@@ -113,6 +113,34 @@ test.describe("browsing", () => {
     await shot(page, "posters-small");
   });
 
+  test("top nav: centred on desktop-width windows, and a hovered item's white ring is not clipped", async ({ page }) => {
+    const account = await newAccount("nav");
+    await openSignedIn(page, account);
+    const nav = page.getByRole("navigation", { name: "Primary" });
+    await expect(nav).toBeVisible();
+    const width = page.viewportSize()!.width;
+    if (width >= 1101) {
+      const box = (await nav.boundingBox())!;
+      expect(Math.abs(box.x + box.width / 2 - width / 2), "nav items are centred in the window").toBeLessThanOrEqual(2);
+      const logo = (await page.locator(".topnav__logo").boundingBox())!;
+      expect(logo.x + logo.width, "the MANGO TV logo stays at the left").toBeLessThan(box.x);
+    }
+    for (const name of ["Home", "Settings"]) {
+      const item = nav.getByRole("link", { name });
+      await item.hover();
+      await page.waitForTimeout(350); // the hover scale-up transition
+      const ring = (await item.boundingBox())!; // bounding boxes include the scale transform
+      const clip = (await nav.boundingBox())!; // the scrolling box that clips anything outside it
+      expect(ring.y, `${name}: top of the ring`).toBeGreaterThanOrEqual(clip.y);
+      expect(ring.y + ring.height, `${name}: bottom of the ring`).toBeLessThanOrEqual(clip.y + clip.height);
+      expect(ring.x, `${name}: left of the ring`).toBeGreaterThanOrEqual(clip.x);
+      expect(ring.x + ring.width, `${name}: right of the ring`).toBeLessThanOrEqual(clip.x + clip.width);
+    }
+    await nav.getByRole("link", { name: "Movies" }).hover();
+    await page.waitForTimeout(350);
+    await shot(page, "nav-hover");
+  });
+
   test("Genres: coloured icon cards lead to a genre's results", async ({ page }) => {
     const account = await newAccount("genres");
     await openSignedIn(page, account, "/genres");
