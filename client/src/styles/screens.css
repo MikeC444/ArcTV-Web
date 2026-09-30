@@ -286,3 +286,26 @@
 .boot { position: fixed; inset: 0; z-index: 500; background: #000; cursor: pointer; }
 .boot__video { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 250ms ease; }
 .boot__video[data-shown="true"] { opacity: 1; }
+
+/* ── Phones: a poster-style, centred hero (MangoTV flavour: mango glow, amber Play) ── */
+.hero__actlabel { display: none; }
+@media (max-width: 720px) {
+  .hero { min-height: min(82vh, 760px); }
+  .hero__layer img { object-position: 50% 8%; }
+  .hero__scrim-x { background: radial-gradient(120% 60% at 50% 100%, rgba(255, 120, 32, 0.22), transparent 70%); }
+  .hero__scrim-y { background: linear-gradient(to bottom, rgba(8, 8, 10, 0.55) 0%, transparent 22%, transparent 40%, rgba(8, 8, 10, 0.7) 70%, var(--bg) 100%); }
+  .hero__content { bottom: 64px; align-items: center; text-align: center; max-width: none; }
+  .hero__logo { object-position: center; width: min(300px, 80%); height: 84px; }
+  .hero__content h1 { text-align: center; }
+  .hero__meta { margin-top: 10px; font-size: 14px; }
+  .hero__genres { margin-top: 6px; font-size: 14px; }
+  .hero__desc { display: none; }
+  .hero .hero__actions { margin-top: 18px; width: 100%; justify-content: space-between; align-items: center; flex-wrap: nowrap; gap: 8px; padding: 0 4px; }
+  .hero__actions > .mbtn { order: 2; --tvs-bg: transparent; --tvs-bg-image: var(--brand-gradient-wide); color: #1a1207; min-width: 132px; justify-content: center; box-shadow: 0 6px 22px rgba(255, 120, 32, 0.35); }
+  .hero__act { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 64px; }
+  .hero__act[data-act="list"] { order: 1; }
+  .hero__act[data-act="info"] { order: 3; }
+  .hero__act .ibtn { --tvs-bg: transparent; background: none; width: 44px; height: 44px; }
+  .hero__actlabel { display: block; font-size: 12px; line-height: 14px; color: var(--text-2); }
+  .hero__dots { left: 50%; right: auto; transform: translateX(-50%); bottom: 4px; }
+}
