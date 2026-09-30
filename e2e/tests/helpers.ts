@@ -81,11 +81,6 @@ export async function newAccount(label: string, options: { addon?: boolean } = {
   return { tv, email: tv.email };
 }
 
-/** Configures a page: unique client IP, and no boot video (it has its own dedicated test). */
-export async function preparePage(page: Page, options: { boot?: boolean } = {}) {
-  if (!options.boot) await page.addInitScript(() => sessionStorage.setItem("mtv:booted", "1"));
-}
-
 export async function useClientIp(context: BrowserContext, ip = nextIp()) {
   await context.setExtraHTTPHeaders({ "X-Forwarded-For": ip });
   return ip;
@@ -98,7 +93,6 @@ export async function signIn(context: BrowserContext, email: string, password = 
 }
 
 export async function openSignedIn(page: Page, account: TestAccount, path = "/") {
-  await preparePage(page);
   await useClientIp(page.context());
   await signIn(page.context(), account.email);
   await page.goto(path);

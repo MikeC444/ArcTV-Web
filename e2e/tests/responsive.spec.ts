@@ -38,7 +38,6 @@ test.describe("responsive layouts", () => {
   });
 
   test("welcome and sign-in screens fit too", async ({ page }, info) => {
-    await page.addInitScript(() => sessionStorage.setItem("mtv:booted", "1"));
     for (const [name, path] of [["welcome", "/auth"], ["auth-method", "/auth/method/login"], ["auth-password", "/auth/password/login"]] as const) {
       await page.goto(path);
       await expect(page.getByRole("button").first()).toBeVisible();

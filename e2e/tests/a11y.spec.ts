@@ -67,7 +67,6 @@ test.describe("accessibility", () => {
     test.setTimeout(300_000);
     const phone = info.project.name.startsWith("mobile");
     const all: string[] = [];
-    await page.addInitScript(() => sessionStorage.setItem("mtv:booted", "1"));
     for (const [name, path] of SIGNED_OUT) {
       await page.goto(path);
       await expect(page.locator("main")).toHaveCount(1); // one main landmark per screen
@@ -137,7 +136,6 @@ test.describe("accessibility", () => {
   });
 
   test("a form error is announced and tied to the fields it is about", async ({ page }) => {
-    await page.addInitScript(() => sessionStorage.setItem("mtv:booted", "1"));
     await page.goto("/auth/password/login");
     await page.getByRole("button", { name: "Log In" }).click();
     const error = page.getByRole("alert");

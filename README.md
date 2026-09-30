@@ -86,7 +86,7 @@ Browser (React SPA)  ──same origin──▶  MangoTV Web server (this repo, 
 
 Everything in the Fire TV app that can run in a browser:
 
-* Cold-start boot video, Welcome, **Log in / Sign up** (email + password with the app's validation rules) and **QR
+* Welcome (no boot video on the web), **Log in / Sign up** (email + password with the app's validation rules) and **QR
   sign-in** (uses the existing pairing endpoints; a phone finishes it on the backend's own activation page).
 * **Home** (rotating hero, Continue Watching, one row per addon catalogue, your Home-row order and hidden rows),
   **Movies**, **TV Shows** (grids of 8 posters across at 1920 and 7 on a laptop — 6 / 5 / 4 / 3 on narrower windows — with sort pills and infinite scroll), **Genres**, **Search**, **My List** (All / Watched).

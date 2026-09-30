@@ -1,10 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
-import { BACKEND, newAccount, nextIp, openSignedIn, PASSWORD, preparePage, Tv, uniqueEmail, useClientIp, shot } from "./helpers";
+import { BACKEND, newAccount, nextIp, openSignedIn, PASSWORD, Tv, uniqueEmail, useClientIp, shot } from "./helpers";
 
 test.describe("sign-in flows", () => {
   test("a signed-out visitor sees the welcome screen (hero photo, brand headline, Log In / Sign Up)", async ({ page }) => {
-    await preparePage(page);
     await useClientIp(page.context());
     await page.goto("/");
     await expect(page).toHaveURL(/\/auth$/);
@@ -19,7 +18,6 @@ test.describe("sign-in flows", () => {
   test("an EXISTING Fire TV account signs in with its email + password and lands on Home with its synced data", async ({ page }) => {
     const account = await newAccount("firetv");
     await account.tv.seedContinueWatching({ contentId: "fxm3", title: "Resume Me" });
-    await preparePage(page);
     await useClientIp(page.context());
     await page.goto("/auth");
     await page.getByRole("button", { name: "Log In" }).click();
@@ -37,7 +35,6 @@ test.describe("sign-in flows", () => {
 
   test("wrong credentials and invalid input show clear errors and don't sign in", async ({ page }) => {
     const account = await newAccount("wrongpw", { addon: false });
-    await preparePage(page);
     await useClientIp(page.context());
     await page.goto("/auth/password/login");
     await page.getByRole("button", { name: "Log In" }).click();
@@ -55,7 +52,6 @@ test.describe("sign-in flows", () => {
 
   test("when the service says \"too many attempts\", the form says how long to wait and keeps the button off until then", async ({ page }) => {
     const account = await newAccount("ratelimited", { addon: false });
-    await preparePage(page);
     await useClientIp(page.context());
     await page.clock.install();
     let attempts = 0;
@@ -85,7 +81,6 @@ test.describe("sign-in flows", () => {
 
   test("creating an account in the browser makes a real account the TV can also sign in to", async ({ page }) => {
     const email = uniqueEmail("newweb");
-    await preparePage(page);
     await useClientIp(page.context());
     await page.goto("/auth/password/register");
     await page.getByPlaceholder("Email").fill(email);
@@ -100,7 +95,6 @@ test.describe("sign-in flows", () => {
 
   test("QR sign-in: a phone completes it on the backend's activation flow and the browser signs in by itself", async ({ page }) => {
     const account = await newAccount("qr");
-    await preparePage(page);
     await useClientIp(page.context());
     await page.goto("/auth/qr/login");
     await expect(page.getByRole("heading", { name: "Scan to sign in" })).toBeVisible();

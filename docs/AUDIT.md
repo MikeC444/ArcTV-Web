@@ -115,7 +115,7 @@ no duplicate account, no second user table.
 
 | Firestick (Compose) | Web route | Notes |
 |---|---|---|
-| `BootVideoScreen` (`newboot1.mp4`) | `<BootSplash>` on cold load | Muted autoplay (browser policy), skippable, same 10 s/20 s timeouts |
+| `BootVideoScreen` (`newboot1.mp4`) | — | Intentionally not ported: the web app opens straight to Home |
 | `AuthGate` / `AuthStart` (hero photo, "Your Entertainment, Your Way") | `/auth` | Same layout, scrim, buttons |
 | `AuthMethod` (QR vs remote) | `/auth/method/:intent` | "Scan a QR code" / "Type on my keyboard" |
 | `PasswordSignIn` (login + register) | `/auth/password/:intent` | Same validation rules as `validateCredentials` |

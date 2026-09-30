@@ -1,15 +1,13 @@
-import { lazy, Suspense, useEffect, useState } from "react";
-import { BrowserRouter, Route, Routes, useLocation, useParams } from "react-router-dom";
+import { lazy, Suspense, useEffect } from "react";
+import { BrowserRouter, Route, Routes, useParams } from "react-router-dom";
 import { installModalityTracking } from "./lib/modality";
 import { installSpatialNavigation } from "./lib/spatialNav";
 import { useAuth } from "./state/auth";
-import { useHome } from "./state/homeData";
 import { detachSession, startSession } from "./state/sync";
 import { AppShell } from "./ui/layout/AppShell";
 import { Spinner } from "./ui/components/States";
 import { AddAddonScreen, SettingsScreen } from "./ui/screens/Settings";
 import { AuthMethodScreen, AuthStartScreen, PasswordSignInScreen, QrSignInScreen, RedirectIfAuthed, RequireAuth } from "./ui/screens/Auth";
-import { BootSplash, shouldShowBoot } from "./ui/screens/Boot";
 import { GenreResultsScreen, MoviesScreen, MyListScreen, TvShowsScreen } from "./ui/screens/Browse";
 import { DetailScreen } from "./ui/screens/Detail";
 import { GenresScreen } from "./ui/screens/Genres";
@@ -48,25 +46,6 @@ function NotFound() {
   );
 }
 
-/** Rendered only while booting, so the shared Home fetch isn't started on every route. */
-function BootHost({ onDone }: { onDone: () => void }) {
-  const { ready } = useHome();
-  return <BootSplash dataReady={ready} onDone={onDone} />;
-}
-
-function BootGate({ children }: { children: React.ReactNode }) {
-  const { pathname } = useLocation();
-  const status = useAuth((s) => s.status);
-  const [booting, setBooting] = useState(() => shouldShowBoot(pathname));
-  if (status !== "signedIn" || !booting) return <>{children}</>;
-  return (
-    <>
-      {children}
-      <BootHost onDone={() => setBooting(false)} />
-    </>
-  );
-}
-
 export function App() {
   const init = useAuth((s) => s.init);
   useEffect(() => {
@@ -90,9 +69,7 @@ export function App() {
         <Route
           element={
             <RequireAuth>
-              <BootGate>
-                <AppShell />
-              </BootGate>
+              <AppShell />
             </RequireAuth>
           }
         >
