@@ -18,13 +18,33 @@ test.describe("sources and playback", () => {
     await openSources(page);
     await expect(page.locator(".source")).toHaveCount(6);
     await expect(page.locator(".source__reco")).toHaveCount(1);
-    // the recommendation is a source a browser can actually play, not the (higher-quality) torrent
+    // the recommendation is a source this browser can actually play, not the (higher-quality) torrent
     await expect(row(page, "Fixture HLS").locator(".source__reco")).toBeVisible();
-    await expect(row(page, "Fixture Torrent")).toContainText("Not supported in browser");
-    await expect(row(page, "Fixture MKV")).toContainText("May not play in browser");
-    await expect(row(page, "Fixture Headers")).toContainText("Not supported in browser");
+    // every source says whether THIS device can play it, and why not
+    await expect(row(page, "Fixture Direct")).toContainText("Should play here"); // WebM / VP9
+    await expect(row(page, "Fixture HLS")).toContainText("Should play here"); // HLS through hls.js
+    await expect(row(page, "Fixture Torrent")).toContainText("Can't play here — Torrent source");
+    await expect(row(page, "Fixture Headers")).toContainText("Can't play here — Needs special headers");
+    await expect(row(page, "Fixture Web-unready")).toContainText("Might not play");
+    await expect(row(page, "Fixture MKV")).toContainText(/Should play here|Can't play here/); // depends on the codecs of the browser running the test
     await expect(row(page, "Fixture Direct")).toContainText("250 seeders");
+    // playable sources are listed first
+    await expect(page.locator(".source").first()).toContainText("Fixture HLS");
+    await expect(page.locator(".source").last()).toContainText(/Fixture (Torrent|Headers)/);
+    // the "This device" panel says what the browser supports
+    const device = page.locator(".addonres", { has: page.locator("summary", { hasText: "This device:" }) });
+    await device.locator("summary").click();
+    await expect(device.locator(".devcaps__item", { hasText: "MKV" })).toBeVisible();
+    await expect(device.locator(".devcaps__item", { hasText: "H.264" })).toBeVisible();
     await shot(page, "sources");
+
+    // "Plays on this device" hides what can't play, and turns off again
+    await page.getByRole("button", { name: "Plays on this device" }).click();
+    await expect(row(page, "Fixture Torrent")).toHaveCount(0);
+    await expect(row(page, "Fixture Headers")).toHaveCount(0);
+    await expect(row(page, "Fixture Direct")).toHaveCount(1);
+    await page.getByRole("button", { name: "Plays on this device" }).click();
+    await expect(page.locator(".source")).toHaveCount(6);
 
     await page.getByRole("button", { name: "4K", exact: true }).click();
     await expect(page.locator(".source")).toHaveCount(1);

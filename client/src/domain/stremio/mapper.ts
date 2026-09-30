@@ -154,6 +154,7 @@ export function streamToStream(stream: StremioStream, providerId: string, provid
     sourceTag,
     codec,
     audioTag,
+    descriptor: haystack,
     sizeLabel,
     sizeBytes,
     seeders,

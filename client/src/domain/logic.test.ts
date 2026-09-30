@@ -10,6 +10,7 @@ import { validateCredentials } from "../state/auth";
 import { sortContent } from "../ui/screens/Browse";
 import { sortStreams } from "../ui/screens/Sources";
 import { recommendedStreamId } from "../state/sourcesData";
+import { detectDeviceCaps } from "./deviceSupport";
 import type { Content, Stream } from "./types";
 
 const section = (id: string, title: string): HomeSection => ({ id, title, items: [], style: "STANDARD" });
@@ -168,7 +169,8 @@ describe("catalog and source sorting", () => {
   const s = (id: string, tier: Stream["resolutionTier"], seeders: number | null, sizeBytes: number | null, extra: Partial<Stream> = {}): Stream => ({ id, providerId: "p", providerLabel: "P", resolutionTier: tier, qualityBadge: tier, releaseTitle: id, seeders, sizeBytes, url: "https://x/v.mp4", ...extra });
   it("sorts sources by quality → seeders, seeders, size", () => {
     const list = [s("720", "HD_720P", 900, 1), s("4k-low", "UHD_4K", 5, 50), s("4k-hi", "UHD_4K", 500, 40)];
-    expect(sortStreams(list, "QUALITY").map((x) => x.id)).toEqual(["4k-hi", "4k-low", "720"]);
+    const anyDevice = detectDeviceCaps({ canPlayType: () => "probably", hasMediaSource: true, userAgent: "Chrome/130 Safari/537.36" });
+    expect(sortStreams(list, "QUALITY", anyDevice).map((x) => x.id)).toEqual(["4k-hi", "4k-low", "720"]);
     expect(sortStreams(list, "SEEDERS").map((x) => x.id)).toEqual(["720", "4k-hi", "4k-low"]);
     expect(sortStreams(list, "SIZE").map((x) => x.id)).toEqual(["4k-low", "4k-hi", "720"]);
   });
@@ -176,9 +178,10 @@ describe("catalog and source sorting", () => {
   it("recommends the best source a BROWSER can play, not an unplayable torrent", () => {
     const torrent = s("torrent", "UHD_4K", 5000, 1, { url: null, infoHash: "abc" });
     const web = s("web", "FHD_1080P", 10, 1);
-    expect(recommendedStreamId([torrent, web])).toBe("web");
-    expect(recommendedStreamId([torrent])).toBe("torrent"); // nothing playable → still recommend something
-    expect(recommendedStreamId([])).toBeNull();
+    const anyDevice = detectDeviceCaps({ canPlayType: () => "probably", hasMediaSource: true, userAgent: "Chrome/130 Safari/537.36" }); // jsdom has no media stack, so state what the "device" can do
+    expect(recommendedStreamId([torrent, web], anyDevice)).toBe("web");
+    expect(recommendedStreamId([torrent], anyDevice)).toBe("torrent"); // nothing playable → still recommend something
+    expect(recommendedStreamId([], anyDevice)).toBeNull();
   });
 });
 

@@ -31,7 +31,7 @@ test.describe("addons are asked for streams", () => {
     expect(log.filter((r) => r.includes("/nostreams/stream/"))).toHaveLength(0); // a catalog-only addon is never asked for streams
 
     // the panel says who was asked and what each answered
-    const panel = page.locator(".addonres");
+    const panel = page.locator(".addonres", { has: page.locator("summary", { hasText: "Addon results" }) });
     await expect(panel.locator("summary")).toContainText("Addon results (4)");
     await panel.locator("summary").click();
     await expect(panel.locator(".addonres__row", { hasText: "Fixture Streams providers" })).toContainText("2 sources");

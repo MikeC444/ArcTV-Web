@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { MdArrowBack, MdFastForward, MdForward10, MdFullscreen, MdFullscreenExit, MdGraphicEq, MdHighQuality, MdPause, MdPlayArrow, MdReplay10, MdSettings, MdSkipNext, MdSubtitles, MdSwapHoriz, MdVolumeOff, MdVolumeUp } from "react-icons/md";
 import { useNavigate, useParams } from "react-router-dom";
+import { deviceVerdict } from "../../domain/deviceSupport";
 import { assessStream, engineFor } from "../../domain/playability";
 import { activeProviders } from "../../domain/registry";
 import type { Content, ContentType, Episode, Stream } from "../../domain/types";
@@ -86,6 +87,12 @@ const HIDE_AFTER_MS = 4000;
 const SLOW_START_MS = 15_000;
 const START_TIMEOUT_MS = 45_000;
 
+/** When we already knew this device can't handle the file, say so in the error instead of a generic failure. */
+function withDeviceHint(stream: Stream, error: PlaybackError): PlaybackError {
+  const verdict = deviceVerdict(stream);
+  return verdict.level === "yes" || verdict.level === "unknown" ? error : { ...error, message: `${error.message} ${verdict.reason}` };
+}
+
 /** Plain-language reason for a source that never started, using what the <video> element reports and the server's host (never the full link, which can carry a key). */
 function startTimeoutError(stream: Stream, video: HTMLVideoElement | null): PlaybackError {
   let host = "";
@@ -97,12 +104,12 @@ function startTimeoutError(stream: Stream, video: HTMLVideoElement | null): Play
   const where = host ? ` (${host})` : "";
   const seconds = START_TIMEOUT_MS / 1000;
   const waiting = video?.networkState === HTMLMediaElement.NETWORK_LOADING;
-  return {
+  return withDeviceHint(stream, {
     type: "network",
     message: waiting
       ? `This source didn't start playing within ${seconds} seconds. Its server${where} is either very slow to prepare the file (some debrid links are) or is sending something your browser can't open. Try again, or choose another source.`
       : `This source didn't start playing within ${seconds} seconds — its server${where} didn't send any video. Try again, or choose another source.`,
-  };
+  });
 }
 const REPORT_EVERY_MS = 30_000;
 const EMPTY_TRACKS: EngineTracks = { audio: [], subtitles: [], quality: [] };
@@ -243,7 +250,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
             void start("hls");
             return;
           }
-          setError(e);
+          setError(withDeviceHint(stream, e));
         },
       });
       if (cancelled) return created.destroy();
@@ -268,7 +275,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
     };
     const onNativeError = () => {
       if (engine.current?.kind === "native" || !engine.current) return; // native engine reports its own errors
-      if (v.error) setError(mediaErrorToPlaybackError(v.error));
+      if (v.error) setError(withDeviceHint(stream, mediaErrorToPlaybackError(v.error)));
     };
     v.addEventListener("loadedmetadata", onMeta);
     v.addEventListener("timeupdate", onTime);

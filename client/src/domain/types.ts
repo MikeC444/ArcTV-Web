@@ -84,6 +84,8 @@ export interface Stream {
   sourceTag?: string | null;
   codec?: string | null;
   audioTag?: string | null;
+  /** The addon's raw title/name/description text — only used to work out the file's format (see deviceSupport). */
+  descriptor?: string | null;
   sizeLabel?: string | null;
   sizeBytes?: number | null;
   seeders?: number | null;

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { MdArrowBack, MdExpandMore, MdRefresh, MdExtension, MdInfo, MdPerson, MdSearchOff, MdSecurity, MdStar, MdSurroundSound, MdCheckCircle, MdOutlineCheckCircle, MdWifi, MdPlayArrow, MdWarningAmber } from "react-icons/md";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { assessStream } from "../../domain/playability";
+import { DEVICE_RANK, describeCaps, deviceVerdict, getDeviceCaps, type DeviceCaps } from "../../domain/deviceSupport";
 import { resolutionOrdinal, SOURCE_HEALTH_LABEL, type Content, type ContentType, type ResolutionTier, type Stream } from "../../domain/types";
 import { formatRuntime } from "../../lib/format";
 import { parseOptionalInt, routes } from "../../lib/routes";
@@ -26,9 +26,13 @@ const SORTS: Array<{ id: SourceSort; label: string }> = [
   { id: "SIZE", label: "Size" },
 ];
 
-export function sortStreams(streams: Stream[], sort: SourceSort): Stream[] {
+/** "Quality" puts what this device can play first (then best resolution, then seeders); Seeders / Size are exactly what they say. */
+export function sortStreams(streams: Stream[], sort: SourceSort, caps?: DeviceCaps): Stream[] {
   const copy = streams.slice();
-  if (sort === "QUALITY") return copy.sort((a, b) => resolutionOrdinal(a.resolutionTier) - resolutionOrdinal(b.resolutionTier) || (b.seeders ?? -1) - (a.seeders ?? -1));
+  if (sort === "QUALITY") {
+    const rank = new Map(copy.map((stream) => [stream.id, DEVICE_RANK[deviceVerdict(stream, caps).level]]));
+    return copy.sort((a, b) => (rank.get(a.id) ?? 0) - (rank.get(b.id) ?? 0) || resolutionOrdinal(a.resolutionTier) - resolutionOrdinal(b.resolutionTier) || (b.seeders ?? -1) - (a.seeders ?? -1));
+  }
   if (sort === "SEEDERS") return copy.sort((a, b) => (b.seeders ?? -1) - (a.seeders ?? -1));
   return copy.sort((a, b) => (b.sizeBytes ?? -1) - (a.sizeBytes ?? -1));
 }
@@ -56,7 +60,8 @@ export function SourcesScreen() {
   useEffect(() => {
     if (!auto || state.kind !== "loaded" || state.searchingMore || !state.recommendedId) return;
     const pick = state.streams.find((s) => s.id === state.recommendedId);
-    if (pick && assessStream(pick).level !== "no") navigate(routes.player(providerId, type, id, season, episode, pick.id), { replace: true });
+    const playsHere = pick ? ["yes", "unknown"].includes(deviceVerdict(pick).level) : false;
+    if (pick && playsHere) navigate(routes.player(providerId, type, id, season, episode, pick.id), { replace: true });
   }, [auto, state, navigate, providerId, type, id, season, episode]);
 
   useEffect(() => {
@@ -95,8 +100,13 @@ function SourcesLoaded({ state, onBack, onSelect, onManage, onRetry }: { state: 
   const [filter, setFilter] = useState<SourceFilter>("ALL");
   const [sort, setSort] = useState<SourceSort>("QUALITY");
   const [showHelp, setShowHelp] = useState(false);
-  const filtered = useMemo(() => (filter === "ALL" ? state.streams : state.streams.filter((s) => s.resolutionTier === filter)), [state.streams, filter]);
-  const sorted = useMemo(() => sortStreams(filtered, sort), [filtered, sort]);
+  const [playableOnly, setPlayableOnly] = useState(false);
+  const caps = useMemo(() => getDeviceCaps(), []);
+  const filtered = useMemo(() => {
+    const byQuality = filter === "ALL" ? state.streams : state.streams.filter((s) => s.resolutionTier === filter);
+    return playableOnly ? byQuality.filter((s) => ["yes", "unknown"].includes(deviceVerdict(s, caps).level)) : byQuality;
+  }, [state.streams, filter, playableOnly, caps]);
+  const sorted = useMemo(() => sortStreams(filtered, sort, caps), [filtered, sort, caps]);
   const { content } = state;
   const nextSort = () => setSort((s) => SORTS[(SORTS.findIndex((x) => x.id === s) + 1) % SORTS.length]!.id);
 
@@ -113,6 +123,7 @@ function SourcesLoaded({ state, onBack, onSelect, onManage, onRetry }: { state: 
             {FILTERS.map((f) => (
               <Pill key={f.id} label={f.label} selected={filter === f.id} onClick={() => setFilter(f.id)} />
             ))}
+            <Pill label="Plays on this device" selected={playableOnly} onClick={() => setPlayableOnly((v) => !v)} icon={<MdCheckCircle aria-hidden="true" />} />
           </div>
           <Surface className="pill" radius="999px" background="var(--surface-high)" onClick={nextSort} ariaLabel={`Sort by ${SORTS.find((s) => s.id === sort)?.label}. Activate to change.`}>
             <span className="c-text">Sort by: {SORTS.find((s) => s.id === sort)?.label}</span>
@@ -123,7 +134,7 @@ function SourcesLoaded({ state, onBack, onSelect, onManage, onRetry }: { state: 
           {sorted.length === 0 && state.searchingMore ? (
             <div className="sources__empty"><Spinner /><h2 className="t-title-lg">Searching for sources…</h2><p className="c-text-2 t-body-md">Checking your installed addons for this title.</p></div>
           ) : sorted.length === 0 && state.streams.length > 0 ? (
-            <div className="sources__empty"><MdSearchOff size={40} className="c-text-3" aria-hidden="true" /><h2 className="t-title-lg">No sources in this quality</h2><p className="c-text-2 t-body-md">Choose “All Sources” to see everything your addons found.</p><MangoButton text="All Sources" icon={<MdCheckCircle />} onClick={() => setFilter("ALL")} /></div>
+            <div className="sources__empty"><MdSearchOff size={40} className="c-text-3" aria-hidden="true" /><h2 className="t-title-lg">{playableOnly ? "Nothing here plays on this device" : "No sources in this quality"}</h2><p className="c-text-2 t-body-md">{playableOnly ? `None of the ${state.streams.length} sources found looks playable in ${caps.browser} on this device. Turn the filter off to see them all and why.` : "Choose “All Sources” to see everything your addons found."}</p><MangoButton text="Show All Sources" icon={<MdCheckCircle />} onClick={() => { setFilter("ALL"); setPlayableOnly(false); }} /></div>
           ) : sorted.length === 0 ? (
             <div className="sources__empty">
               <MdSearchOff size={40} className="c-text-3" aria-hidden="true" />
@@ -147,6 +158,7 @@ function SourcesLoaded({ state, onBack, onSelect, onManage, onRetry }: { state: 
         {sorted.length > 0 || state.streams.length > 0 ? (
           <div style={{ marginTop: "calc(8 * var(--dp))" }}>
             <AddonResults rows={state.addons} open={state.addons.some((a) => a.lookup.kind === "failed")} />
+            <DeviceSupport caps={caps} streams={state.streams} />
             {state.addons.some((a) => a.lookup.kind === "failed") && !state.searchingMore ? <MangoButton text="Try Again" icon={<MdRefresh />} compact onClick={onRetry} /> : null}
           </div>
         ) : null}
@@ -268,13 +280,33 @@ function AddonResults({ rows, open }: { rows: AddonLookupRow[]; open?: boolean }
   );
 }
 
+/** What this browser can and can't play — the basis for every "Should play here / Can't play here" badge. */
+function DeviceSupport({ caps, streams }: { caps: DeviceCaps; streams: Stream[] }) {
+  const playable = streams.filter((s) => ["yes", "unknown"].includes(deviceVerdict(s, caps).level)).length;
+  return (
+    <details className="addonres">
+      <summary className="t-label-md c-text-2">This device: {caps.browser} — {playable} of {streams.length} sources should play</summary>
+      <ul className="devcaps">
+        {describeCaps(caps).map((c) => (
+          <li key={c.label} className="devcaps__item" data-supported={c.supported}>
+            <span aria-hidden="true">{c.supported ? "✓" : "✗"}</span> <span className="t-label-md">{c.label}</span><span className="sr-only">{c.supported ? " supported" : " not supported"}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="t-label-sm c-text-3" style={{ margin: "6px 0 0", maxWidth: 560 }}>Read from your browser. Badges on each source are worked out from its file name and link, so they're a strong hint, not a promise.</p>
+    </details>
+  );
+}
+
+const VERDICT_TONE = { yes: "ok", unknown: "muted", audio: "warn", no: "bad" } as const;
+
 function SourceRow({ stream, recommended, onClick, autoFocus }: { stream: Stream; recommended: boolean; onClick: () => void; autoFocus?: boolean }) {
-  const play = assessStream(stream);
+  const play = deviceVerdict(stream);
   const subtitle = [stream.codec, stream.sourceTag].filter(Boolean).join("  •  ");
   const color = TIER_COLOR[stream.resolutionTier];
   return (
-    <div className="source" role="listitem" data-unplayable={play.level === "no" || undefined}>
-      <Surface className="source__surface" background="var(--surface-high)" alwaysBorder={recommended} borderColor={recommended ? "var(--amber)" : undefined} onClick={onClick} dataAttrs={{ autofocus: autoFocus }} ariaLabel={`${stream.qualityBadge} ${stream.releaseTitle}, ${stream.providerLabel}${recommended ? ", recommended" : ""}${play.level === "no" ? ", not playable in a browser" : ""}`}>
+    <div className="source" role="listitem" data-unplayable={play.level === "no" || undefined} data-device={play.level}>
+      <Surface className="source__surface" background="var(--surface-high)" alwaysBorder={recommended} borderColor={recommended ? "var(--amber)" : undefined} onClick={onClick} dataAttrs={{ autofocus: autoFocus }} ariaLabel={`${stream.qualityBadge} ${stream.releaseTitle}, ${stream.providerLabel}${recommended ? ", recommended" : ""}. ${play.label}${play.detail ? `: ${play.detail}` : ""}`}>
         <span className="source__badge" style={{ borderColor: color, color }}>
           <span className="t-label-lg">{stream.qualityBadge}</span>
           {stream.sourceTag ? <span className="t-label-sm">{stream.sourceTag}</span> : null}
@@ -286,7 +318,10 @@ function SourceRow({ stream, recommended, onClick, autoFocus }: { stream: Stream
             {stream.seedersLabel ? <span className="source__fact"><MdPerson aria-hidden="true" />{stream.seedersLabel} seeders</span> : null}
             {stream.sourceHealth ? <span className="source__fact" style={{ color: HEALTH_COLOR[stream.sourceHealth] }}><MdOutlineCheckCircle aria-hidden="true" />{SOURCE_HEALTH_LABEL[stream.sourceHealth]}</span> : null}
             {stream.audioTag ? <span className="source__fact"><MdSurroundSound aria-hidden="true" />{stream.audioTag}</span> : null}
-            {play.level !== "ok" ? <span className="source__fact source__warn" title={play.reason}><MdWarningAmber aria-hidden="true" />{play.level === "no" ? "Not supported in browser" : "May not play in browser"}</span> : null}
+            <span className="source__fact source__device" data-tone={VERDICT_TONE[play.level]} title={play.reason}>
+              {play.level === "yes" ? <MdCheckCircle aria-hidden="true" /> : <MdWarningAmber aria-hidden="true" />}
+              {play.label}{play.detail ? ` — ${play.detail}` : ""}
+            </span>
           </span>
         </span>
         <span className="source__side">

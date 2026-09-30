@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { assessStream } from "../domain/playability";
+import { DEVICE_RANK, deviceVerdict, type DeviceCaps } from "../domain/deviceSupport";
 import type { StreamLookup } from "../domain/provider";
 import { activeProviders } from "../domain/registry";
 import { resolutionOrdinal, type Content, type ContentType, type Stream } from "../domain/types";
@@ -19,9 +19,9 @@ export type SourcesState =
   | { kind: "error"; message: string }
   | { kind: "loaded"; content: Content; streams: Stream[]; addons: AddonLookupRow[]; recommendedId: string | null; searchingMore: boolean; autoSelect: Stream | null };
 
-/** Best stream = highest resolution, then most seeders; streams a browser can actually play win over ones it can't. */
-export function recommendedStreamId(streams: Stream[]): string | null {
-  const rank = (s: Stream) => (assessStream(s).level === "no" ? 1 : 0);
+/** Best stream = highest resolution, then most seeders; sources this device can play win over ones it can't (or can only show without sound). */
+export function recommendedStreamId(streams: Stream[], caps?: DeviceCaps): string | null {
+  const rank = (s: Stream) => DEVICE_RANK[deviceVerdict(s, caps).level];
   return (
     streams
       .slice()

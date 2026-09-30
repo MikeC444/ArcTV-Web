@@ -194,12 +194,29 @@ or silently picking another source:
 | Source | Behaviour |
 |---|---|
 | Direct HTTPS MP4 / WebM / HLS / DASH | Plays if the host allows cross-origin media and the codecs are supported by the browser |
-| Torrent (`infoHash`) / magnet | Listed, badged "Not supported in browser", explains why on click. Use an addon that returns direct (debrid) links |
+| Torrent (`infoHash`) / magnet | Listed, badged "Can't play here — Torrent source", explains why on click. Use an addon that returns direct (debrid) links |
 | YouTube-only (`ytId`) | Explained; the trailer button opens YouTube in a new tab like the TV does |
 | Sources needing custom request headers (`proxyHeaders`) | Explained — browsers may not set those headers, and the server deliberately does not proxy protected streams |
 | `http://` media on the https site | Blocked by the browser; explained |
-| MKV / AVI / HEVC / AC-3 etc. | Marked "May not play in browser"; if it fails, the error names the likely cause and offers **Change Source** |
+| MKV / AVI / HEVC / AC-3 etc. | Checked against **this browser's own codec support** (see below); if it fails anyway, the error names the likely cause and offers **Change Source** |
 | DRM (Widevine / FairPlay / PlayReady) | Not implemented — the Firestick app has no DRM path either |
+
+### Which sources can this device play?
+
+Select a Source asks the browser itself what it can decode (`canPlayType` / MediaSource — not a guess from its name) and
+reads each source's file name and link for its container, video codec and audio codec. Every row then carries a badge:
+
+| Badge | Meaning |
+|---|---|
+| **Should play here** | Container and codecs are ones this browser supports |
+| **No sound here — Dolby Digital Plus audio not supported** | Picture should play; the only audio track is one the browser can't decode |
+| **Can't play here — HEVC (x265) video not supported** / **MKV not supported** / **Torrent source** … | Won't work in this browser; the reason is on the row |
+| **Format unknown — May play** / **Might not play** | The source doesn't say what it is, or its addon says it isn't web-ready |
+
+"Sort by: Quality" lists playable sources first, **Recommended** is always the best playable one, the **Plays on this
+device** pill hides everything else, and **This device** (under the list) shows what your browser supports. The badges are
+a strong hint rather than a promise — they are derived from text — and a source whose server never answers can still
+fail; that case is reported by the player's start-up watchdog. Logic and tests: `client/src/domain/deviceSupport.ts`.
 
 ### "Nothing plays" / "No sources found"
 
