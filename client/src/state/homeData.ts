@@ -81,15 +81,14 @@ export function useHome(): { state: HomeState; reload(): void; ready: boolean } 
   const [reloadTick, setReloadTick] = useState(0);
   const generation = useRef(0);
 
-  // instant paint from the last session's rows
+  // Last session's rows are NOT painted first: Home shows a different selection of titles each time it is opened, so they would
+  // be replaced a moment later. They are kept as the fallback for when the addons can't be reached.
+  const cached = useRef<HomeSection[] | null>(null);
   useEffect(() => {
+    cached.current = null;
     if (!userId) return;
     const cache = readJson<HomeCache | null>(userKey(userId, "homeCache"), null);
-    if (cache && Date.now() - cache.at < CACHE_MAX_AGE_MS && cache.sections.length) {
-      setRaw(cache.sections);
-      setFetched(true);
-      setCacheOnly(true);
-    }
+    if (cache && Date.now() - cache.at < CACHE_MAX_AGE_MS && cache.sections.length) cached.current = cache.sections;
   }, [userId]);
 
   useEffect(() => {
@@ -125,10 +124,11 @@ export function useHome(): { state: HomeState; reload(): void; ready: boolean } 
     ).then(() => {
       if (gen !== generation.current) return;
       setFailed(anyFailed);
-      if (sections.length === 0 && !(anyFailed && cacheOnly)) {
+      if (sections.length === 0) {
+        const fallback = anyFailed ? cached.current : null;
+        setRaw(fallback ?? []);
+        setCacheOnly(fallback !== null);
         setFetched(true);
-        setCacheOnly(false);
-        if (!cacheOnly) setRaw([]);
       }
       if (sections.length > 0 && userId) writeJson(userKey(userId, "homeCache"), { at: Date.now(), sections: trimForCache(sections) } satisfies HomeCache);
     });
