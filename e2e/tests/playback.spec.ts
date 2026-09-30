@@ -28,7 +28,13 @@ test.describe("sources and playback", () => {
     await expect(row(page, "Fixture Web-unready")).toContainText("Might not play");
     await expect(row(page, "Fixture MKV")).toContainText(/Should play here|Can't play here/); // depends on the codecs of the browser running the test
     await expect(row(page, "Fixture Direct")).toContainText("250 seeders");
-    // playable sources are listed first
+    // the list starts sorted by size, biggest first (the recommendation is marked on its own row, wherever it sits)
+    await expect(page.getByRole("button", { name: /Sort by Size/ })).toBeVisible();
+    await expect(page.locator(".source").first()).toContainText("Fixture Torrent"); // 40 GB
+    await expect(page.locator(".source").last()).toContainText("Fixture Web-unready"); // 700 MB
+    // "Quality" lists playable sources first
+    await page.getByRole("button", { name: /Sort by Size/ }).click();
+    await expect(page.getByRole("button", { name: /Sort by Quality/ })).toBeVisible();
     await expect(page.locator(".source").first()).toContainText("Fixture HLS");
     await expect(page.locator(".source").last()).toContainText(/Fixture (Torrent|MKV)/); // what this device can't play goes last
     // the "This device" panel says what the browser supports

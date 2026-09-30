@@ -98,7 +98,7 @@ function SourcesShell({ onBack }: { loading?: boolean; onBack: () => void }) {
 
 function SourcesLoaded({ state, onBack, onSelect, onManage, onRetry }: { state: Extract<ReturnType<typeof useSources>["state"], { kind: "loaded" }>; onBack: () => void; onSelect: (s: Stream) => void; onManage: () => void; onRetry: () => void }) {
   const [filter, setFilter] = useState<SourceFilter>("ALL");
-  const [sort, setSort] = useState<SourceSort>("QUALITY");
+  const [sort, setSort] = useState<SourceSort>("SIZE"); // biggest file first; "Recommended" still marks the best source this device can play
   const [showHelp, setShowHelp] = useState(false);
   const [playableOnly, setPlayableOnly] = useState(false);
   const caps = useMemo(() => getDeviceCaps(), []);
@@ -216,7 +216,6 @@ function InfoPanel({ content, onBack }: { content: Content; onBack: () => void }
           <div className="t-label-md" style={{ display: "flex", gap: 5, alignItems: "center" }}><MdInfo className="c-text-2" aria-hidden="true" /> What are sources?</div>
           <p className="t-label-sm c-text-2" style={{ margin: "4px 0 0" }}>Sources are different streams or files available online. Choose the one that works best for you.</p>
         </div>
-        <GlowPlay size={30} glow={46} icon={15} />
       </div>
     </aside>
   );

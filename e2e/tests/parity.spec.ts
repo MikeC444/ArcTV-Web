@@ -141,8 +141,8 @@ test.describe("Fire TV layout parity @ 1920×1080 (1dp = 2px)", () => {
     const info = (await page.locator(".sources__info").boundingBox())!;
     near(info.width / 1920, 0.35, 0.005);
     const poster = (await page.locator(".sources__poster").boundingBox())!;
-    near(poster.width, 84 * DP);
-    near(poster.height, 126 * DP);
+    near(poster.width, 150 * DP); // larger than the TV's 84dp so the poster is easy to see
+    near(poster.height, 225 * DP);
 
     await page.goto("/settings");
     await expect(page.locator(".settings__cat").first()).toBeVisible();

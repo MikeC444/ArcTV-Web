@@ -220,7 +220,7 @@ Debrid-style names are read too: `[RD+]` means the file is already **cached** at
 `[RD download]` means the service still has to fetch it, which can take minutes — such sources show "Not cached on
 Real-Debrid — may take minutes", rank below ready ones, and if one sits on a spinner the player says why.
 
-"Sort by: Quality" lists playable sources first, **Recommended** is always the best playable one, the **Plays on this
+The list starts sorted by **Size** (biggest first). "Sort by: Quality" lists playable sources first, **Recommended** is always the best playable one, the **Plays on this
 device** pill hides everything else, and **This device** (under the list) shows what your browser supports. The badges are
 a strong hint rather than a promise — they are derived from text — and a source whose server never answers can still
 fail; that case is reported by the player's start-up watchdog. Logic and tests: `client/src/domain/deviceSupport.ts`.

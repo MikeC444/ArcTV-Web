@@ -159,7 +159,9 @@ test.describe("addons are asked for streams", () => {
     await expect(uncached).toContainText("Not cached on Real-Debrid — may take minutes");
     await shot(page, "sources-debrid-cache");
 
-    // a 4K source that isn't cached sits below every playable, ready-to-go source (but above unknowns)
+    // "Quality" (the list starts sorted by size): a 4K source that isn't cached sits below every playable, ready-to-go source (but above unknowns)
+    await page.getByRole("button", { name: /Sort by Size/ }).click();
+    await expect(page.getByRole("button", { name: /Sort by Quality/ })).toBeVisible();
     const order = await page.locator(".source").evaluateAll((rows) => rows.map((r) => r.textContent ?? ""));
     const at = (needle: string) => order.findIndex((text) => text.includes(needle));
     expect(at("Debrid.uncached.2160p")).toBeGreaterThan(at("Debrid.cached.1080p"));

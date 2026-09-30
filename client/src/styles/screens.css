@@ -148,7 +148,7 @@
 .sources__bg { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; }
 .sources__veil { position: fixed; inset: 0; background: rgba(8, 8, 10, 0.4); z-index: -1; }
 .sources__info { flex: 0 0 35%; max-width: 35%; min-height: 100vh; padding: calc(22 * var(--dp)); display: flex; flex-direction: column; align-items: flex-start; position: sticky; top: 0; align-self: flex-start; height: 100vh; overflow: hidden; }
-.sources__poster { margin-top: calc(16 * var(--dp)); width: calc(84 * var(--dp)); height: calc(126 * var(--dp)); min-width: 64px; object-fit: cover; border-radius: var(--card-radius); box-shadow: 0 10px 24px rgba(0, 0, 0, 0.6); border: 1px solid var(--divider); background: var(--surface-high); }
+.sources__poster { margin-top: calc(16 * var(--dp)); width: calc(150 * var(--dp)); height: calc(225 * var(--dp)); min-width: 100px; min-height: 150px; object-fit: cover; border-radius: var(--card-radius); box-shadow: 0 10px 24px rgba(0, 0, 0, 0.6); border: 1px solid var(--divider); background: var(--surface-high); }
 .sources__meta { margin-top: calc(14 * var(--dp)); display: flex; gap: calc(8 * var(--dp)); align-items: center; }
 .sources__logo { margin-top: calc(8 * var(--dp)); width: calc(200 * var(--dp)); height: calc(54 * var(--dp)); object-fit: contain; object-position: left center; max-width: 100%; }
 .sources__what { width: 100%; display: flex; gap: calc(10 * var(--dp)); align-items: center; background: var(--surface-high); border-radius: var(--card-radius); padding: calc(12 * var(--dp)); }
