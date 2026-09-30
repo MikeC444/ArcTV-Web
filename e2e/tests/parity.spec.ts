@@ -53,11 +53,11 @@ test.describe("Fire TV layout parity @ 1920×1080 (1dp = 2px)", () => {
     await account.tv.seedContinueWatching({ contentId: "fxm4", title: "CW" });
     await openSignedIn(page, account);
     await expect(page.locator(".hero")).toBeVisible();
-    near(await page.locator(".hero").evaluate((el) => el.getBoundingClientRect().height), 0.82 * 1080, 2); // heroMinHeight = screenHeight × 0.82
+    near(await page.locator(".hero").evaluate((el) => el.getBoundingClientRect().height), 0.74 * 1080, 2); // the TV uses screenHeight × 0.82; shorter here so Continue Watching shows above the fold
     const play = page.locator(".hero__actions .mbtn").first();
     near(await play.evaluate((el) => el.getBoundingClientRect().height), 52 * DP); // MangoButton height
     near(await page.locator(".hero__actions .ibtn").first().evaluate((el) => el.getBoundingClientRect().width), 52 * DP); // 24dp icon + 2×14dp padding
-    near(await page.locator(".hero__content").evaluate((el) => parseFloat(getComputedStyle(el).bottom)), 56 * DP);
+    near(await page.locator(".hero__content").evaluate((el) => parseFloat(getComputedStyle(el).bottom)), 88 * DP); // lifted (the TV: 56dp) so the details and buttons sit higher
 
     // deliberately NOT the TV's 168dp × 0.75 posters: the web shows 10 across at 1920 (--poster-cols), with 10dp gaps
     const poster = page.locator(".home__rows .card:not([data-cw]) .card__surface").first();
@@ -69,6 +69,7 @@ test.describe("Fire TV layout parity @ 1920×1080 (1dp = 2px)", () => {
     const cw = (await page.locator('.home__rows .card[data-cw="true"] .card__surface').first().boundingBox())!;
     near(cw.width, 2 * slot + 10 * DP, 1.5); // Continue Watching: two poster columns wide
     near(cw.width / cw.height, 16 / 9, 0.02);
+    expect(cw.y + cw.height, "Continue Watching is fully above the fold at 1920 × 1080").toBeLessThanOrEqual(1080);
     const firstRow = page.locator(".home__rows .row").filter({ has: page.locator(".card:not([data-cw])") }).first();
     const fullyInView = await firstRow.locator(".card:not([data-cw]) .card__surface").evaluateAll((els) => els.filter((el) => el.getBoundingClientRect().right <= window.innerWidth).length);
     expect(fullyInView).toBeGreaterThanOrEqual(10);
