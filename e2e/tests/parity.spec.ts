@@ -57,12 +57,10 @@ test.describe("Fire TV layout parity @ 1920×1080 (1dp = 2px)", () => {
     const play = page.locator(".hero__actions .mbtn").first();
     near(await play.evaluate((el) => el.getBoundingClientRect().height), 52 * DP); // MangoButton height
     near(await page.locator(".hero__actions .ibtn").first().evaluate((el) => el.getBoundingClientRect().width), 52 * DP); // 24dp icon + 2×14dp padding
-    // the logo / title, details and buttons sit at the top left, straight under the MANGO TV logo (the TV keeps them at the bottom)
-    near(await page.locator(".hero__content").evaluate((el) => parseFloat(getComputedStyle(el).top)), 72 * DP + 4 * DP);
+    // the logo / title, details and buttons sit in the vertical middle of the hero photo, left-aligned
     const contentBox = (await page.locator(".hero__content").boundingBox())!;
-    const logoBox = (await page.locator(".topnav__logo").boundingBox())!;
-    expect(contentBox.y, "under the logo, not over it").toBeGreaterThanOrEqual(logoBox.y + logoBox.height);
-    expect(contentBox.y + contentBox.height, "all of it in the top half of the hero").toBeLessThan(0.74 * 1080 * 0.6);
+    const heroBox = (await page.locator(".hero").boundingBox())!;
+    near(contentBox.y + contentBox.height / 2, heroBox.y + heroBox.height / 2, 2);
     near((await page.locator(".hero__actions").boundingBox())!.x, 56 * DP, 2); // left-aligned with the page margin, like the rows
 
     // deliberately NOT the TV's 168dp × 0.75 posters: the web shows 10 across at 1920 (--poster-cols), with 10dp gaps

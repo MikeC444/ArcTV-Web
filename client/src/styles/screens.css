@@ -32,10 +32,10 @@
 .hero__layer img { width: 100%; height: 100%; object-fit: cover; }
 .hero__layer img[data-loaded="true"] { animation: kenburns 9s linear infinite alternate; }
 @keyframes kenburns { from { transform: scale(1); } to { transform: scale(1.08); } }
-.hero__scrim-x { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(8, 8, 10, 0.5), transparent 55%), linear-gradient(to right, rgba(8, 8, 10, 0.55), rgba(8, 8, 10, 0.2), transparent); } /* the text sits top-left, so the top and left edges are darkened */
+.hero__scrim-x { position: absolute; inset: 0; background: linear-gradient(to right, rgba(8, 8, 10, 0.55), rgba(8, 8, 10, 0.2), transparent); }
 .hero__scrim-y { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 0%, transparent 25%, rgba(8, 8, 10, 0.15) 50%, rgba(8, 8, 10, 0.6) 75%, var(--bg) 100%); }
-/* The logo / title, details and buttons sit at the top left, straight under the MANGO TV logo (phones keep them at the bottom). */
-.hero__content { position: absolute; left: 0; right: 0; top: calc(var(--nav-h) + 4 * var(--dp)); padding: 0 var(--pad-x); max-width: calc(760 * var(--dp) + 2 * var(--pad-x)); display: flex; flex-direction: column; }
+/* The logo / title, details and buttons sit left-aligned in the vertical middle of the hero photo (phones keep them at the bottom). */
+.hero__content { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); padding: 0 var(--pad-x); max-width: calc(760 * var(--dp) + 2 * var(--pad-x)); display: flex; flex-direction: column; }
 .hero__logo { width: calc(380 * var(--dp)); height: calc(90 * var(--dp)); object-fit: contain; object-position: left center; max-width: 100%; }
 .hero__meta { margin: calc(14 * var(--dp)) 0 0; color: #fff; font-weight: 500; font-size: calc(14 * var(--dp)); line-height: calc(18 * var(--dp)); }
 .hero__genres { margin: calc(6 * var(--dp)) 0 0; color: #fff; font-weight: 500; font-size: calc(13 * var(--dp)); line-height: calc(18 * var(--dp)); }
@@ -45,7 +45,7 @@
 .hero__dots span { width: 6px; height: 6px; border-radius: 50%; background: rgba(255, 255, 255, 0.35); transition: background var(--t-medium), transform var(--t-medium); }
 .hero__dots span[data-active="true"] { background: #fff; transform: scale(1.3); }
 @media (max-width: 720px) { .hero__dots { right: auto; left: var(--pad-x); bottom: 8px; } }
-@media (max-width: 720px) { .hero { min-height: 72vh; } .hero__content { top: auto; bottom: 28px; } .hero__logo { width: 260px; height: 70px; } }
+@media (max-width: 720px) { .hero { min-height: 72vh; } .hero__content { top: auto; bottom: 28px; transform: none; } .hero__logo { width: 260px; height: 70px; } }
 
 /* ── Text field (Material "filled" TextField as configured in the app) ───── */
 .mfield {
