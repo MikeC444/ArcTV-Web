@@ -62,10 +62,10 @@ test.describe("settings", () => {
     const account = await newAccount("rows");
     await openSignedIn(page, account, "/settings/home-rows");
     await expect(page.getByText("Toggle categories on or off")).toBeVisible();
-    const action = page.getByRole("switch", { name: /^Action,/ });
+    const action = page.getByRole("switch", { name: "Action", exact: true });
     await expect(action).toBeVisible();
     await action.click();
-    await expect(action).toHaveAttribute("aria-pressed", "false");
+    await expect(action).toHaveAttribute("aria-checked", "false");
     // move "Comedy" up once
     await page.getByRole("button", { name: "Move Comedy up" }).click();
     await expect.poll(async () => (await account.tv.get("/user/settings")).body.hiddenRowIds).toEqual(["test.mangotv.fixture_Action"]);

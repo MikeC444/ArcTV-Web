@@ -30,7 +30,7 @@ export function AuthStartScreen() {
     document.title = "Welcome · Mango TV";
   }, []);
   return (
-    <div className="authstart">
+    <main className="authstart" id="main">
       <img className="authstart__hero" src={heroImage} alt="" />
       <div className="authstart__scrim" />
       <div className="authstart__col">
@@ -54,7 +54,7 @@ export function AuthStartScreen() {
           <MdQrCode2 aria-hidden="true" /> Scan a QR code to create an account from your phone
         </p>
       </div>
-    </div>
+    </main>
   );
 }
 
@@ -65,7 +65,7 @@ export function AuthMethodScreen() {
   const navigate = useNavigate();
   const location = useLocation();
   return (
-    <div className="authcenter">
+    <main className="authcenter" id="main">
       <div className="authcenter__col">
         <h1 className="t-headline-sm" style={{ textAlign: "center", margin: 0 }}>{intent === "register" ? "How would you like to create your account?" : "How would you like to sign in?"}</h1>
         <div className="authcenter__buttons">
@@ -73,7 +73,7 @@ export function AuthMethodScreen() {
           <MangoButton text="Use Email & Password" icon={<MdEdit />} fullWidth onClick={() => navigate(routes.authPassword(intent), { state: location.state })} />
         </div>
       </div>
-    </div>
+    </main>
   );
 }
 
@@ -134,11 +134,11 @@ export function PasswordSignInScreen() {
   };
 
   return (
-    <div className="authcenter">
+    <main className="authcenter" id="main">
       <form className="authcenter__col authform" onSubmit={submit} noValidate>
         <h1 className="t-headline-sm" style={{ margin: 0 }}>{isRegister ? "Create Your Account" : "Log In"}</h1>
         <label className="sr-only" htmlFor="email">Email</label>
-        <input id="email" className="mfield" type="email" inputMode="email" autoComplete="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} data-autofocus="true" autoCapitalize="none" spellCheck={false} />
+        <input id="email" className="mfield" aria-invalid={error ? true : undefined} aria-describedby={error ? "auth-error" : undefined} type="email" inputMode="email" autoComplete="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} data-autofocus="true" autoCapitalize="none" spellCheck={false} />
         {isRegister ? (
           <>
             <label className="sr-only" htmlFor="name">Display name (optional)</label>
@@ -146,11 +146,11 @@ export function PasswordSignInScreen() {
           </>
         ) : null}
         <label className="sr-only" htmlFor="password">Password</label>
-        <input id="password" className="mfield" type={visible ? "text" : "password"} autoComplete={isRegister ? "new-password" : "current-password"} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <input id="password" className="mfield" aria-invalid={error ? true : undefined} aria-describedby={error ? "auth-error" : undefined} type={visible ? "text" : "password"} autoComplete={isRegister ? "new-password" : "current-password"} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
         <div>
           <MangoButton text={visible ? "Hide Password" : "Show Password"} icon={visible ? <MdVisibilityOff /> : <MdVisibility />} compact onClick={() => setVisible((v) => !v)} />
         </div>
-        {error ? <p className="c-coral t-body-md" role="alert" style={{ margin: 0, textAlign: "center" }}>{error}</p> : null}
+        {error ? <p id="auth-error" className="c-coral t-body-md" role="alert" style={{ margin: 0, textAlign: "center" }}>{error}</p> : null}
         {waitLeft > 0 ? (
           <p className="c-coral t-body-md" role="alert" style={{ margin: 0, textAlign: "center" }}>
             Too many sign-in attempts right now — MangoTV only accepts a few a minute, shared by everyone using this site. You can try again in {waitLeft} s.
@@ -160,7 +160,7 @@ export function PasswordSignInScreen() {
         {busy ? <div style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "center" }}><Spinner small /><span className="c-text-2 t-body-md">{isRegister ? "Creating account…" : "Signing in…"}</span></div> : null}
         <MangoButton text={isRegister ? "Already have an account? Log in" : "New here? Create an account"} icon={<MdChevronRight />} compact onClick={() => { setMode(isRegister ? "login" : "register"); setError(null); }} />
       </form>
-    </div>
+    </main>
   );
 }
 
@@ -227,7 +227,7 @@ export function QrSignInScreen() {
   }, [start]);
 
   return (
-    <div className="authcenter">
+    <main className="authcenter" id="main">
       {state.kind === "loading" ? <Spinner /> : null}
       {state.kind === "error" ? <FullScreenError message={state.message} onRetry={() => void start()} /> : null}
       {state.kind === "ready" ? (
@@ -239,7 +239,7 @@ export function QrSignInScreen() {
           {degraded ? <p className="t-label-sm c-text-3" style={{ display: "flex", gap: 8, alignItems: "center", margin: 0 }} role="status"><MdWifiOff aria-hidden="true" /> Can't reach the server right now — still trying…</p> : null}
         </div>
       ) : null}
-    </div>
+    </main>
   );
 }
 

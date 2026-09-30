@@ -24,6 +24,7 @@
     "verify:backend": "node scripts/verify-backend.mjs"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "^1.63.0"
   }
 }

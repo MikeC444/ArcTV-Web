@@ -27,6 +27,8 @@ export interface SurfaceProps {
   noShadow?: boolean;
   ariaLabel?: string;
   ariaPressed?: boolean;
+  /** For role="switch" / role="radio" (aria-pressed is only valid on buttons). */
+  ariaChecked?: boolean;
   ariaCurrent?: "page" | undefined;
   role?: string;
   title?: string;
@@ -46,7 +48,7 @@ const LONG_PRESS_MS = 500;
  * and pointer hover both trigger the same scale + glow + ring; click plays the UI click sound.
  */
 export const Surface = forwardRef<HTMLElement, SurfaceProps>(function Surface(props, ref) {
-  const { children, className, style, to, onClick, onLongPress, clickSound = "default", disabled, radius, background, backgroundImage, borderColor, scale, alwaysBorder, instantBorder, noShadow, ariaLabel, ariaPressed, ariaCurrent, role, title, tabIndex, id, autoFocus, onFocus, onBlur, dataAttrs, type = "button" } = props;
+  const { children, className, style, to, onClick, onLongPress, clickSound = "default", disabled, radius, background, backgroundImage, borderColor, scale, alwaysBorder, instantBorder, noShadow, ariaLabel, ariaPressed, ariaChecked, ariaCurrent, role, title, tabIndex, id, autoFocus, onFocus, onBlur, dataAttrs, type = "button" } = props;
   const timer = useRef<number | null>(null);
   const suppressClick = useRef(false);
   const start = useRef<{ x: number; y: number } | null>(null);
@@ -129,6 +131,7 @@ export const Surface = forwardRef<HTMLElement, SurfaceProps>(function Surface(pr
     style: css,
     "aria-label": ariaLabel,
     "aria-pressed": ariaPressed,
+    "aria-checked": ariaChecked,
     "aria-current": ariaCurrent,
     role,
     title,

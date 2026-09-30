@@ -255,7 +255,7 @@
 .card__rating {
   position: absolute; inset: auto 0 0 0; z-index: 1; padding: clamp(5px, 6cqw, calc(10 * var(--dp)));
   background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.85));
-  color: var(--text); font-weight: 500; font-size: clamp(11px, 8cqw, calc(12 * var(--dp))); letter-spacing: 0.02em;
+  color: var(--text); font-weight: 500; font-size: clamp(12px, 8cqw, calc(12 * var(--dp))); letter-spacing: 0.02em;
   opacity: 0; transition: opacity var(--t-medium) var(--ease);
 }
 .card:hover .card__rating, .card__surface:focus-visible .card__rating { opacity: 1; }
@@ -263,9 +263,9 @@
 .card__cw-scrim { position: absolute; inset: auto 0 0 0; height: calc(56 * var(--dp)); background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.75)); z-index: 1; }
 .card__progress { position: absolute; inset: auto 0 0 0; height: calc(4 * var(--dp)); min-height: 3px; background: var(--progress-track); z-index: 2; }
 .card__progress > span { display: block; height: 100%; background: var(--progress-fill); }
-.card__title { margin-top: clamp(4px, 4cqw, calc(8 * var(--dp))); color: var(--text-2); font-weight: 600; font-size: clamp(12px, 8.5cqw, calc(16 * var(--dp))); line-height: 1.35; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.card__title { margin-top: clamp(4px, 4cqw, calc(8 * var(--dp))); color: var(--text-2); font-weight: 600; font-size: clamp(13px, 8.5cqw, calc(16 * var(--dp))); line-height: 1.35; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .card:hover .card__title, .card:focus-within .card__title { color: var(--text); }
-.card__sub { color: var(--text-3); font-weight: 500; font-size: clamp(11px, 7.5cqw, calc(12 * var(--dp))); line-height: 1.35; letter-spacing: 0.02em; }
+.card__sub { color: var(--text-3); font-weight: 500; font-size: clamp(12px, 7.5cqw, calc(12 * var(--dp))); line-height: 1.35; letter-spacing: 0.02em; }
 .card__placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 8px; text-align: center; color: var(--text-3); background: linear-gradient(160deg, var(--surface-high), var(--surface)); font-weight: 700; font-size: clamp(11px, 8cqw, calc(14 * var(--dp))); }
 
 /* ── Skeletons / states ──────────────────────────────────────────────────── */

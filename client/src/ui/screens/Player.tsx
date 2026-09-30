@@ -66,7 +66,7 @@ export function PlayerScreen() {
   const back = useCallback(() => navigate(-1), [navigate]);
 
   if (screen.kind === "loading") return <div className="player player--center"><Spinner white /></div>;
-  if (screen.kind === "error") return <div className="player"><FullScreenError message={screen.message} onRetry={() => setTick((t) => t + 1)} secondaryLabel="Choose a Different Source" onSecondary={changeSource} /></div>;
+  if (screen.kind === "error") return <main className="player" id="main"><FullScreenError message={screen.message} onRetry={() => setTick((t) => t + 1)} secondaryLabel="Choose a Different Source" onSecondary={changeSource} /></main>;
   return (
     <Playback
       key={screen.stream.id}
@@ -625,7 +625,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
   const subtitle = [content.year, content.ageRating, episode && content.seasons.length ? `${content.seasons.length} Season${content.seasons.length === 1 ? "" : "s"}` : content.runtimeMinutes ? `${Math.floor(content.runtimeMinutes / 60)}h ${content.runtimeMinutes % 60}m` : null].filter(Boolean).join("  •  ");
 
   return (
-    <div ref={container} className="player" data-spatial="off" data-hidden={!showControls && playing} onPointerMove={(e) => e.pointerType !== "touch" && bump()}>
+    <main ref={container} id="main" className="player" data-spatial="off" data-hidden={!showControls && playing} onPointerMove={(e) => e.pointerType !== "touch" && bump()}>
       <video ref={video} className="player__video" playsInline crossOrigin={undefined} onClick={onSurfaceClick} onDoubleClick={() => !coarse && toggleFullscreen()} aria-label={`${content.title} video`} />
 
       {(phase === "loading" || phase === "buffering") && !error ? <div className="player__spinner"><Spinner white /></div> : null}
@@ -700,7 +700,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
         />
       ) : null}
       <span className="sr-only" aria-live="polite">{phase === "buffering" ? "Buffering" : phase === "playing" ? "Playing" : phase === "paused" ? "Paused" : ""}</span>
-    </div>
+    </main>
   );
 }
 

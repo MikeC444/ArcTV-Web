@@ -56,7 +56,7 @@ test.describe("browsing", () => {
     await page.goto("/detail/test.mangotv.fixture/TV_SHOW/fxs1");
     await expect(page.getByRole("heading", { name: "Seasons" })).toBeVisible();
     await expect(page.getByRole("button", { name: /Play episode 1: Chapter 1/ })).toBeVisible();
-    await page.getByRole("tab", { name: "Season 2" }).click();
+    await page.getByRole("button", { name: "Season 2" }).click();
     await expect(page.getByText("Season 2", { exact: true })).toBeVisible();
     await expect(page.getByText("5 Episodes")).toBeVisible();
     await expect(page.getByRole("button", { name: /Play S1E1/ }).or(page.getByRole("button", { name: /Play/ }).first())).toBeVisible();

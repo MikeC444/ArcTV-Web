@@ -1,0 +1,36 @@
+/* ── Accessibility ───────────────────────────────────────────────────────────
+   Loaded last. Nothing here changes how the app looks on a laptop except the focus ring on plain buttons, links and inputs. */
+
+/* A visible focus ring for everything that is not a .tvs surface (those draw their own ring and scale-up). */
+:where(a, button, input, select, textarea, summary, [tabindex]):not(.tvs):focus-visible {
+  outline: 2px solid var(--focus-border);
+  outline-offset: 2px;
+}
+
+/* People who ask their device for less motion get none: no slide, no Ken Burns zoom, no shimmer, no focus scale.
+   The loading spinner keeps turning — it is the only sign that something is happening. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .spinner { animation-duration: 900ms !important; animation-iteration-count: infinite !important; }
+  .tvs:focus-visible, .tvs:hover { transform: none !important; }
+}
+
+/* Phones: touch targets of at least 44 x 44 CSS px (WCAG 2.5.5 / Apple HIG), and room between them. */
+@media (max-width: 720px) {
+  .navitem { min-height: 44px; padding: 10px 14px; }
+  .topnav__logo { min-height: 44px; display: inline-flex; align-items: center; }
+  .pill { min-height: 44px; padding-left: 14px; padding-right: 14px; }
+  .mbtn { min-height: 44px; }
+  .ibtn, .ibtn[data-compact="true"] { min-width: 44px; min-height: 44px; }
+  .ibtn--flat { min-width: 44px; min-height: 44px; }
+  .switchbtn { min-width: 44px; min-height: 44px; align-items: center; justify-content: center; }
+  .addonres summary { min-height: 44px; display: flex; align-items: center; }
+  .homerow__move { min-width: 44px; min-height: 44px; }
+  .hero__dot { width: 32px; height: 32px; } /* ten of them must fit across a phone: 32px is above the WCAG 2.2 AA minimum of 24px, and swiping or the pause button are alternatives */
+  .hero__pause { width: 44px; height: 44px; }
+}

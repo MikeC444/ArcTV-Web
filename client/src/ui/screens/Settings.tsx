@@ -257,7 +257,7 @@ function HomeRowsPane() {
           };
           return (
             <li key={row.id} className="homerow">
-              <Surface className="homerow__toggle" scale={1.02} borderColor="var(--text)" onClick={() => setRowHidden(row.id, visible)} role="switch" ariaLabel={`${row.title}, ${visible ? "shown" : "hidden"}`} ariaPressed={visible}>
+              <Surface className="homerow__toggle" scale={1.02} borderColor="var(--text)" onClick={() => setRowHidden(row.id, visible)} role="switch" ariaLabel={row.title} ariaChecked={visible}>
                 <span className="t-body-md" style={{ flex: 1, color: visible ? "var(--text)" : "var(--text-3)" }}>{row.title}</span>
                 <span className="t-label-sm" style={{ color: visible ? "var(--text-2)" : "var(--text-3)" }}>{pluralize(row.items.length, "title")}</span>
                 <Switch checked={visible} white />
@@ -301,25 +301,23 @@ function SubtitlesPane() {
   const setPlayer = useSettings((s) => s.setPlayer);
   return (
     <div>
-      <Surface className="settingrow" scale={1.02} borderColor="var(--text)" onClick={() => setPlayer({ subtitlesEnabled: !player.subtitlesEnabled })} role="switch" ariaPressed={player.subtitlesEnabled} ariaLabel="Subtitles" dataAttrs={{ autofocus: true }}>
+      <Surface className="settingrow" scale={1.02} borderColor="var(--text)" onClick={() => setPlayer({ subtitlesEnabled: !player.subtitlesEnabled })} role="switch" ariaChecked={player.subtitlesEnabled} ariaLabel="Subtitles" dataAttrs={{ autofocus: true }}>
         <span className="t-title-md" style={{ flex: 1 }}>Subtitles</span>
         <Switch checked={player.subtitlesEnabled} />
       </Surface>
       <h3 className="t-title-md" style={{ margin: "16px 0 0" }}>Default Language</h3>
       <p className="t-body-sm c-text-2" style={{ margin: "4px 0 8px" }}>Used to automatically pick a matching subtitle track when Subtitles is on.</p>
-      <ul className="langlist" role="radiogroup" aria-label="Default subtitle language">
+      <div className="langlist" role="radiogroup" aria-label="Default subtitle language">
         {SUBTITLE_LANGUAGES.map((option) => {
           const selected = option.code === player.defaultSubtitleLanguage;
           return (
-            <li key={option.code ?? "system"}>
-              <Surface className="settingrow settingrow--lang" scale={1.02} borderColor="var(--text)" role="radio" ariaPressed={selected} onClick={() => setPlayer({ defaultSubtitleLanguage: option.code })}>
-                <span className="t-body-lg" style={{ flex: 1 }}>{option.label}</span>
-                {selected ? <MdCheck className="c-amber" aria-label="Selected" /> : null}
-              </Surface>
-            </li>
+            <Surface key={option.code ?? "system"} className="settingrow settingrow--lang" scale={1.02} borderColor="var(--text)" role="radio" ariaChecked={selected} onClick={() => setPlayer({ defaultSubtitleLanguage: option.code })}>
+              <span className="t-body-lg" style={{ flex: 1 }}>{option.label}</span>
+              {selected ? <MdCheck className="c-amber" aria-hidden="true" /> : null}
+            </Surface>
           );
         })}
-      </ul>
+      </div>
     </div>
   );
 }

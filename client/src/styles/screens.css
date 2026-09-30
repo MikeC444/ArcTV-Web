@@ -51,13 +51,17 @@
 .hero__desc { margin: calc(16 * var(--dp)) 0 0; color: #fff; font-size: calc(14 * var(--dp)); line-height: calc(20 * var(--dp)); }
 .hero__actions { margin-top: calc(28 * var(--dp)); display: flex; align-items: center; gap: calc(16 * var(--dp)); flex-wrap: wrap; }
 .hero__dots { position: absolute; z-index: 2; right: calc(var(--pad-x) - 8px); bottom: calc(20 * var(--dp)); display: flex; }
+.hero__pause { width: 28px; height: 24px; display: inline-flex; align-items: center; justify-content: center; color: #fff; border-radius: 50%; margin-right: 4px; background: none; border: 0; cursor: pointer; filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.7)); }
+.hero__pause svg { width: 18px; height: 18px; }
+.hero__title { margin: 0; }
+.hero { touch-action: pan-y; }
 .hero__dot { position: relative; width: 24px; height: 24px; padding: 0; border: 0; background: none; cursor: pointer; border-radius: 50%; -webkit-tap-highlight-color: transparent; }
-.hero__dot::before { content: ""; position: absolute; left: 50%; top: 50%; width: 10px; height: 10px; border-radius: 50%; transform: translate(-50%, -50%); background: rgba(255, 255, 255, 0.4); transition: background var(--t-medium), width var(--t-medium), height var(--t-medium); }
+.hero__dot::before { content: ""; position: absolute; left: 50%; top: 50%; width: 10px; height: 10px; border-radius: 50%; transform: translate(-50%, -50%); background: rgba(255, 255, 255, 0.55); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45); transition: background var(--t-medium), width var(--t-medium), height var(--t-medium); }
 .hero__dot:hover::before { background: rgba(255, 255, 255, 0.75); }
 .hero__dot[data-active="true"]::before { background: #fff; width: 13px; height: 13px; }
 .hero__dot:focus-visible { outline: 2px solid var(--focus-border); outline-offset: 1px; }
 @media (max-width: 720px) { .hero__dots { right: auto; left: calc(var(--pad-x) - 8px); bottom: 4px; } }
-@media (max-width: 720px) { .hero { min-height: 72vh; } .hero__content { top: auto; bottom: 28px; transform: none; } .hero__logo { width: 260px; height: 70px; } }
+@media (max-width: 720px) { .hero { min-height: 72vh; } .hero__content { top: auto; bottom: 60px; transform: none; } .hero__logo { width: 260px; height: 70px; } }
 
 /* ── Text field (Material "filled" TextField as configured in the app) ───── */
 .mfield {
@@ -181,7 +185,7 @@
 .sources__more { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
 .source { position: relative; }
 .source__surface { width: 100%; display: flex; align-items: center; gap: calc(8 * var(--dp)); padding: calc(10 * var(--dp)) calc(14 * var(--dp)); text-align: left; --tvs-radius: var(--card-radius); }
-.source[data-unplayable="true"] .source__surface { opacity: 0.72; }
+/* an unplayable source is marked by its red "Can't play here" reason, not by fading the row: faded text would fall below the AA contrast ratio */
 .source__badge { flex: none; display: flex; flex-direction: column; align-items: center; border: 1px solid; border-radius: 6px; background: var(--bg); padding: calc(5 * var(--dp)) calc(7 * var(--dp)); min-width: calc(44 * var(--dp)); }
 .source__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: calc(3 * var(--dp)); }
 .source__facts { display: flex; flex-wrap: wrap; gap: calc(4 * var(--dp)) calc(10 * var(--dp)); align-items: center; }
@@ -195,7 +199,7 @@
 .source__device[data-tone="ok"] { color: var(--teal); }
 .source__device[data-tone="muted"] { color: var(--text-3); }
 .source__device[data-tone="warn"] { color: var(--amber); }
-.source__device[data-tone="bad"] { color: var(--coral, #ff5c5c); }
+.source__device[data-tone="bad"] { color: var(--coral-text); }
 .devcaps { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; max-width: 640px; }
 .devcaps__item { color: var(--text-2); }
 .devcaps__item[data-supported="true"] > span:first-child { color: var(--teal); }

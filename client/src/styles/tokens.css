@@ -20,6 +20,7 @@
   --amber: #ffb020;
   --tangerine: #ff7a3d;
   --coral: #ff3d68;
+  --coral-text: #ff6b8a; /* the coral for TEXT on raised surfaces: 5.6:1 (the brand coral is 4.4:1 there) */
   --azure: #3d8bff;
   --teal: #2dd9a8;
   /* Compose's linearGradient runs corner-to-corner; these angles reproduce that for a wide / near-square box. */
@@ -29,7 +30,7 @@
   /* Text */
   --text: #f6f6f8;
   --text-2: #afafb8;
-  --text-3: #75757e;
+  --text-3: #92929c; /* 5.1:1 on the raised surfaces (was #75757e, 4.4:1 — just under WCAG AA for small text) */
 
   /* Structural / focus / progress */
   --divider: rgba(255, 255, 255, 0.122);
@@ -75,14 +76,15 @@
 /* Phones / small tablets: same product, tighter gutters and a two-row header. */
 @media (max-width: 720px) {
   :root {
-    --pad-x: 16px;
+    --dp: 1.12px; /* phones: text and controls ~12% larger than the 1px-per-dp of a laptop (15px body text becomes ~17px) */
+    --pad-x: max(16px, env(safe-area-inset-left), env(safe-area-inset-right)); /* clear of a notch in landscape */
     --pad-y: 16px;
-    --nav-h: 96px;
+    --nav-h: 112px; /* two rows: the logo, then 44px-tall nav items */
   }
 }
 @media (min-width: 721px) and (max-width: 1100px) {
   :root {
-    --pad-x: 28px;
+    --pad-x: max(28px, env(safe-area-inset-left), env(safe-area-inset-right));
     --nav-h: calc(72 * var(--dp) + 8px);
   }
 }

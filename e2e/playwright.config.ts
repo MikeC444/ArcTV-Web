@@ -22,6 +22,6 @@ export default defineConfig({
     { name: "desktop-1920", use: { ...devices["Desktop Chrome"], viewport: { width: 1920, height: 1080 }, launchOptions } },
     { name: "laptop-1366", use: { ...devices["Desktop Chrome"], viewport: { width: 1366, height: 768 }, launchOptions }, testMatch: /responsive|browse|auth/ },
     { name: "tablet-820", use: { ...devices["Desktop Chrome"], viewport: { width: 820, height: 1180 }, hasTouch: true, isMobile: true, launchOptions }, testMatch: /responsive/ },
-    { name: "mobile-390", use: { ...devices["Desktop Chrome"], viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2, launchOptions }, testMatch: /responsive/ },
+    { name: "mobile-390", use: { ...devices["Desktop Chrome"], viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2, launchOptions }, testMatch: /responsive|a11y/ },
   ],
 });

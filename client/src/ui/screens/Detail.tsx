@@ -129,9 +129,9 @@ function SeasonsSection({ seasons, initialSeason, onPlay }: { seasons: Season[];
   return (
     <section className="seasons" aria-label="Seasons">
       <h2 className="row__title" style={{ margin: 0 }}>Seasons</h2>
-      <div className="seasons__pills hide-scroll" role="tablist" aria-label="Choose a season">
+      <div className="seasons__pills hide-scroll" role="group" aria-label="Choose a season">
         {seasons.map((s, i) => (
-          <Surface key={s.seasonNumber} className="season-pill" radius="50%" role="tab" ariaPressed={i === selected} ariaLabel={`Season ${s.seasonNumber}`} onClick={() => setSelected(i)} dataAttrs={{ selected: i === selected }}>
+          <Surface key={s.seasonNumber} className="season-pill" radius="50%" ariaPressed={i === selected} ariaLabel={`Season ${s.seasonNumber}`} onClick={() => setSelected(i)} dataAttrs={{ selected: i === selected }}>
             {s.seasonNumber}
           </Surface>
         ))}
@@ -164,7 +164,7 @@ function CastRow({ cast, compact }: { cast: Content["cast"]; compact: boolean })
   return (
     <section className="cast" data-compact={compact} aria-label="Cast">
       <h2 className={compact ? "t-title-lg" : "t-headline-sm"} style={{ margin: 0, padding: `0 0 calc(${compact ? 6 : 12} * var(--dp)) var(--pad-x)` }}>Cast</h2>
-      <div className="row__scroller hide-scroll cast__list" style={{ ["--scale" as string]: 1 }}>
+      <div className="row__scroller hide-scroll cast__list" style={{ ["--scale" as string]: 1 }} role="group" aria-label="Cast members" tabIndex={0}>
         {cast.map((member) => (
           <div className="cast__member" key={member.name}>
             <span className="cast__avatar" aria-hidden="true">
