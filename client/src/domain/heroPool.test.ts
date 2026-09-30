@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { pickHeroPool } from "./heroPool";
+import { pickHeroPool, pickHeroTitles } from "./heroPool";
 
 const item = (id: string, backdropUrl: string | null, posterUrl: string | null) => ({ id, backdropUrl, posterUrl });
 const wide = (id: string) => item(id, `https://img/${id}/bg`, `https://img/${id}/poster`);
@@ -25,5 +25,31 @@ describe("hero pool", () => {
     expect(picked[3]).toBe("b1");
     expect(pickHeroPool(pool, 10)).toHaveLength(4);
     expect(pickHeroPool([], 10)).toEqual([]);
+  });
+});
+
+describe("hero titles from the enabled rows", () => {
+  const many = (prefix: string, n: number) => Array.from({ length: n }, (_, i) => wide(`${prefix}${i}`));
+
+  it("draws only from the enabled rows when they hold enough titles", () => {
+    for (let run = 0; run < 20; run++) {
+      const picked = pickHeroTitles(many("on", 25), many("off", 25), 10);
+      expect(picked).toHaveLength(10);
+      expect(picked.every((c) => c.id.startsWith("on"))).toBe(true);
+      expect(new Set(picked.map((c) => c.id)).size).toBe(10);
+    }
+  });
+
+  it("uses every enabled title and makes up the rest from other rows when there are fewer than ten", () => {
+    const picked = pickHeroTitles(many("on", 4), [...many("on", 4), ...many("off", 20)], 10);
+    expect(picked).toHaveLength(10);
+    expect(new Set(picked.map((c) => c.id)).size).toBe(10); // no title twice, even though the backup repeats the enabled ones
+    expect(picked.filter((c) => c.id.startsWith("on"))).toHaveLength(4);
+  });
+
+  it("copes with nothing enabled, and with too few titles overall", () => {
+    expect(pickHeroTitles([], many("off", 12), 10)).toHaveLength(10);
+    expect(pickHeroTitles(many("on", 2), many("off", 3), 10)).toHaveLength(5);
+    expect(pickHeroTitles([], [], 10)).toEqual([]);
   });
 });

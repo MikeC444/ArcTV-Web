@@ -13,7 +13,7 @@ import { ContentRow } from "../components/ContentRow";
 import { HomeSkeleton } from "../components/Skeletons";
 import { FullScreenError, HomeEmptyState } from "../components/States";
 
-const HERO_ROTATE_MS = 9000;
+const HERO_ROTATE_MS = 5000;
 const HERO_SLIDE_MS = 650;
 
 /** The next title slides in from the right (and the old one out to the left); picking an EARLIER title with the dots slides the other way. */

@@ -17,3 +17,15 @@ export function pickHeroPool<T extends Pick<Content, "backdropUrl" | "posterUrl"
   const blank = shuffled(rest.filter((c) => !c.backdropUrl && !c.posterUrl), random);
   return [...wide, ...withImage, ...blank].slice(0, size);
 }
+
+/**
+ * The Home hero's titles: `size` random ones from the rows the person has enabled (`enabled`). Only when those rows hold fewer
+ * than `size` titles in total is the rest made up with random titles from the other rows (`backup`) — never a title twice.
+ */
+export function pickHeroTitles<T extends Pick<Content, "id" | "backdropUrl" | "posterUrl">>(enabled: readonly T[], backup: readonly T[], size: number, random: () => number = Math.random): T[] {
+  const own = pickHeroPool(enabled, size, random);
+  if (own.length >= size) return own;
+  const taken = new Set(own.map((c) => c.id));
+  const extra = pickHeroPool(backup.filter((c) => !taken.has(c.id)), size - own.length, random);
+  return shuffled([...own, ...extra], random);
+}

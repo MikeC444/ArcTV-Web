@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { applyRowOrder, dedupeRows, withoutShownTitles } from "../domain/homeRows";
 import { useProviders } from "../domain/registry";
 import type { CatalogProvider } from "../domain/provider";
-import { pickHeroPool } from "../domain/heroPool";
+import { pickHeroTitles } from "../domain/heroPool";
 import type { Content, HomeSection } from "../domain/types";
 import { distinctBy } from "../lib/format";
 import { useAuth } from "./auth";
@@ -28,10 +28,14 @@ interface HomeCache {
   sections: HomeSection[];
 }
 
-/** The hero pool is chosen once per app launch ("picked fresh each time you launch the app"), not on every visit to Home. */
-let heroPool: Content[] | null = null;
+/**
+ * The hero's titles are chosen once per app launch ("picked fresh each time you launch the app"), not on every visit to Home.
+ * They are picked again only if the rows the person has enabled change (Settings → Home Rows) or the rows turn out to come from
+ * the offline copy, so a title from a row that has since been switched off never lingers in the hero.
+ */
+let heroLock: { key: string; titles: Content[] } | null = null;
 export const resetHomeSession = (): void => {
-  heroPool = null;
+  heroLock = null;
 };
 
 const entryToContent = (entry: ContinueWatchingEntry): Content => ({
@@ -77,6 +81,7 @@ export function useHome(): { state: HomeState; reload(): void; ready: boolean } 
   const [raw, setRaw] = useState<HomeSection[]>([]);
   const [fetched, setFetched] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [complete, setComplete] = useState(false); // every addon has finished answering
   const [cacheOnly, setCacheOnly] = useState(false);
   const [reloadTick, setReloadTick] = useState(0);
   const generation = useRef(0);
@@ -95,12 +100,14 @@ export function useHome(): { state: HomeState; reload(): void; ready: boolean } 
   useEffect(() => {
     const gen = ++generation.current;
     if (!addonsReady) return;
+    setComplete(false);
     if (providers.length === 0) {
       if (!cacheOnly) {
         setRaw([]);
         setFetched(true);
         setFailed(false);
       }
+      setComplete(true);
       return;
     }
     if (!cacheOnly) setFetched(false);
@@ -125,6 +132,7 @@ export function useHome(): { state: HomeState; reload(): void; ready: boolean } 
     ).then(() => {
       if (gen !== generation.current) return;
       setFailed(anyFailed);
+      setComplete(true);
       if (sections.length === 0 && !(anyFailed && cacheOnly)) {
         setFetched(true);
         setCacheOnly(false);
@@ -144,17 +152,20 @@ export function useHome(): { state: HomeState; reload(): void; ready: boolean } 
     const sections = [...(cwSection ? [cwSection] : []), ...visible];
 
     const pool = distinctBy(visible.flatMap((s) => s.items), (c) => c.id);
-    let hero: Content[];
-    if (cacheOnly) hero = pickHeroPool(pool, HERO_POOL_SIZE);
-    else {
-      // Lock the pool in once there is something to pick from — never lock in an empty one (providers load after sign-in).
-      if ((!heroPool || heroPool.length === 0) && pool.length > 0) heroPool = pickHeroPool(pool, HERO_POOL_SIZE);
-      hero = (heroPool ?? []).map((c) => (watchedIds.has(c.id) ? { ...c, watched: true } : c));
+    // The hero: 10 random titles from the rows the person has enabled. Wait until those rows hold at least 10 (or everything has
+    // loaded); if they never do, the rest is made up at random from the other rows.
+    const lockKey = `${prefs.hiddenRowIds.join("|")}#${cacheOnly}`;
+    if (heroLock && heroLock.key !== lockKey) heroLock = null;
+    if (!heroLock && (pool.length >= HERO_POOL_SIZE || complete || cacheOnly)) {
+      const backup = distinctBy(raw.flatMap((s) => s.items), (c) => c.id);
+      const titles = pickHeroTitles(pool, backup, HERO_POOL_SIZE);
+      if (titles.length > 0) heroLock = { key: lockKey, titles };
     }
+    const hero = (heroLock?.titles ?? []).map((c) => (watchedIds.has(c.id) ? { ...c, watched: true } : c));
     if (hero.length > 0 || sections.length > 0) return { kind: "success", hero, sections };
     if (failed) return { kind: "error", message: "Couldn't reach your installed addons. Check your connection and try again." };
     return { kind: "empty" };
-  }, [fetched, addonsReady, raw, prefs, cw, watchedIds, cacheOnly, failed]);
+  }, [fetched, addonsReady, raw, prefs, cw, watchedIds, cacheOnly, failed, complete]);
 
   return { state, reload: () => setReloadTick((t) => t + 1), ready: fetched && !cacheOnly };
 }
