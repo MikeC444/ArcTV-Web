@@ -48,6 +48,7 @@
 .hero__dots { position: absolute; right: var(--pad-x); bottom: calc(56 * var(--dp)); display: flex; gap: 6px; }
 .hero__dots span { width: 6px; height: 6px; border-radius: 50%; background: rgba(255, 255, 255, 0.35); transition: background var(--t-medium), transform var(--t-medium); }
 .hero__dots span[data-active="true"] { background: #fff; transform: scale(1.3); }
+@media (max-width: 720px) { .hero__dots { right: auto; left: var(--pad-x); bottom: 8px; } }
 @media (max-width: 720px) { .hero { min-height: 72vh; } .hero__content { bottom: 28px; } .hero__logo { width: 260px; height: 70px; } }
 
 /* ── Text field (Material "filled" TextField as configured in the app) ───── */
@@ -91,7 +92,7 @@
 .detail[data-compact="true"] .detail__rating-value { font-size: calc(16 * var(--dp)); }
 @media (max-width: 720px) { .detail__rating { position: static; align-self: flex-start; margin: 0 var(--pad-x) 12px; } .detail__hero { flex-direction: column; justify-content: flex-end; } .detail[data-compact="true"] .detail__col { padding-top: calc(var(--nav-h) + 24px); } }
 .detail__below { display: grid; grid-template-columns: 1fr 2fr; align-items: start; }
-.detail__below > .detail__similar { min-width: 0; }
+.detail__below > * { min-width: 0; }
 @media (max-width: 900px) { .detail__below { grid-template-columns: 1fr; } }
 .cast { min-width: 0; }
 .cast__list { --scale: 1; gap: calc(20 * var(--dp)) !important; padding-left: var(--pad-x) !important; }

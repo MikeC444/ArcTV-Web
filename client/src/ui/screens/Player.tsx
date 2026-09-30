@@ -8,6 +8,7 @@ import { formatTimestamp } from "../../lib/format";
 import { parseOptionalInt, routes } from "../../lib/routes";
 import { playSound } from "../../lib/sounds";
 import { useAuth } from "../../state/auth";
+import { useAddonsReady } from "../../state/hooks";
 import { useContinueWatching } from "../../state/continueWatching";
 import { setLastStreamId } from "../../state/lastSource";
 import { useMyList } from "../../state/myList";
@@ -33,10 +34,12 @@ export function PlayerScreen() {
   const episodeNumber = parseOptionalInt(p.episode);
   const [screen, setScreen] = useState<Screen>({ kind: "loading" });
   const [tick, setTick] = useState(0);
+  const ready = useAddonsReady();
 
   useEffect(() => {
     let cancelled = false;
     setScreen({ kind: "loading" });
+    if (!ready) return;
     void (async () => {
       const providers = activeProviders();
       const owner = providers.find((x) => x.id === providerId);
@@ -53,7 +56,7 @@ export function PlayerScreen() {
     return () => {
       cancelled = true;
     };
-  }, [providerId, type, id, season, episodeNumber, streamId, tick]);
+  }, [providerId, type, id, season, episodeNumber, streamId, tick, ready]);
 
   const changeSource = useCallback(() => navigate(routes.sources(providerId, type, id, season, episodeNumber, true), { replace: true }), [navigate, providerId, type, id, season, episodeNumber]);
   const back = useCallback(() => navigate(-1), [navigate]);
@@ -394,10 +397,18 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
     const onKeyDown = (e: KeyboardEvent) => {
       if (overlay || error || e.ctrlKey || e.metaKey || e.altKey) return;
       const target = e.target as HTMLElement | null;
-      if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName) && target.getAttribute("type") !== "range") return;
+      if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return; // the volume slider etc. handle their own keys
       const v = video.current;
       if (!v) return;
       switch (e.key) {
+        case "Tab":
+          // hidden controls are inert, so bring them back and put focus on the first one instead of losing the key
+          if (!e.shiftKey && document.querySelector(".pctl")?.hasAttribute("inert")) {
+            e.preventDefault();
+            bump();
+            window.setTimeout(() => document.querySelector<HTMLElement>(".pctl[data-visible='true'] button:not([disabled])")?.focus(), 60);
+          }
+          break;
         case " ":
         case "k":
         case "K":
@@ -407,6 +418,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
           break;
         case "ArrowLeft":
         case "ArrowRight": {
+          if (document.querySelector('[data-spatial-trap="true"]')) return; // e.g. the Up-next card: arrows move between its buttons
           e.preventDefault();
           const dir = e.key === "ArrowLeft" ? -1 : 1;
           if (!Number.isFinite(v.duration)) return;
@@ -419,6 +431,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
         }
         case "ArrowUp":
         case "ArrowDown":
+          if (document.querySelector('[data-spatial-trap="true"]')) return;
           e.preventDefault();
           setVolumeTo(v.volume + (e.key === "ArrowUp" ? 0.05 : -0.05));
           break;
@@ -490,7 +503,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
         <button type="button" className="pbig" aria-label="Play" onClick={toggle}><MdPlayArrow /></button>
       ) : null}
 
-      <div className="pctl" data-visible={showControls} aria-hidden={!showControls}>
+      <div className="pctl" data-visible={showControls} {...(showControls ? {} : { inert: "" as unknown as boolean })}>
         <div className="pctl__scrim" />
         <div className="ptop">
           <IconButton icon={<MdArrowBack />} label="Back" showBackground={false} borderColor="#fff" clickSound="back" onClick={handleBack} />

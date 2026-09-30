@@ -88,7 +88,7 @@ export function focusElement(el: HTMLElement, repeat = false): void {
 
 /** The element a keyboard user lands on when nothing is focused yet. */
 function initialTarget(): HTMLElement | null {
-  const auto = document.querySelector<HTMLElement>("[data-autofocus]");
+  const auto = document.querySelector<HTMLElement>('[data-autofocus="true"]');
   if (auto && visibleRect(auto)) return auto;
   const nav = document.querySelector<HTMLElement>('.navitem[data-selected="true"]');
   if (nav) return nav;
@@ -101,8 +101,10 @@ export function installSpatialNavigation(): () => void {
     if (!direction || event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return;
     const active = document.activeElement;
     if (isTextEntry(active) || (active instanceof HTMLInputElement && active.type === "range")) return;
-    if ((active as HTMLElement | null)?.closest('[data-spatial="off"]')) return;
     const trapEl = document.querySelector<HTMLElement>('[data-spatial-trap="true"]');
+    // Screens that own the arrow keys themselves (the player: seek / volume) opt out — including when nothing is focused
+    // yet — but a dialog opened inside them still gets directional navigation.
+    if (!trapEl && document.querySelector('[data-spatial="off"]')) return;
     if (trapEl && !active?.closest('[data-spatial-trap="true"]')) {
       // a dialog is open: pull focus into it first
       const first = trapEl.querySelector<HTMLElement>(FOCUSABLE);
@@ -124,7 +126,19 @@ export function installSpatialNavigation(): () => void {
       return;
     }
     const trap = active.closest<HTMLElement>('[data-spatial-trap="true"]');
-    const next = findNext(direction, active, trap ?? document);
+    // Like the TV: DOWN from the nav bar lands on the screen's primary control (contentFocusRequester), and UP from
+    // content returns to the *selected* nav item rather than whichever one happens to be nearest.
+    if (direction === "down" && !trap && active.closest(".topnav")) {
+      const primary = document.querySelector<HTMLElement>('[data-autofocus="true"]');
+      if (primary && visibleRect(primary)) {
+        event.preventDefault();
+        focusElement(primary, event.repeat);
+        playSound("nav");
+        return;
+      }
+    }
+    let next = findNext(direction, active, trap ?? document);
+    if (next && direction === "up" && !trap && next.closest(".topnav")) next = document.querySelector<HTMLElement>('.navitem[data-selected="true"]') ?? next;
     if (next) {
       event.preventDefault();
       focusElement(next, event.repeat);

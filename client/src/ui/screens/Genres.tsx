@@ -6,6 +6,7 @@ import { useProviders } from "../../domain/registry";
 import { routes } from "../../lib/routes";
 import { Surface } from "../components/Surface";
 import { Spinner } from "../components/States";
+import { useAddonsReady } from "../../state/hooks";
 
 const GENRE_LIST_MIN_YEAR = 2016;
 const ACCENTS = ["var(--amber)", "var(--tangerine)", "var(--coral)", "var(--azure)", "var(--teal)"];
@@ -38,18 +39,19 @@ export function buildGenreList(all: Iterable<string>): string[] {
 
 export function GenresScreen() {
   const providers = useProviders((s) => s.providers);
+  const ready = useAddonsReady();
   const navigate = useNavigate();
   const [genres, setGenres] = useState<string[] | null>(null);
   useEffect(() => {
     document.title = "Genres · Mango TV";
-    if (providers.length === 0) return setGenres(null);
+    if (!ready || providers.length === 0) return setGenres(null);
     let cancelled = false;
     setGenres(null);
     void Promise.all(providers.map((p) => p.getAvailableGenres().catch(() => [] as string[]))).then((lists) => !cancelled && setGenres(buildGenreList(lists.flat())));
     return () => {
       cancelled = true;
     };
-  }, [providers]);
+  }, [providers, ready]);
 
   return (
     <div className="page">
@@ -57,14 +59,14 @@ export function GenresScreen() {
         <MdCategory aria-hidden="true" /> Genres
       </h1>
       <div className="page__body">
-        {providers.length === 0 ? (
+        {ready && providers.length === 0 ? (
           <div>
             <p className="c-text-2 t-body-md">Install an addon first — genres will show up here once it's added.</p>
             <p style={{ marginTop: 12 }}>
               <Surface to={routes.settings("addons")} className="pill pill--lg" radius="999px" background="var(--surface-high)"><MdExtension /> Manage addons</Surface>
             </p>
           </div>
-        ) : genres === null ? (
+        ) : !ready || genres === null ? (
           <Spinner />
         ) : genres.length === 0 ? (
           <p className="c-text-2 t-body-md">Your installed addons aren't reporting any genres right now.</p>

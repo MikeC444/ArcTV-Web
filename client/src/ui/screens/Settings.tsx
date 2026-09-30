@@ -9,6 +9,7 @@ import { playPreview } from "../../lib/sounds";
 import { routes } from "../../lib/routes";
 import { useAddons, CINEMETA_MANIFEST_URL } from "../../state/addons";
 import { useAuth } from "../../state/auth";
+import { useAddonsReady } from "../../state/hooks";
 import { useSettings } from "../../state/settings";
 import { signOutAndWipe } from "../../state/sync";
 import { MangoButton, Switch } from "../components/Buttons";
@@ -213,12 +214,13 @@ export function AddAddonScreen() {
 
 function HomeRowsPane() {
   const providers = useProviders((s) => s.providers);
+  const ready = useAddonsReady();
   const prefs = useSettings((s) => s.homeRows);
   const setRowHidden = useSettings((s) => s.setRowHidden);
   const setRowOrder = useSettings((s) => s.setRowOrder);
   const [rows, setRows] = useState<HomeSection[] | null>(null);
   useEffect(() => {
-    if (providers.length === 0) return setRows(null);
+    if (!ready || providers.length === 0) return setRows(null);
     let cancelled = false;
     setRows(null);
     void Promise.all(
@@ -235,10 +237,11 @@ function HomeRowsPane() {
     return () => {
       cancelled = true;
     };
-  }, [providers]);
+  }, [providers, ready]);
   const ordered = useMemo(() => (rows ? applyRowOrder(rows, prefs) : []), [rows, prefs]);
   const displayOrder = useMemo(() => ordered.map((r) => r.id), [ordered]);
 
+  if (!ready) return <Spinner />;
   if (providers.length === 0) return <p className="c-text-2 t-body-md">Install an addon first — its rows will show up here once it's added.</p>;
   if (rows === null) return <Spinner />;
   if (rows.length === 0) return <p className="c-text-2 t-body-md">Your installed addons aren't reporting any rows right now.</p>;

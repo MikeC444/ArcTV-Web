@@ -20,7 +20,7 @@ export function parseYear(releaseInfo: string | null | undefined): number | null
  */
 export function parseRuntimeMinutes(runtime: string | null | undefined): number | null {
   if (!runtime) return null;
-  const hm = /(\d+)\s*h\D*?(?:(\d+)\s*m)?/i.exec(runtime);
+  const hm = /(\d+)\s*h(?:\D*?(\d+)\s*m)?/i.exec(runtime);
   if (hm) return Number(hm[1]) * 60 + Number(hm[2] ?? 0);
   const digits = runtime.replace(/\D/g, "");
   return digits ? Number(digits) : null;

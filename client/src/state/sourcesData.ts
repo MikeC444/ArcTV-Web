@@ -3,6 +3,7 @@ import { assessStream } from "../domain/playability";
 import { activeProviders } from "../domain/registry";
 import { resolutionOrdinal, type Content, type ContentType, type Stream } from "../domain/types";
 import { useAuth } from "./auth";
+import { useAddonsReady } from "./hooks";
 import { useContinueWatching } from "./continueWatching";
 import { findLastStreamId } from "./lastSource";
 
@@ -25,12 +26,14 @@ export function recommendedStreamId(streams: Stream[]): string | null {
 /** SourcesViewModel.kt — progressive: rows appear as each addon answers; a resume with a remembered source skips the list. */
 export function useSources(providerId: string, type: ContentType, id: string, season: number | null, episode: number | null, skipAutoSelect: boolean) {
   const userId = useAuth((s) => s.user?.id);
+  const ready = useAddonsReady();
   const [state, setState] = useState<SourcesState>({ kind: "loading" });
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     setState({ kind: "loading" });
+    if (!ready) return;
     const providers = activeProviders();
     const owner = providers.find((p) => p.id === providerId);
     const resume = useContinueWatching.getState().findResumePoint(providerId, id, type);
@@ -69,7 +72,7 @@ export function useSources(providerId: string, type: ContentType, id: string, se
     return () => {
       cancelled = true;
     };
-  }, [providerId, type, id, season, episode, skipAutoSelect, userId, tick]);
+  }, [providerId, type, id, season, episode, skipAutoSelect, userId, tick, ready]);
 
   const reload = useCallback(() => setTick((t) => t + 1), []);
   return useMemo(() => ({ state, reload }), [state, reload]);

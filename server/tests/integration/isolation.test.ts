@@ -70,7 +70,7 @@ describe.skipIf(!integrationEnabled)("two accounts cannot see or change each oth
     expect((await alice.get("/api/user/continue-watching")).body.items).toHaveLength(1);
 
     // At the database level: every row is owned by exactly one user, and Bob's has only his own.
-    const { rows } = await db.query("SELECT user_id, title FROM watchlist_items WHERE content_id = 'tt-alice' ORDER BY title");
+    const { rows } = await db.query("SELECT user_id, title FROM watchlist_items WHERE content_id = 'tt-alice' AND user_id = ANY($1) ORDER BY title", [[alice.user.id, bob.user.id]]);
     expect(rows).toHaveLength(2);
     expect(new Set(rows.map((r: { user_id: string }) => r.user_id))).toEqual(new Set([alice.user.id, bob.user.id]));
   });

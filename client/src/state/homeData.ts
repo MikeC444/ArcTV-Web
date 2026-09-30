@@ -6,7 +6,7 @@ import type { Content, HomeSection } from "../domain/types";
 import { distinctBy, shuffled } from "../lib/format";
 import { useAuth } from "./auth";
 import { useContinueWatching, type ContinueWatchingEntry } from "./continueWatching";
-import { sectionWithWatched, useWatchedIds } from "./hooks";
+import { sectionWithWatched, useAddonsReady, useWatchedIds } from "./hooks";
 import { readJson, userKey, writeJson } from "./persist";
 import { useSettings } from "./settings";
 
@@ -67,6 +67,7 @@ async function collect(provider: CatalogProvider, onBatch: (batch: HomeSection[]
 /** Fetches every provider's home rows progressively, then merges Continue Watching, hidden/ordered rows and watched flags. */
 export function useHome(): { state: HomeState; reload(): void; ready: boolean } {
   const providers = useProviders((s) => s.providers);
+  const addonsReady = useAddonsReady();
   const userId = useAuth((s) => s.user?.id);
   const prefs = useSettings((s) => s.homeRows);
   const cw = useContinueWatching((s) => s.items);
@@ -92,6 +93,7 @@ export function useHome(): { state: HomeState; reload(): void; ready: boolean } 
 
   useEffect(() => {
     const gen = ++generation.current;
+    if (!addonsReady) return;
     if (providers.length === 0) {
       if (!cacheOnly) {
         setRaw([]);
@@ -131,10 +133,10 @@ export function useHome(): { state: HomeState; reload(): void; ready: boolean } 
     });
     // `cacheOnly` intentionally omitted: it only gates the first paint and must not re-trigger the fetch.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [providers, reloadTick, userId]);
+  }, [providers, reloadTick, userId, addonsReady]);
 
   const state = useMemo<HomeState>(() => {
-    if (!fetched) return { kind: "loading" };
+    if (!fetched || !addonsReady) return { kind: "loading" };
     const visible = applyRowOrder(raw, prefs).filter((s) => !prefs.hiddenRowIds.includes(s.id)).map((s) => sectionWithWatched(s, watchedIds));
     const cwSection: HomeSection | null = cw.length ? { id: CONTINUE_WATCHING_ROW_ID, title: "Continue Watching", style: "CONTINUE_WATCHING", items: cw.map(entryToContent).map((c) => (watchedIds.has(c.id) ? { ...c, watched: true } : c)) } : null;
     const sections = [...(cwSection ? [cwSection] : []), ...visible];
@@ -143,13 +145,14 @@ export function useHome(): { state: HomeState; reload(): void; ready: boolean } 
     let hero: Content[];
     if (cacheOnly) hero = shuffled(pool).slice(0, HERO_POOL_SIZE);
     else {
-      heroPool ??= shuffled(pool).slice(0, HERO_POOL_SIZE);
-      hero = heroPool.map((c) => (watchedIds.has(c.id) ? { ...c, watched: true } : c));
+      // Lock the pool in once there is something to pick from — never lock in an empty one (providers load after sign-in).
+      if ((!heroPool || heroPool.length === 0) && pool.length > 0) heroPool = shuffled(pool).slice(0, HERO_POOL_SIZE);
+      hero = (heroPool ?? []).map((c) => (watchedIds.has(c.id) ? { ...c, watched: true } : c));
     }
     if (hero.length > 0 || sections.length > 0) return { kind: "success", hero, sections };
     if (failed) return { kind: "error", message: "Couldn't reach your installed addons. Check your connection and try again." };
     return { kind: "empty" };
-  }, [fetched, raw, prefs, cw, watchedIds, cacheOnly, failed]);
+  }, [fetched, addonsReady, raw, prefs, cw, watchedIds, cacheOnly, failed]);
 
   return { state, reload: () => setReloadTick((t) => t + 1), ready: fetched && !cacheOnly };
 }

@@ -126,7 +126,8 @@ export function createApp(config: AppConfig, options: CreateAppOptions = {}): Ex
     app.use("/assets", express.static(path.join(staticDir, "assets"), { immutable: true, maxAge: "1y", index: false }));
     app.use(express.static(staticDir, { index: false, maxAge: "1h" }));
     app.get(/^(?!\/api\/).*/, (req, res, next) => {
-      if (!req.accepts("html")) return next();
+      // client-side routes only: a missing asset / file must 404 (never HTML posing as a script or image)
+      if (!req.accepts("html") || req.path.startsWith("/assets/") || path.extname(req.path)) return next();
       res.setHeader("Cache-Control", "no-cache");
       res.sendFile(path.join(staticDir, "index.html"));
     });

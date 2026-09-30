@@ -29,6 +29,19 @@ const PAGE_SIZE = 100;
 /** Rows are fetched in small batches so the first rows appear fast and shared free addon servers aren't hammered. */
 const HOME_BATCH_SIZE = 4;
 
+/**
+ * Ids are derived from the stream's link, so an addon that lists the same link twice would produce duplicate ids
+ * (which break list keys and "play this exact source" lookups). The second and later copies get a stable "#n" suffix.
+ */
+export function uniqueStreamIds(streams: Stream[]): Stream[] {
+  const seen = new Map<string, number>();
+  return streams.map((stream) => {
+    const n = seen.get(stream.id) ?? 0;
+    seen.set(stream.id, n + 1);
+    return n === 0 ? stream : { ...stream, id: `${stream.id}#${n}` };
+  });
+}
+
 const isYear = (value: string): boolean => /^\d+$/.test(value) && Number(value) >= 1900 && Number(value) <= 2100;
 const genreExtra = (catalog: AddonCatalogDef) => catalog.extra.find((extra) => extra.name === "genre");
 const isBaseCatalog = (catalog: AddonCatalogDef) => genreExtra(catalog)?.isRequired !== true;
@@ -128,7 +141,7 @@ export class StremioAddonProvider implements CatalogProvider {
     const requestId = season != null && episode != null ? `${id}:${season}:${episode}` : id;
     try {
       const streams = await fetchStreams(this.manifestUrl, stremioTypeOf(type), requestId);
-      return streams.map((stream) => streamToStream(stream, this.id, this.name));
+      return uniqueStreamIds(streams.map((stream) => streamToStream(stream, this.id, this.name)));
     } catch {
       return [];
     }

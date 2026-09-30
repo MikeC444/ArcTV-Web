@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import type { Content, HomeSection } from "../domain/types";
+import { useAddons } from "./addons";
 import { useMyList } from "./myList";
 
 /** Ids of titles that are My-List entries with watched = true — every screen stamps this onto the cards it shows. */
@@ -15,3 +16,6 @@ export function useSavedIds(): Set<string> {
   const items = useMyList((s) => s.items);
   return useMemo(() => new Set(items.map((i) => i.id)), [items]);
 }
+
+/** True once the account's addon list is known (cache or first fetch) — before that, "no providers" means "not loaded yet". */
+export const useAddonsReady = (): boolean => useAddons((s) => s.ready);

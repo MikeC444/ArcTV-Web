@@ -22,7 +22,8 @@ export function createWebApp(): Express {
   return createApp(
     loadConfig({
       NODE_ENV: "test",
-      MANGOTV_API_URL: BACKEND_URL,
+      // describe.skipIf still runs the suite body, so a placeholder keeps a plain `npm test` (no backend) loadable
+      MANGOTV_API_URL: BACKEND_URL || "http://integration-tests-disabled.invalid",
       SESSION_SECRET: SECRET,
       TRUST_PROXY: "1", // so a per-test X-Forwarded-For selects the client IP the backend rate-limits on
     } as NodeJS.ProcessEnv),

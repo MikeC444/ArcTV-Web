@@ -12,7 +12,7 @@ function useRouteFocus() {
     window.scrollTo({ top: 0 });
     if (getModality() !== "keyboard") return;
     const timer = window.setTimeout(() => {
-      const target = document.querySelector<HTMLElement>("[data-autofocus]") ?? document.querySelector<HTMLElement>('.navitem[data-selected="true"]');
+      const target = document.querySelector<HTMLElement>('[data-autofocus="true"]') ?? document.querySelector<HTMLElement>('.navitem[data-selected="true"]');
       target?.focus({ preventScroll: true });
     }, 120);
     return () => window.clearTimeout(timer);
@@ -23,12 +23,13 @@ export function AppShell() {
   const { pathname } = useLocation();
   useRouteFocus();
   const overHero = pathname === "/" || pathname.startsWith("/detail");
+  const fullScreen = pathname.startsWith("/sources"); // like the TV's SourcesScreen: its own back arrow, no top navigation
   return (
     <>
       <a className="skip-link" href="#main">
         Skip to content
       </a>
-      <TopNav transparent={overHero} />
+      {fullScreen ? null : <TopNav transparent={overHero} />}
       <main id="main" tabIndex={-1} style={{ outline: "none" }}>
         <Outlet />
       </main>

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { activeProviders, useProviders } from "../domain/registry";
+import { useProviders } from "../domain/registry";
 import type { Content, ContentType } from "../domain/types";
 import { api } from "../lib/api";
 import { distinctBy } from "../lib/format";
-import { withWatched } from "./hooks";
+import { useAddonsReady, withWatched } from "./hooks";
 import { consumeDetailPreview } from "./pendingDetail";
 
 /** DetailViewModel.kt */
@@ -12,11 +12,12 @@ export type LookupState<T> = { kind: "idle" | "loading" | "notFound" } | { kind:
 
 export function useDetail(providerId: string, type: ContentType, id: string, watchedIds: Set<string>) {
   const providers = useProviders((s) => s.providers);
+  const ready = useAddonsReady();
   const preview = useRef<Content | undefined>(consumeDetailPreview(id));
   const [content, setContent] = useState<Content | null>(preview.current ?? null);
   const [similar, setSimilar] = useState<Content[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(!preview.current);
+  const [, setLoading] = useState(!preview.current);
   const [trailer, setTrailer] = useState<LookupState<string>>({ kind: "idle" });
   const [releaseDate, setReleaseDate] = useState<LookupState<string>>({ kind: "idle" });
   const [tick, setTick] = useState(0);
@@ -26,9 +27,10 @@ export function useDetail(providerId: string, type: ContentType, id: string, wat
     setError(null);
     setTrailer({ kind: "idle" });
     setReleaseDate({ kind: "idle" });
+    if (!ready) return;
     const provider = providers.find((p) => p.id === providerId);
     if (!provider) {
-      if (providers.length > 0 || !content) {
+      if (!content) {
         setError("This addon is no longer installed.");
         setLoading(false);
       }
@@ -80,9 +82,9 @@ export function useDetail(providerId: string, type: ContentType, id: string, wat
     };
     // `content` deliberately omitted — it is the preview we already have, not an input.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [providers, providerId, type, id, tick]);
+  }, [providers, ready, providerId, type, id, tick]);
 
   const reload = useCallback(() => setTick((t) => t + 1), []);
-  const state: DetailState = content ? { kind: "success", content: withWatched(content, watchedIds), similar: similar.map((c) => withWatched(c, watchedIds)) } : error ? { kind: "error", message: error } : loading || activeProviders().length === 0 ? { kind: "loading" } : { kind: "loading" };
+  const state: DetailState = content ? { kind: "success", content: withWatched(content, watchedIds), similar: similar.map((c) => withWatched(c, watchedIds)) } : error ? { kind: "error", message: error } : { kind: "loading" };
   return { state, trailer, releaseDate, reload };
 }

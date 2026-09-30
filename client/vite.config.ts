@@ -2,7 +2,7 @@ import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 
 // In development the SPA runs on :5173 and proxies /api to the web server
-// (default :8080), so the browser only ever talks to one origin — exactly like
+// (default :8080; set WEB_SERVER_URL if you use another port), so the browser only ever talks to one origin — exactly like
 // production, where the web server serves the built SPA itself.
 export default defineConfig({
   plugins: [react()],

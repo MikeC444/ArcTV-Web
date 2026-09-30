@@ -5,7 +5,7 @@ import { activeProviders, useProviders } from "../../domain/registry";
 import type { Content, ContentType } from "../../domain/types";
 import { distinctBy, interleave, shuffled } from "../../lib/format";
 import { routes } from "../../lib/routes";
-import { useWatchedIds, withWatched } from "../../state/hooks";
+import { useAddonsReady, useWatchedIds, withWatched } from "../../state/hooks";
 import { useMyList, type SavedListItem } from "../../state/myList";
 import { Pill } from "../components/Buttons";
 import { ContentCard } from "../components/ContentCard";
@@ -32,6 +32,7 @@ interface Pager {
 /** TypeBrowseViewModel / GenreResultsViewModel — first page from every provider, then "skip" pages as you scroll. */
 function usePager(kind: { type: "type"; value: ContentType } | { type: "genre"; value: string }): Pager {
   const providers = useProviders((s) => s.providers);
+  const ready = useAddonsReady();
   const [items, setItems] = useState<Content[]>([]);
   const [status, setStatus] = useState<Pager["status"]>("loading");
   const [tick, setTick] = useState(0);
@@ -46,11 +47,12 @@ function usePager(kind: { type: "type"; value: ContentType } | { type: "genre"; 
     s.loading = false;
     s.seen = new Set();
     setItems([]);
+    setStatus("loading");
+    if (!ready) return;
     if (providers.length === 0) {
       setStatus("loaded");
       return;
     }
-    setStatus("loading");
     void (async () => {
       const results = await Promise.all(
         providers.map(async (provider) => {
@@ -71,7 +73,7 @@ function usePager(kind: { type: "type"; value: ContentType } | { type: "genre"; 
       setStatus(merged.length > 0 ? "loaded" : anyFailed ? "error" : "loaded");
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [providers, kindKey, tick]);
+  }, [providers, kindKey, tick, ready]);
 
   const loadMore = useCallback(() => {
     const s = state.current;

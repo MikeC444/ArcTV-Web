@@ -54,7 +54,7 @@ export function IconButton({ icon, label, compact, showBackground = true, classN
 /** FilterPill.kt */
 export function Pill({ label, selected, onClick, large, icon, ...rest }: Omit<SurfaceProps, "children" | "radius"> & { label: string; selected?: boolean; large?: boolean; icon?: ReactNode }) {
   return (
-    <Surface {...rest} onClick={onClick} className={`pill${large ? " pill--lg" : ""}`} ariaPressed={selected} dataAttrs={{ selected: selected ? "true" : "false" }}>
+    <Surface {...rest} onClick={onClick} className={`pill${large ? " pill--lg" : ""}`} ariaPressed={selected} dataAttrs={{ ...rest.dataAttrs, selected: selected ? "true" : "false" }}>
       {label}
       {icon}
     </Surface>

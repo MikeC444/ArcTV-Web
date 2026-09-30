@@ -43,6 +43,8 @@ function fromDto(dto: AddonDto): StoredAddon | null {
 interface AddonsState {
   userId: string | null;
   addons: StoredAddon[];
+  /** False until the addon list is known — from this browser's cache, or after the first attempt to fetch it from the account. Screens wait for it instead of flashing "no addons". */
+  ready: boolean;
   hydrate(userId: string): void;
   reset(): void;
   install(rawUrl: string): Promise<StoredAddon>;
@@ -97,17 +99,18 @@ export const useAddons = create<AddonsState>((set, get) => {
   return {
     userId: null,
     addons: [],
+    ready: false,
 
     hydrate(userId) {
       outbox = new Outbox<AddonDto>(userId, "addons");
       const stored = readJson<StoredAddon[]>(userKey(userId, "addons"), []);
-      set({ userId, addons: stored });
+      set({ userId, addons: stored, ready: stored.length > 0 });
       useProviders.getState().replaceAll(stored.filter((a) => a.enabled).map((a) => new StremioAddonProvider(a.manifestUrl, a.manifest)));
     },
     reset() {
       outbox = null;
       clearAddonCache();
-      set({ userId: null, addons: [] });
+      set({ userId: null, addons: [], ready: false });
       useProviders.getState().replaceAll([]);
     },
 
@@ -144,8 +147,10 @@ export const useAddons = create<AddonsState>((set, get) => {
         const localPending = get().addons.filter((a) => a.manifestUrl in pending && !pending[a.manifestUrl]?.deletedAt);
         // cloud order is authoritative (sort_order); unsynced local changes stay put until retryPending lands them
         commit([...remote, ...localPending]);
+        set({ ready: true });
         return { ok: true, empty: items.length === 0 };
       } catch {
+        set({ ready: true });
         return { ok: false, empty: false };
       }
     },
