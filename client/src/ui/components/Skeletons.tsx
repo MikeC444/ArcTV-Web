@@ -1,3 +1,5 @@
+import { BackButton } from "./BackButton";
+
 /** LoadingSkeleton.kt */
 export const Shimmer = ({ width, height, radius, style }: { width?: string; height?: string; radius?: string; style?: React.CSSProperties }) => (
   <div className="shimmer" style={{ width, height, borderRadius: radius, ...style }} aria-hidden="true" />
@@ -44,9 +46,10 @@ export function RowsSkeleton({ rows = 4 }: { rows?: number }) {
   );
 }
 
-export function GridSkeleton({ title }: { title: string }) {
+export function GridSkeleton({ title, back }: { title: string; back?: string }) {
   return (
     <div style={{ paddingTop: `calc(var(--nav-h) + ${dp(24)})` }} aria-busy="true" aria-label="Loading">
+      {back ? <div className="page__back"><BackButton fallback={back} /></div> : null}
       <h1 className="t-display-md" style={{ padding: `${dp(4)} var(--pad-x)`, margin: 0 }}>
         {title}
       </h1>

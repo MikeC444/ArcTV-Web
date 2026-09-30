@@ -7,6 +7,7 @@ import { distinctBy, interleave, shuffled } from "../../lib/format";
 import { routes } from "../../lib/routes";
 import { useAddonsReady, useWatchedIds, withWatched } from "../../state/hooks";
 import { useMyList, type SavedListItem } from "../../state/myList";
+import { BackButton } from "../components/BackButton";
 import { Pill } from "../components/Buttons";
 import { ContentCard } from "../components/ContentCard";
 import { GridSkeleton } from "../components/Skeletons";
@@ -29,15 +30,28 @@ interface Pager {
   retry(): void;
 }
 
+/**
+ * What each Movies / TV / genre page has loaded so far (kept until the site is reloaded): coming Back from a title finds the
+ * same titles in the same order — including the pages loaded by scrolling — so the page can return to the exact spot.
+ */
+interface PagerSnapshot {
+  items: Content[];
+  page: number;
+  hasMore: boolean;
+}
+const pagerCache = new Map<string, PagerSnapshot>();
+
 /** TypeBrowseViewModel / GenreResultsViewModel — first page from every provider, then "skip" pages as you scroll. */
 function usePager(kind: { type: "type"; value: ContentType } | { type: "genre"; value: string }): Pager {
   const providers = useProviders((s) => s.providers);
   const ready = useAddonsReady();
-  const [items, setItems] = useState<Content[]>([]);
-  const [status, setStatus] = useState<Pager["status"]>("loading");
-  const [tick, setTick] = useState(0);
-  const state = useRef({ page: 1, hasMore: true, loading: false, seen: new Set<string>(), gen: 0 });
   const kindKey = `${kind.type}:${kind.value}`;
+  const cacheKey = `${kindKey}|${providers.map((p) => p.id).join(",")}`;
+  const cachedAtStart = pagerCache.get(cacheKey);
+  const [items, setItems] = useState<Content[]>(() => cachedAtStart?.items ?? []);
+  const [status, setStatus] = useState<Pager["status"]>(cachedAtStart ? "loaded" : "loading");
+  const [tick, setTick] = useState(0);
+  const state = useRef({ page: 1, hasMore: true, loading: false, seen: new Set<string>(), gen: 0, items: [] as Content[] });
 
   useEffect(() => {
     const s = state.current;
@@ -46,6 +60,17 @@ function usePager(kind: { type: "type"; value: ContentType } | { type: "genre"; 
     s.hasMore = true;
     s.loading = false;
     s.seen = new Set();
+    const hit = pagerCache.get(cacheKey);
+    if (hit) {
+      s.page = hit.page;
+      s.hasMore = hit.hasMore;
+      s.items = hit.items;
+      s.seen = new Set(hit.items.map((c) => c.id));
+      setItems(hit.items);
+      setStatus("loaded");
+      return;
+    }
+    s.items = [];
     setItems([]);
     setStatus("loading");
     if (!ready) return;
@@ -69,11 +94,13 @@ function usePager(kind: { type: "type"; value: ContentType } | { type: "genre"; 
       // movies/TV are a shuffled browse row; a genre interleaves providers so each addon is represented
       const merged = distinctBy(kind.type === "type" ? shuffled(results.flatMap((r) => r.items)) : interleave(results.map((r) => r.items)), (c) => c.id);
       merged.forEach((c) => s.seen.add(c.id));
+      s.items = merged;
+      if (merged.length > 0) pagerCache.set(cacheKey, { items: merged, page: s.page, hasMore: s.hasMore });
       setItems(merged);
       setStatus(merged.length > 0 ? "loaded" : anyFailed ? "error" : "loaded");
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [providers, kindKey, tick, ready]);
+  }, [providers, kindKey, cacheKey, tick, ready]);
 
   const loadMore = useCallback(() => {
     const s = state.current;
@@ -89,14 +116,24 @@ function usePager(kind: { type: "type"; value: ContentType } | { type: "genre"; 
       else {
         s.page++;
         fresh.forEach((c) => s.seen.add(c.id));
-        setItems((current) => [...current, ...fresh]);
+        s.items = [...s.items, ...fresh];
+        setItems(s.items);
       }
+      pagerCache.set(cacheKey, { items: s.items, page: s.page, hasMore: s.hasMore });
       s.loading = false;
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [providers, kindKey]);
+  }, [providers, kindKey, cacheKey]);
 
-  return { items, status, loadMore, retry: () => setTick((t) => t + 1) };
+  return {
+    items,
+    status,
+    loadMore,
+    retry: () => {
+      pagerCache.delete(cacheKey);
+      setTick((t) => t + 1);
+    },
+  };
 }
 
 /** Grid + infinite-scroll sentinel shared by Movies, TV Shows, Genre results and My List. */
@@ -124,12 +161,13 @@ export function ContentGrid({ items, onLoadMore }: { items: Content[]; onLoadMor
   );
 }
 
-function Page({ title, children, filters }: { title: string; children: ReactNode; filters?: ReactNode }) {
+function Page({ title, children, filters, back }: { title: string; children: ReactNode; filters?: ReactNode; back?: string }) {
   useEffect(() => {
     document.title = `${title} · Mango TV`;
   }, [title]);
   return (
     <div className="page">
+      {back ? <div className="page__back"><BackButton fallback={back} /></div> : null}
       <h1 className="t-display-md page__title">{title}</h1>
       {filters ? <div className="page__filters">{filters}</div> : null}
       {children}
@@ -137,23 +175,24 @@ function Page({ title, children, filters }: { title: string; children: ReactNode
   );
 }
 
-function CatalogPage({ title, pager, emptyMessage }: { title: string; pager: Pager; emptyMessage: string }) {
+function CatalogPage({ title, pager, emptyMessage, back }: { title: string; pager: Pager; emptyMessage: string; back?: string }) {
   const watched = useWatchedIds();
   const [sort, setSort] = useState<SortMode>("FEATURED");
   const navigate = useNavigate();
   const items = useMemo(() => sortContent(pager.items, sort).map((c) => withWatched(c, watched)), [pager.items, sort, watched]);
 
-  if (pager.status === "loading") return <GridSkeleton title={title} />;
+  if (pager.status === "loading") return <GridSkeleton title={title} back={back} />;
   if (pager.status === "error") return <div className="page"><FullScreenError message="Couldn't reach your installed addons. Check your connection and try again." onRetry={pager.retry} /></div>;
   if (activeProviders().length === 0)
     return (
-      <Page title={title}>
+      <Page title={title} back={back}>
         <EmptyState icon={<MdExtension size={48} />} title="No addons installed" message="Install an addon to bring movies and TV shows into Mango TV." actionLabel="Browse Addons" actionIcon={<MdExtension />} onAction={() => navigate(routes.settings("addons"))} />
       </Page>
     );
   return (
     <Page
       title={title}
+      back={back}
       filters={items.length > 0 ? SORTS.map((s) => <Pill key={s.id} label={s.label} selected={sort === s.id} large onClick={() => setSort(s.id)} dataAttrs={{ autofocus: s.id === "FEATURED" }} />) : undefined}
     >
       {items.length === 0 ? <p className="page__empty">{emptyMessage}</p> : <ContentGrid items={items} onLoadMore={pager.loadMore} />}
@@ -163,7 +202,7 @@ function CatalogPage({ title, pager, emptyMessage }: { title: string; pager: Pag
 
 export const MoviesScreen = () => <CatalogPage title="Movies" pager={usePager({ type: "type", value: "MOVIE" })} emptyMessage="Nothing to show here right now." />;
 export const TvShowsScreen = () => <CatalogPage title="TV Shows" pager={usePager({ type: "type", value: "TV_SHOW" })} emptyMessage="Nothing to show here right now." />;
-export const GenreResultsScreen = ({ genre }: { genre: string }) => <CatalogPage title={genre} pager={usePager({ type: "genre", value: genre })} emptyMessage={`Nothing found for ${genre} right now.`} />;
+export const GenreResultsScreen = ({ genre }: { genre: string }) => <CatalogPage title={genre} pager={usePager({ type: "genre", value: genre })} emptyMessage={`Nothing found for ${genre} right now.`} back={routes.genres} />;
 
 /** MyListScreen.kt — newest-added first, All / Watched filter. */
 export function MyListScreen() {

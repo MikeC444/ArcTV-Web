@@ -50,7 +50,7 @@ test.describe("Fire TV layout parity @ 1920×1080 (1dp = 2px)", () => {
 
   test("Home: hero height, hero buttons, poster rows of 8 (HeroSection.kt, ContentRow.kt, ContentCard.kt)", async ({ page }) => {
     const account = await newAccount("parity-home");
-    await account.tv.seedContinueWatching({ contentId: "fxm4", title: "CW" });
+    await account.tv.seedContinueWatching({ contentId: "fxm901", title: "CW" });
     await openSignedIn(page, account);
     await expect(page.locator(".hero")).toBeVisible();
     near(await page.locator(".hero").evaluate((el) => el.getBoundingClientRect().height), 0.74 * 1080, 2); // the TV uses screenHeight × 0.82; shorter here so Continue Watching shows above the fold

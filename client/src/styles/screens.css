@@ -304,3 +304,11 @@
   .hero__actlabel { display: block; font-size: 12px; line-height: 14px; color: var(--text-2); }
   .hero__dots { left: 50%; right: auto; transform: translateX(-50%); bottom: 4px; }
 }
+
+/* ── Back buttons (Detail, genre results) ─────────────────────────────────── */
+.page__back { padding: 0 var(--pad-x) calc(4 * var(--dp)); }
+.detail__back { position: absolute; z-index: 3; top: calc(var(--nav-h) + 8px); left: var(--pad-x); }
+
+/* ── Back buttons (Detail, genre results) ─────────────────────────────────── */
+.page__back { padding: 0 var(--pad-x) calc(4 * var(--dp)); }
+.detail__back { position: absolute; z-index: 3; top: calc(var(--nav-h) + 8px); left: var(--pad-x); }

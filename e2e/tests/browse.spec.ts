@@ -4,13 +4,14 @@ import { ADDON, cards, newAccount, openSignedIn, shot } from "./helpers";
 test.describe("browsing", () => {
   test("Home: rotating hero, Continue Watching first, addon rows, watched tick, empty/error states", async ({ page }) => {
     const account = await newAccount("home");
-    await account.tv.seedContinueWatching({ contentId: "fxm4", title: "Continue Me", positionMs: 1_800_000, durationMs: 6_000_000 });
+    await account.tv.seedContinueWatching({ contentId: "fxm901", title: "Continue Me", positionMs: 1_800_000, durationMs: 6_000_000 });
     await account.tv.seedWatched({ contentId: "fxm7", title: "Seen It" });
     await openSignedIn(page, account);
 
     await expect(page.locator(".hero")).toBeVisible();
     await expect(page.locator(".hero__content").getByRole("button", { name: "Play" })).toBeVisible();
     await expect(page.getByRole("button", { name: "More Info" })).toBeVisible();
+    // (Continue Watching only lists titles no other row shows, so its fixture title "fxm901" is outside the addon catalogue)
     // rows in order: Continue Watching, then the addon's base row and genre rows
     const headings = await page.locator(".home__rows .row__title").allTextContents();
     expect(headings[0]).toBe("Continue Watching");
@@ -231,7 +232,7 @@ test.describe("browsing", () => {
 
   test("card quick-actions menu: right-click → mark watched / remove from Continue Watching", async ({ page }) => {
     const account = await newAccount("menu");
-    await account.tv.seedContinueWatching({ contentId: "fxm9", title: "Menu Movie" });
+    await account.tv.seedContinueWatching({ contentId: "fxm902", title: "Menu Movie" });
     await openSignedIn(page, account);
     const cw = page.locator('.card[data-cw="true"] .card__surface').first();
     await cw.click({ button: "right" });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyRowOrder, dedupeRows, moveRow } from "./homeRows";
+import { applyRowOrder, dedupeRows, moveRow, withoutShownTitles } from "./homeRows";
 import { assessStream, engineFor } from "./playability";
 import type { HomeSection } from "./types";
 import { formatElapsed, formatReleaseDate, formatRuntime, formatTimestamp, interleave, distinctBy } from "../lib/format";
@@ -61,6 +61,15 @@ describe("no title twice on Home (dedupeRows)", () => {
     const rows = [row("action", ["x", "y"]), row("popular", ["x", "z"])];
     expect(dedupeRows(rows).map((r) => r.items.map((i) => i.id))).toEqual([["x", "y"], ["z"]]);
     expect(dedupeRows([...rows].reverse()).map((r) => r.items.map((i) => i.id))).toEqual([["x", "z"], ["y"]]);
+  });
+});
+
+describe("Continue Watching vs the catalogue rows (withoutShownTitles)", () => {
+  it("drops entries whose title is already in a row and keeps the rest in order", () => {
+    const rows: HomeSection[] = [{ id: "r", title: "r", style: "STANDARD", items: [{ id: "a" }, { id: "b" }] as Content[] }];
+    const entries = [{ contentId: "a" }, { contentId: "x" }, { contentId: "b" }, { contentId: "y" }];
+    expect(withoutShownTitles(entries, rows)).toEqual([{ contentId: "x" }, { contentId: "y" }]);
+    expect(withoutShownTitles(entries, [])).toEqual(entries);
   });
 });
 

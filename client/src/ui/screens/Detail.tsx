@@ -12,6 +12,7 @@ import { findLastStreamId } from "../../state/lastSource";
 import { useMyList } from "../../state/myList";
 import { stashDetailPreview } from "../../state/pendingDetail";
 import { IconButton, MangoButton } from "../components/Buttons";
+import { BackButton } from "../components/BackButton";
 import { ContentRow } from "../components/ContentRow";
 import { HomeSkeleton } from "../components/Skeletons";
 import { FullScreenError } from "../components/States";
@@ -66,6 +67,8 @@ function DetailContent({ content, similar, providerId, trailerId, releaseDate }:
         {content.backdropUrl ? <img src={content.backdropUrl} alt="" referrerPolicy="no-referrer" /> : null}
         <div className="detail__scrim" />
       </div>
+
+      <BackButton fallback={routes.home} className="detail__back" />
 
       <section className="detail__hero">
         {content.rating != null ? (

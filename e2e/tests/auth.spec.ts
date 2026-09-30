@@ -17,7 +17,7 @@ test.describe("sign-in flows", () => {
 
   test("an EXISTING Fire TV account signs in with its email + password and lands on Home with its synced data", async ({ page }) => {
     const account = await newAccount("firetv");
-    await account.tv.seedContinueWatching({ contentId: "fxm3", title: "Resume Me" });
+    await account.tv.seedContinueWatching({ contentId: "fxm901", title: "Resume Me" });
     await useClientIp(page.context());
     await page.goto("/auth");
     await page.getByRole("button", { name: "Log In" }).click();

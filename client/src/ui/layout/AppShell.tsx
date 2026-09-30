@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { getModality } from "../../lib/modality";
+import { useScrollMemory } from "../../lib/scrollMemory";
 import { CardActionsMenu } from "../components/CardActionsMenu";
 import { OfflineBanner } from "../components/OfflineBanner";
 import { TopNav } from "../components/TopNav";
@@ -9,7 +10,6 @@ import { TopNav } from "../components/TopNav";
 function useRouteFocus() {
   const { pathname } = useLocation();
   useEffect(() => {
-    window.scrollTo({ top: 0 });
     if (getModality() !== "keyboard") return;
     const timer = window.setTimeout(() => {
       const target = document.querySelector<HTMLElement>('[data-autofocus="true"]') ?? document.querySelector<HTMLElement>('.navitem[data-selected="true"]');
@@ -22,6 +22,7 @@ function useRouteFocus() {
 export function AppShell() {
   const { pathname } = useLocation();
   useRouteFocus();
+  useScrollMemory();
   const overHero = pathname === "/" || pathname.startsWith("/detail");
   const fullScreen = pathname.startsWith("/sources"); // like the TV's SourcesScreen: its own back arrow, no top navigation
   return (

@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { MdAccountBalance, MdArticle, MdAutoAwesome, MdCalendarToday, MdCategory, MdDirectionsRun, MdExtension, MdFavorite, MdGavel, MdGroups, MdLandscape, MdLocalMovies, MdMood, MdMusicNote, MdNightsStay, MdPalette, MdScience, MdSearch, MdShield, MdSportsSoccer, MdTerrain, MdTheaterComedy, MdVideocam, MdVisibility } from "react-icons/md";
 import type { IconType } from "react-icons";
-import { useNavigate } from "react-router-dom";
 import { useProviders } from "../../domain/registry";
 import { routes } from "../../lib/routes";
 import { Surface } from "../components/Surface";
@@ -40,7 +39,6 @@ export function buildGenreList(all: Iterable<string>): string[] {
 export function GenresScreen() {
   const providers = useProviders((s) => s.providers);
   const ready = useAddonsReady();
-  const navigate = useNavigate();
   const [genres, setGenres] = useState<string[] | null>(null);
   useEffect(() => {
     document.title = "Genres · Mango TV";
@@ -83,7 +81,6 @@ export function GenresScreen() {
                     backgroundImage={`linear-gradient(135deg, var(--surface-high), color-mix(in srgb, ${ACCENTS[index % ACCENTS.length]} 32%, var(--surface-high)))`}
                     dataAttrs={{ autofocus: index === 0 }}
                     ariaLabel={genre}
-                    onClick={() => navigate(routes.genre(genre))}
                   >
                     <Icon aria-hidden="true" />
                     <span className="t-label-lg ellipsis">{genre}</span>

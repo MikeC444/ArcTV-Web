@@ -4,6 +4,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { DEBRID_NAMES, describeCaps, deviceVerdict, getDeviceCaps, startRank, type DeviceCaps } from "../../domain/deviceSupport";
 import { resolutionOrdinal, SOURCE_HEALTH_LABEL, type Content, type ContentType, type ResolutionTier, type Stream } from "../../domain/types";
 import { formatRuntime } from "../../lib/format";
+import { useGoBack } from "../../lib/navigation";
 import { parseOptionalInt, routes } from "../../lib/routes";
 import { useSources, type AddonLookupRow } from "../../state/sourcesData";
 import { IconButton, MangoButton, Pill } from "../components/Buttons";
@@ -41,6 +42,7 @@ export function SourcesScreen() {
   const params = useParams<{ providerId: string; type: string; id: string; season: string; episode: string }>();
   const [search] = useSearchParams();
   const navigate = useNavigate();
+  const goBack = useGoBack(routes.home);
   const providerId = params.providerId ?? "";
   const id = params.id ?? "";
   const type: ContentType = params.type === "TV_SHOW" ? "TV_SHOW" : "MOVIE";
@@ -69,8 +71,8 @@ export function SourcesScreen() {
   }, [state]);
 
   if (state.kind === "error") return <FullScreenError message={state.message} onRetry={reload} />;
-  if (state.kind === "loading" || autoSelect) return <SourcesShell loading onBack={() => navigate(-1)} />;
-  return <SourcesLoaded state={state} onBack={() => navigate(-1)} onSelect={(s) => goPlay(s.id)} onManage={() => navigate(routes.settings("addons"))} onRetry={reload} />;
+  if (state.kind === "loading" || autoSelect) return <SourcesShell loading onBack={goBack} />;
+  return <SourcesLoaded state={state} onBack={goBack} onSelect={(s) => goPlay(s.id)} onManage={() => navigate(routes.settings("addons"))} onRetry={reload} />;
 }
 
 function SourcesShell({ onBack }: { loading?: boolean; onBack: () => void }) {

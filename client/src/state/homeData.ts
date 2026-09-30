@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { applyRowOrder, dedupeRows } from "../domain/homeRows";
+import { applyRowOrder, dedupeRows, withoutShownTitles } from "../domain/homeRows";
 import { useProviders } from "../domain/registry";
 import type { CatalogProvider } from "../domain/provider";
 import { pickHeroPool } from "../domain/heroPool";
@@ -139,7 +139,8 @@ export function useHome(): { state: HomeState; reload(): void; ready: boolean } 
   const state = useMemo<HomeState>(() => {
     if (!fetched || !addonsReady) return { kind: "loading" };
     const visible = dedupeRows(applyRowOrder(raw, prefs).filter((s) => !prefs.hiddenRowIds.includes(s.id))).map((s) => sectionWithWatched(s, watchedIds));
-    const cwSection: HomeSection | null = cw.length ? { id: CONTINUE_WATCHING_ROW_ID, title: "Continue Watching", style: "CONTINUE_WATCHING", items: cw.map(entryToContent).map((c) => (watchedIds.has(c.id) ? { ...c, watched: true } : c)) } : null;
+    const cwEntries = withoutShownTitles(cw, visible); // a title that already sits in another row is not repeated under Continue Watching
+    const cwSection: HomeSection | null = cwEntries.length ? { id: CONTINUE_WATCHING_ROW_ID, title: "Continue Watching", style: "CONTINUE_WATCHING", items: cwEntries.map(entryToContent).map((c) => (watchedIds.has(c.id) ? { ...c, watched: true } : c)) } : null;
     const sections = [...(cwSection ? [cwSection] : []), ...visible];
 
     const pool = distinctBy(visible.flatMap((s) => s.items), (c) => c.id);
