@@ -2,8 +2,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { applyRowOrder } from "../domain/homeRows";
 import { useProviders } from "../domain/registry";
 import type { CatalogProvider } from "../domain/provider";
+import { pickHeroPool } from "../domain/heroPool";
 import type { Content, HomeSection } from "../domain/types";
-import { distinctBy, shuffled } from "../lib/format";
+import { distinctBy } from "../lib/format";
 import { useAuth } from "./auth";
 import { useContinueWatching, type ContinueWatchingEntry } from "./continueWatching";
 import { sectionWithWatched, useAddonsReady, useWatchedIds } from "./hooks";
@@ -143,10 +144,10 @@ export function useHome(): { state: HomeState; reload(): void; ready: boolean } 
 
     const pool = distinctBy(visible.flatMap((s) => s.items), (c) => c.id);
     let hero: Content[];
-    if (cacheOnly) hero = shuffled(pool).slice(0, HERO_POOL_SIZE);
+    if (cacheOnly) hero = pickHeroPool(pool, HERO_POOL_SIZE);
     else {
       // Lock the pool in once there is something to pick from — never lock in an empty one (providers load after sign-in).
-      if ((!heroPool || heroPool.length === 0) && pool.length > 0) heroPool = shuffled(pool).slice(0, HERO_POOL_SIZE);
+      if ((!heroPool || heroPool.length === 0) && pool.length > 0) heroPool = pickHeroPool(pool, HERO_POOL_SIZE);
       hero = (heroPool ?? []).map((c) => (watchedIds.has(c.id) ? { ...c, watched: true } : c));
     }
     if (hero.length > 0 || sections.length > 0) return { kind: "success", hero, sections };

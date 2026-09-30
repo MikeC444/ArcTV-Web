@@ -37,9 +37,10 @@
 @media (prefers-reduced-motion: reduce) { .hero__slide[data-anim] { animation-duration: 1ms; } }
 .hero__layer { position: absolute; inset: 0; }
 @keyframes heroIn { from { opacity: 0; } to { opacity: 1; } }
-.hero__layer img { width: 100%; height: 100%; object-fit: cover; }
-.hero__layer img[data-loaded="true"] { animation: kenburns 9s linear infinite alternate; }
-@keyframes kenburns { from { transform: scale(1); } to { transform: scale(1.08); } }
+/* The hero box is wider than the 16:9 pictures addons supply (about 2.4:1 at 1920x1080), so they are cropped: keep the top (heads, titles) and let the bottom go — it is darkened by the scrim anyway. */
+.hero__layer img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 12%; }
+.hero__layer img[data-loaded="true"] { transform-origin: 50% 12%; animation: kenburns 9s linear infinite alternate; }
+@keyframes kenburns { from { transform: scale(1); } to { transform: scale(1.04); } }
 .hero__scrim-x { position: absolute; inset: 0; background: linear-gradient(to right, rgba(8, 8, 10, 0.55), rgba(8, 8, 10, 0.2), transparent); }
 .hero__scrim-y { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 0%, transparent 25%, rgba(8, 8, 10, 0.15) 50%, rgba(8, 8, 10, 0.6) 75%, var(--bg) 100%); }
 /* The logo / title, details and buttons sit left-aligned in the vertical middle of the hero photo (phones keep them at the bottom). */
