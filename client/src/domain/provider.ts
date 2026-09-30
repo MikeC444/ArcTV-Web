@@ -1,5 +1,5 @@
 import { distinctBy, interleave } from "../lib/format";
-import { fetchCatalog, fetchMeta, fetchStreams } from "./stremio/client";
+import { AddonHttpError, describeAddonError, fetchCatalog, fetchMeta, fetchStreams } from "./stremio/client";
 import { metaToContent, previewToContent, streamToStream } from "./stremio/mapper";
 import type { AddonCatalogDef, AddonManifest, Content, ContentType, HomeSection, Stream } from "./types";
 
@@ -7,12 +7,27 @@ import type { AddonCatalogDef, AddonManifest, Content, ContentType, HomeSection,
  * Port of data/provider/{CatalogProvider,StremioAddonProvider}.kt. The UI only ever talks to providers through
  * this interface and the normalised Content / HomeSection models — it never sees an addon's wire format.
  */
+/** What one addon answered when asked for the streams of a title (shown on Select a Source so nothing fails silently). */
+export type StreamLookup =
+  | { kind: "ok"; count: number }
+  | { kind: "none" } // it answered, with no streams for this title
+  | { kind: "unsupported" } // its manifest says it doesn't provide streams (e.g. Cinemeta) — it isn't asked
+  | { kind: "failed"; reason: string };
+
+export interface StreamReport {
+  addonName: string;
+  streams: Stream[];
+  lookup: StreamLookup;
+}
+
 export interface CatalogProvider {
   readonly id: string;
   readonly name: string;
   getHomeSections(): AsyncGenerator<HomeSection[], void, void>;
   getDetails(type: ContentType, id: string): Promise<Content | null>;
   getStreams(type: ContentType, id: string, season?: number | null, episode?: number | null): Promise<Stream[]>;
+  /** Like getStreams, but says what happened (streams / none / not a stream addon / failed and why). Never throws. */
+  getStreamReport(type: ContentType, id: string, season?: number | null, episode?: number | null): Promise<StreamReport>;
   getSectionsByType(type: ContentType): Promise<HomeSection[]>;
   getAvailableGenres(): Promise<string[]>;
   getGenreSection(genre: string): Promise<HomeSection | null>;
@@ -138,12 +153,26 @@ export class StremioAddonProvider implements CatalogProvider {
   }
 
   async getStreams(type: ContentType, id: string, season?: number | null, episode?: number | null): Promise<Stream[]> {
+    return (await this.getStreamReport(type, id, season, episode)).streams;
+  }
+
+  /** A manifest that lists its resources without "stream" (Cinemeta: catalog + meta) has nothing to ask; an undeclared list is asked anyway, like the TV app does. */
+  private offersStreams(): boolean {
+    const resources = this.manifest.resources;
+    if (!Array.isArray(resources) || resources.length === 0) return true;
+    return resources.some((r) => (typeof r === "string" ? r : (r as { name?: unknown } | null)?.name) === "stream");
+  }
+
+  async getStreamReport(type: ContentType, id: string, season?: number | null, episode?: number | null): Promise<StreamReport> {
+    const addonName = this.name;
+    if (!this.offersStreams()) return { addonName, streams: [], lookup: { kind: "unsupported" } };
     const requestId = season != null && episode != null ? `${id}:${season}:${episode}` : id;
     try {
-      const streams = await fetchStreams(this.manifestUrl, stremioTypeOf(type), requestId);
-      return uniqueStreamIds(streams.map((stream) => streamToStream(stream, this.id, this.name)));
-    } catch {
-      return [];
+      const streams = uniqueStreamIds((await fetchStreams(this.manifestUrl, stremioTypeOf(type), requestId)).map((stream) => streamToStream(stream, this.id, this.name)));
+      return { addonName, streams, lookup: streams.length > 0 ? { kind: "ok", count: streams.length } : { kind: "none" } };
+    } catch (error) {
+      if (error instanceof AddonHttpError && error.status === 404) return { addonName, streams: [], lookup: { kind: "none" } }; // "I don't know this id"
+      return { addonName, streams: [], lookup: { kind: "failed", reason: describeAddonError(error) } };
     }
   }
 

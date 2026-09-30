@@ -107,6 +107,43 @@ function svg(kind, key) {
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*", "Access-Control-Expose-Headers": "Content-Length, Content-Range, Accept-Ranges" };
 const MIME = { ".webm": "video/webm", ".m3u8": "application/vnd.apple.mpegurl", ".m4s": "video/iso.segment", ".mp4": "video/mp4", ".vtt": "text/vtt" };
 
+/** Every request the addon receives, so tests can prove the web app really asked (GET /__requests, DELETE /__requests). */
+const requestLog = [];
+
+// Extra addons, each mounted under its own prefix. The path segment after /streamonly/ is a "config" like the one real
+// debrid addons carry in their URL (characters such as = , | included).
+//   /streamonly/<config>/…   stream-only addon (no catalogs) that returns two direct streams
+//   /broken/…                declares streams but answers HTTP 500
+//   /empty/…                 declares streams but has none for any title
+//   /nostreams/…             catalog + meta only, like Cinemeta (must never be asked for streams)
+const extraManifest = (id, name, resources) => ({ id, name, version: "1.0.0", description: "Local test addon", resources, types: ["movie", "series"], idPrefixes: ["fx"], catalogs: [] });
+
+function handleExtraAddon(p, res, cors) {
+  let m = /^\/streamonly\/([^/]+)\/manifest\.json$/.exec(p);
+  if (m) {
+    const config = decodeURIComponent(m[1]);
+    return json(res, extraManifest(`test.mangotv.streamonly.${config.replace(/\W/g, "")}`, `Fixture Streams ${config.split(/[=|,]/)[0]}`, ["stream"]), cors), true;
+  }
+  m = /^\/streamonly\/([^/]+)\/stream\/(movie|series)\/([^/]+)\.json$/.exec(p);
+  if (m) {
+    const tag = decodeURIComponent(m[1]).split(/[=|,]/)[0];
+    const title = `Extra.${tag}`;
+    return json(res, { streams: [
+      { name: `Stream ${tag} 1080p`, title: `${title}.1080p.WEB-DL.VP9\n👤 320 💾 2.1 GB`, url: `${BASE}/media/sample.webm?via=${tag}-1` },
+      { name: `Stream ${tag} 720p`, title: `${title}.720p.WEB-DL.VP9\n👤 120 💾 1.1 GB`, url: `${BASE}/media/sample.webm?via=${tag}-2` },
+    ] }, cors), true;
+  }
+  if (p === "/broken/manifest.json") return json(res, extraManifest("test.mangotv.broken", "Fixture Broken", ["stream"]), cors), true;
+  if (/^\/broken\/stream\//.test(p)) return res.writeHead(500, cors ? CORS : {}), res.end("boom"), true;
+  if (p === "/empty/manifest.json") return json(res, extraManifest("test.mangotv.empty", "Fixture Empty", ["stream"]), cors), true;
+  if (/^\/empty\/stream\//.test(p)) return json(res, { streams: [] }, cors), true;
+  if (p === "/nostreams/manifest.json") return json(res, extraManifest("test.mangotv.nostreams", "Fixture Catalog Only", ["catalog", "meta"]), cors), true;
+  if (/^\/nostreams\/stream\//.test(p)) return res.writeHead(404, cors ? CORS : {}), res.end("no such resource"), true;
+  m = /^\/nostreams\/meta\/(movie|series)\/([^/]+)\.json$/.exec(p);
+  if (m) return json(res, { meta: metaFor(m[1], decodeURIComponent(m[2])) }, cors), true;
+  return false;
+}
+
 function json(res, body, cors) {
   res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", ...(cors ? CORS : {}) });
   res.end(JSON.stringify(body));
@@ -145,12 +182,19 @@ export function createAddonServer() {
     const url = new URL(req.url ?? "/", BASE);
     let p = url.pathname;
     if (req.method === "OPTIONS") {
-      res.writeHead(204, { ...CORS, "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS" });
+      res.writeHead(204, { ...CORS, "Access-Control-Allow-Methods": "GET, HEAD, DELETE, OPTIONS" });
       return res.end();
     }
     // /nocors/... = the same addon, but without any CORS headers (browsers can't read it directly)
     const cors = !p.startsWith("/nocors/");
     if (!cors) p = p.slice("/nocors".length);
+
+    if (p === "/__requests") {
+      if (req.method === "DELETE") requestLog.length = 0;
+      return json(res, { requests: requestLog }, true);
+    }
+    requestLog.push(`${req.method} ${cors ? "" : "/nocors"}${p}`);
+    if (handleExtraAddon(p, res, cors)) return;
 
     if (p === "/manifest.json") return json(res, manifest, cors);
     if (p.startsWith("/media/")) return serveFile(req, res, path.join(mediaDir, decodeURIComponent(p.slice("/media/".length))));

@@ -19,6 +19,17 @@ export class AddonHttpError extends Error {
   }
 }
 
+/** A plain-language reason for an addon request that failed, shown next to the addon's name on Select a Source. */
+export function describeAddonError(error: unknown): string {
+  const status = error instanceof AddonHttpError ? error.status : undefined;
+  if (status === 429) return "is limiting requests right now — try again in a moment";
+  if (status && status >= 500) return `had a problem answering (HTTP ${status})`;
+  if (status) return `refused the request (HTTP ${status})`;
+  const message = error instanceof Error ? error.message : "";
+  if (/time|abort/i.test(message) || (error instanceof Error && error.name === "TimeoutError")) return "took too long to answer";
+  return message && message.length < 140 ? `couldn't be reached (${message.replace(/[.\s]+$/, "")})` : "couldn't be reached";
+}
+
 const REQUEST_TIMEOUT_MS = 15_000;
 
 interface CacheEntry {

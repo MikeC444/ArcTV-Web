@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { MdArrowBack, MdExpandMore, MdExtension, MdInfo, MdPerson, MdSearchOff, MdSecurity, MdStar, MdSurroundSound, MdCheckCircle, MdOutlineCheckCircle, MdWifi, MdPlayArrow, MdWarningAmber } from "react-icons/md";
+import { MdArrowBack, MdExpandMore, MdRefresh, MdExtension, MdInfo, MdPerson, MdSearchOff, MdSecurity, MdStar, MdSurroundSound, MdCheckCircle, MdOutlineCheckCircle, MdWifi, MdPlayArrow, MdWarningAmber } from "react-icons/md";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { assessStream } from "../../domain/playability";
 import { resolutionOrdinal, SOURCE_HEALTH_LABEL, type Content, type ContentType, type ResolutionTier, type Stream } from "../../domain/types";
 import { formatRuntime } from "../../lib/format";
 import { parseOptionalInt, routes } from "../../lib/routes";
-import { useSources } from "../../state/sourcesData";
+import { useSources, type AddonLookupRow } from "../../state/sourcesData";
 import { IconButton, MangoButton, Pill } from "../components/Buttons";
 import { Shimmer } from "../components/Skeletons";
 import { FullScreenError, Spinner } from "../components/States";
@@ -65,7 +65,7 @@ export function SourcesScreen() {
 
   if (state.kind === "error") return <FullScreenError message={state.message} onRetry={reload} />;
   if (state.kind === "loading" || autoSelect) return <SourcesShell loading onBack={() => navigate(-1)} />;
-  return <SourcesLoaded state={state} onBack={() => navigate(-1)} onSelect={(s) => goPlay(s.id)} onManage={() => navigate(routes.settings("addons"))} />;
+  return <SourcesLoaded state={state} onBack={() => navigate(-1)} onSelect={(s) => goPlay(s.id)} onManage={() => navigate(routes.settings("addons"))} onRetry={reload} />;
 }
 
 function SourcesShell({ onBack }: { loading?: boolean; onBack: () => void }) {
@@ -91,7 +91,7 @@ function SourcesShell({ onBack }: { loading?: boolean; onBack: () => void }) {
   );
 }
 
-function SourcesLoaded({ state, onBack, onSelect, onManage }: { state: Extract<ReturnType<typeof useSources>["state"], { kind: "loaded" }>; onBack: () => void; onSelect: (s: Stream) => void; onManage: () => void }) {
+function SourcesLoaded({ state, onBack, onSelect, onManage, onRetry }: { state: Extract<ReturnType<typeof useSources>["state"], { kind: "loaded" }>; onBack: () => void; onSelect: (s: Stream) => void; onManage: () => void; onRetry: () => void }) {
   const [filter, setFilter] = useState<SourceFilter>("ALL");
   const [sort, setSort] = useState<SourceSort>("QUALITY");
   const [showHelp, setShowHelp] = useState(false);
@@ -122,8 +122,19 @@ function SourcesLoaded({ state, onBack, onSelect, onManage }: { state: Extract<R
         <div className="sources__list" role="list" aria-live="polite">
           {sorted.length === 0 && state.searchingMore ? (
             <div className="sources__empty"><Spinner /><h2 className="t-title-lg">Searching for sources…</h2><p className="c-text-2 t-body-md">Checking your installed addons for this title.</p></div>
+          ) : sorted.length === 0 && state.streams.length > 0 ? (
+            <div className="sources__empty"><MdSearchOff size={40} className="c-text-3" aria-hidden="true" /><h2 className="t-title-lg">No sources in this quality</h2><p className="c-text-2 t-body-md">Choose “All Sources” to see everything your addons found.</p><MangoButton text="All Sources" icon={<MdCheckCircle />} onClick={() => setFilter("ALL")} /></div>
           ) : sorted.length === 0 ? (
-            <div className="sources__empty"><MdSearchOff size={40} className="c-text-3" aria-hidden="true" /><h2 className="t-title-lg">No sources found</h2><p className="c-text-2 t-body-md">Try installing more addons to find sources for this title.</p><MangoButton text="Manage Addons" icon={<MdExtension />} onClick={onManage} /></div>
+            <div className="sources__empty">
+              <MdSearchOff size={40} className="c-text-3" aria-hidden="true" />
+              <h2 className="t-title-lg">No sources found</h2>
+              <p className="c-text-2 t-body-md">{noSourcesHint(state.addons)}</p>
+              <AddonResults rows={state.addons} open />
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center", marginTop: 8 }}>
+                {state.addons.some((a) => a.lookup.kind === "failed") ? <MangoButton text="Try Again" icon={<MdRefresh />} onClick={onRetry} /> : null}
+                <MangoButton text="Manage Addons" icon={<MdExtension />} onClick={onManage} />
+              </div>
+            </div>
           ) : (
             <>
               {state.searchingMore ? <div className="sources__more"><Spinner small /> <span className="t-label-md c-text-2">Looking for more sources…</span></div> : null}
@@ -133,6 +144,12 @@ function SourcesLoaded({ state, onBack, onSelect, onManage }: { state: Extract<R
             </>
           )}
         </div>
+        {sorted.length > 0 || state.streams.length > 0 ? (
+          <div style={{ marginTop: "calc(8 * var(--dp))" }}>
+            <AddonResults rows={state.addons} open={state.addons.some((a) => a.lookup.kind === "failed")} />
+            {state.addons.some((a) => a.lookup.kind === "failed") && !state.searchingMore ? <MangoButton text="Try Again" icon={<MdRefresh />} compact onClick={onRetry} /> : null}
+          </div>
+        ) : null}
         <div className="safety">
           <div className="safety__rule" />
           <div className="safety__row">
@@ -207,6 +224,49 @@ export function GlowPlay({ size = 36, glow, icon = 18 }: { size?: number; glow?:
 
 const TIER_COLOR: Record<ResolutionTier, string> = { UHD_4K: "var(--amber)", FHD_1080P: "var(--azure)", HD_720P: "var(--teal)", OTHER: "var(--text-3)" };
 const HEALTH_COLOR = { VERY_HIGH: "var(--teal)", HIGH: "var(--teal)", GOOD: "var(--azure)", LOW: "var(--text-3)" } as const;
+
+function noSourcesHint(rows: AddonLookupRow[]): string {
+  if (rows.length === 0) return "You don't have any addons installed. Add a stream addon under Settings → Addons to find sources.";
+  if (rows.some((r) => r.lookup.kind === "failed")) return "Some of your addons didn't answer, so this list may be incomplete. Try again in a moment.";
+  if (rows.every((r) => r.lookup.kind === "unsupported")) return "None of your installed addons provide streams. Add a stream addon under Settings → Addons.";
+  return "Your addons were asked, but none of them has a stream for this title yet. Newer or lesser-known titles often have none.";
+}
+
+function lookupText(lookup: AddonLookupRow["lookup"]): { text: string; tone: "ok" | "muted" | "bad" } {
+  switch (lookup.kind) {
+    case "searching":
+      return { text: "Checking…", tone: "muted" };
+    case "ok":
+      return { text: `${lookup.count} source${lookup.count === 1 ? "" : "s"}`, tone: "ok" };
+    case "none":
+      return { text: "No streams for this title", tone: "muted" };
+    case "unsupported":
+      return { text: "Doesn't provide streams", tone: "muted" };
+    case "failed":
+      return { text: lookup.reason, tone: "bad" };
+  }
+}
+
+/** Which addons were asked for this title, and what each one answered — so a missing source is never a mystery. */
+function AddonResults({ rows, open }: { rows: AddonLookupRow[]; open?: boolean }) {
+  if (rows.length === 0) return null;
+  return (
+    <details className="addonres" open={open}>
+      <summary className="t-label-md c-text-2">Addon results ({rows.length})</summary>
+      <ul className="addonres__list">
+        {rows.map((row, index) => {
+          const { text, tone } = lookupText(row.lookup);
+          return (
+            <li key={`${row.name}-${index}`} className="addonres__row" data-tone={tone}>
+              <span className="t-label-md addonres__name">{row.name}</span>
+              <span className="t-label-md addonres__text">{text}</span>
+            </li>
+          );
+        })}
+      </ul>
+    </details>
+  );
+}
 
 function SourceRow({ stream, recommended, onClick, autoFocus }: { stream: Stream; recommended: boolean; onClick: () => void; autoFocus?: boolean }) {
   const play = assessStream(stream);

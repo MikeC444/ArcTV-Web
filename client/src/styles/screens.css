@@ -134,6 +134,14 @@
 .sources__pills { display: flex; gap: calc(6 * var(--dp)); flex: 1; overflow-x: auto; padding: 4px 2px; }
 .sources__list { flex: 1; display: flex; flex-direction: column; gap: calc(10 * var(--dp)); padding: calc(24 * var(--dp)) 0 calc(14 * var(--dp)); }
 .sources__empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 8px; min-height: 240px; }
+.addonres { margin: calc(6 * var(--dp)) 0; text-align: left; }
+.addonres summary { cursor: pointer; padding: 6px 2px; }
+.addonres__list { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; max-width: 640px; min-width: min(440px, 100%); }
+.addonres__row { display: flex; justify-content: space-between; gap: 32px; }
+.addonres__name { color: var(--text-2); font-weight: 700; }
+.addonres__text { color: var(--text-3); text-align: right; }
+.addonres__row[data-tone="ok"] .addonres__text { color: var(--teal); }
+.addonres__row[data-tone="bad"] .addonres__text { color: var(--amber, #ffb020); }
 .sources__more { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
 .source { position: relative; }
 .source__surface { width: 100%; display: flex; align-items: center; gap: calc(8 * var(--dp)); padding: calc(10 * var(--dp)) calc(14 * var(--dp)); text-align: left; --tvs-radius: var(--card-radius); }

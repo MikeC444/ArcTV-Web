@@ -43,6 +43,13 @@ export class Tv {
   put = (path: string, body: unknown) => this.call("PUT", path, body);
   del = (path: string) => this.call("DELETE", path);
 
+  /** Installs any Stremio addon by manifest URL exactly as the TV would (synced to the cloud). */
+  async installAddon(manifestUrl: string, sortOrder = 1) {
+    const manifest = await (await fetch(manifestUrl)).json();
+    const r = await this.post("/user/addons", { manifestUrl, addonId: manifest.id, name: manifest.name, manifestJson: manifest, enabled: true, sortOrder, updatedAt: new Date(Date.now() - 50_000 + sortOrder).toISOString() });
+    expect(r.status).toBe(200);
+  }
+
   /** Installs the fixture addon exactly as the TV would (synced to the cloud). */
   async installFixtureAddon() {
     const manifest = await (await fetch(ADDON_MANIFEST)).json();

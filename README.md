@@ -201,6 +201,16 @@ or silently picking another source:
 | MKV / AVI / HEVC / AC-3 etc. | Marked "May not play in browser"; if it fails, the error names the likely cause and offers **Change Source** |
 | DRM (Widevine / FairPlay / PlayReady) | Not implemented — the Firestick app has no DRM path either |
 
+### "Nothing plays" / "No sources found"
+
+Playback starts from **Select a Source**, which asks **every enabled addon on your account** for streams of the title
+(stream-only addons such as debrid addons included; an addon whose manifest lists resources without `stream`, like
+Cinemeta, is skipped). Under the list, **Addon results** shows what each addon answered — number of sources, "no streams
+for this title", "doesn't provide streams", or why it failed (timed out, HTTP 500 …) — and **Try Again** re-asks. If every
+addon says "no streams", the title simply has no sources yet (new or obscure titles often don't). If sources are listed
+but won't play, the reason is in the table above (torrent-only, MKV/HEVC/Dolby audio, headers, CORS, insecure HTTP).
+`e2e/tests/addons.spec.ts` proves this flow with stream-only addons whose URL carries a config, with and without CORS.
+
 ## Security model
 
 * No database URL, Neon credential, service key or signing secret exists in client code, in the repository, or in any

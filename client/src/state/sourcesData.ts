@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { assessStream } from "../domain/playability";
+import type { StreamLookup } from "../domain/provider";
 import { activeProviders } from "../domain/registry";
 import { resolutionOrdinal, type Content, type ContentType, type Stream } from "../domain/types";
 import { useAuth } from "./auth";
@@ -7,10 +8,16 @@ import { useAddonsReady } from "./hooks";
 import { useContinueWatching } from "./continueWatching";
 import { findLastStreamId } from "./lastSource";
 
+/** One installed addon and what it answered (or that it is still being asked). */
+export interface AddonLookupRow {
+  name: string;
+  lookup: StreamLookup | { kind: "searching" };
+}
+
 export type SourcesState =
   | { kind: "loading" }
   | { kind: "error"; message: string }
-  | { kind: "loaded"; content: Content; streams: Stream[]; recommendedId: string | null; searchingMore: boolean; autoSelect: Stream | null };
+  | { kind: "loaded"; content: Content; streams: Stream[]; addons: AddonLookupRow[]; recommendedId: string | null; searchingMore: boolean; autoSelect: Stream | null };
 
 /** Best stream = highest resolution, then most seeders; streams a browser can actually play win over ones it can't. */
 export function recommendedStreamId(streams: Stream[]): string | null {
@@ -45,27 +52,32 @@ export function useSources(providerId: string, type: ContentType, id: string, se
       const fail = () => !cancelled && setState({ kind: "error", message: "Couldn't load details for this title." });
 
       if (resumeFlow) {
-        const streams = (await Promise.all(providers.map((p) => p.getStreams(type, id, season, episode).catch(() => [] as Stream[])))).flat();
+        const reports = await Promise.all(providers.map((p) => p.getStreamReport(type, id, season, episode)));
+        const streams = reports.flatMap((r) => r.streams);
         const content = await contentPromise;
         if (cancelled) return;
         if (!content) return fail();
         const lastId = userId ? findLastStreamId(userId, providerId, id, type, season, episode) : null;
-        setState({ kind: "loaded", content, streams, recommendedId: recommendedStreamId(streams), searchingMore: false, autoSelect: lastId ? (streams.find((s) => s.id === lastId) ?? null) : null });
+        setState({ kind: "loaded", content, streams, addons: reports.map((r) => ({ name: r.addonName, lookup: r.lookup })), recommendedId: recommendedStreamId(streams), searchingMore: false, autoSelect: lastId ? (streams.find((s) => s.id === lastId) ?? null) : null });
         return;
       }
 
       const content = await contentPromise;
       if (cancelled) return;
       if (!content) return fail();
-      if (providers.length === 0) return setState({ kind: "loaded", content, streams: [], recommendedId: null, searchingMore: false, autoSelect: null });
+      if (providers.length === 0) return setState({ kind: "loaded", content, streams: [], addons: [], recommendedId: null, searchingMore: false, autoSelect: null });
       const accumulated: Stream[] = [];
+      const rows: AddonLookupRow[] = providers.map((p) => ({ name: p.name, lookup: { kind: "searching" } }));
       let remaining = providers.length;
-      providers.forEach((provider) => {
-        void provider.getStreams(type, id, season, episode).catch(() => [] as Stream[]).then((streams) => {
+      const publish = () => setState({ kind: "loaded", content, streams: accumulated.slice(), addons: rows.slice(), recommendedId: recommendedStreamId(accumulated), searchingMore: remaining > 0, autoSelect: null });
+      publish();
+      providers.forEach((provider, index) => {
+        void provider.getStreamReport(type, id, season, episode).then((report) => {
           if (cancelled) return;
-          accumulated.push(...streams);
+          accumulated.push(...report.streams);
+          rows[index] = { name: report.addonName, lookup: report.lookup };
           remaining--;
-          setState({ kind: "loaded", content, streams: accumulated.slice(), recommendedId: recommendedStreamId(accumulated), searchingMore: remaining > 0, autoSelect: null });
+          publish();
         });
       });
     })();
