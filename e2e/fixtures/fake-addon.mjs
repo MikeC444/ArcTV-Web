@@ -1,0 +1,187 @@
+// A tiny, deterministic Stremio-protocol addon used ONLY by the browser tests (and for local demos).
+// It speaks the real protocol (manifest / catalog / meta / stream), serves generated poster art and the
+// synthetic media in ./media with Range + CORS support, and also exposes a copy of itself WITHOUT CORS
+// headers under /nocors to exercise the server-side addon fallback.
+//
+//   node e2e/fixtures/fake-addon.mjs            # http://127.0.0.1:7000/manifest.json
+import fs from "node:fs";
+import http from "node:http";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+const mediaDir = path.join(here, "media");
+export const PORT = Number(process.env.ADDON_PORT ?? 7000);
+const BASE = process.env.ADDON_PUBLIC_URL ?? `http://127.0.0.1:${PORT}`;
+
+const GENRES = ["Action", "Comedy", "Drama", "Sci-Fi", "Horror", "Romance"];
+const YEAR_OPTIONS = ["2024", "2023"];
+const WORDS_A = ["Crimson", "Silent", "Golden", "Broken", "Hidden", "Electric", "Midnight", "Paper", "Iron", "Velvet", "Neon", "Hollow", "Wild", "Distant", "Burning"];
+const WORDS_B = ["Harbor", "Empire", "Signal", "Garden", "Horizon", "Machine", "Kingdom", "Letters", "Frontier", "Echo", "Orchard", "Thunder", "Mirror", "Voyage", "Season"];
+
+function rand(seed) {
+  let s = seed >>> 0;
+  return () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 2 ** 32);
+}
+
+function makeItem(kind, i) {
+  const r = rand(i * 7919 + (kind === "movie" ? 1 : 2));
+  const title = `${WORDS_A[Math.floor(r() * WORDS_A.length)]} ${WORDS_B[Math.floor(r() * WORDS_B.length)]}${i % 5 === 0 ? ` ${Math.floor(r() * 3) + 2}` : ""}`;
+  const genres = [...new Set([GENRES[i % GENRES.length], GENRES[Math.floor(r() * GENRES.length)]])];
+  const year = 2015 + (i % 10);
+  return {
+    id: `fx${kind === "movie" ? "m" : "s"}${i}`,
+    type: kind === "movie" ? "movie" : "series",
+    name: `${title}`,
+    releaseInfo: kind === "movie" ? String(year) : `${year}–`,
+    imdbRating: (5 + r() * 4.4).toFixed(1),
+    genres: [...genres, ...(year >= 2023 ? [String(year)] : [])].filter((g) => !/^\d+$/.test(g)),
+    _year: String(year),
+    runtime: kind === "movie" ? `${90 + Math.floor(r() * 60)} min` : "45 min",
+    description: `A ${genres[0].toLowerCase()} story: ${title} follows an unlikely crew across one impossible season. Generated fixture text for tests — not a real title.`,
+    poster: `${BASE}/img/poster/${i}-${kind}.svg`,
+    background: `${BASE}/img/bg/${i}-${kind}.svg`,
+  };
+}
+
+const MOVIES = Array.from({ length: 140 }, (_, i) => makeItem("movie", i + 1));
+const SERIES = Array.from({ length: 70 }, (_, i) => makeItem("series", i + 1));
+const all = { movie: MOVIES, series: SERIES };
+
+const manifest = {
+  id: "test.mangotv.fixture",
+  version: "1.0.0",
+  name: "Fixture Catalog",
+  description: "Local Stremio-protocol test addon (synthetic titles, no real content).",
+  resources: ["catalog", "meta", "stream"],
+  types: ["movie", "series"],
+  idPrefixes: ["fx"],
+  catalogs: ["movie", "series"].map((type) => ({
+    type,
+    id: "top",
+    name: "Popular",
+    extra: [{ name: "genre", options: [...GENRES, ...YEAR_OPTIONS] }, { name: "search" }, { name: "skip" }],
+  })),
+};
+
+const preview = ({ _year, ...meta }) => meta;
+
+function cast(i) {
+  return ["Ana Whitlock", "Marcus Bell", "Priya Nandakumar", "Tomás Ferreira", "Yuki Tanabe"].slice(0, 3 + (i % 3));
+}
+
+function metaFor(type, id) {
+  const item = all[type]?.find((m) => m.id === id);
+  if (!item) return null;
+  const base = { ...preview(item), logo: null, director: ["Sam Okafor"], cast: cast(Number(id.replace(/\D/g, ""))) };
+  if (type === "series") {
+    base.videos = [];
+    for (let s = 1; s <= 3; s++)
+      for (let e = 1; e <= 5; e++)
+        base.videos.push({ id: `${id}:${s}:${e}`, title: `Chapter ${e}`, season: s, episode: e, overview: `Season ${s}, episode ${e} of ${item.name}.`, thumbnail: `${BASE}/img/bg/${id}-${s}-${e}.svg` });
+  }
+  return base;
+}
+
+function streamsFor(type, id) {
+  const title = (all[type]?.find((m) => m.id === id.split(":")[0])?.name ?? "Fixture").replace(/ /g, ".");
+  return [
+    { name: "Fixture Direct", title: `${title}.2024.720p.WEB-DL.VP9\n👤 250 💾 1.2 GB`, url: `${BASE}/media/sample.webm` },
+    { name: "Fixture HLS", title: `${title}.2024.1080p.WEB-DL.VP9\n👤 640 💾 2.4 GB`, url: `${BASE}/media/hls/master.m3u8` },
+    { name: "[TB+] Fixture Torrent", title: `${title}.2024.2160p.BluRay.x265.DDP5.1.Atmos\n👤 1500 💾 40 GB`, infoHash: "a".repeat(40) },
+    { name: "Fixture MKV", title: `${title}.2024.1080p.BluRay.x264.mkv\n👤 90 💾 8 GB`, url: `${BASE}/media/missing.mkv` },
+    { name: "Fixture Web-unready", title: `${title}.2024.480p.HDTV\n👤 10 💾 700 MB`, url: `${BASE}/media/sample.webm?variant=web-unready`, behaviorHints: { notWebReady: true } },
+    { name: "Fixture Headers", title: `${title}.2024.1080p.WEB-DL\n👤 30 💾 3 GB`, url: `${BASE}/media/sample.webm?variant=headers`, behaviorHints: { notWebReady: true, proxyHeaders: { request: { Referer: "https://example.invalid/" } } } },
+  ];
+}
+
+function svg(kind, key) {
+  const [a, b] = key.split("-");
+  const hash = [...key].reduce((h, c) => (Math.imul(h, 31) + c.charCodeAt(0)) | 0, 7);
+  const hue = Math.abs(hash) % 360;
+  const [w, h] = kind === "poster" ? [300, 450] : [640, 360];
+  const label = `${a}`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="hsl(${hue},70%,38%)"/><stop offset="1" stop-color="hsl(${(hue + 60) % 360},75%,16%)"/></linearGradient></defs><rect width="100%" height="100%" fill="url(#g)"/><circle cx="${w * 0.72}" cy="${h * 0.3}" r="${h * 0.22}" fill="hsla(${(hue + 30) % 360},90%,60%,.25)"/><text x="50%" y="52%" fill="white" fill-opacity=".9" font-family="Roboto,Arial,sans-serif" font-weight="800" font-size="${kind === "poster" ? 34 : 30}" text-anchor="middle">${label}</text><text x="50%" y="62%" fill="white" fill-opacity=".55" font-family="Roboto,Arial,sans-serif" font-size="16" text-anchor="middle">${b ?? ""}</text></svg>`;
+}
+
+const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*", "Access-Control-Expose-Headers": "Content-Length, Content-Range, Accept-Ranges" };
+const MIME = { ".webm": "video/webm", ".m3u8": "application/vnd.apple.mpegurl", ".m4s": "video/iso.segment", ".mp4": "video/mp4", ".vtt": "text/vtt" };
+
+function json(res, body, cors) {
+  res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", ...(cors ? CORS : {}) });
+  res.end(JSON.stringify(body));
+}
+
+function parseExtra(segment) {
+  const extra = {};
+  for (const part of (segment ?? "").split("&")) {
+    if (!part) continue;
+    const [k, v = ""] = part.split("=");
+    extra[decodeURIComponent(k)] = decodeURIComponent(v);
+  }
+  return extra;
+}
+
+function serveFile(req, res, file) {
+  if (!file.startsWith(mediaDir) || !fs.existsSync(file) || !fs.statSync(file).isFile()) {
+    res.writeHead(404, CORS);
+    return res.end("not found");
+  }
+  const size = fs.statSync(file).size;
+  const type = MIME[path.extname(file)] ?? "application/octet-stream";
+  const range = /bytes=(\d*)-(\d*)/.exec(req.headers.range ?? "");
+  if (range) {
+    const start = range[1] ? Number(range[1]) : 0;
+    const end = range[2] ? Math.min(Number(range[2]), size - 1) : size - 1;
+    res.writeHead(206, { "Content-Type": type, "Content-Range": `bytes ${start}-${end}/${size}`, "Accept-Ranges": "bytes", "Content-Length": end - start + 1, ...CORS });
+    return fs.createReadStream(file, { start, end }).pipe(res);
+  }
+  res.writeHead(200, { "Content-Type": type, "Content-Length": size, "Accept-Ranges": "bytes", ...CORS });
+  fs.createReadStream(file).pipe(res);
+}
+
+export function createAddonServer() {
+  return http.createServer((req, res) => {
+    const url = new URL(req.url ?? "/", BASE);
+    let p = url.pathname;
+    if (req.method === "OPTIONS") {
+      res.writeHead(204, { ...CORS, "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS" });
+      return res.end();
+    }
+    // /nocors/... = the same addon, but without any CORS headers (browsers can't read it directly)
+    const cors = !p.startsWith("/nocors/");
+    if (!cors) p = p.slice("/nocors".length);
+
+    if (p === "/manifest.json") return json(res, manifest, cors);
+    if (p.startsWith("/media/")) return serveFile(req, res, path.join(mediaDir, decodeURIComponent(p.slice("/media/".length))));
+
+    let m = /^\/img\/(poster|bg)\/(.+)\.svg$/.exec(p);
+    if (m) {
+      res.writeHead(200, { "Content-Type": "image/svg+xml", "Cache-Control": "public, max-age=3600", ...CORS });
+      return res.end(svg(m[1], m[2]));
+    }
+
+    m = /^\/catalog\/(movie|series)\/top(?:\/([^/]+))?\.json$/.exec(p);
+    if (m) {
+      const extra = parseExtra(m[2] && decodeURIComponent(m[2]));
+      let items = all[m[1]];
+      if (extra.genre) items = items.filter((i) => i.genres.includes(extra.genre) || i._year === extra.genre);
+      if (extra.search) items = items.filter((i) => i.name.toLowerCase().includes(extra.search.toLowerCase()));
+      const skip = Number(extra.skip ?? 0);
+      return json(res, { metas: items.slice(skip, skip + 100).map(preview) }, cors);
+    }
+
+    m = /^\/meta\/(movie|series)\/([^/]+)\.json$/.exec(p);
+    if (m) return json(res, { meta: metaFor(m[1], decodeURIComponent(m[2])) }, cors);
+
+    m = /^\/stream\/(movie|series)\/([^/]+)\.json$/.exec(p);
+    if (m) return json(res, { streams: streamsFor(m[1], decodeURIComponent(m[2])) }, cors);
+
+    res.writeHead(404, cors ? CORS : {});
+    res.end("not found");
+  });
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  createAddonServer().listen(PORT, "127.0.0.1", () => console.log(`Fixture addon: ${BASE}/manifest.json`));
+}

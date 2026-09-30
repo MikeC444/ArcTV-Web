@@ -23,3 +23,6 @@ e2e/screenshots/*.actual.png
 .idea/
 .vscode/
 *.log
+
+# read-only checkout of the source backend used by CI
+backend-src/

@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Lint, types, unit tests, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  # Runs the REAL MangoTV backend (from the Firestick repository, read-only) against a throwaway Postgres.
+  # It needs a fine-grained token with *read-only* "Contents" access to MikeC444/MangoTV-Live-TV, stored as the
+  # repository secret BACKEND_REPO_TOKEN. Without it this job is skipped (the job above still gates merges).
+  backend-tests:
+    name: Integration + browser tests against the real backend
+    runs-on: ubuntu-latest
+    needs: verify
+    env:
+      HAS_BACKEND_TOKEN: ${{ secrets.BACKEND_REPO_TOKEN != '' }}
+      TEST_DATABASE_URL: postgresql://postgres@localhost:5432/mangotv_web_it # throwaway service container, trust auth (no password stored)
+      MANGOTV_BACKEND_DIR: ${{ github.workspace }}/backend-src
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: mangotv_web_it
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check out the backend (read-only)
+        if: env.HAS_BACKEND_TOKEN == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: MikeC444/MangoTV-Live-TV
+          ref: 924d366
+          token: ${{ secrets.BACKEND_REPO_TOKEN }}
+          path: backend-src
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        if: env.HAS_BACKEND_TOKEN == 'true'
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - if: env.HAS_BACKEND_TOKEN == 'true'
+        run: npm ci
+      - name: Integration tests (real backend, throwaway database)
+        if: env.HAS_BACKEND_TOKEN == 'true'
+        run: npm run test:integration
+      - name: Install Chromium
+        if: env.HAS_BACKEND_TOKEN == 'true'
+        run: npx playwright install --with-deps chromium
+      - name: Browser tests
+        if: env.HAS_BACKEND_TOKEN == 'true'
+        run: npm run test:e2e
+      - name: Upload screenshots and traces
+        if: always() && env.HAS_BACKEND_TOKEN == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-screenshots
+          path: e2e/screenshots
+          if-no-files-found: ignore
+      - name: Skipped
+        if: env.HAS_BACKEND_TOKEN != 'true'
+        run: echo "BACKEND_REPO_TOKEN is not set — integration and browser tests were skipped."

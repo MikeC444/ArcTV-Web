@@ -1,0 +1,130 @@
+import { expect, test } from "@playwright/test";
+import { newAccount, openSignedIn } from "./helpers";
+
+/**
+ * Layout parity with the Firestick's Compose spec. The Fire TV reference is 960 × 540 dp at 2x = 1920 × 1080 px, so at
+ * that viewport 1dp must equal 2 CSS px. Every expected number below is a Compose token (ui/theme/{Dimens,Type,Color}.kt)
+ * multiplied by 2 — not a value read back from the implementation.
+ */
+test.describe("Fire TV layout parity @ 1920×1080 (1dp = 2px)", () => {
+  test.skip(({ viewport }) => viewport?.width !== 1920, "reference viewport only");
+  const DP = 2;
+  const near = (actual: number, expected: number, tolerance = 1.5) => expect(Math.abs(actual - expected), `${actual} ≈ ${expected}`).toBeLessThanOrEqual(tolerance);
+
+  test("design tokens: colours, radii, type scale", async ({ page }) => {
+    const account = await newAccount("parity-tokens");
+    await openSignedIn(page, account);
+    await expect(page.locator(".hero")).toBeVisible();
+    const t = await page.evaluate(() => {
+      const css = getComputedStyle(document.documentElement);
+      const px = (name: string) => parseFloat(getComputedStyle(document.body).getPropertyValue(name));
+      void px;
+      return {
+        dp: parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--dp")) || 0,
+        bg: getComputedStyle(document.documentElement).backgroundColor,
+        tokens: Object.fromEntries(["--bg", "--bg-elevated", "--surface", "--surface-high", "--amber", "--tangerine", "--coral", "--azure", "--teal", "--text", "--text-2", "--text-3", "--focus-border", "--watched"].map((k) => [k, css.getPropertyValue(k).trim().toLowerCase()])),
+      };
+    });
+    expect(t.bg).toBe("rgb(8, 8, 10)"); // MangoBackground 0xFF08080A
+    expect(t.tokens).toEqual({
+      "--bg": "#08080a", "--bg-elevated": "#141417", "--surface": "#1c1c20", "--surface-high": "#26262b", "--amber": "#ffb020", "--tangerine": "#ff7a3d", "--coral": "#ff3d68",
+      "--azure": "#3d8bff", "--teal": "#2dd9a8", "--text": "#f6f6f8", "--text-2": "#afafb8", "--text-3": "#75757e", "--focus-border": "#ffc873", "--watched": "#2ecc71",
+    });
+    const dpPx = await page.evaluate(() => { const d = document.createElement("div"); d.style.width = "var(--dp)"; document.body.appendChild(d); const w = d.getBoundingClientRect().width; d.remove(); return w; });
+    near(dpPx, DP, 0.01);
+  });
+
+  test("top navigation bar and logo (TopNavBar.kt, MangoLogo.kt)", async ({ page }) => {
+    const account = await newAccount("parity-nav");
+    await openSignedIn(page, account);
+    const logo = page.locator(".topnav .logo");
+    await expect(logo).toBeVisible();
+    near(await logo.evaluate((el) => parseFloat(getComputedStyle(el).fontSize)), 24 * DP); // MangoLogo 24.sp
+    expect(await logo.evaluate((el) => getComputedStyle(el).fontWeight)).toBe("900"); // FontWeight.Black
+    near(await page.locator(".topnav").evaluate((el) => parseFloat(getComputedStyle(el).paddingLeft)), 56 * DP); // ScreenPaddingHorizontal
+    const items = await page.locator(".navitem").allTextContents();
+    expect(items).toEqual(["Home", "Movies", "TV Shows", "Genres", "Search", "My List", "Settings"]);
+    near(await page.locator(".navitem").first().evaluate((el) => parseFloat(getComputedStyle(el).fontSize)), 13 * DP); // labelMedium
+    near(await page.locator(".navitem").first().evaluate((el) => parseFloat(getComputedStyle(el).borderTopLeftRadius)), 6 * DP);
+  });
+
+  test("Home: hero height, hero buttons, poster rows at 0.75 scale (HeroSection.kt, ContentRow.kt, ContentCard.kt)", async ({ page }) => {
+    const account = await newAccount("parity-home");
+    await account.tv.seedContinueWatching({ contentId: "fxm4", title: "CW" });
+    await openSignedIn(page, account);
+    await expect(page.locator(".hero")).toBeVisible();
+    near(await page.locator(".hero").evaluate((el) => el.getBoundingClientRect().height), 0.82 * 1080, 2); // heroMinHeight = screenHeight × 0.82
+    const play = page.locator(".hero__actions .mbtn").first();
+    near(await play.evaluate((el) => el.getBoundingClientRect().height), 52 * DP); // MangoButton height
+    near(await page.locator(".hero__actions .ibtn").first().evaluate((el) => el.getBoundingClientRect().width), 52 * DP); // 24dp icon + 2×14dp padding
+    near(await page.locator(".hero__content").evaluate((el) => parseFloat(getComputedStyle(el).bottom)), 56 * DP);
+
+    const poster = page.locator(".home__rows .card:not([data-cw]) .card__surface").first();
+    const box = (await poster.boundingBox())!;
+    near(box.width, 168 * 0.75 * DP); // PosterWidth × posterScale
+    near(box.height, 252 * 0.75 * DP);
+    near(await poster.evaluate((el) => parseFloat(getComputedStyle(el).borderTopLeftRadius)), 10 * DP); // CardCornerRadius
+    const cw = (await page.locator('.home__rows .card[data-cw="true"] .card__surface').first().boundingBox())!;
+    near(cw.width, 300 * 0.75 * DP); // ContinueWatchingWidth
+    near(cw.height, 169 * 0.75 * DP);
+    const title = page.locator(".home__rows .row__title").first();
+    near(await title.evaluate((el) => parseFloat(getComputedStyle(el).fontSize)), 20 * DP); // headlineSmall 20.sp
+    expect(await title.evaluate((el) => getComputedStyle(el).fontWeight)).toBe("700");
+    // gap between cards = CardSpacing 18dp × posterScale
+    const second = (await page.locator(".home__rows .card:not([data-cw]) .card__surface").nth(1).boundingBox())!;
+    near(second.x - (box.x + box.width), 18 * 0.75 * DP);
+    // rows start 56dp from the left screen edge
+    near(box.x, 56 * DP, 2);
+  });
+
+  test("Movies grid: 7 columns with 18dp gaps; Genres: 5 columns (RowsBrowseScreen.kt, GenresScreen.kt)", async ({ page }) => {
+    const account = await newAccount("parity-grid");
+    await openSignedIn(page, account, "/movies");
+    await expect(page.locator(".grid .card").first()).toBeVisible();
+    const cols = await page.locator(".grid").evaluate((el) => getComputedStyle(el).gridTemplateColumns.split(" ").length);
+    expect(cols).toBe(7); // GRID_COLUMNS
+    const a = (await page.locator(".grid .card__surface").nth(0).boundingBox())!;
+    const b = (await page.locator(".grid .card__surface").nth(1).boundingBox())!;
+    near(b.x - (a.x + a.width), 18 * DP); // CardSpacing
+    near(a.width, (1920 - 2 * 56 * DP - 6 * 18 * DP) / 7, 1.5); // cardWidth formula from the Compose grid
+    near(a.height / a.width, 1.5, 0.01); // 168 × 252 poster ratio
+    near(await page.locator(".page__title").evaluate((el) => parseFloat(getComputedStyle(el).fontSize)), 40 * DP); // displayMedium
+
+    await page.goto("/genres");
+    await expect(page.locator(".genre-card").first()).toBeVisible();
+    expect(await page.locator(".genre-grid").evaluate((el) => getComputedStyle(el).gridTemplateColumns.split(" ").length)).toBe(5); // GENRE_GRID_COLUMNS
+  });
+
+  test("Sources: 35 / 65 split, 76dp-ish rows; Settings: 1 : 3 panes (SourcesScreen.kt, SettingsScreen.kt)", async ({ page }) => {
+    const account = await newAccount("parity-panes");
+    await openSignedIn(page, account, "/sources/test.mangotv.fixture/MOVIE/fxm1/-1/-1");
+    await expect(page.locator(".source").first()).toBeVisible();
+    const info = (await page.locator(".sources__info").boundingBox())!;
+    near(info.width / 1920, 0.35, 0.005);
+    const poster = (await page.locator(".sources__poster").boundingBox())!;
+    near(poster.width, 84 * DP);
+    near(poster.height, 126 * DP);
+
+    await page.goto("/settings");
+    await expect(page.locator(".settings__cat").first()).toBeVisible();
+    const side = (await page.locator(".settings__side").boundingBox())!;
+    const pane = (await page.locator(".settings__pane").boundingBox())!;
+    near(pane.width / side.width, 3, 0.35); // weight(1f) : weight(3f)
+  });
+
+  test("Player: control sizes and 360dp menu panel (PlayerScreen.kt, MenuOverlayScaffold.kt)", async ({ page }) => {
+    const account = await newAccount("parity-player");
+    await openSignedIn(page, account, "/sources/test.mangotv.fixture/MOVIE/fxm1/-1/-1");
+    await page.locator(".source", { hasText: "Fixture HLS" }).locator(".source__surface").click();
+    await expect(page.locator("video.player__video")).toBeVisible();
+    await page.mouse.move(300, 300);
+    const playPause = (await page.locator(".pbottom .ibtn").first().boundingBox())!;
+    near(playPause.width, 52 * DP);
+    const rewind = (await page.locator(".pbottom .ibtn").nth(1).boundingBox())!;
+    near(rewind.width, 44 * DP); // compact icon button
+    near(await page.locator(".pbottom").evaluate((el) => parseFloat(getComputedStyle(el).paddingLeft)), 40 * DP);
+    await expect.poll(async () => page.getByRole("button", { name: "Quality" }).count(), { timeout: 20_000 }).toBe(1);
+    await page.getByRole("button", { name: "Quality" }).click();
+    near((await page.locator(".pmenu__panel").boundingBox())!.width, 360 * DP, 2);
+  });
+});
