@@ -8,7 +8,7 @@
 .page__pad { padding-left: var(--pad-x); padding-right: var(--pad-x); margin: 0; }
 .page__body { padding: calc(28 * var(--dp)) var(--pad-x); }
 
-/* Poster grid: the same column count as the rows (--poster-cols, 9 on a desktop-sized window) — cards fill their cell. */
+/* Poster grid: the same column count as the rows (--poster-cols) — cards fill their cell. */
 .grid { display: grid; grid-template-columns: repeat(var(--poster-cols), minmax(0, 1fr)); column-gap: var(--poster-gap); row-gap: calc(16 * var(--dp)); padding: calc(8 * var(--dp)) var(--pad-x) 0; }
 .grid .card { width: 100%; }
 @media (max-width: 720px) { .grid { row-gap: 14px; } }
@@ -115,7 +115,7 @@
 }
 .detail__below { display: grid; grid-template-columns: 1fr 2fr; align-items: start; }
 .detail__below > * { min-width: 0; }
-@media (min-width: 901px) { .detail__similar { --poster-cols: 6; } } /* the "You May Also Like" row sits in two thirds of the page */
+@media (min-width: 901px) { .detail__similar { --poster-cols: 5; } } /* the "You May Also Like" row sits in two thirds of the page */
 @media (max-width: 900px) { .detail__below { grid-template-columns: 1fr; } }
 .cast { min-width: 0; }
 .cast__list { --scale: 1; gap: calc(20 * var(--dp)) !important; padding-left: var(--pad-x) !important; }

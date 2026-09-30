@@ -45,8 +45,8 @@
   --nav-h: calc(72 * var(--dp));
   --cw-w: calc(300 * var(--dp));
   --cw-h: calc(169 * var(--dp));
-  /* Posters per row — rows and grids share it. 10 on a 1920-wide window, 9 on a laptop; fewer only where that would be too small to see or tap. */
-  --poster-cols: 10;
+  /* Posters per row — rows and grids share it. 8 on a 1920-wide window, 7 on a laptop; fewer on narrower ones. */
+  --poster-cols: 8;
   --poster-gap: calc(10 * var(--dp));
   --card-radius: calc(10 * var(--dp));
   --button-radius: calc(8 * var(--dp));
@@ -65,9 +65,9 @@
   --font: "Roboto", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
-@media (max-width: 1600px) { :root { --poster-cols: 9; } }
-@media (max-width: 1100px) { :root { --poster-cols: 7; } }
-@media (max-width: 900px) { :root { --poster-cols: 6; } }
+@media (max-width: 1600px) { :root { --poster-cols: 7; } }
+@media (max-width: 1100px) { :root { --poster-cols: 6; } }
+@media (max-width: 900px) { :root { --poster-cols: 5; } }
 @media (max-width: 720px) { :root { --poster-cols: 4; --poster-gap: 10px; } }
 @media (max-width: 540px) { :root { --poster-cols: 3; } }
 @media (max-width: 360px) { :root { --poster-cols: 2; } }

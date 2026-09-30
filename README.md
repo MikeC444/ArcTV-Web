@@ -79,7 +79,7 @@ Browser (React SPA)  ──same origin──▶  MangoTV Web server (this repo, 
 * **Layout parity, at desktop size** — the Compose tokens (colours, radii, type scale, spacing, focus animation) are carried
   over one for one, but the TV's sizes are meant to be read from a sofa, so `1dp` is **1px up to a 1745-px-wide window and
   1.1px at 1920** (then it grows with the window, at most 2px). Text, buttons and spacing are roughly half the TV's size;
-  posters are sized by how many fit across (10 at 1920, 9 on a laptop) rather than in dp. To make everything larger or
+  posters are sized by how many fit across (8 at 1920, 7 on a laptop) rather than in dp. To make everything larger or
   smaller, change `--dp` in `client/src/styles/tokens.css`.
 
 ## What is included
@@ -89,7 +89,7 @@ Everything in the Fire TV app that can run in a browser:
 * Cold-start boot video, Welcome, **Log in / Sign up** (email + password with the app's validation rules) and **QR
   sign-in** (uses the existing pairing endpoints; a phone finishes it on the backend's own activation page).
 * **Home** (rotating hero, Continue Watching, one row per addon catalogue, your Home-row order and hidden rows),
-  **Movies**, **TV Shows** (grids of 10 posters across at 1920 and 9 on a laptop — 7 / 6 / 4 / 3 on narrower windows — with sort pills and infinite scroll), **Genres**, **Search**, **My List** (All / Watched).
+  **Movies**, **TV Shows** (grids of 8 posters across at 1920 and 7 on a laptop — 6 / 5 / 4 / 3 on narrower windows — with sort pills and infinite scroll), **Genres**, **Search**, **My List** (All / Watched).
 * **Detail** pages (Resume / Play, trailer, watched, watchlist, seasons and episodes, cast, similar titles) and the
   card quick-actions menu (right-click, long-press or `M`).
 * **Select a Source** with quality badges, health, sizes, "Recommended", filters and sort, remembering your last source.

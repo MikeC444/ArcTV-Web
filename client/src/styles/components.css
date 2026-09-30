@@ -230,7 +230,7 @@
   .row:hover .row__nav[data-visible="true"], .row__nav:focus-visible { opacity: 1; }
 }
 
-/* A poster is one column of --poster-cols across its container (a row or a grid); Continue Watching takes two columns, 16:9.
+/* A poster is one column of --poster-cols across its container (a row or a grid); Continue Watching is 1.65 columns wide, 16:9.
    container-type lets the text and badges scale with the card instead of staying TV-sized. */
 .card {
   --slot: calc((100% - (var(--poster-cols) - 1) * var(--poster-gap)) / var(--poster-cols));
@@ -238,7 +238,7 @@
   container-type: inline-size;
   width: var(--slot);
 }
-.card[data-cw="true"] { width: calc(2 * var(--slot) + var(--poster-gap)); }
+.card[data-cw="true"] { width: calc(1.65 * var(--slot) + 0.65 * var(--poster-gap)); } /* kept close to its earlier size so the whole card still shows above the fold under the hero */
 .card__surface {
   width: 100%;
   aspect-ratio: 2 / 3;

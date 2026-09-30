@@ -121,7 +121,7 @@ no duplicate account, no second user table.
 | `PasswordSignIn` (login + register) | `/auth/password/:intent` | Same validation rules as `validateCredentials` |
 | `QrSignIn` (create → poll every 2.5 s → auto-refresh on expiry) | `/auth/qr/:intent` | Uses the *existing* `/auth/qr/create` + `/auth/qr/status`; a phone completes it on the backend's `/activate` page |
 | `HomeScreen` + `HeroSection` + `ContentRow` | `/` | Rotating hero (9 s, Ken-Burns), Continue Watching row, addon rows, Home-row prefs |
-| `RowsBrowseScreen` (Movies / TV Shows / Genre results / My List) | `/movies` `/tv` `/genres/:genre` `/my-list` | 7-column grid on the TV; the web shows 10 across at 1920 and 9 on a laptop (`--poster-cols`, fewer on narrow ones) so posters are smaller; sort pills, infinite scroll, All/Watched filter |
+| `RowsBrowseScreen` (Movies / TV Shows / Genre results / My List) | `/movies` `/tv` `/genres/:genre` `/my-list` | 7-column grid on the TV; the web shows 8 across at 1920 and 7 on a laptop (`--poster-cols`, fewer on narrow ones) so posters are smaller; sort pills, infinite scroll, All/Watched filter |
 | `GenresScreen` | `/genres` | 5-column coloured cards + icons |
 | `SearchScreen` | `/search` | Movies + TV rows, addon-side search with client fallback |
 | `DetailScreen` (+ Seasons, Cast, Similar) | `/detail/:provider/:type/:id` | Resume/Play, Trailer, Watched, Watchlist |
