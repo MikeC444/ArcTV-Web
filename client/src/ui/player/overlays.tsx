@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { MdArrowBack, MdChevronRight, MdFastForward, MdGraphicEq, MdHighQuality, MdInfo, MdPlayCircle, MdRefresh, MdSettings, MdSpeed, MdSubtitles, MdSwapHoriz, MdTune, MdCheck, MdOpenInNew } from "react-icons/md";
 import type { Stream } from "../../domain/types";
 import { formatSpeed } from "../../lib/format";
@@ -164,11 +164,27 @@ export function SourceInfoPanel({ stream, tracks, engine, onClose }: { stream: S
 }
 
 /** PlaybackErrorOverlay.kt — plain-language reason, plus the way out. */
-export function PlaybackErrorOverlay({ message, ytId, onTryAgain, onChangeSource, onBack }: { message: string; ytId?: string | null; onTryAgain(): void; onChangeSource(): void; onBack(): void }) {
+export function PlaybackErrorOverlay({ message, details, ytId, onTryAgain, onChangeSource, onBack }: { message: string; details?: string | null; ytId?: string | null; onTryAgain(): void; onChangeSource(): void; onBack(): void }) {
+  const [copied, setCopied] = useState(false);
   return (
     <div className="perror" role="alertdialog" aria-modal="true" aria-label="Unable to play this source" data-spatial-trap="true">
       <h2 className="t-headline-sm" style={{ margin: 0 }}>Unable to play this source</h2>
       <p className="t-body-md c-text-2" style={{ maxWidth: 560, textAlign: "center", margin: "8px 0 16px" }}>{message}</p>
+      {details ? (
+        <details className="perror__details">
+          <summary className="t-label-md c-text-2">Technical details</summary>
+          <pre className="perror__pre t-label-sm">{details}</pre>
+          <button
+            type="button"
+            className="perror__copy t-label-md"
+            onClick={() => {
+              void navigator.clipboard?.writeText(details).then(() => setCopied(true), () => setCopied(false));
+            }}
+          >
+            {copied ? "Copied" : "Copy details"}
+          </button>
+        </details>
+      ) : null}
       <div className="perror__actions">
         <MangoButton text="Change Source" icon={<MdSwapHoriz />} borderColor="#fff" dataAttrs={{ autofocus: true }} onClick={onChangeSource} />
         <MangoButton text="Try Again" icon={<MdRefresh />} borderColor="#fff" onClick={onTryAgain} />

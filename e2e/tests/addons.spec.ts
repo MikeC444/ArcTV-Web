@@ -106,6 +106,14 @@ test.describe("addons are asked for streams", () => {
     const alert = page.getByRole("alertdialog", { name: "Unable to play this source" });
     await expect(alert).toContainText("didn't start playing within 45 seconds");
     await expect(alert).toContainText(new URL(ADDON).host); // names the server, never the full link
+    // a technical account is one click away, and never contains the link's query / key
+    await alert.getByText("Technical details").click();
+    const details = alert.locator(".perror__pre");
+    await expect(details).toContainText("network LOADING");
+    await expect(details).toContainText("file type .webm");
+    await expect(details).toContainText("loadstart");
+    expect(await details.textContent()).not.toMatch(/SECRET|apikey/i);
+    await expect(alert.getByRole("button", { name: "Copy details" })).toBeVisible();
     await shot(page, "player-start-timeout");
     await alert.getByRole("button", { name: "Change Source" }).click();
     await expect(page.getByRole("heading", { name: "Select a Source" })).toBeVisible();

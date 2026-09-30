@@ -25,6 +25,8 @@ export type PlaybackErrorType = "unsupported" | "network" | "cors" | "decode" | 
 export interface PlaybackError {
   type: PlaybackErrorType;
   message: string;
+  /** Copy-pasteable technical account for the "Technical details" section (never contains the link's path or query). */
+  details?: string;
 }
 export interface EngineCallbacks {
   onTracks(tracks: EngineTracks): void;

@@ -135,7 +135,7 @@ function handleExtraAddon(p, res, cors) {
     ] }, cors), true;
   }
   if (p === "/stall/manifest.json") return json(res, extraManifest("test.mangotv.stall", "Fixture Stall", ["stream"]), cors), true;
-  if (/^\/stall\/stream\//.test(p)) return json(res, { streams: [{ name: "Stream stall 1080p", title: "Extra.stall.1080p.WEB-DL.VP9\n👤 99 💾 1 GB", url: `${BASE}/media/stall.webm` }] }, cors), true;
+  if (/^\/stall\/stream\//.test(p)) return json(res, { streams: [{ name: "Stream stall 1080p", title: "Extra.stall.1080p.WEB-DL.VP9\n👤 99 💾 1 GB", url: `${BASE}/media/stall.webm?apikey=SECRET-KEY-123` }] }, cors), true;
   if (p === "/broken/manifest.json") return json(res, extraManifest("test.mangotv.broken", "Fixture Broken", ["stream"]), cors), true;
   if (/^\/broken\/stream\//.test(p)) return res.writeHead(500, cors ? CORS : {}), res.end("boom"), true;
   if (p === "/empty/manifest.json") return json(res, extraManifest("test.mangotv.empty", "Fixture Empty", ["stream"]), cors), true;

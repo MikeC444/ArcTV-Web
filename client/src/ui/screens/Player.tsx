@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { MdArrowBack, MdFastForward, MdForward10, MdFullscreen, MdFullscreenExit, MdGraphicEq, MdHighQuality, MdPause, MdPlayArrow, MdReplay10, MdSettings, MdSkipNext, MdSubtitles, MdSwapHoriz, MdVolumeOff, MdVolumeUp } from "react-icons/md";
 import { useNavigate, useParams } from "react-router-dom";
-import { deviceVerdict } from "../../domain/deviceSupport";
+import { deviceVerdict, getDeviceCaps } from "../../domain/deviceSupport";
 import { assessStream, engineFor } from "../../domain/playability";
 import { activeProviders } from "../../domain/registry";
 import type { Content, ContentType, Episode, Stream } from "../../domain/types";
@@ -18,6 +18,7 @@ import { useSettings } from "../../state/settings";
 import { IconButton, MangoButton } from "../components/Buttons";
 import { MangoLogo } from "../components/Logo";
 import { FullScreenError, Spinner } from "../components/States";
+import { describeDiagnostics, EVENTS_WORTH_KEEPING, snapshotVideo, type TrailEntry } from "../player/diagnostics";
 import { createEngine, mediaErrorToPlaybackError, pickDefaultSubtitle, type EngineTracks, type PlaybackError, type PlayerEngine } from "../player/engine";
 import { AdvancedPanel, PlaybackErrorOverlay, SettingsPanel, SourceInfoPanel, SpeedMenu, TrackMenu } from "../player/overlays";
 
@@ -104,12 +105,12 @@ function startTimeoutError(stream: Stream, video: HTMLVideoElement | null): Play
   const where = host ? ` (${host})` : "";
   const seconds = START_TIMEOUT_MS / 1000;
   const waiting = video?.networkState === HTMLMediaElement.NETWORK_LOADING;
-  return withDeviceHint(stream, {
+  return {
     type: "network",
     message: waiting
       ? `This source didn't start playing within ${seconds} seconds. Its server${where} is either very slow to prepare the file (some debrid links are) or is sending something your browser can't open. Try again, or choose another source.`
       : `This source didn't start playing within ${seconds} seconds — its server${where} didn't send any video. Try again, or choose another source.`,
-  });
+  };
 }
 const REPORT_EVERY_MS = 30_000;
 const EMPTY_TRACKS: EngineTracks = { audio: [], subtitles: [], quality: [] };
@@ -140,11 +141,22 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
   const engine = useRef<PlayerEngine | null>(null);
   const prefsRef = useRef(prefs);
   prefsRef.current = prefs;
+  const trail = useRef<TrailEntry[]>([]);
+  const trailStart = useRef(0);
 
   const [phase, setPhase] = useState<"loading" | "playing" | "paused" | "buffering" | "ended">("loading");
   const [error, setError] = useState<PlaybackError | null>(null);
   const [slowStart, setSlowStart] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  /** Every playback failure goes through here: adds what we knew about this device, and a technical account of what the video element did. */
+  const fail = useCallback(
+    (e: PlaybackError) => {
+      const v = video.current;
+      const details = describeDiagnostics({ stream, snapshot: v ? snapshotVideo(v) : null, engine: engine.current?.kind ?? "native", trail: trail.current, verdict: deviceVerdict(stream), browser: getDeviceCaps().browser, userAgent: navigator.userAgent });
+      setError({ ...withDeviceHint(stream, e), details });
+    },
+    [stream],
+  );
   const [tracks, setTracks] = useState<EngineTracks>(EMPTY_TRACKS);
   const [speed, setSpeed] = useState(1);
   const [controls, setControls] = useState(true);
@@ -250,7 +262,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
             void start("hls");
             return;
           }
-          setError(withDeviceHint(stream, e));
+          fail(e);
         },
       });
       if (cancelled) return created.destroy();
@@ -275,7 +287,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
     };
     const onNativeError = () => {
       if (engine.current?.kind === "native" || !engine.current) return; // native engine reports its own errors
-      if (v.error) setError(withDeviceHint(stream, mediaErrorToPlaybackError(v.error)));
+      if (v.error) fail(mediaErrorToPlaybackError(v.error));
     };
     v.addEventListener("loadedmetadata", onMeta);
     v.addEventListener("timeupdate", onTime);
@@ -287,6 +299,12 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
     v.addEventListener("ended", onEnded);
     v.addEventListener("volumechange", onVolume);
     v.addEventListener("error", onNativeError);
+    trail.current = [];
+    trailStart.current = performance.now();
+    const noteEvent = (e: Event) => {
+      if (trail.current.length < 80) trail.current.push({ at: Math.round(performance.now() - trailStart.current), name: e.type });
+    };
+    EVENTS_WORTH_KEEPING.forEach((name) => v.addEventListener(name, noteEvent));
     void start(engineFor(url));
     return () => {
       cancelled = true;
@@ -300,6 +318,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
       v.removeEventListener("ended", onEnded);
       v.removeEventListener("volumechange", onVolume);
       v.removeEventListener("error", onNativeError);
+      EVENTS_WORTH_KEEPING.forEach((name) => v.removeEventListener(name, noteEvent));
       engine.current?.destroy();
       engine.current = null;
     };
@@ -313,12 +332,12 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
     setSlowStart(false);
     const stalled = () => (video.current?.readyState ?? 0) === 0 && !video.current?.error;
     const slow = window.setTimeout(() => stalled() && setSlowStart(true), SLOW_START_MS);
-    const giveUp = window.setTimeout(() => stalled() && setError(startTimeoutError(stream, video.current)), START_TIMEOUT_MS);
+    const giveUp = window.setTimeout(() => stalled() && fail(startTimeoutError(stream, video.current)), START_TIMEOUT_MS);
     return () => {
       window.clearTimeout(slow);
       window.clearTimeout(giveUp);
     };
-  }, [stream, attempt]);
+  }, [stream, attempt, fail]);
 
   // pause → report; end → report completed + up-next
   useEffect(() => {
@@ -597,6 +616,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
       {error ? (
         <PlaybackErrorOverlay
           message={error.message}
+          details={error.details}
           ytId={stream.ytId}
           onTryAgain={() => setAttempt((a) => a + 1)}
           onChangeSource={onChangeSource}

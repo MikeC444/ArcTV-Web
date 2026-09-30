@@ -61,3 +61,8 @@
   .ptop .logo { display: none; }
   .pbottom .ptime { order: -1; }
 }
+.perror__details { max-width: min(640px, calc(100vw - 32px)); margin: 0 0 14px; text-align: left; }
+.perror__details summary { cursor: pointer; text-align: center; padding: 4px; }
+.perror__pre { margin: 8px 0; padding: 10px 12px; background: rgba(255, 255, 255, 0.08); border-radius: 8px; white-space: pre-wrap; word-break: break-word; max-height: 30vh; overflow: auto; color: var(--text-2); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.perror__copy { background: none; border: 1px solid var(--divider); border-radius: 999px; color: var(--text); padding: 6px 14px; cursor: pointer; }
+.perror__copy:hover { background: rgba(255, 255, 255, 0.1); }
