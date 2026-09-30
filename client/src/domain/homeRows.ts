@@ -26,6 +26,25 @@ export function applyRowOrder(sections: HomeSection[], preferences: HomeRowPrefe
   return [...ordered, ...remaining];
 }
 
+/**
+ * A title appears in only one row: the first one (in the order shown) that holds it. Later rows lose their copy, and a row
+ * left with nothing is dropped. Call it with the rows exactly as they will be displayed (ordered, hidden rows removed),
+ * so a hidden row never "uses up" a title.
+ */
+export function dedupeRows(sections: HomeSection[]): HomeSection[] {
+  const seen = new Set<string>();
+  const out: HomeSection[] = [];
+  for (const section of sections) {
+    const items = section.items.filter((item) => {
+      if (seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    });
+    if (items.length > 0) out.push(items.length === section.items.length ? section : { ...section, items });
+  }
+  return out;
+}
+
 export function moveRow(displayOrder: string[], rowId: string, delta: number): string[] | null {
   const ids = displayOrder.slice();
   const index = ids.indexOf(rowId);

@@ -270,4 +270,17 @@ test.describe("browsing", () => {
     await page.keyboard.press("Enter");
     await expect(page).toHaveURL(/\/detail\//);
   });
+
+  test("Home: a title appears in only one catalogue row (the first one that holds it)", async ({ page }) => {
+    const account = await newAccount("nodupes");
+    await openSignedIn(page, account);
+    await expect(page.locator(".home__rows .card:not([data-cw])").first()).toBeVisible({ timeout: 20_000 });
+    await expect(page.locator(".home__rows .row").nth(2)).toBeVisible(); // the fixture addon offers a Popular row and several genre rows
+    const rows = await page.locator(".home__rows .row").evaluateAll((all) =>
+      all.filter((row) => row.querySelector(".card:not([data-cw])")).map((row) => Array.from(row.querySelectorAll(".card:not([data-cw]) .card__surface")).map((a) => a.getAttribute("href") ?? "")),
+    );
+    const flat = rows.flat();
+    expect(flat.length).toBeGreaterThan(10);
+    expect(new Set(flat).size).toBe(flat.length);
+  });
 });

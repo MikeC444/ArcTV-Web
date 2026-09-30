@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyRowOrder, moveRow } from "./homeRows";
+import { applyRowOrder, dedupeRows, moveRow } from "./homeRows";
 import { assessStream, engineFor } from "./playability";
 import type { HomeSection } from "./types";
 import { formatElapsed, formatReleaseDate, formatRuntime, formatTimestamp, interleave, distinctBy } from "../lib/format";
@@ -37,6 +37,30 @@ describe("home row ordering (HomeRowPreferences.applyOrder)", () => {
     expect(moveRow(["a", "b", "c"], "a", -1)).toBeNull();
     expect(moveRow(["a", "b", "c"], "c", 1)).toBeNull();
     expect(moveRow(["a", "b", "c"], "zzz", 1)).toBeNull();
+  });
+});
+
+describe("no title twice on Home (dedupeRows)", () => {
+  const item = (id: string) => ({ id }) as Content;
+  const row = (id: string, ids: string[]): HomeSection => ({ id, title: id, style: "STANDARD", items: ids.map(item) });
+
+  it("keeps a title in the first row that has it and removes it from later rows", () => {
+    const out = dedupeRows([row("popular", ["a", "b", "c"]), row("action", ["b", "d"]), row("comedy", ["a", "c", "e"])]);
+    expect(out.map((r) => r.items.map((i) => i.id))).toEqual([["a", "b", "c"], ["d"], ["e"]]);
+  });
+
+  it("drops a row that would be left empty, keeps untouched rows as they are, and never mutates its input", () => {
+    const input = [row("popular", ["a", "b"]), row("again", ["b", "a"]), row("other", ["z"])];
+    const out = dedupeRows(input);
+    expect(out.map((r) => r.id)).toEqual(["popular", "other"]);
+    expect(out[0]).toBe(input[0]);
+    expect(input[1]!.items).toHaveLength(2);
+  });
+
+  it("follows the order given, so the first row shown wins", () => {
+    const rows = [row("action", ["x", "y"]), row("popular", ["x", "z"])];
+    expect(dedupeRows(rows).map((r) => r.items.map((i) => i.id))).toEqual([["x", "y"], ["z"]]);
+    expect(dedupeRows([...rows].reverse()).map((r) => r.items.map((i) => i.id))).toEqual([["x", "z"], ["y"]]);
   });
 });
 
