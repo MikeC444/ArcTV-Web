@@ -42,24 +42,45 @@ describe("player diagnostics", () => {
 
 describe("connection test", () => {
   const asFetch = (fn: unknown) => fn as typeof fetch;
+  const readableAnswer = (headers: Record<string, string>, chunks: number[], status = 206) => {
+    const queue = [...chunks];
+    return {
+      status,
+      redirected: true,
+      headers: { get: (name: string) => headers[name.toLowerCase()] ?? null },
+      body: { getReader: () => ({ read: async () => (queue.length ? { done: false, value: new Uint8Array(queue.shift()!) } : { done: true, value: undefined }) }) },
+    } as unknown as Response;
+  };
 
   it("asks like a browser tab and like the video player, and reports how fast the server answered", async () => {
     let clock = 0;
-    const fetchImpl = vi.fn(async () => {
+    const fetchImpl = vi.fn(async (_url: string, init: RequestInit) => {
       clock += 250;
+      if (init.mode === "cors") throw new TypeError("Failed to fetch"); // the usual: the host doesn't allow web pages to read its answer
       return {} as Response;
     });
     const streamed: string[] = [];
     const lines = await probeSource("https://cdn.example/secret/path.mkv?key=abc", { fetchImpl: asFetch(fetchImpl), now: () => clock, onLine: (l) => streamed.push(l) });
     expect(streamed).toEqual(lines); // each answer is reported as soon as it is known
-    expect(lines).toEqual([
-      "Plain GET (what opening the link in a tab does): the server answered after 250 ms",
-      "Range GET bytes=0-1 (what the video player does): the server answered after 250 ms",
-    ]);
-    const [plain, ranged] = fetchImpl.mock.calls as unknown as [[string, RequestInit], [string, RequestInit]];
-    expect(plain[1]).toMatchObject({ method: "GET", mode: "no-cors", credentials: "omit", referrerPolicy: "no-referrer", headers: {} });
-    expect(ranged[1].headers).toEqual({ Range: "bytes=0-1" });
-    expect(lines.join("\n")).not.toMatch(/secret|abc/); // timing only, never the link
+    expect(lines[0]).toBe("Plain GET (what opening the link in a tab does): the server answered after 250 ms");
+    expect(lines[1]).toBe("Range GET bytes=0-1 (what the video player does): the server answered after 250 ms");
+    expect(lines[2]).toContain("not possible — the server doesn't let web pages read its answer");
+    const calls = fetchImpl.mock.calls as unknown as Array<[string, RequestInit]>;
+    expect(calls[0]![1]).toMatchObject({ method: "GET", mode: "no-cors", credentials: "omit", referrerPolicy: "no-referrer", headers: {} });
+    expect(calls[1]![1].headers).toEqual({ Range: "bytes=0-1" });
+    expect(calls[2]![1]).toMatchObject({ mode: "cors", headers: { Range: "bytes=0-65535" } });
+    expect(lines.join("\n")).not.toMatch(/secret|abc/); // timing and headers only, never the link
+  });
+
+  it("when the answer can be read, reports its status, type, ranges and whether bytes really flow", async () => {
+    const fetchImpl = vi.fn(async (_url: string, init: RequestInit) =>
+      init.mode === "cors" ? readableAnswer({ "content-type": "video/x-matroska", "content-length": "65536", "accept-ranges": "bytes", "content-range": "bytes 0-65535/9000000", "content-disposition": "attachment; filename=secret.mkv" }, [40_000, 30_000]) : ({} as Response),
+    );
+    const lines = await probeSource("https://cdn.example/v.mkv", { fetchImpl: asFetch(fetchImpl) });
+    const answer = lines[2]!;
+    expect(answer).toContain("HTTP 206, type video/x-matroska, length 65536, ranges bytes, content-range bytes 0-65535/9000000, sent as attachment, redirected");
+    expect(answer).toMatch(/headers after \d+ ms, then 70000 bytes in \d+ ms/);
+    expect(answer).not.toContain("secret.mkv"); // only that a filename was sent, never the name
   });
 
   it("says when a server never answers", async () => {
@@ -67,19 +88,21 @@ describe("connection test", () => {
     try {
       const fetchImpl = vi.fn((_url: string, init: RequestInit) => new Promise<Response>((_resolve, reject) => init.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")))));
       const pending = probeSource("https://slow.example/v.mkv", { fetchImpl: asFetch(fetchImpl), timeoutMs: 2000 });
-      await vi.advanceTimersByTimeAsync(2000);
-      await vi.advanceTimersByTimeAsync(2000);
-      expect(await pending).toEqual(["Plain GET (what opening the link in a tab does): no answer within 2 s", "Range GET bytes=0-1 (what the video player does): no answer within 2 s"]);
+      for (let i = 0; i < 3; i++) await vi.advanceTimersByTimeAsync(2000);
+      const lines = await pending;
+      expect(lines).toHaveLength(3);
+      expect(lines.every((l) => l.endsWith("no answer within 2 s"))).toBe(true);
     } finally {
       vi.useRealTimers();
     }
   });
 
   it("reports a network failure with its reason", async () => {
-    const fetchImpl = vi.fn(async () => {
-      throw new TypeError("Failed to fetch");
+    const fetchImpl = vi.fn(async (_url: string, init: RequestInit) => {
+      if (init.mode === "cors") throw new TypeError("Failed to fetch");
+      throw new Error("net::ERR_CONNECTION_RESET");
     });
     const lines = await probeSource("https://down.example/v.mkv", { fetchImpl: asFetch(fetchImpl) });
-    expect(lines[0]).toMatch(/Plain GET .*: failed after \d+ ms \(Failed to fetch\)/);
+    expect(lines[0]).toMatch(/Plain GET .*: failed after \d+ ms \(net::ERR_CONNECTION_RESET\)/);
   });
 });

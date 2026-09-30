@@ -27,7 +27,7 @@ export interface VideoSnapshot {
   buffered: Array<[number, number]>;
 }
 
-export const EVENTS_WORTH_KEEPING = ["loadstart", "durationchange", "loadedmetadata", "loadeddata", "canplay", "canplaythrough", "playing", "waiting", "stalled", "suspend", "abort", "emptied", "error", "seeking", "seeked", "ended"] as const;
+export const EVENTS_WORTH_KEEPING = ["loadstart", "progress", "durationchange", "loadedmetadata", "loadeddata", "canplay", "canplaythrough", "playing", "waiting", "stalled", "suspend", "abort", "emptied", "error", "seeking", "seeked", "ended"] as const;
 
 export function snapshotVideo(video: HTMLVideoElement): VideoSnapshot {
   const buffered: Array<[number, number]> = [];
@@ -109,9 +109,53 @@ export async function probeSource(url: string, options: { timeoutMs?: number; fe
     }
   };
 
+  /** Reads the server's actual answer — possible only when the server (and any redirect target) lets web pages read it. */
+  const inspect = async (): Promise<string> => {
+    const label = "Reading the answer (only possible if the server allows it)";
+    const controller = new AbortController();
+    let timedOut = false;
+    const timer = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, timeoutMs);
+    const started = now();
+    try {
+      const response = await doFetch(url, { method: "GET", headers: { Range: "bytes=0-65535" }, mode: "cors", credentials: "omit", referrerPolicy: "no-referrer", cache: "no-store", redirect: "follow", signal: controller.signal });
+      const headersAfter = Math.round(now() - started);
+      const header = (name: string) => response.headers.get(name);
+      const facts = [
+        `HTTP ${response.status}`,
+        `type ${header("content-type") ?? "none"}`,
+        `length ${header("content-length") ?? "unknown"}`,
+        `ranges ${header("accept-ranges") ?? "not advertised"}`,
+        header("content-range") ? `content-range ${header("content-range")}` : null,
+        header("content-disposition") ? "sent as attachment" : null,
+        response.redirected ? "redirected" : null,
+      ].filter(Boolean);
+      let bytes = 0;
+      const readStarted = now();
+      const reader = response.body?.getReader();
+      while (reader && bytes < 65_536) {
+        const chunk = await reader.read();
+        if (chunk.done) break;
+        bytes += chunk.value.length;
+      }
+      const bodyMs = Math.round(now() - readStarted);
+      controller.abort();
+      return `${label}: ${facts.join(", ")}; headers after ${headersAfter} ms, then ${bytes} bytes in ${bodyMs} ms`;
+    } catch (error) {
+      if (timedOut) return `${label}: no answer within ${Math.round(timeoutMs / 1000)} s`;
+      if (error instanceof TypeError) return `${label}: not possible — the server doesn't let web pages read its answer (normal for video hosts; it doesn't stop the video player from using it)`;
+      return `${label}: failed (${error instanceof Error ? error.message : "network error"})`;
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+
   const lines: string[] = [];
-  for (const [label, headers] of [["Plain GET (what opening the link in a tab does)", {}], ["Range GET bytes=0-1 (what the video player does)", { Range: "bytes=0-1" }]] as const) {
-    const line = await run(label, headers);
+  const steps: Array<() => Promise<string>> = [() => run("Plain GET (what opening the link in a tab does)", {}), () => run("Range GET bytes=0-1 (what the video player does)", { Range: "bytes=0-1" }), inspect];
+  for (const step of steps) {
+    const line = await step();
     lines.push(line);
     options.onLine?.(line); // show each answer as soon as it is known
   }

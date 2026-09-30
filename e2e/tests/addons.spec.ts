@@ -121,6 +121,8 @@ test.describe("addons are asked for streams", () => {
     await expect(details).toContainText("Plain GET (what opening the link in a tab does): no answer within 10 s");
     await page.clock.fastForward(11_000);
     await expect(details).toContainText("Range GET bytes=0-1 (what the video player does): no answer within 10 s");
+    await page.clock.fastForward(11_000);
+    await expect(details).toContainText("Reading the answer (only possible if the server allows it): no answer within 10 s");
     expect(await details.textContent()).not.toMatch(/SECRET|apikey/i);
     await shot(page, "player-start-timeout");
     await alert.getByRole("button", { name: "Change Source" }).click();

@@ -168,7 +168,7 @@ export function PlaybackErrorOverlay({ message, details, onProbe, ytId, onTryAga
   const [copied, setCopied] = useState(false);
   const [probe, setProbe] = useState<{ state: "idle" | "running" | "done"; lines: string[] }>({ state: "idle", lines: [] });
   const testing = probe.state === "running";
-  const fullDetails = details ? [details, ...(probe.state !== "idle" ? ["", "Connection test:", ...probe.lines, ...(testing ? ["Testing… (up to 20 seconds)"] : [])] : [])].join("\n") : "";
+  const fullDetails = details ? [details, ...(probe.state !== "idle" ? ["", "Connection test:", ...probe.lines, ...(testing ? ["Testing… (up to 30 seconds)"] : [])] : [])].join("\n") : "";
   return (
     <div className="perror" role="alertdialog" aria-modal="true" aria-label="Unable to play this source" data-spatial-trap="true">
       <h2 className="t-headline-sm" style={{ margin: 0 }}>Unable to play this source</h2>

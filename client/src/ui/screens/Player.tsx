@@ -301,7 +301,9 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
     v.addEventListener("error", onNativeError);
     trail.current = [];
     trailStart.current = performance.now();
+    let progressSeen = 0;
     const noteEvent = (e: Event) => {
+      if (e.type === "progress" && ++progressSeen > 5) return; // bytes arriving is the point, not every packet
       if (trail.current.length < 80) trail.current.push({ at: Math.round(performance.now() - trailStart.current), name: e.type });
     };
     EVENTS_WORTH_KEEPING.forEach((name) => v.addEventListener(name, noteEvent));
