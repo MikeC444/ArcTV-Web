@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
-import { MdArrowBack, MdFastForward, MdForward10, MdFullscreen, MdFullscreenExit, MdGraphicEq, MdHighQuality, MdPause, MdPlayArrow, MdReplay10, MdSettings, MdSkipNext, MdSubtitles, MdVolumeOff, MdVolumeUp } from "react-icons/md";
+import { MdArrowBack, MdFastForward, MdForward10, MdFullscreen, MdFullscreenExit, MdGraphicEq, MdHighQuality, MdPause, MdPlayArrow, MdReplay10, MdSettings, MdSkipNext, MdSubtitles, MdSwapHoriz, MdVolumeOff, MdVolumeUp } from "react-icons/md";
 import { useNavigate, useParams } from "react-router-dom";
 import { assessStream, engineFor } from "../../domain/playability";
 import { activeProviders } from "../../domain/registry";
@@ -82,6 +82,28 @@ export function PlayerScreen() {
 
 type Overlay = "settings" | "subtitles" | "audio" | "quality" | "speed" | "advanced" | "info";
 const HIDE_AFTER_MS = 4000;
+/** A source that hasn't produced a picture yet: reassure after this long, give up (with a reason) after the second. */
+const SLOW_START_MS = 15_000;
+const START_TIMEOUT_MS = 45_000;
+
+/** Plain-language reason for a source that never started, using what the <video> element reports and the server's host (never the full link, which can carry a key). */
+function startTimeoutError(stream: Stream, video: HTMLVideoElement | null): PlaybackError {
+  let host = "";
+  try {
+    host = new URL(stream.url ?? "").host;
+  } catch {
+    /* not a URL */
+  }
+  const where = host ? ` (${host})` : "";
+  const seconds = START_TIMEOUT_MS / 1000;
+  const waiting = video?.networkState === HTMLMediaElement.NETWORK_LOADING;
+  return {
+    type: "network",
+    message: waiting
+      ? `This source didn't start playing within ${seconds} seconds. Its server${where} is either very slow to prepare the file (some debrid links are) or is sending something your browser can't open. Try again, or choose another source.`
+      : `This source didn't start playing within ${seconds} seconds — its server${where} didn't send any video. Try again, or choose another source.`,
+  };
+}
 const REPORT_EVERY_MS = 30_000;
 const EMPTY_TRACKS: EngineTracks = { audio: [], subtitles: [], quality: [] };
 const KNOWN_NATIVE_EXT = /\.(mp4|m4v|webm|mov|ogv|ogg|mkv)(\?|#|$)/i;
@@ -114,6 +136,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
 
   const [phase, setPhase] = useState<"loading" | "playing" | "paused" | "buffering" | "ended">("loading");
   const [error, setError] = useState<PlaybackError | null>(null);
+  const [slowStart, setSlowStart] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [tracks, setTracks] = useState<EngineTracks>(EMPTY_TRACKS);
   const [speed, setSpeed] = useState(1);
@@ -275,6 +298,19 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
     };
     // `speed` is applied once at start; later changes go through changeSpeed().
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stream, attempt]);
+
+  // A source that never starts must not spin forever: reassure first, then say why it gave up. "Started" = the browser
+  // has learned anything about the file (metadata, a frame, playback); a video that is merely paused or buffering later doesn't count.
+  useEffect(() => {
+    setSlowStart(false);
+    const stalled = () => (video.current?.readyState ?? 0) === 0 && !video.current?.error;
+    const slow = window.setTimeout(() => stalled() && setSlowStart(true), SLOW_START_MS);
+    const giveUp = window.setTimeout(() => stalled() && setError(startTimeoutError(stream, video.current)), START_TIMEOUT_MS);
+    return () => {
+      window.clearTimeout(slow);
+      window.clearTimeout(giveUp);
+    };
   }, [stream, attempt]);
 
   // pause → report; end → report completed + up-next
@@ -495,7 +531,14 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
     <div ref={container} className="player" data-spatial="off" data-hidden={!showControls && playing} onPointerMove={(e) => e.pointerType !== "touch" && bump()}>
       <video ref={video} className="player__video" playsInline crossOrigin={undefined} onClick={onSurfaceClick} onDoubleClick={() => !coarse && toggleFullscreen()} aria-label={`${content.title} video`} />
 
-      {phase === "loading" || phase === "buffering" ? <div className="player__spinner"><Spinner white /></div> : null}
+      {(phase === "loading" || phase === "buffering") && !error ? <div className="player__spinner"><Spinner white /></div> : null}
+      {(phase === "loading" || phase === "buffering") && slowStart && !error && (video.current?.readyState ?? 0) === 0 ? (
+        <div className="player__slow" role="status">
+          <p className="t-title-md" style={{ margin: 0 }}>Still trying to start this source…</p>
+          <p className="t-body-md c-text-2" style={{ margin: 0 }}>Some sources take a while to prepare. You can keep waiting or pick another one.</p>
+          <MangoButton text="Choose a Different Source" icon={<MdSwapHoriz />} compact borderColor="#fff" onClick={onChangeSource} />
+        </div>
+      ) : null}
       {phase === "paused" && !showControls ? null : null}
       {pill ? <div className="ppill t-title-md" role="status">{pill}</div> : null}
       {flash ? <div className="pflash" aria-hidden="true">{flash === "play" ? <MdPlayArrow /> : <MdPause />}</div> : null}

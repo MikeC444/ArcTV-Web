@@ -116,6 +116,7 @@ const requestLog = [];
 //   /broken/…                declares streams but answers HTTP 500
 //   /empty/…                 declares streams but has none for any title
 //   /nostreams/…             catalog + meta only, like Cinemeta (must never be asked for streams)
+//   /stall/…                 one stream whose media request is accepted and then never answered (a hung debrid link)
 const extraManifest = (id, name, resources) => ({ id, name, version: "1.0.0", description: "Local test addon", resources, types: ["movie", "series"], idPrefixes: ["fx"], catalogs: [] });
 
 function handleExtraAddon(p, res, cors) {
@@ -133,6 +134,8 @@ function handleExtraAddon(p, res, cors) {
       { name: `Stream ${tag} 720p`, title: `${title}.720p.WEB-DL.VP9\n👤 120 💾 1.1 GB`, url: `${BASE}/media/sample.webm?via=${tag}-2` },
     ] }, cors), true;
   }
+  if (p === "/stall/manifest.json") return json(res, extraManifest("test.mangotv.stall", "Fixture Stall", ["stream"]), cors), true;
+  if (/^\/stall\/stream\//.test(p)) return json(res, { streams: [{ name: "Stream stall 1080p", title: "Extra.stall.1080p.WEB-DL.VP9\n👤 99 💾 1 GB", url: `${BASE}/media/stall.webm` }] }, cors), true;
   if (p === "/broken/manifest.json") return json(res, extraManifest("test.mangotv.broken", "Fixture Broken", ["stream"]), cors), true;
   if (/^\/broken\/stream\//.test(p)) return res.writeHead(500, cors ? CORS : {}), res.end("boom"), true;
   if (p === "/empty/manifest.json") return json(res, extraManifest("test.mangotv.empty", "Fixture Empty", ["stream"]), cors), true;
@@ -197,6 +200,7 @@ export function createAddonServer() {
     if (handleExtraAddon(p, res, cors)) return;
 
     if (p === "/manifest.json") return json(res, manifest, cors);
+    if (p === "/media/stall.webm") return; // accepted, never answered
     if (p.startsWith("/media/")) return serveFile(req, res, path.join(mediaDir, decodeURIComponent(p.slice("/media/".length))));
 
     let m = /^\/img\/(poster|bg)\/(.+)\.svg$/.exec(p);

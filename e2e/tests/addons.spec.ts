@@ -83,4 +83,31 @@ test.describe("addons are asked for streams", () => {
     await page.getByRole("button", { name: "Manage Addons" }).click();
     await expect(page).toHaveURL(/\/settings\/addons/);
   });
+
+  test("a source that never starts: a reassuring note after 15 s, then a clear reason after 45 s (never an endless spinner)", async ({ page }) => {
+    const account = await newAccount("stall");
+    await account.tv.installAddon(`${ADDON}/stall/manifest.json`, 1);
+    await page.clock.install(); // lets the test jump past the watchdog timers instead of waiting a minute
+    await openSignedIn(page, account);
+    await page.goto("/sources/test.mangotv.fixture/MOVIE/fxm1/-1/-1");
+    await page.locator(".source", { hasText: "Stream stall" }).locator(".source__surface").click();
+    await expect(page).toHaveURL(/\/player\//);
+
+    // the loading spinner is a real 48px ring, not a collapsed sliver
+    const ring = await page.locator(".player__spinner .spinner").boundingBox();
+    expect(ring!.width).toBeGreaterThan(40);
+    expect(ring!.height).toBeGreaterThan(40);
+
+    await page.clock.fastForward(16_000);
+    await expect(page.getByText("Still trying to start this source")).toBeVisible();
+    await shot(page, "player-slow-start");
+
+    await page.clock.fastForward(30_000);
+    const alert = page.getByRole("alertdialog", { name: "Unable to play this source" });
+    await expect(alert).toContainText("didn't start playing within 45 seconds");
+    await expect(alert).toContainText(new URL(ADDON).host); // names the server, never the full link
+    await shot(page, "player-start-timeout");
+    await alert.getByRole("button", { name: "Change Source" }).click();
+    await expect(page.getByRole("heading", { name: "Select a Source" })).toBeVisible();
+  });
 });

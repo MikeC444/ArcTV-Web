@@ -4,6 +4,7 @@
 .player[data-hidden="true"] { cursor: none; }
 .player__video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; }
 .player__video::cue { background: rgba(0, 0, 0, 0.72); color: #fff; font-family: var(--font); }
+.player__slow { position: absolute; z-index: 5; left: 50%; top: calc(50% + 48px); transform: translateX(-50%); width: min(520px, calc(100% - 32px)); display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
 .player__spinner { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); pointer-events: none; }
 .pctl { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; opacity: 0; pointer-events: none; transition: opacity 250ms ease; }
 .pctl[data-visible="true"] { opacity: 1; pointer-events: auto; }
