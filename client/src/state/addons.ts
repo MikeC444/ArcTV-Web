@@ -54,6 +54,8 @@ interface AddonsState {
   retryPending(): Promise<void>;
   /** A brand-new account (everything empty in the cloud) gets the same default a fresh TV gets: Cinemeta. */
   bootstrapDefault(): void;
+  /** Visitors without an account browse with the default addon (Cinemeta); nothing is stored or synced. */
+  loadGuestDefault(): void;
 }
 
 let outbox: Outbox<AddonDto> | null = null;
@@ -167,6 +169,14 @@ export const useAddons = create<AddonsState>((set, get) => {
           if (error instanceof ApiClientError && (error.status === 401 || error.isNetwork)) return;
         }
       }
+    },
+
+    loadGuestDefault() {
+      outbox = null;
+      const raw = cinemetaManifest as unknown as Record<string, unknown>;
+      const addon: StoredAddon = { manifestUrl: CINEMETA_MANIFEST_URL, manifest: normalizeManifest(raw), enabled: true, raw };
+      set({ userId: null, addons: [addon], ready: true });
+      useProviders.getState().replaceAll([new StremioAddonProvider(addon.manifestUrl, addon.manifest)]);
     },
 
     bootstrapDefault() {

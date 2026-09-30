@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { MdCategory, MdHome, MdMovie, MdOutlineBookmarkBorder, MdSearch, MdSettings, MdTv } from "react-icons/md";
-import { NAV_ITEMS } from "../../lib/routes";
+import { NAV_ITEMS, routes } from "../../lib/routes";
+import { useAuth } from "../../state/auth";
 import { MangoLogo } from "./Logo";
 import { Surface } from "./Surface";
 
@@ -25,21 +26,30 @@ const TABS = [
 export function TopNav({ transparent = false }: { transparent?: boolean }) {
   const { pathname } = useLocation();
   const selected = selectedNavIndex(pathname);
+  const guest = useAuth((s) => s.status !== "signedIn");
+  // Without an account the Settings link becomes "Sign In" (and Settings itself is unreachable).
+  const items = guest ? NAV_ITEMS.map((item) => (item.to === "/settings" ? { label: "Sign In", to: routes.auth } : item)) : NAV_ITEMS;
   return (
     <header className="topnav" data-transparent={transparent} role="banner">
       <Link to="/" className="topnav__logo tvs" aria-label="Mango TV — Home" style={{ ["--tvs-radius" as string]: "6px", ["--tvs-border" as string]: "var(--text)" }}>
         <MangoLogo size="1em" />
       </Link>
       <nav className="topnav__items hide-scroll" aria-label="Primary">
-        {NAV_ITEMS.map((item, index) => (
+        {items.map((item, index) => (
           <Surface key={item.label} to={item.to} className="navitem" instantBorder noShadow borderColor="var(--text)" ariaCurrent={index === selected ? "page" : undefined} dataAttrs={{ selected: index === selected }}>
             {item.label}
           </Surface>
         ))}
       </nav>
-      <Link to="/settings" className="topnav__gear" aria-label="Settings" aria-current={selected === NAV_ITEMS.length - 1 ? "page" : undefined}>
-        <MdSettings aria-hidden="true" />
-      </Link>
+      {guest ? (
+        <Link to={routes.auth} state={{ from: pathname }} className="topnav__signin">
+          Sign In
+        </Link>
+      ) : (
+        <Link to="/settings" className="topnav__gear" aria-label="Settings" aria-current={selected === NAV_ITEMS.length - 1 ? "page" : undefined}>
+          <MdSettings aria-hidden="true" />
+        </Link>
+      )}
       <nav className="tabbar" aria-label="Primary">
         {TABS.map((tab) => {
           const active = NAV_ITEMS[selected]?.to === tab.to;

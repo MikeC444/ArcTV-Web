@@ -329,3 +329,9 @@
   .tabbar__item[data-selected="true"] svg { filter: drop-shadow(0 0 6px rgba(255, 176, 32, 0.55)); }
   main#main { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 }
+
+/* "Sign In" for visitors without an account: a pill on phones (the nav links there live in the tab bar). */
+.topnav__signin { display: none; }
+@media (max-width: 720px) {
+  .topnav__signin { display: inline-flex; grid-column: 3; grid-row: 1; justify-self: end; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 999px; color: #1a1207; background: var(--brand-gradient-wide); font-weight: 700; font-size: 14px; text-decoration: none; }
+}

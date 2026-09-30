@@ -3,9 +3,9 @@ import { expect, test } from "@playwright/test";
 import { BACKEND, newAccount, nextIp, openSignedIn, PASSWORD, Tv, uniqueEmail, useClientIp, shot } from "./helpers";
 
 test.describe("sign-in flows", () => {
-  test("a signed-out visitor sees the welcome screen (hero photo, brand headline, Log In / Sign Up)", async ({ page }) => {
+  test("the welcome screen has the hero photo, brand headline, Log In / Sign Up", async ({ page }) => {
     await useClientIp(page.context());
-    await page.goto("/");
+    await page.goto("/auth");
     await expect(page).toHaveURL(/\/auth$/);
     await expect(page.getByRole("heading", { name: /Your Entertainment,\s*Your Way/ })).toBeVisible();
     await expect(page.getByRole("img", { name: "Mango TV" }).first()).toBeVisible();

@@ -5,7 +5,7 @@ import type { Content } from "../../domain/types";
 import { formatRuntime } from "../../lib/format";
 import { routes } from "../../lib/routes";
 import { useHome } from "../../state/homeData";
-import { useSavedIds } from "../../state/hooks";
+import { useAccountAction, useSavedIds } from "../../state/hooks";
 import { useMyList } from "../../state/myList";
 import { stashDetailPreview } from "../../state/pendingDetail";
 import { MangoButton, IconButton } from "../components/Buttons";
@@ -23,7 +23,7 @@ type Leaving = { index: number; dir: "next" | "prev" };
 function Hero({ items }: { items: Content[] }) {
   const navigate = useNavigate();
   const saved = useSavedIds();
-  const toggle = useMyList((s) => s.toggle);
+  const toggle = useAccountAction(useMyList((s) => s.toggle));
   const [index, setIndex] = useState(0);
   const [leaving, setLeaving] = useState<Leaving | null>(null);
   const [dir, setDir] = useState<"next" | "prev">("next");

@@ -6,6 +6,7 @@ import { routes } from "../../lib/routes";
 import { useAuth } from "../../state/auth";
 import { useCardMenu } from "../../state/cardMenu";
 import { useContinueWatching } from "../../state/continueWatching";
+import { useAccountAction } from "../../state/hooks";
 import { findLastStreamId } from "../../state/lastSource";
 import { useMyList } from "../../state/myList";
 import { Surface } from "./Surface";
@@ -17,8 +18,8 @@ export function CardActionsMenu() {
   const navigate = useNavigate();
   const userId = useAuth((s) => s.user?.id);
   const items = useMyList((s) => s.items);
-  const toggle = useMyList((s) => s.toggle);
-  const toggleWatched = useMyList((s) => s.toggleWatched);
+  const toggle = useAccountAction(useMyList((s) => s.toggle));
+  const toggleWatched = useAccountAction(useMyList((s) => s.toggleWatched));
   const reportProgress = useContinueWatching((s) => s.reportProgress);
   const first = useRef<HTMLElement>(null);
 

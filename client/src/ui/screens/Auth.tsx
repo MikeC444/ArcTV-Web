@@ -254,6 +254,13 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+/** Browsing is open to everyone: only the first paint waits (to learn whether a session exists). Play, My List and Settings use RequireAuth. */
+export function AllowGuests({ children }: { children: React.ReactNode }) {
+  const status = useAuth((s) => s.status);
+  if (status === "unknown") return <div className="gate" aria-busy="true"><MangoLogo size={32} /></div>;
+  return <>{children}</>;
+}
+
 /** Signed-in people never see the auth screens. */
 export function RedirectIfAuthed({ children }: { children: React.ReactNode }) {
   const status = useAuth((s) => s.status);

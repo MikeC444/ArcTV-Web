@@ -86,6 +86,9 @@ Browser (React SPA)  ──same origin──▶  MangoTV Web server (this repo, 
 
 Everything in the Fire TV app that can run in a browser:
 
+* **No account needed to browse.** Visitors without an account go straight to Home and can browse Movies, TV Shows, Genres, Search and
+  titles' details (using the default Cinemeta addon). The sign-up / log-in screens appear only when they press **Play**, open **My List**
+  or **Settings**, or save a title; after signing in they return to where they were heading. (Trailers and release dates need an account.)
 * Welcome (no boot video on the web), **Log in / Sign up** (email + password with the app's validation rules) and **QR
   sign-in** (uses the existing pairing endpoints; a phone finishes it on the backend's own activation page).
 * **Home** (rotating hero, Continue Watching, one row per addon catalogue, your Home-row order and hidden rows),

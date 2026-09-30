@@ -70,6 +70,11 @@ export async function startSession(userId: string): Promise<void> {
   await syncAll();
 }
 
+/** Browsing without an account: the default addon's catalogue, nothing stored. Play, My List and Settings ask for an account. */
+export function startGuestSession(): void {
+  useAddons.getState().loadGuestDefault();
+}
+
 export function resetAllStores(): void {
   stopBackgroundSync();
   useSettings.getState().reset();

@@ -3,11 +3,11 @@ import { BrowserRouter, Route, Routes, useParams } from "react-router-dom";
 import { installModalityTracking } from "./lib/modality";
 import { installSpatialNavigation } from "./lib/spatialNav";
 import { useAuth } from "./state/auth";
-import { detachSession, startSession } from "./state/sync";
+import { detachSession, startGuestSession, startSession } from "./state/sync";
 import { AppShell } from "./ui/layout/AppShell";
 import { Spinner } from "./ui/components/States";
 import { AddAddonScreen, SettingsScreen } from "./ui/screens/Settings";
-import { AuthMethodScreen, AuthStartScreen, PasswordSignInScreen, QrSignInScreen, RedirectIfAuthed, RequireAuth } from "./ui/screens/Auth";
+import { AllowGuests, AuthMethodScreen, AuthStartScreen, PasswordSignInScreen, QrSignInScreen, RedirectIfAuthed, RequireAuth } from "./ui/screens/Auth";
 import { GenreResultsScreen, MoviesScreen, MyListScreen, TvShowsScreen } from "./ui/screens/Browse";
 import { DetailScreen } from "./ui/screens/Detail";
 import { GenresScreen } from "./ui/screens/Genres";
@@ -32,6 +32,8 @@ function SessionLifecycle() {
       void startSession(userId);
       return () => detachSession();
     }
+    // no account: browse with the default addon (offline = no session could be confirmed, treated the same)
+    if (status === "signedOut" || status === "offline") startGuestSession();
     return undefined;
   }, [status, userId]);
   return null;
@@ -68,9 +70,9 @@ export function App() {
         <Route path="/auth/qr/:intent" element={<RedirectIfAuthed><QrSignInScreen /></RedirectIfAuthed>} />
         <Route
           element={
-            <RequireAuth>
+            <AllowGuests>
               <AppShell />
-            </RequireAuth>
+            </AllowGuests>
           }
         >
           <Route index element={<Home />} />
@@ -79,12 +81,12 @@ export function App() {
           <Route path="genres" element={<GenresScreen />} />
           <Route path="genres/:genre" element={<GenreRoute />} />
           <Route path="search" element={<SearchScreen />} />
-          <Route path="my-list" element={<MyListScreen />} />
-          <Route path="settings" element={<SettingsScreen />} />
-          <Route path="settings/addons/add" element={<AddAddonScreen />} />
-          <Route path="settings/:tab" element={<SettingsScreen />} />
+          <Route path="my-list" element={<RequireAuth><MyListScreen /></RequireAuth>} />
+          <Route path="settings" element={<RequireAuth><SettingsScreen /></RequireAuth>} />
+          <Route path="settings/addons/add" element={<RequireAuth><AddAddonScreen /></RequireAuth>} />
+          <Route path="settings/:tab" element={<RequireAuth><SettingsScreen /></RequireAuth>} />
           <Route path="detail/:providerId/:type/:id" element={<DetailScreen />} />
-          <Route path="sources/:providerId/:type/:id/:season/:episode" element={<SourcesScreen />} />
+          <Route path="sources/:providerId/:type/:id/:season/:episode" element={<RequireAuth><SourcesScreen /></RequireAuth>} />
           <Route path="*" element={<NotFound />} />
         </Route>
         <Route
