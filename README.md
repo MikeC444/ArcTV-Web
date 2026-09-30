@@ -136,6 +136,20 @@ The server then serves the SPA and the API from one origin. See [`docs/DEPLOYMEN
 
 Other scripts: `npm run lint`, `npm run typecheck` (client, server and e2e), `npm test`.
 
+## Built-in catalog (optional)
+
+With `TMDB_API_KEY` set, the web server also serves **Mango TV Catalog**, a real Stremio addon of its own at `/addon/manifest.json`
+(catalog + meta, built on TMDB): Popular, Trending, Top Rated and genre rows with TMDB artwork, logos, cast and episode lists. Titles
+use IMDb ids (`tt…`), exactly like Cinemeta, so stream addons and the TV app keep working; a title TMDB has no IMDb id for is left out.
+
+* **Everyone gets it, nobody's account changes.** The web app adds it to the providers in the browser, after the person's own addons.
+  It is never installed into an account, never synced, and not shown as an installed addon (Settings → Addons just mentions it).
+  Visitors without an account browse with it instead of Cinemeta. Hide any of its rows under Settings → Home Rows.
+* **Without a key, or if TMDB is unreachable,** nothing is added and the app behaves as before.
+* Ratings on its titles are TMDB's score, and Detail labels them "TMDB Rating".
+* Answers are cached (30 min for lists, days for ids) and requests to TMDB are capped and retried; `/addon` is public, rate-limited
+  per client and read-only. Brand-new accounts still get Cinemeta written to them like a fresh TV, as before.
+
 ## Configuration
 
 Set on the **server only**. Nothing here is exposed to the browser and nothing here is a database credential.
@@ -148,6 +162,7 @@ Set on the **server only**. Nothing here is exposed to the browser and nothing h
 | `PORT` | no | Default `8080`. |
 | `TRUST_PROXY` | no | `1` when exactly one reverse proxy is in front (most PaaS), so client IPs and HTTPS are read correctly. |
 | `CSP_EXTRA_CONNECT_SRC` | no | Extra origins for the Content-Security-Policy `connect-src`, comma separated. |
+| `TMDB_API_KEY` | no | A free [TMDB](https://www.themoviedb.org/settings/api) key (v3 key or v4 read-access token). Turns on the **built-in catalog** (see below). Without it the built-in catalog is simply off and nothing else changes. Also `TMDB_API_BASE` / `TMDB_IMAGE_BASE` (defaults: TMDB's own) for testing. |
 | `STREAM_RELAY` | no | Default `1`. The [stream relay](docs/PLAYBACK.md) that plays sources a browser can't fetch itself. `0` turns it off. Relayed video uses this server's bandwidth. |
 
 `.env.example` contains placeholders only; `.env*` files are git-ignored. The client bundle contains no configuration
@@ -160,7 +175,7 @@ and no secrets.
 | `npm run lint && npm run typecheck` | ESLint (zero warnings) and strict TypeScript for client, server and e2e code |
 | `npm test` | **118 client** unit tests (Stremio mapping, stream ranking/playability/device support, relay addresses, stores, outbox, sync rules) and **97 server** tests (cookie sealing, CSRF, session refresh/rotation, allow-list, SSRF guard, stream relay, static hosting) |
 | `npm run test:integration` | The **real, unmodified backend** from the Firestick repo, all 14 migrations, on a throwaway local Postgres: an account created the way the TV creates it signs in on the web with the same user id and sees its synced data; TV ↔ web sync with last-write-wins; **two accounts cannot read or modify each other's data**; token refresh / expiry / revocation; QR flows; logout revocation |
-| `npm run test:e2e` | Playwright + Chromium against that backend, the built SPA and a local Stremio-protocol fixture addon: sign-in (existing account, wrong password, QR, sign-up, sign-out, remote revocation), browse, search, My List, Detail, Sources, real playback (WebM and HLS) with progress reported to the account, playback of sources a browser can't fetch itself via the stream relay, resume, autoplay-next, settings sync, keyboard navigation, layout proportions of the Compose tokens at 1920 × 1080, and no-overflow layouts at 1920, 1366, 820 and 390 px |
+| `npm run test:e2e` | Playwright + Chromium against that backend, the built SPA (served twice: without a TMDB key, and with one pointing at a fake TMDB for the built-in catalog) and a local Stremio-protocol fixture addon: sign-in (existing account, wrong password, QR, sign-up, sign-out, remote revocation), browse, search, My List, Detail, Sources, real playback (WebM and HLS) with progress reported to the account, playback of sources a browser can't fetch itself via the stream relay, resume, autoplay-next, settings sync, keyboard navigation, layout proportions of the Compose tokens at 1920 × 1080, and no-overflow layouts at 1920, 1366, 820 and 390 px |
 
 `npm run test:integration` and `npm run test:e2e` run the backend from `MikeC444/MangoTV-Live-TV` (cloned at a pinned
 commit, or point `MANGOTV_BACKEND_DIR` at a local checkout) against a Postgres database you provide via

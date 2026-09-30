@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Route, Routes, useParams } from "react-router-dom";
+import { detectBuiltinCatalog } from "./domain/builtinCatalog";
 import { installModalityTracking } from "./lib/modality";
 import { installSpatialNavigation } from "./lib/spatialNav";
 import { useAuth } from "./state/auth";
@@ -54,6 +55,7 @@ export function App() {
     const removeModality = installModalityTracking();
     const removeNav = installSpatialNavigation();
     void init();
+    void detectBuiltinCatalog();
     return () => {
       removeModality();
       removeNav();

@@ -3,6 +3,7 @@ import { MdAccountCircle, MdAdd, MdArrowDownward, MdArrowUpward, MdCheck, MdClou
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { applyRowOrder, moveRow } from "../../domain/homeRows";
 import { useProviders } from "../../domain/registry";
+import { BUILTIN_ADDON_ID } from "../../domain/builtinCatalog";
 import type { HomeSection } from "../../domain/types";
 import { pluralize } from "../../lib/format";
 import { playPreview } from "../../lib/sounds";
@@ -100,12 +101,18 @@ function AddonsPane() {
   const navigate = useNavigate();
   const [confirming, setConfirming] = useState<string | null>(null);
   const target = addons.find((a) => a.manifestUrl === confirming);
+  const builtin = useProviders((s) => s.builtin);
   return (
     <div className="addons">
       <div className="addons__head">
         <p className="t-body-sm c-text-2" style={{ margin: 0, flex: 1 }}>Stremio-compatible addons contribute their catalogs directly into Home.</p>
         <MangoButton text="Add Addon" icon={<MdAdd />} variant="filled" compact onClick={() => navigate(routes.addAddon)} />
       </div>
+      {builtin?.id === BUILTIN_ADDON_ID ? (
+        <p className="t-body-sm c-text-2" style={{ margin: "0 0 14px" }}>
+          <strong className="c-text">{builtin.name}</strong> is built into Mango TV and adds its own rows (Popular, Trending, Top Rated and genres) next to your addons. It isn't part of your account; hide any of its rows under Home Rows.
+        </p>
+      ) : null}
       {addons.length === 0 ? (
         <div style={{ marginTop: 14 }}>
           <MdExtension className="c-text-3" size={32} aria-hidden="true" />

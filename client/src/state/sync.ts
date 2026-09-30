@@ -1,3 +1,4 @@
+import { detectBuiltinCatalog } from "../domain/builtinCatalog";
 import { useAddons } from "./addons";
 import { useAuth } from "./auth";
 import { useContinueWatching } from "./continueWatching";
@@ -72,7 +73,9 @@ export async function startSession(userId: string): Promise<void> {
 
 /** Browsing without an account: the default addon's catalogue, nothing stored. Play, My List and Settings ask for an account. */
 export function startGuestSession(): void {
-  useAddons.getState().loadGuestDefault();
+  void detectBuiltinCatalog().then(() => {
+    if (useAuth.getState().status !== "signedIn") useAddons.getState().loadGuestDefault(); // unless they signed in while we were asking
+  });
 }
 
 export function resetAllStores(): void {

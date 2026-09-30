@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { MdAdd, MdCheck, MdCheckCircle, MdMoreVert, MdOutlineCheckCircle, MdPerson, MdPlayArrow, MdStar, MdTheaters } from "react-icons/md";
 import { useNavigate, useParams } from "react-router-dom";
+import { BUILTIN_ADDON_ID } from "../../domain/builtinCatalog";
 import type { Content, ContentType, Episode, Season } from "../../domain/types";
 import { formatReleaseDate, formatRuntime } from "../../lib/format";
 import { routes } from "../../lib/routes";
@@ -60,6 +61,7 @@ function DetailContent({ content, similar, providerId, trailerId, releaseDate }:
   const releaseLabel = releaseDate && releaseDate !== "none" ? formatReleaseDate(releaseDate) ?? (content.year ? String(content.year) : null) : releaseDate === "none" ? (content.year ? String(content.year) : null) : null;
   const leading = [releaseLabel, content.runtimeMinutes ? formatRuntime(content.runtimeMinutes) : null].filter(Boolean).join("   ");
   const isWatched = content.watched;
+  const ratingSource = content.providerId === BUILTIN_ADDON_ID ? "TMDB" : "IMDb"; // the built-in catalog carries TMDB's score, not IMDb's
 
   return (
     <div className="detail" data-compact={compact}>
@@ -72,11 +74,11 @@ function DetailContent({ content, similar, providerId, trailerId, releaseDate }:
 
       <section className="detail__hero">
         {content.rating != null ? (
-          <div className="detail__rating" aria-label={`IMDb rating ${content.rating.toFixed(1)}`}>
+          <div className="detail__rating" aria-label={`${ratingSource} rating ${content.rating.toFixed(1)}`}>
             <MdStar aria-hidden="true" />
             <div>
               <div className="detail__rating-value">{content.rating.toFixed(1)}</div>
-              <div className="t-label-sm c-text-2">IMDb Rating</div>
+              <div className="t-label-sm c-text-2">{ratingSource} Rating</div>
             </div>
           </div>
         ) : null}

@@ -173,6 +173,12 @@ export const useAddons = create<AddonsState>((set, get) => {
 
     loadGuestDefault() {
       outbox = null;
+      // Visitors browse with the built-in catalog when this server has one; otherwise with Cinemeta. Nothing is stored or synced either way.
+      if (useProviders.getState().builtin) {
+        set({ userId: null, addons: [], ready: true });
+        useProviders.getState().replaceAll([]);
+        return;
+      }
       const raw = cinemetaManifest as unknown as Record<string, unknown>;
       const addon: StoredAddon = { manifestUrl: CINEMETA_MANIFEST_URL, manifest: normalizeManifest(raw), enabled: true, raw };
       set({ userId: null, addons: [addon], ready: true });

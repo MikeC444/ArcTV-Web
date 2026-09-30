@@ -2,6 +2,7 @@ import { useCallback, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { routes } from "../lib/routes";
 import type { Content, HomeSection } from "../domain/types";
+import { useProviders } from "../domain/registry";
 import { useAddons } from "./addons";
 import { useAuth } from "./auth";
 import { useMyList } from "./myList";
@@ -20,8 +21,12 @@ export function useSavedIds(): Set<string> {
   return useMemo(() => new Set(items.map((i) => i.id)), [items]);
 }
 
-/** True once the account's addon list is known (cache or first fetch) — before that, "no providers" means "not loaded yet". */
-export const useAddonsReady = (): boolean => useAddons((s) => s.ready);
+/** True once the account's addon list is known (cache or first fetch) and we know whether the built-in catalog exists — before that, "no providers" means "not loaded yet". */
+export function useAddonsReady(): boolean {
+  const addonsKnown = useAddons((s) => s.ready);
+  const builtinKnown = useProviders((s) => s.builtinChecked);
+  return addonsKnown && builtinKnown;
+}
 
 /**
  * Visitors without an account can browse everything, but saving a title needs one. Wrap such an action: signed-in people
