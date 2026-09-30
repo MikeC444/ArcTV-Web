@@ -122,7 +122,7 @@ const mediaLog = [];
 //                              hostile  – refuses a browser-style request (one carrying Sec-Fetch-*) with 403, like hotlink protection, but serves everyone else
 //                              headers  – needs the addon's proxyHeaders (X-Required) or answers 403
 //                              dead     – answers every client 403
-//                              resolver – a debrid-style link that ends in .mp4 but redirects to an HLS stream (a file-like address that isn't a file)
+//                              resolver – a link with no file extension that redirects to an HLS stream (what a resolver can look like)
 //   /debrid/…                a cached ("[RD+]") and a not-yet-cached ("[RD download]") debrid-style stream
 //   /stall/…                 one stream whose media request is accepted and then never answered (a hung debrid link)
 const extraManifest = (id, name, resources) => ({ id, name, version: "1.0.0", description: "Local test addon", resources, types: ["movie", "series"], idPrefixes: ["fx"], catalogs: [] });
@@ -147,7 +147,7 @@ function handleExtraAddon(p, res, cors) {
     { name: "Stream hostile 1080p", title: "Relay.hostile.1080p.WEB-DL.VP9\n👤 400 💾 2 GB", url: `${BASE}/media/browser-hostile.webm` },
     { name: "Stream headers 1080p", title: "Relay.headers.1080p.WEB-DL.VP9\n👤 300 💾 2 GB", url: `${BASE}/media/needs-headers.webm`, behaviorHints: { proxyHeaders: { request: { "X-Required": "let-me-in" } } } },
     { name: "Stream dead 1080p", title: "Relay.dead.1080p.WEB-DL.VP9\n👤 200 💾 2 GB", url: `${BASE}/media/dead.webm` },
-    { name: "Stream resolver 1080p", title: "Relay.resolver.1080p.WEB-DL.VP9\n👤 100 💾 2 GB", url: `${BASE}/media/resolve/movie.mp4` },
+    { name: "Stream resolver 1080p", title: "Relay.resolver.1080p.WEB-DL.VP9\n👤 100 💾 2 GB", url: `${BASE}/media/resolve/movie` },
   ] }, cors), true;
   if (p === "/debrid/manifest.json") return json(res, extraManifest("test.mangotv.debrid", "Fixture Debrid", ["stream"]), cors), true;
   if (/^\/debrid\/stream\//.test(p)) return json(res, { streams: [
@@ -223,7 +223,7 @@ export function createAddonServer() {
       return json(res, { requests: requestLog }, true);
     }
     requestLog.push(`${req.method} ${cors ? "" : "/nocors"}${p}`);
-    if (p.startsWith("/media/")) mediaLog.push({ path: p, browser: Boolean(req.headers["sec-fetch-dest"]), range: req.headers.range ?? null, referer: req.headers.referer ?? null, required: req.headers["x-required"] ?? null, userAgent: req.headers["user-agent"] ?? null });
+    if (p.startsWith("/media/")) mediaLog.push({ path: p, method: req.method, browser: Boolean(req.headers["sec-fetch-dest"]), range: req.headers.range ?? null, referer: req.headers.referer ?? null, required: req.headers["x-required"] ?? null, userAgent: req.headers["user-agent"] ?? null });
     if (handleExtraAddon(p, res, cors)) return;
 
     if (p === "/manifest.json") return json(res, manifest, cors);
@@ -235,7 +235,7 @@ export function createAddonServer() {
       }
       return serveFile(req, res, path.join(mediaDir, "sample.webm"));
     }
-    if (p === "/media/resolve/movie.mp4") {
+    if (p === "/media/resolve/movie") {
       res.writeHead(302, { Location: `${BASE}/media/hls/master.m3u8`, ...CORS });
       return res.end();
     }

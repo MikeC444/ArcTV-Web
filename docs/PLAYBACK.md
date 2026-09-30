@@ -28,7 +28,7 @@ the first diagnosis, what MangoTV does now, and what has and has not been verifi
    before playing it. MangoTV did neither, so both were added on a hypothesis that Torrentio answers browsers differently.
    The direct request still did not start. The HEAD probe could not even read the answer (the redirect doesn't allow web
    pages to), which is exactly what Stremio Web would see too. The Referer change was **reverted** (no effect, small privacy
-   cost); the content-type probe stays because it is Stremio's own flow and finds HLS behind file-like addresses.
+   cost); the content-type probe stays, but only for addresses with no media-file extension (see the table below).
 4. **The network capture (Chrome DevTools, filter "Media").** Both attempts look the same:
 
    | Request | Status | Size | Time |
@@ -57,7 +57,7 @@ Read from the source of `@stremio/stremio-video` (MIT) and Stremio Web (GPL-2.0,
 | Stremio | MangoTV |
 |---|---|
 | `video.src = url` on a native `<video>`; `crossOrigin` deliberately not set | same |
-| `getContentType()`: a HEAD request before playing; an HLS answer behind a file-like address is played with hls.js | adapted in `client/src/domain/contentType.ts` (wait capped at 4 s; unreadable → the address decides, like Stremio) |
+| `getContentType()`: a HEAD request before playing; an HLS answer behind a file-like address is played with hls.js | adapted in `client/src/domain/contentType.ts` — only for addresses that don't name a media file (an `.mkv` link is just played: asking first costs the host a request, and for a debrid link a second "generate a download link" call, and the browser's cross-origin rules usually refuse to show the answer anyway — the red "CORS error" row in DevTools); wait capped at 4 s; unreadable → the address decides, like Stremio |
 | Streams with `proxyHeaders` (and mixed-content `http://`) go through the streaming server's `/proxy/<origin>&h=…&r=…/<path>` | same address shape, served by MangoTV's own web server: the stream relay (`client/src/domain/relay.ts`, adapted from `buildProxyUrl.js`, MIT — see `THIRD_PARTY_NOTICES.md`) |
 | Everything else the streaming server does (transcoding, torrents) | not available to a hosted website |
 
@@ -89,7 +89,7 @@ through the web server's bandwidth (small on Render's free plan) and the stream 
   address builder, the content-type probe and the diagnostics.
 * End-to-end (Chromium against fixture hosts, `e2e/tests/relay.spec.ts`, `addons.spec.ts`): a host that refuses browser
   requests is played through the relay with a real picture; `proxyHeaders` sources play through it while the browser never
-  contacts the host; a host that refuses both says so; a link that looks like an `.mp4` but redirects to HLS plays with
+  contacts the host; a host that refuses both says so; a link with no file extension that redirects to HLS plays with
   hls.js; a host that never delivers is **not** sent to the relay and ends with the "too slow" message.
 * These fixtures are **inventions of the test author**. They prove the code paths work, not that any real host behaves that
   way. The real Torrentio/debrid stream could not be reached from the development sandbox at all.

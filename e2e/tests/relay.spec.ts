@@ -8,7 +8,7 @@ import { ADDON, newAccount, openSignedIn, shot, type TestAccount } from "./helpe
  * once after the browser's own request FAILED outright. (A source that is merely slow is not sent to the relay: see addons.spec.)
  * The fixture host ("hostile") serves every client EXCEPT ones carrying Sec-Fetch-* headers, i.e. browsers.
  */
-type MediaRequest = { path: string; browser: boolean; range: string | null; referer: string | null; required: string | null; userAgent: string | null };
+type MediaRequest = { path: string; method: string; browser: boolean; range: string | null; referer: string | null; required: string | null; userAgent: string | null };
 const mediaLog = async () => ((await (await fetch(`${ADDON}/__media-requests`)).json()) as { requests: MediaRequest[] }).requests;
 const clearLog = () => fetch(`${ADDON}/__media-requests`, { method: "DELETE" });
 const video = (page: Page) => page.locator("video.player__video");
@@ -35,6 +35,7 @@ test.describe("stream relay (Stremio-style proxy) — sources a browser can't fe
 
     const requests = await mediaLog();
     expect(requests.some((r) => r.path === "/media/browser-hostile.webm" && r.browser), "the browser tried first").toBe(true);
+    expect(requests.some((r) => r.method === "HEAD"), "an address that names a media file is played, not probed first").toBe(false);
     const viaRelay = requests.find((r) => r.path === "/media/browser-hostile.webm" && !r.browser);
     expect(viaRelay, "the relay's own request reached the host").toBeTruthy();
     expect(viaRelay!.userAgent).toContain("MangoTV-Web");
@@ -78,7 +79,7 @@ test.describe("stream relay (Stremio-style proxy) — sources a browser can't fe
     await shot(page, "player-relay-both-failed");
   });
 
-  test("a link that looks like an .mp4 but redirects to HLS: the player asks the server what it is first (like Stremio Web) and plays it with hls.js", async ({ page }) => {
+  test("a link with no file extension that redirects to HLS: the player asks the server what it is first (like Stremio Web) and plays it with hls.js", async ({ page }) => {
     const account = await newAccount("resolver");
     await openFixtureSources(page, account);
     await pick(page, "Relay.resolver");
@@ -86,7 +87,7 @@ test.describe("stream relay (Stremio-style proxy) — sources a browser can't fe
     expect(await video(page).evaluate((v: HTMLVideoElement) => v.currentSrc)).toMatch(/^blob:/); // hls.js over Media Source, not the native element on a playlist
     expect(await video(page).evaluate((v: HTMLVideoElement) => v.videoWidth)).toBeGreaterThan(0);
     expect(await video(page).evaluate((v: HTMLVideoElement) => v.error)).toBeNull();
-    expect((await mediaLog()).some((r) => r.path === "/media/resolve/movie.mp4")).toBe(true);
+    expect((await mediaLog()).some((r) => r.path === "/media/resolve/movie" && r.method === "HEAD")).toBe(true);
   });
 
   test("the relay is for signed-in sessions only and is not an open proxy", async ({ request }) => {

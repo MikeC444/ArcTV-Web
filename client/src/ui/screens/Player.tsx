@@ -360,6 +360,9 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
     void (async () => {
       const fromAddress = engineFor(url);
       if (fromAddress !== "native") return start(fromAddress);
+      // An address that names a media file (.mkv, .mp4 …) is played as one. Asking first would cost a request to the stream host — and, for a debrid
+      // link, a second "generate a download link" call — and is usually refused by the browser's cross-origin rules anyway (the red "CORS error" row).
+      if (KNOWN_NATIVE_EXT.test(url)) return start("native");
       const contentType = await getContentType(stream, url, { timeoutMs: CONTENT_TYPE_WAIT_MS, signal: probe.signal });
       if (cancelled) return;
       if (trail.current.length < 80) trail.current.push({ at: Math.round(performance.now() - trailStart.current), name: describeContentType(contentType) });
