@@ -165,3 +165,41 @@ If the stream still does not play after this change, the **Technical details** w
 saw (`content-type …` in the event list), whether a Referer-bearing HEAD could be read at all, and — for the relay — who
 refused it. The remaining suspects are then a host that refuses datacenter addresses (the relay case) or one that really
 withholds the video from this browser for a reason that can only be seen on the wire.
+
+## Third round: what the second real test showed
+
+With the Referer and content-type changes deployed, the same stream's details read:
+
+```
+HEAD for the content type (what Stremio Web asks first): not readable by web pages … after 385 ms
+Through this site's relay: HTTP 502 — The stream host answered HTTP 403 (from torrentio.strem.fun; server: cloudflare;
+  it said: "Attention Required! | Cloudflare …")
+```
+
+1. **The relay is a dead end for Torrentio.** The refusal comes from `torrentio.strem.fun` itself (no redirect was followed) and
+   its page is Cloudflare's "Attention Required!" block page: Torrentio's Cloudflare front refuses this site's server — a
+   hosting-provider address that is not a person's browser. That is the host's access control, and the relay does not try to
+   get around it (no pretending to be a browser, no rotating addresses). The same will be true of any addon that blocks
+   server-side requests, and of debrid links that are locked to the address that asked for them. The relay remains useful for
+   hosts that only need headers or plain-http access (what it was tested against), not for these.
+2. **The Referer hypothesis did not fix the direct request.** The player still reported "the direct request delivered no
+   video" after 12 s. It is not ruled out as a *contributing* factor, but it is not the cause.
+3. **The content-type probe learns nothing from this host** — Stremio Web's own HEAD would fail the same way (the host's
+   redirect doesn't allow web pages to read it) and fall back to the address, as ours now does.
+
+So what remains is the direct `<video>` request, which gets response headers within ~1–2 s (the connection test's plain and
+Range GET) and then no video data at all, while opening the same address in a browser tab starts a download. Nothing in a web
+page can see what that request's redirect target answers, so the next evidence has to come from the browser's own network
+tool (see "What to capture" below). The details now also keep what the *direct* attempt did (`Direct attempt (replaced by the
+relay): …`) instead of losing it when the relay takes over, say whether the source is marked cached at the debrid service,
+and — when the relay is refused — put the refusal's reason in the error message instead of the browser's generic "format not
+supported".
+
+### What to capture
+
+Chrome DevTools → **Network** → tick *Disable cache*, filter **Media** (or type `resolve` in the filter box) → start the
+source. For the request that stays "pending" or "stalled", and for the one it redirects to, note: *Status*, the response
+headers `content-type`, `content-length`, `content-range`, `accept-ranges`, `location` (host only) and the *Timing* tab.
+That shows whether the debrid host answers the video request with a redirect, with headers only, or with a playlist, which is
+what decides the next step. (If another source from the same addon — ideally an `.mp4`, or one marked cached — plays, the
+problem is that particular file rather than the route.)

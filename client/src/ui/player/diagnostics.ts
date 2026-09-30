@@ -55,14 +55,23 @@ export function safeSourceLabel(url: string | null | undefined): { host: string;
   }
 }
 
-export function describeDiagnostics(input: { stream: Stream; snapshot: VideoSnapshot | null; engine: string; trail: TrailEntry[]; verdict: DeviceVerdict; browser: string; userAgent: string; route?: string }): string {
-  const { stream, snapshot, engine, trail, verdict, browser, userAgent, route } = input;
+/** One line about an attempt that has been replaced (the direct request, before the relay took over), so its evidence isn't lost. */
+export function describeAttempt(snapshot: VideoSnapshot | null, trail: TrailEntry[]): string {
+  const state = snapshot
+    ? `network ${NETWORK_STATES[snapshot.networkState] ?? snapshot.networkState}, ready ${READY_STATES[snapshot.readyState] ?? snapshot.readyState}, ${snapshot.buffered.length ? "some video buffered" : "nothing buffered"}, ${snapshot.error ? `error ${ERROR_CODES[snapshot.error.code] ?? snapshot.error.code}` : "no media error"}`
+    : "no video element";
+  return `${state}; events: ${trail.length ? trail.slice(-16).map((e) => `+${e.at}ms ${e.name}`).join(", ") : "none"}`;
+}
+
+export function describeDiagnostics(input: { stream: Stream; snapshot: VideoSnapshot | null; engine: string; trail: TrailEntry[]; verdict: DeviceVerdict; browser: string; userAgent: string; route?: string; directAttempt?: string }): string {
+  const { stream, snapshot, engine, trail, verdict, browser, userAgent, route, directAttempt } = input;
   const { host, ext } = safeSourceLabel(stream.url);
   const facts = parseStreamFacts(stream);
   const lines = [
     "MangoTV player diagnostics",
     `Browser: ${browser} (${/(Chrome|Edg|Firefox|Version)\/[\d.]+/.exec(userAgent)?.[0] ?? "unknown version"})`,
     `Source: server ${host}, file type .${ext}, engine ${engine}${route ? `, route ${route}` : ""}`,
+    ...(stream.debrid ? [`Debrid: ${stream.debrid.service}, ${stream.debrid.cached ? "marked cached" : "marked NOT cached (the service has to fetch it first)"}`] : []),
     `Detected: container ${facts.container ?? "?"}, video ${facts.video ?? "?"}${facts.tenBit ? " 10-bit" : ""}, audio ${facts.audio.join("+") || "?"}`,
     `This device: ${verdict.label}${verdict.detail ? ` (${verdict.detail})` : ""}`,
   ];
@@ -74,7 +83,8 @@ export function describeDiagnostics(input: { stream: Stream; snapshot: VideoSnap
       `Media error: ${snapshot.error ? `${ERROR_CODES[snapshot.error.code] ?? snapshot.error.code}${snapshot.error.message ? ` — ${snapshot.error.message.slice(0, 160)}` : ""}` : "none reported"}`,
     );
   }
-  lines.push(`Events: ${trail.length ? trail.slice(-24).map((e) => `+${e.at}ms ${e.name}`).join(", ") : "none — the browser never reported anything for this source"}`);
+  if (directAttempt) lines.push(`Direct attempt (replaced by the relay): ${directAttempt}`);
+  lines.push(`Events${directAttempt ? " (relay attempt)" : ""}: ${trail.length ? trail.slice(-24).map((e) => `+${e.at}ms ${e.name}`).join(", ") : "none — the browser never reported anything for this source"}`);
   return lines.join("\n");
 }
 

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { describeDiagnostics, probeSource, safeSourceLabel, type VideoSnapshot } from "./diagnostics";
+import { describeAttempt, describeDiagnostics, probeSource, safeSourceLabel, type VideoSnapshot } from "./diagnostics";
 import { detectDeviceCaps, deviceVerdict } from "../../domain/deviceSupport";
 import type { Stream } from "../../domain/types";
 
@@ -28,6 +28,13 @@ describe("player diagnostics", () => {
     expect(text).toContain("Can't play here");
   });
 
+  it("says whether the debrid service had the file ready", () => {
+    const base = { snapshot, engine: "native", trail: [], verdict: deviceVerdict(stream, caps, "https:"), browser: "Chrome", userAgent: "" };
+    expect(describeDiagnostics({ ...base, stream: { ...stream, debrid: { service: "realdebrid", cached: true } } })).toContain("Debrid: realdebrid, marked cached");
+    expect(describeDiagnostics({ ...base, stream: { ...stream, debrid: { service: "realdebrid", cached: false } } })).toContain("marked NOT cached (the service has to fetch it first)");
+    expect(describeDiagnostics({ ...base, stream })).not.toContain("Debrid:");
+  });
+
   it("says so plainly when the browser reported nothing at all", () => {
     const text = describeDiagnostics({ stream, snapshot: null, engine: "hls", trail: [], verdict: deviceVerdict(stream, caps, "https:"), browser: "Chrome", userAgent: "" });
     expect(text).toContain("none — the browser never reported anything for this source");
@@ -37,6 +44,18 @@ describe("player diagnostics", () => {
   it("includes the media error code and message when there is one", () => {
     const text = describeDiagnostics({ stream, snapshot: { ...snapshot, readyState: 1, error: { code: 4, message: "DEMUXER_ERROR_COULD_NOT_OPEN" } }, engine: "native", trail: [], verdict: deviceVerdict(stream, caps, "https:"), browser: "Chrome", userAgent: "" });
     expect(text).toContain("Media error: SRC_NOT_SUPPORTED — DEMUXER_ERROR_COULD_NOT_OPEN");
+  });
+});
+
+describe("the direct attempt that the relay replaced", () => {
+  it("is kept as one line, so the evidence from the first request isn't lost with its event trail", () => {
+    const line = describeAttempt(snapshot, [{ at: 3, name: "loadstart" }, { at: 3200, name: "stalled" }]);
+    expect(line).toBe("network LOADING, ready HAVE_NOTHING, nothing buffered, no media error; events: +3ms loadstart, +3200ms stalled");
+    const text = describeDiagnostics({ stream, snapshot, engine: "native", trail: [{ at: 1, name: "emptied" }], verdict: deviceVerdict(stream, caps, "https:"), browser: "Chrome", userAgent: "", route: "direct, then relay", directAttempt: line });
+    expect(text).toContain(`Direct attempt (replaced by the relay): ${line}`);
+    expect(text).toContain("Events (relay attempt): +1ms emptied");
+    expect(text).not.toMatch(/SECRET|realdebrid|abcdef|token/i);
+    expect(describeAttempt(null, [])).toBe("no video element; events: none");
   });
 });
 

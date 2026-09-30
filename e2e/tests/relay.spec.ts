@@ -74,9 +74,12 @@ test.describe("stream relay (Stremio-style proxy) — content that used to fail 
     const alert = page.getByRole("alertdialog", { name: "Unable to play this source" });
     await expect(alert).toBeVisible({ timeout: 15_000 });
     await expect(alert).toContainText("Tried directly and through this site's relay");
+    // a <video> can only say "format not supported" — the dialog asks the relay why it was refused and says so
+    await expect(alert).toContainText("this site's server was refused: The stream host answered HTTP 403 (from 127.0.0.1:");
     await alert.getByText("Technical details").click();
     await expect(alert.locator(".perror__pre")).toContainText("route direct, then relay");
     await expect(alert.locator(".perror__pre")).toContainText("relay-fallback (the direct request delivered no video)");
+    await expect(alert.locator(".perror__pre")).toContainText("Direct attempt (replaced by the relay): network LOADING, ready HAVE_NOTHING"); // what the first request did isn't lost
 
     await alert.getByRole("button", { name: "Test connection" }).click();
     const pre = alert.locator(".perror__pre");

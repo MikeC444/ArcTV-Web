@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as
 import { MdArrowBack, MdFastForward, MdForward10, MdFullscreen, MdFullscreenExit, MdGraphicEq, MdHighQuality, MdPause, MdPlayArrow, MdReplay10, MdSettings, MdSkipNext, MdSubtitles, MdSwapHoriz, MdVolumeOff, MdVolumeUp } from "react-icons/md";
 import { useNavigate, useParams } from "react-router-dom";
 import { DEBRID_NAMES, deviceVerdict, getDeviceCaps } from "../../domain/deviceSupport";
-import { buildRelayUrl, needsRelay, playbackUrl } from "../../domain/relay";
+import { buildRelayUrl, needsRelay, playbackUrl, relayRefusal } from "../../domain/relay";
 import { describeContentType, engineForContentType, getContentType } from "../../domain/contentType";
 import { assessStream, engineFor } from "../../domain/playability";
 import { activeProviders } from "../../domain/registry";
@@ -20,7 +20,7 @@ import { useSettings } from "../../state/settings";
 import { IconButton, MangoButton } from "../components/Buttons";
 import { MangoLogo } from "../components/Logo";
 import { FullScreenError, Spinner } from "../components/States";
-import { describeDiagnostics, EVENTS_WORTH_KEEPING, probeSource, snapshotVideo, type TrailEntry } from "../player/diagnostics";
+import { describeAttempt, describeDiagnostics, EVENTS_WORTH_KEEPING, probeSource, snapshotVideo, type TrailEntry } from "../player/diagnostics";
 import { createEngine, mediaErrorToPlaybackError, pickDefaultSubtitle, type EngineTracks, type PlaybackError, type PlayerEngine } from "../player/engine";
 import { AdvancedPanel, PlaybackErrorOverlay, SettingsPanel, SourceInfoPanel, SpeedMenu, TrackMenu } from "../player/overlays";
 
@@ -162,9 +162,13 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
   /** How the media is fetched: straight from the host, or through this site's relay (needed for header-locked / plain-http links; also the fallback when a direct request never delivers video). */
   const [route, setRoute] = useState<Route>(() => (needsRelay(stream) ? "relay" : "direct"));
   const [fellBack, setFellBack] = useState(false);
+  /** What the direct request did before the relay replaced it — the evidence would otherwise be lost with the old event trail. */
+  const directAttempt = useRef("");
   const fallBackToRelay = useCallback(
     (): boolean => {
       if (route !== "direct" || fellBack || !stream.url) return false;
+      const v = video.current;
+      directAttempt.current = describeAttempt(v ? snapshotVideo(v) : null, trail.current);
       setFellBack(true);
       setRoute("relay");
       return true;
@@ -175,9 +179,19 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
   const fail = useCallback(
     (e: PlaybackError) => {
       const v = video.current;
-      const details = describeDiagnostics({ stream, snapshot: v ? snapshotVideo(v) : null, engine: engine.current?.kind ?? "native", trail: trail.current, verdict: deviceVerdict(stream), browser: getDeviceCaps().browser, userAgent: navigator.userAgent, route: fellBack ? "direct, then relay" : route });
+      const details = describeDiagnostics({ stream, snapshot: v ? snapshotVideo(v) : null, engine: engine.current?.kind ?? "native", trail: trail.current, verdict: deviceVerdict(stream), browser: getDeviceCaps().browser, userAgent: navigator.userAgent, route: fellBack ? "direct, then relay" : route, directAttempt: fellBack ? directAttempt.current : undefined });
       const hinted = withDeviceHint(stream, e);
-      setError({ ...hinted, message: fellBack && !hinted.message.includes("relay") ? `${hinted.message} (Tried directly and through this site's relay.)` : hinted.message, details });
+      const tried = fellBack ? " (Tried directly and through this site's relay.)" : "";
+      setError({ ...hinted, message: fellBack && !hinted.message.includes("relay") ? `${hinted.message}${tried}` : hinted.message, details });
+      // A <video> can only say "format not supported" when this site's server was refused; the relay itself knows why, so ask it.
+      if (route === "relay" && stream.url && e.type !== "decode") {
+        void relayRefusal(playbackUrl(stream, "relay")).then((reason) => {
+          if (!reason) return;
+          const before = fellBack ? "Nothing arrived when your browser asked directly, and " : "";
+          const cant = fellBack ? "this site's server was refused" : "This site's server couldn't get this stream";
+          setError((current) => (current && current.details === details ? { ...current, message: `${before}${cant}: ${reason}${tried}` } : current));
+        });
+      }
     },
     [stream, route, fellBack],
   );

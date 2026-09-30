@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { buildRelayUrl, isRelayUrl, needsRelay, playbackUrl } from "./relay";
+import { describe, expect, it, vi } from "vitest";
+import { buildRelayUrl, isRelayUrl, needsRelay, playbackUrl, relayRefusal } from "./relay";
 
 describe("relay addresses (adapted from stremio-video's buildProxyUrl)", () => {
   it("keeps Stremio's shape: d=<origin>&h=…&r=… first, then the stream's own path and query", () => {
@@ -37,5 +37,22 @@ describe("relay addresses (adapted from stremio-video's buildProxyUrl)", () => {
     expect(playbackUrl(stream, "direct")).toBe("https://cdn.example.com/v.mp4");
     expect(playbackUrl(stream, "relay")).toContain("h=Referer%3Ar");
     expect(playbackUrl(stream, "relay")).toContain("r=Content-Type%3Avideo%2Fmp4");
+  });
+});
+
+describe("relayRefusal — the relay's own explanation, which a <video> can't read", () => {
+  const json = (status: number, body: unknown) => ({ ok: status >= 200 && status < 300, status, json: async () => body }) as unknown as Response;
+
+  it("returns the server's message when the relay was refused", async () => {
+    const fetchImpl = vi.fn(async () => json(502, { error: { code: "upstream_error", message: "The stream host answered HTTP 403 (from torrentio.strem.fun; server: cloudflare)." } }));
+    expect(await relayRefusal("/api/relay/d=x/y", { fetchImpl: fetchImpl as unknown as typeof fetch })).toContain("HTTP 403 (from torrentio.strem.fun");
+    expect(fetchImpl).toHaveBeenCalledWith("/api/relay/d=x/y", expect.objectContaining({ headers: { Range: "bytes=0-0" }, credentials: "same-origin" }));
+  });
+
+  it("returns null when the relay works (the failure was something else), when it can't be read, or when the message is junk", async () => {
+    expect(await relayRefusal("/api/relay/d=x/y", { fetchImpl: (async () => json(206, {})) as unknown as typeof fetch })).toBeNull();
+    expect(await relayRefusal("/api/relay/d=x/y", { fetchImpl: (async () => Promise.reject(new TypeError("offline"))) as unknown as typeof fetch })).toBeNull();
+    expect(await relayRefusal("/api/relay/d=x/y", { fetchImpl: (async () => json(502, { error: { message: "x".repeat(2000) } })) as unknown as typeof fetch })).toBeNull();
+    expect(await relayRefusal("/api/relay/d=x/y", { fetchImpl: (async () => ({ ok: false, status: 502, json: async () => Promise.reject(new Error("not json")) }) as unknown as Response) as unknown as typeof fetch })).toBeNull();
   });
 });

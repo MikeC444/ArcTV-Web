@@ -152,7 +152,10 @@ async function describeRefusal(upstream: Awaited<ReturnType<typeof undiciRequest
     await Promise.race([read, new Promise<void>((resolve) => (timer = setTimeout(resolve, 2_000)))]);
     clearTimeout(timer);
     upstream.body.destroy();
-    said = Buffer.concat(chunks).toString("utf8").replace(/<[^>]*>/g, " ").replace(/https?:\/\/\S+/gi, "<link>").replace(/[^\x20-\x7e]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 120);
+    const text = Buffer.concat(chunks).toString("utf8");
+    // an error PAGE is summed up by its title ("Attention Required! | Cloudflare"); anything else by its first words (tags, even a cut-off one, dropped)
+    const title = /<title[^>]*>([^<]{1,100})/i.exec(text)?.[1];
+    said = (title ?? text.replace(/<[^>]*>?/g, " ")).replace(/https?:\/\/\S+/gi, "<link>").replace(/[^\x20-\x7e]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 120);
   } else {
     void upstream.body.dump?.().catch(() => undefined);
   }

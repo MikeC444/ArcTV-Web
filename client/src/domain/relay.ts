@@ -38,3 +38,26 @@ export function playbackUrl(stream: Pick<Stream, "url" | "proxyHeaders" | "proxy
   const url = stream.url as string;
   return route === "relay" ? buildRelayUrl(url, stream.proxyHeaders ?? {}, stream.proxyResponseHeaders ?? {}) : url;
 }
+
+/**
+ * Why the relay couldn't get a stream: the server's own explanation, or null when the relay works (the failure was something else).
+ * A `<video>` can't read the relay's JSON error — it only reports "format not supported" — so the player asks once more with fetch.
+ */
+export async function relayRefusal(relayUrl: string, options: { fetchImpl?: typeof fetch; timeoutMs?: number } = {}): Promise<string | null> {
+  const doFetch = options.fetchImpl ?? ((...args: Parameters<typeof fetch>) => fetch(...args));
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? 8_000);
+  try {
+    const response = await doFetch(relayUrl, { headers: { Range: "bytes=0-0" }, credentials: "same-origin", cache: "no-store", signal: controller.signal });
+    if (response.ok || response.status === 206) {
+      controller.abort(); // it answers fine — only the first byte was wanted
+      return null;
+    }
+    const message = ((await response.json()) as { error?: { message?: unknown } }).error?.message;
+    return typeof message === "string" && message.length > 0 && message.length <= 600 ? message : null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}

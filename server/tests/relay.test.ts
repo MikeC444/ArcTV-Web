@@ -32,7 +32,7 @@ beforeAll(async () => {
     seen.other = req.headers;
     if (req.url === "/refuse") {
       res.writeHead(403, { "Content-Type": "application/json" });
-      return res.end('{"error":"ip_not_allowed"}');
+      return res.end('{"error":"ip_not_allowed","help":"https://secret.example/key=abc"}');
     }
     res.writeHead(200, { "Content-Type": "video/mp4", "Content-Length": MOVIE.length });
     res.end(MOVIE);
@@ -76,6 +76,9 @@ beforeAll(async () => {
       case "/refused":
         res.writeHead(403, { "Content-Type": "text/html", Server: "cloudflare", "cf-mitigated": "challenge" });
         return res.end("<html><title>Attention Required!</title>Sorry, you have been blocked. See https://secret.example/key=abc\u2014 Cloudflare</html>");
+      case "/blocked-page": // like a CDN's block page: a long head, cut off mid-tag by the relay's 400-byte peek
+        res.writeHead(403, { "Content-Type": "text/html; charset=UTF-8", Server: "cloudflare" });
+        return res.end(`<!DOCTYPE html><html><head><title>Attention Required! | Cloudflare</title>${"<!-- filler -->".repeat(30)}<meta name="viewport" content="width=device-width"></head></html>`);
       case "/hop-refused":
         res.writeHead(302, { Location: `${otherBase}/refuse` });
         return res.end();
@@ -254,13 +257,18 @@ describe("stream relay", () => {
     expect(message).toContain("server: cloudflare");
     expect(message).toContain("a bot check was demanded");
     expect(message).toContain("Attention Required!");
-    expect(message).toContain("<link>");
     expect(message).not.toMatch(/secret\.example|key=abc|\/refused/);
+
+    const page = await client.get(relayUrl(`${base}/blocked-page`));
+    expect(page.body.error.message).toContain('it said: "Attention Required! | Cloudflare")'); // the page's title, not a torn-off tag
+    expect(page.body.error.message).not.toContain("<");
 
     const viaRedirect = await client.get(relayUrl(`${base}/hop-refused`));
     expect(viaRedirect.status).toBe(502);
     expect(viaRedirect.body.error.message).toContain(`from ${new URL(otherBase).host} after 1 redirect`);
     expect(viaRedirect.body.error.message).toContain("ip_not_allowed");
+    expect(viaRedirect.body.error.message).toContain("<link>"); // a link in the host's answer can carry a key, so it is never passed on
+    expect(viaRedirect.body.error.message).not.toMatch(/secret\.example|key=abc/);
   });
 
   it("rejects unsupported Range headers (multi-range) and malformed relay addresses", async () => {
