@@ -142,6 +142,7 @@ Set on the **server only**. Nothing here is exposed to the browser and nothing h
 | `PORT` | no | Default `8080`. |
 | `TRUST_PROXY` | no | `1` when exactly one reverse proxy is in front (most PaaS), so client IPs and HTTPS are read correctly. |
 | `CSP_EXTRA_CONNECT_SRC` | no | Extra origins for the Content-Security-Policy `connect-src`, comma separated. |
+| `STREAM_RELAY` | no | Default `1`. The [stream relay](docs/PLAYBACK.md) that plays sources a browser can't fetch itself. `0` turns it off. Relayed video uses this server's bandwidth. |
 
 `.env.example` contains placeholders only; `.env*` files are git-ignored. The client bundle contains no configuration
 and no secrets.
@@ -151,9 +152,9 @@ and no secrets.
 | Command | What it proves |
 |---|---|
 | `npm run lint && npm run typecheck` | ESLint (zero warnings) and strict TypeScript for client, server and e2e code |
-| `npm test` | **72 client** unit tests (Stremio mapping, stream ranking/playability, stores, outbox, sync rules) and **78 server** tests (cookie sealing, CSRF, session refresh/rotation, allow-list, SSRF guard, static hosting) |
+| `npm test` | **105 client** unit tests (Stremio mapping, stream ranking/playability/device support, relay addresses, stores, outbox, sync rules) and **95 server** tests (cookie sealing, CSRF, session refresh/rotation, allow-list, SSRF guard, stream relay, static hosting) |
 | `npm run test:integration` | The **real, unmodified backend** from the Firestick repo, all 14 migrations, on a throwaway local Postgres: an account created the way the TV creates it signs in on the web with the same user id and sees its synced data; TV ↔ web sync with last-write-wins; **two accounts cannot read or modify each other's data**; token refresh / expiry / revocation; QR flows; logout revocation |
-| `npm run test:e2e` | Playwright + Chromium against that backend, the built SPA and a local Stremio-protocol fixture addon: sign-in (existing account, wrong password, QR, sign-up, sign-out, remote revocation), browse, search, My List, Detail, Sources, real playback (WebM and HLS) with progress reported to the account, resume, autoplay-next, settings sync, keyboard navigation, layout parity with the Compose tokens at 1920 × 1080, and no-overflow layouts at 1920, 1366, 820 and 390 px |
+| `npm run test:e2e` | Playwright + Chromium against that backend, the built SPA and a local Stremio-protocol fixture addon: sign-in (existing account, wrong password, QR, sign-up, sign-out, remote revocation), browse, search, My List, Detail, Sources, real playback (WebM and HLS) with progress reported to the account, playback of sources a browser can't fetch itself via the stream relay, resume, autoplay-next, settings sync, keyboard navigation, layout parity with the Compose tokens at 1920 × 1080, and no-overflow layouts at 1920, 1366, 820 and 390 px |
 
 `npm run test:integration` and `npm run test:e2e` run the backend from `MikeC444/MangoTV-Live-TV` (cloned at a pinned
 commit, or point `MANGOTV_BACKEND_DIR` at a local checkout) against a Postgres database you provide via
@@ -193,11 +194,11 @@ or silently picking another source:
 
 | Source | Behaviour |
 |---|---|
-| Direct HTTPS MP4 / WebM / HLS / DASH | Plays if the host allows cross-origin media and the codecs are supported by the browser |
+| Direct HTTPS MP4 / WebM / HLS / DASH | Plays if the codecs are supported by the browser. Requested directly first; if the host delivers nothing for 12 s or refuses, the player retries **once through the stream relay** (below) |
 | Torrent (`infoHash`) / magnet | Listed, badged "Can't play here — Torrent source", explains why on click. Use an addon that returns direct (debrid) links |
 | YouTube-only (`ytId`) | Explained; the trailer button opens YouTube in a new tab like the TV does |
-| Sources needing custom request headers (`proxyHeaders`) | Explained — browsers may not set those headers, and the server deliberately does not proxy protected streams |
-| `http://` media on the https site | Blocked by the browser; explained |
+| Sources needing custom request headers (`proxyHeaders`) | Play **through the stream relay** from the start ("via this site's relay"), which adds the addon's headers server-side |
+| `http://` media on the https site | Play through the stream relay (a browser would block them) |
 | MKV / AVI / HEVC / AC-3 etc. | Checked against **this browser's own codec support** (see below); if it fails anyway, the error names the likely cause and offers **Change Source** |
 | DRM (Widevine / FairPlay / PlayReady) | Not implemented — the Firestick app has no DRM path either |
 
@@ -222,6 +223,18 @@ device** pill hides everything else, and **This device** (under the list) shows 
 a strong hint rather than a promise — they are derived from text — and a source whose server never answers can still
 fail; that case is reported by the player's start-up watchdog. Logic and tests: `client/src/domain/deviceSupport.ts`.
 
+### The stream relay (Stremio's `/proxy/`, built into this server)
+
+Stremio Web gets around hosts a browser can't use by sending the stream through its streaming server. A website has no
+local server, so MangoTV's own web server does that job: `/api/relay/d=<origin>&h=<header>&r=<header>/<path>` fetches the
+stream like a native player would (no browser headers, plus the addon's `proxyHeaders`), and streams it back with `Range`
+support. It is for signed-in users' own streams only — same-origin, media content types only, private/loopback/metadata
+addresses refused at connect time, every redirect re-validated, no cookies or `Referer` forwarded, a per-user
+concurrency cap — and `STREAM_RELAY=0` disables it. If the relay can't get the stream either, the error says so and
+**Technical details → Test connection** shows what the stream host answered. Trade-offs (server bandwidth, the debrid
+service seeing the server's IP) and the investigation are in [`docs/PLAYBACK.md`](docs/PLAYBACK.md); the copied address
+builder's MIT attribution is in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+
 ### "Nothing plays" / "No sources found"
 
 Playback starts from **Select a Source**, which asks **every enabled addon on your account** for streams of the title
@@ -241,6 +254,8 @@ but won't play, the reason is in the table above (torrent-only, MKV/HEVC/Dolby a
 * `/api/user/*` is an allow-list, not a pass-through; the bearer is always the session's own.
 * The addon fallback proxy is SSRF-hardened: connect-time DNS validation, private / loopback / link-local / metadata
   ranges blocked, https-only outside tests, JSON only, ≤ 2 MB, redirects re-validated, timeouts.
+* The stream relay is session-only, same-origin, GET/HEAD, media-only, SSRF-guarded like the addon proxy, and never
+  forwards cookies, `Referer` or the addon's headers to a redirect target.
 * Content-Security-Policy without inline scripts, `frame-ancestors 'none'`, HSTS, referrer policy, per-IP rate limits.
 * Payment state is never trusted from the client — there are no payments in this product today; if added, verification
   must stay in the backend.

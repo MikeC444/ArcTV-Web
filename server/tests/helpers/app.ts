@@ -15,6 +15,7 @@ export function testConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     extraConnectSrc: [],
     staticDir: undefined,
     allowPrivateAddonHosts: false,
+    streamRelay: true,
     ...overrides,
   };
 }

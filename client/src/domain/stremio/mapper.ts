@@ -173,6 +173,7 @@ export function streamToStream(stream: StremioStream, providerId: string, provid
     ytId: stream.ytId ?? null,
     notWebReady: stream.behaviorHints?.notWebReady === true,
     proxyHeaders: stream.behaviorHints?.proxyHeaders?.request ?? null,
+    proxyResponseHeaders: stream.behaviorHints?.proxyHeaders?.response ?? null,
   };
 }
 

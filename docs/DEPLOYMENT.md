@@ -32,6 +32,7 @@ You do **not** need the database URL, and the web service must never be given it
 | `TRUST_PROXY` | `1` on nearly every PaaS (exactly one proxy in front). Use `0` if the Node process is exposed directly. |
 | `PORT` | whatever the platform injects (default `8080`) |
 | `CSP_EXTRA_CONNECT_SRC` | leave empty unless you need extra origins |
+| `STREAM_RELAY` | `1` (default) or `0`. See "Stream relay" below. |
 
 The server refuses to start in production without a valid `SESSION_SECRET` and an `https://` API URL.
 
@@ -82,6 +83,15 @@ For real scale the backend needs a small change (in the Firestick repository, wh
 modify): key the `/user/*` limiter on the authenticated user id (or the bearer token) instead of the IP, and make the
 `/auth/*` limiter read the client IP the web service forwards (for example via an explicit trusted-proxy setting).
 Until then, watch for `429` in the logs and keep the number of simultaneous new sign-ins per minute low.
+
+### Stream relay (bandwidth)
+
+Sources that need addon request headers, are plain `http://`, or whose host never answers a browser's own request are
+played through `/api/relay/…` on this service (see [`PLAYBACK.md`](PLAYBACK.md)). Direct playback is always tried first,
+so most viewing costs nothing, but **relayed video flows through this server** and counts against your host's bandwidth
+(on a free Render plan that allowance is small, and free services are slower to stream). It is per-user capped at 6
+simultaneous streams. The stream host (for example a debrid service) sees this server's IP address instead of the
+viewer's. Set `STREAM_RELAY=0` to switch the relay off; the player then only ever requests streams directly.
 
 ### Scaling and restarts
 

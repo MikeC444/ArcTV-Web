@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as
 import { MdArrowBack, MdFastForward, MdForward10, MdFullscreen, MdFullscreenExit, MdGraphicEq, MdHighQuality, MdPause, MdPlayArrow, MdReplay10, MdSettings, MdSkipNext, MdSubtitles, MdSwapHoriz, MdVolumeOff, MdVolumeUp } from "react-icons/md";
 import { useNavigate, useParams } from "react-router-dom";
 import { DEBRID_NAMES, deviceVerdict, getDeviceCaps } from "../../domain/deviceSupport";
+import { buildRelayUrl, needsRelay, playbackUrl } from "../../domain/relay";
 import { assessStream, engineFor } from "../../domain/playability";
 import { activeProviders } from "../../domain/registry";
 import type { Content, ContentType, Episode, Stream } from "../../domain/types";
@@ -87,6 +88,9 @@ const HIDE_AFTER_MS = 4000;
 /** A source that hasn't produced a picture yet: reassure after this long, give up (with a reason) after the second. */
 const SLOW_START_MS = 15_000;
 const START_TIMEOUT_MS = 45_000;
+/** Still no video this long after asking the host directly → ask again through this site's stream relay (Stremio's answer to hosts that don't play well with browsers: proxy them). */
+const RELAY_AFTER_MS = 12_000;
+type Route = "direct" | "relay";
 
 /** When we already knew this device can't handle the file, say so in the error instead of a generic failure. */
 function withDeviceHint(stream: Stream, error: PlaybackError): PlaybackError {
@@ -95,7 +99,7 @@ function withDeviceHint(stream: Stream, error: PlaybackError): PlaybackError {
 }
 
 /** Plain-language reason for a source that never started, using what the <video> element reports and the server's host (never the full link, which can carry a key). */
-function startTimeoutError(stream: Stream, video: HTMLVideoElement | null): PlaybackError {
+function startTimeoutError(stream: Stream, video: HTMLVideoElement | null, fellBack: boolean): PlaybackError {
   let host = "";
   try {
     host = new URL(stream.url ?? "").host;
@@ -107,6 +111,7 @@ function startTimeoutError(stream: Stream, video: HTMLVideoElement | null): Play
   const waiting = video?.networkState === HTMLMediaElement.NETWORK_LOADING;
   const notCached = stream.debrid && !stream.debrid.cached ? DEBRID_NAMES[stream.debrid.service] ?? stream.debrid.service : null;
   if (notCached) return { type: "network", message: `This source isn't cached on ${notCached} yet, so ${notCached} has to fetch it first — that can take several minutes and nothing plays until it's ready. Try again later, or choose a source marked "Cached".` };
+  if (fellBack) return { type: "network", message: `No video arrived from this source${where} — neither when your browser asked directly nor through this site's relay. The host may be busy, blocking requests, or still preparing the file. Try again in a few minutes, or choose another source.` };
   return {
     type: "network",
     message: waiting
@@ -145,19 +150,33 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
   prefsRef.current = prefs;
   const trail = useRef<TrailEntry[]>([]);
   const trailStart = useRef(0);
+  const startedAt = useRef(Date.now());
 
   const [phase, setPhase] = useState<"loading" | "playing" | "paused" | "buffering" | "ended">("loading");
   const [error, setError] = useState<PlaybackError | null>(null);
   const [slowStart, setSlowStart] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  /** How the media is fetched: straight from the host, or through this site's relay (needed for header-locked / plain-http links; also the fallback when a direct request never delivers video). */
+  const [route, setRoute] = useState<Route>(() => (needsRelay(stream) ? "relay" : "direct"));
+  const [fellBack, setFellBack] = useState(false);
+  const fallBackToRelay = useCallback(
+    (): boolean => {
+      if (route !== "direct" || fellBack || !stream.url) return false;
+      setFellBack(true);
+      setRoute("relay");
+      return true;
+    },
+    [route, fellBack, stream.url],
+  );
   /** Every playback failure goes through here: adds what we knew about this device, and a technical account of what the video element did. */
   const fail = useCallback(
     (e: PlaybackError) => {
       const v = video.current;
-      const details = describeDiagnostics({ stream, snapshot: v ? snapshotVideo(v) : null, engine: engine.current?.kind ?? "native", trail: trail.current, verdict: deviceVerdict(stream), browser: getDeviceCaps().browser, userAgent: navigator.userAgent });
-      setError({ ...withDeviceHint(stream, e), details });
+      const details = describeDiagnostics({ stream, snapshot: v ? snapshotVideo(v) : null, engine: engine.current?.kind ?? "native", trail: trail.current, verdict: deviceVerdict(stream), browser: getDeviceCaps().browser, userAgent: navigator.userAgent, route: fellBack ? "direct, then relay" : route });
+      const hinted = withDeviceHint(stream, e);
+      setError({ ...hinted, message: fellBack && !hinted.message.includes("relay") ? `${hinted.message} (Tried directly and through this site's relay.)` : hinted.message, details });
     },
-    [stream],
+    [stream, route, fellBack],
   );
   const [tracks, setTracks] = useState<EngineTracks>(EMPTY_TRACKS);
   const [speed, setSpeed] = useState(1);
@@ -234,13 +253,15 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
     setTracks(EMPTY_TRACKS);
     const verdict = assessStream(stream);
     if (verdict.level === "no") {
-      setError({ type: verdict.kind === "insecure" ? "mixed" : "unsupported", message: verdict.reason });
+      setError({ type: "unsupported", message: verdict.reason });
       return;
     }
-    const url = stream.url as string;
+    const url = playbackUrl(stream, route);
     let cancelled = false;
     let subtitleChosen = false;
     let triedHls = false;
+    /** A relay can fix blocked / unreachable / header-locked fetches, not a file the device can't decode. */
+    const shouldTryRelay = (e: PlaybackError): boolean => route === "direct" && e.type !== "decode" && ["yes", "unknown"].includes(deviceVerdict(stream).level);
 
     const start = async (kind: ReturnType<typeof engineFor>) => {
       engine.current?.destroy();
@@ -264,6 +285,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
             void start("hls");
             return;
           }
+          if (shouldTryRelay(e) && fallBackToRelay()) return;
           fail(e);
         },
       });
@@ -289,7 +311,10 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
     };
     const onNativeError = () => {
       if (engine.current?.kind === "native" || !engine.current) return; // native engine reports its own errors
-      if (v.error) fail(mediaErrorToPlaybackError(v.error));
+      if (!v.error) return;
+      const e = mediaErrorToPlaybackError(v.error);
+      if (shouldTryRelay(e) && fallBackToRelay()) return;
+      fail(e);
     };
     v.addEventListener("loadedmetadata", onMeta);
     v.addEventListener("timeupdate", onTime);
@@ -301,7 +326,8 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
     v.addEventListener("ended", onEnded);
     v.addEventListener("volumechange", onVolume);
     v.addEventListener("error", onNativeError);
-    trail.current = [];
+    // a fresh trail for this route — but say when it only exists because the direct request delivered nothing
+    trail.current = fellBack ? [{ at: 0, name: "relay-fallback (the direct request delivered no video)" }] : [];
     trailStart.current = performance.now();
     let progressSeen = 0;
     const noteEvent = (e: Event) => {
@@ -328,20 +354,29 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
     };
     // `speed` is applied once at start; later changes go through changeSpeed().
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stream, attempt, route]);
+
+  useEffect(() => {
+    startedAt.current = Date.now(); // a new source or "Try Again" restarts the start-up budget; a route switch does not
   }, [stream, attempt]);
 
   // A source that never starts must not spin forever: reassure first, then say why it gave up. "Started" = the browser
   // has learned anything about the file (metadata, a frame, playback); a video that is merely paused or buffering later doesn't count.
   useEffect(() => {
-    setSlowStart(false);
     const stalled = () => (video.current?.readyState ?? 0) === 0 && !video.current?.error;
-    const slow = window.setTimeout(() => stalled() && setSlowStart(true), SLOW_START_MS);
-    const giveUp = window.setTimeout(() => stalled() && fail(startTimeoutError(stream, video.current)), START_TIMEOUT_MS);
+    // The budget (note after 15 s, give up after 45 s) runs from the first request, so switching to the relay never makes the wait longer.
+    const left = (budget: number) => Math.max(0, budget - (Date.now() - startedAt.current));
+    setSlowStart(left(SLOW_START_MS) === 0 && stalled());
+    // no video yet from a direct request → ask again through the relay (once)
+    const relay = route === "direct" ? window.setTimeout(() => stalled() && fallBackToRelay(), left(RELAY_AFTER_MS)) : null;
+    const slow = window.setTimeout(() => stalled() && setSlowStart(true), left(SLOW_START_MS));
+    const giveUp = window.setTimeout(() => stalled() && fail(startTimeoutError(stream, video.current, fellBack)), left(START_TIMEOUT_MS));
     return () => {
+      if (relay !== null) window.clearTimeout(relay);
       window.clearTimeout(slow);
       window.clearTimeout(giveUp);
     };
-  }, [stream, attempt, fail]);
+  }, [stream, attempt, fail, route, fellBack, fallBackToRelay]);
 
   // pause → report; end → report completed + up-next
   useEffect(() => {
@@ -621,9 +656,13 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
         <PlaybackErrorOverlay
           message={error.message}
           details={error.details}
-          onProbe={stream.url ? (onLine) => probeSource(stream.url as string, { onLine }) : undefined}
+          onProbe={stream.url ? (onLine) => probeSource(stream.url as string, { onLine, relayUrl: buildRelayUrl(stream.url as string, stream.proxyHeaders ?? {}, stream.proxyResponseHeaders ?? {}) }) : undefined}
           ytId={stream.ytId}
-          onTryAgain={() => setAttempt((a) => a + 1)}
+          onTryAgain={() => {
+            setFellBack(false);
+            setRoute(needsRelay(stream) ? "relay" : "direct"); // start over the way a first attempt would
+            setAttempt((a) => a + 1);
+          }}
           onChangeSource={onChangeSource}
           onBack={handleBack}
         />

@@ -10,6 +10,7 @@ import type { AppConfig } from "./config.js";
 import type { AppContext } from "./context.js";
 import { ApiError, sendError } from "./errors.js";
 import { createAuthRouter } from "./routes/auth.js";
+import { createStreamRelay } from "./streamRelay.js";
 import { createUserRouter } from "./routes/user.js";
 import { SessionManager } from "./session.js";
 
@@ -113,6 +114,18 @@ export function createApp(config: AppConfig, options: CreateAppOptions = {}): Ex
       if (!ctx.sessions.read(req)) throw new ApiError(401, "unauthorized", "Sign in to continue.");
       res.removeHeader("Cache-Control");
       await addonProxyHandler(fetchAddonJson)(req, res);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Stream relay: media elements and hls.js fetch these same-origin, so the session cookie authenticates them.
+  const relayStream = createStreamRelay(config);
+  api.get("/relay/*rest", perClient(1200), async (req, res, next) => {
+    try {
+      const session = ctx.sessions.read(req);
+      if (!session) throw new ApiError(401, "unauthorized", "Sign in to continue.");
+      await relayStream(req, res, session.user.id);
     } catch (error) {
       next(error);
     }

@@ -103,9 +103,18 @@ describe("the verdict for this device", () => {
     expect(deviceVerdict(mk("Anime.1080p.BluRay.Hi10P.x264.AAC"), chrome, "https:")).toMatchObject({ level: "no", detail: "10-bit H.264 not supported" });
   });
 
-  it("torrents, YouTube-only and header-locked sources are 'no' with their own reason", () => {
+  it("torrents and YouTube-only sources are 'no' with their own reason", () => {
     expect(deviceVerdict(mk("t", null, { infoHash: "abc" }), chrome, "https:")).toMatchObject({ level: "no", detail: "Torrent source" });
-    expect(deviceVerdict(mk("h", "https://x/v.mp4", { proxyHeaders: { Referer: "r" } }), chrome, "https:")).toMatchObject({ level: "no", detail: "Needs special headers" });
+    expect(deviceVerdict(mk("y", null, { ytId: "abc" }), chrome, "https:")).toMatchObject({ level: "no", detail: "YouTube-only source" });
+  });
+
+  it("header-locked and plain-http sources are playable through the site's relay, and say so", () => {
+    expect(deviceVerdict(mk("Movie.1080p.H264.AAC", "https://x/v.mp4", { proxyHeaders: { Referer: "r" } }), chrome, "https:")).toMatchObject({ level: "yes", detail: "via this site's relay" });
+    expect(deviceVerdict(mk("Movie.1080p.H264.AAC", "http://x/v.mp4"), chrome, "https:")).toMatchObject({ level: "yes", detail: "via this site's relay" });
+    expect(deviceVerdict(mk("Movie.1080p.H264.AAC", "http://x/v.mp4"), chrome, "http:").detail).toBe(""); // an http page can fetch http directly
+    expect(deviceVerdict(mk("Some Movie", "https://x/stream", { proxyHeaders: { Referer: "r" } }), chrome, "https:")).toMatchObject({ level: "unknown", detail: "May play, via this site's relay" });
+    // the relay can't fix a format the device can't decode
+    expect(deviceVerdict(mk("Movie.2160p.x265", "http://x/v.mp4"), chrome, "https:").level).toBe("no");
   });
 
   it("says 'unknown' when the source doesn't reveal its format, and flags addon-declared not-web-ready", () => {

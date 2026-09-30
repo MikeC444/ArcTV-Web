@@ -109,6 +109,8 @@ const MIME = { ".webm": "video/webm", ".m3u8": "application/vnd.apple.mpegurl", 
 
 /** Every request the addon receives, so tests can prove the web app really asked (GET /__requests, DELETE /__requests). */
 const requestLog = [];
+/** Media requests with the headers that matter for the relay tests (GET /__media-requests, DELETE to clear). */
+const mediaLog = [];
 
 // Extra addons, each mounted under its own prefix. The path segment after /streamonly/ is a "config" like the one real
 // debrid addons carry in their URL (characters such as = , | included).
@@ -116,6 +118,10 @@ const requestLog = [];
 //   /broken/…                declares streams but answers HTTP 500
 //   /empty/…                 declares streams but has none for any title
 //   /nostreams/…             catalog + meta only, like Cinemeta (must never be asked for streams)
+//   /relay/…                 streams whose hosts don't play well with a browser (see the /media/* routes below):
+//                              hostile  – accepts a browser-style request (one carrying Sec-Fetch-*) and never sends the video, but serves everyone else
+//                              headers  – needs the addon's proxyHeaders (X-Required) or answers 403
+//                              dead     – stalls browsers and answers every other client 403
 //   /debrid/…                a cached ("[RD+]") and a not-yet-cached ("[RD download]") debrid-style stream
 //   /stall/…                 one stream whose media request is accepted and then never answered (a hung debrid link)
 const extraManifest = (id, name, resources) => ({ id, name, version: "1.0.0", description: "Local test addon", resources, types: ["movie", "series"], idPrefixes: ["fx"], catalogs: [] });
@@ -135,6 +141,12 @@ function handleExtraAddon(p, res, cors) {
       { name: `Stream ${tag} 720p`, title: `${title}.720p.WEB-DL.VP9\n👤 120 💾 1.1 GB`, url: `${BASE}/media/sample.webm?via=${tag}-2` },
     ] }, cors), true;
   }
+  if (p === "/relay/manifest.json") return json(res, extraManifest("test.mangotv.relay", "Fixture Relay", ["stream"]), cors), true;
+  if (/^\/relay\/stream\//.test(p)) return json(res, { streams: [
+    { name: "Stream hostile 1080p", title: "Relay.hostile.1080p.WEB-DL.VP9\n👤 400 💾 2 GB", url: `${BASE}/media/browser-hostile.webm` },
+    { name: "Stream headers 1080p", title: "Relay.headers.1080p.WEB-DL.VP9\n👤 300 💾 2 GB", url: `${BASE}/media/needs-headers.webm`, behaviorHints: { proxyHeaders: { request: { "X-Required": "let-me-in" } } } },
+    { name: "Stream dead 1080p", title: "Relay.dead.1080p.WEB-DL.VP9\n👤 200 💾 2 GB", url: `${BASE}/media/dead.webm` },
+  ] }, cors), true;
   if (p === "/debrid/manifest.json") return json(res, extraManifest("test.mangotv.debrid", "Fixture Debrid", ["stream"]), cors), true;
   if (/^\/debrid\/stream\//.test(p)) return json(res, { streams: [
     { name: "[RD+] Fixture Debrid", title: "Debrid.cached.1080p.WEB-DL.VP9\n👤 50 💾 2 GB", url: `${BASE}/media/sample.webm?via=debrid-cached` },
@@ -198,15 +210,39 @@ export function createAddonServer() {
     const cors = !p.startsWith("/nocors/");
     if (!cors) p = p.slice("/nocors".length);
 
+    if (p === "/__media-requests") {
+      if (req.method === "DELETE") mediaLog.length = 0;
+      return json(res, { requests: mediaLog }, true);
+    }
     if (p === "/__requests") {
       if (req.method === "DELETE") requestLog.length = 0;
       return json(res, { requests: requestLog }, true);
     }
     requestLog.push(`${req.method} ${cors ? "" : "/nocors"}${p}`);
+    if (p.startsWith("/media/")) mediaLog.push({ path: p, browser: Boolean(req.headers["sec-fetch-dest"]), range: req.headers.range ?? null, referer: req.headers.referer ?? null, required: req.headers["x-required"] ?? null, userAgent: req.headers["user-agent"] ?? null });
     if (handleExtraAddon(p, res, cors)) return;
 
     if (p === "/manifest.json") return json(res, manifest, cors);
     if (p === "/media/stall.webm") return; // accepted, never answered
+    if (p === "/media/browser-hostile.webm" || p === "/media/dead.webm") {
+      if (req.headers["sec-fetch-dest"]) {
+        res.writeHead(200, { "Content-Type": "video/webm", "Content-Length": fs.statSync(path.join(mediaDir, "sample.webm")).size, "Accept-Ranges": "bytes", ...CORS });
+        res.flushHeaders(); // headers now, video never — the signature seen with a real debrid host
+        return;
+      }
+      if (p === "/media/dead.webm") {
+        res.writeHead(403, CORS);
+        return res.end("forbidden");
+      }
+      return serveFile(req, res, path.join(mediaDir, "sample.webm"));
+    }
+    if (p === "/media/needs-headers.webm") {
+      if (req.headers["x-required"] !== "let-me-in") {
+        res.writeHead(403, CORS);
+        return res.end("missing header");
+      }
+      return serveFile(req, res, path.join(mediaDir, "sample.webm"));
+    }
     if (p.startsWith("/media/")) return serveFile(req, res, path.join(mediaDir, decodeURIComponent(p.slice("/media/".length))));
 
     let m = /^\/img\/(poster|bg)\/(.+)\.svg$/.exec(p);

@@ -20,6 +20,8 @@ const schema = z.object({
   STATIC_DIR: z.string().optional(),
   // Test-only escape hatch: allow the addon proxy to reach loopback/private hosts.
   ALLOW_PRIVATE_ADDON_HOSTS: z.enum(["0", "1"]).default("0"),
+  // Stream relay (see streamRelay.ts): "0" turns it off entirely. On by default; the player only uses it when a stream can't be played directly.
+  STREAM_RELAY: z.enum(["0", "1"]).default("1"),
 });
 
 export interface AppConfig {
@@ -32,6 +34,7 @@ export interface AppConfig {
   extraConnectSrc: string[];
   staticDir: string | undefined;
   allowPrivateAddonHosts: boolean;
+  streamRelay: boolean;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -59,6 +62,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     extraConnectSrc: value.CSP_EXTRA_CONNECT_SRC.split(",").map((s) => s.trim()).filter(Boolean),
     staticDir: value.STATIC_DIR,
     allowPrivateAddonHosts: value.ALLOW_PRIVATE_ADDON_HOSTS === "1",
+    streamRelay: value.STREAM_RELAY === "1",
   };
 }
 

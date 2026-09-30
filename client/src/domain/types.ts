@@ -99,6 +99,8 @@ export interface Stream {
   /** Stremio `behaviorHints` the browser cares about. */
   notWebReady?: boolean;
   proxyHeaders?: Record<string, string> | null;
+  /** `behaviorHints.proxyHeaders.response` — headers (in practice Content-Type) the addon wants forced on the response. */
+  proxyResponseHeaders?: Record<string, string> | null;
 }
 
 // ── Addons (Stremio manifest.json) ────────────────────────────────────────────

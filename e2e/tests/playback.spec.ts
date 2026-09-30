@@ -24,13 +24,13 @@ test.describe("sources and playback", () => {
     await expect(row(page, "Fixture Direct")).toContainText("Should play here"); // WebM / VP9
     await expect(row(page, "Fixture HLS")).toContainText("Should play here"); // HLS through hls.js
     await expect(row(page, "Fixture Torrent")).toContainText("Can't play here — Torrent source");
-    await expect(row(page, "Fixture Headers")).toContainText("Can't play here — Needs special headers");
+    await expect(row(page, "Fixture Headers")).toContainText("via this site's relay"); // special request headers → the web server fetches it, like Stremio's proxy
     await expect(row(page, "Fixture Web-unready")).toContainText("Might not play");
     await expect(row(page, "Fixture MKV")).toContainText(/Should play here|Can't play here/); // depends on the codecs of the browser running the test
     await expect(row(page, "Fixture Direct")).toContainText("250 seeders");
     // playable sources are listed first
     await expect(page.locator(".source").first()).toContainText("Fixture HLS");
-    await expect(page.locator(".source").last()).toContainText(/Fixture (Torrent|Headers)/);
+    await expect(page.locator(".source").last()).toContainText(/Fixture (Torrent|MKV)/); // what this device can't play goes last
     // the "This device" panel says what the browser supports
     const device = page.locator(".addonres", { has: page.locator("summary", { hasText: "This device:" }) });
     await device.locator("summary").click();
@@ -41,7 +41,7 @@ test.describe("sources and playback", () => {
     // "Plays on this device" hides what can't play, and turns off again
     await page.getByRole("button", { name: "Plays on this device" }).click();
     await expect(row(page, "Fixture Torrent")).toHaveCount(0);
-    await expect(row(page, "Fixture Headers")).toHaveCount(0);
+    await expect(row(page, "Fixture Headers")).toHaveCount(1); // playable through the relay
     await expect(row(page, "Fixture Direct")).toHaveCount(1);
     await page.getByRole("button", { name: "Plays on this device" }).click();
     await expect(page.locator(".source")).toHaveCount(6);
@@ -130,7 +130,7 @@ test.describe("sources and playback", () => {
     await shot(page, "player-menu");
   });
 
-  test("unplayable sources explain WHY in plain language — torrent, missing file, special headers — and offer a way out", async ({ page }) => {
+  test("unplayable sources explain WHY in plain language — torrent, missing file — and offer a way out", async ({ page }) => {
     const account = await newAccount("errors");
     await openSignedIn(page, account);
     await openSources(page);
@@ -148,11 +148,6 @@ test.describe("sources and playback", () => {
     await expect(alert).toBeVisible({ timeout: 15_000 });
     await expect(alert).toContainText(/format|downloaded|supported|blocks web playback/);
     await alert.getByRole("button", { name: "Change Source" }).click();
-
-    await row(page, "Fixture Headers").locator(".source__surface").click();
-    alert = page.getByRole("alertdialog", { name: "Unable to play this source" });
-    await expect(alert).toContainText("special request headers");
-    await alert.getByRole("button", { name: "Back" }).click();
     await expect(page.getByRole("heading", { name: "Select a Source" })).toBeVisible();
   });
 

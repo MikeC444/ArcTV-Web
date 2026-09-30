@@ -84,7 +84,7 @@ test.describe("addons are asked for streams", () => {
     await expect(page).toHaveURL(/\/settings\/addons/);
   });
 
-  test("a source that never starts: a reassuring note after 15 s, then a clear reason after 45 s (never an endless spinner)", async ({ page }) => {
+  test("a source that never starts: a reassuring note after 15 s, then a clear reason after 45 s — direct, then via the relay (never an endless spinner)", async ({ page }) => {
     const account = await newAccount("stall");
     await account.tv.installAddon(`${ADDON}/stall/manifest.json`, 1);
     await page.clock.install(); // lets the test jump past the watchdog timers instead of waiting a minute
@@ -104,11 +104,13 @@ test.describe("addons are asked for streams", () => {
 
     await page.clock.fastForward(30_000);
     const alert = page.getByRole("alertdialog", { name: "Unable to play this source" });
-    await expect(alert).toContainText("didn't start playing within 45 seconds");
+    // still nothing 45 s after the first request — the direct request got one try, the stream relay the rest of the budget
+    await expect(alert).toContainText("neither when your browser asked directly nor through this site's relay");
     await expect(alert).toContainText(new URL(ADDON).host); // names the server, never the full link
     // a technical account is one click away, and never contains the link's query / key
     await alert.getByText("Technical details").click();
     const details = alert.locator(".perror__pre");
+    await expect(details).toContainText("route direct, then relay");
     await expect(details).toContainText("network LOADING");
     await expect(details).toContainText("file type .webm");
     await expect(details).toContainText("loadstart");

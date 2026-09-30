@@ -1,4 +1,5 @@
 import { assessStream } from "./playability";
+import { needsRelay } from "./relay";
 import type { Stream } from "./types";
 
 /**
@@ -169,7 +170,7 @@ export interface DeviceVerdict {
   reason: string;
 }
 
-const KIND_DETAIL = { torrent: "Torrent source", youtube: "YouTube-only source", headers: "Needs special headers", insecure: "Insecure http link", external: "External link", unknown: "No playable link" } as const;
+const KIND_DETAIL = { torrent: "Torrent source", youtube: "YouTube-only source", external: "External link", unknown: "No playable link" } as const;
 
 export function deviceVerdict(stream: Stream, caps: DeviceCaps = getDeviceCaps(), pageProtocol?: string): DeviceVerdict {
   const kind = assessStream(stream, pageProtocol);
@@ -194,12 +195,14 @@ export function deviceVerdict(stream: Stream, caps: DeviceCaps = getDeviceCaps()
     const names = facts.audio.map((codec) => AUDIO_NAMES[codec]).join(" / ");
     return { level: "audio", label: "No sound here", detail: `${names} audio not supported`, reason: `The picture should play, but its audio (${names}) isn't supported by ${who} on this device, so there will probably be no sound. Try a source with AAC audio.` };
   }
-  if (stream.notWebReady) return { level: "unknown", label: "Might not play", detail: "Addon says not web-ready", reason: "The addon marks this source as not ready for web players; it may not play in a browser." };
+  const viaRelay = needsRelay(stream, pageProtocol);
+  if (stream.notWebReady) return { level: "unknown", label: "Might not play", detail: `Addon says not web-ready${viaRelay ? ", via this site's relay" : ""}`, reason: "The addon marks this source as not ready for web players; it may not play in a browser." };
 
   const known = facts.container !== null || facts.video !== null || facts.audio.length > 0;
+  const relayNote = viaRelay ? "via this site's relay" : "";
   return known
-    ? { level: "yes", label: "Should play here", detail: "", reason: "Its format is one this browser can play." }
-    : { level: "unknown", label: "Format unknown", detail: "May play", reason: "The source doesn't say what format it is, so it's worth a try." };
+    ? { level: "yes", label: "Should play here", detail: relayNote, reason: `Its format is one this browser can play${relayNote ? `; it goes ${relayNote} because the link needs special headers or is plain http` : ""}.` }
+    : { level: "unknown", label: "Format unknown", detail: relayNote ? `May play, ${relayNote}` : "May play", reason: "The source doesn't say what format it is, so it's worth a try." };
 }
 
 /** Lower plays first: sources this device can play, then unknowns, then picture-only, then the ones it can't. */

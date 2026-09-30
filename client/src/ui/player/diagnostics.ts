@@ -55,14 +55,14 @@ export function safeSourceLabel(url: string | null | undefined): { host: string;
   }
 }
 
-export function describeDiagnostics(input: { stream: Stream; snapshot: VideoSnapshot | null; engine: string; trail: TrailEntry[]; verdict: DeviceVerdict; browser: string; userAgent: string }): string {
-  const { stream, snapshot, engine, trail, verdict, browser, userAgent } = input;
+export function describeDiagnostics(input: { stream: Stream; snapshot: VideoSnapshot | null; engine: string; trail: TrailEntry[]; verdict: DeviceVerdict; browser: string; userAgent: string; route?: string }): string {
+  const { stream, snapshot, engine, trail, verdict, browser, userAgent, route } = input;
   const { host, ext } = safeSourceLabel(stream.url);
   const facts = parseStreamFacts(stream);
   const lines = [
     "MangoTV player diagnostics",
     `Browser: ${browser} (${/(Chrome|Edg|Firefox|Version)\/[\d.]+/.exec(userAgent)?.[0] ?? "unknown version"})`,
-    `Source: server ${host}, file type .${ext}, engine ${engine}`,
+    `Source: server ${host}, file type .${ext}, engine ${engine}${route ? `, route ${route}` : ""}`,
     `Detected: container ${facts.container ?? "?"}, video ${facts.video ?? "?"}${facts.tenBit ? " 10-bit" : ""}, audio ${facts.audio.join("+") || "?"}`,
     `This device: ${verdict.label}${verdict.detail ? ` (${verdict.detail})` : ""}`,
   ];
@@ -83,7 +83,7 @@ export function describeDiagnostics(input: { stream: Stream; snapshot: VideoSnap
  * each took to answer. Responses are opaque (the server's status can't be read across sites) — the point is whether, and how
  * fast, the server answers at all. Nothing but timing is reported, and the link itself is never shown.
  */
-export async function probeSource(url: string, options: { timeoutMs?: number; fetchImpl?: typeof fetch; now?: () => number; onLine?: (line: string) => void } = {}): Promise<string[]> {
+export async function probeSource(url: string, options: { timeoutMs?: number; fetchImpl?: typeof fetch; now?: () => number; onLine?: (line: string) => void; relayUrl?: string } = {}): Promise<string[]> {
   const timeoutMs = options.timeoutMs ?? 10_000;
   const doFetch = options.fetchImpl ?? ((...args: Parameters<typeof fetch>) => fetch(...args));
   const now = options.now ?? (() => performance.now());
@@ -152,8 +152,51 @@ export async function probeSource(url: string, options: { timeoutMs?: number; fe
     }
   };
 
+  /** Same-origin, so everything is readable: asks this site's relay to fetch the first bytes and says what came back. */
+  const viaRelay = async (): Promise<string> => {
+    const label = "Through this site's relay";
+    const controller = new AbortController();
+    let timedOut = false;
+    const timer = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, timeoutMs);
+    const started = now();
+    try {
+      const response = await doFetch(options.relayUrl as string, { method: "GET", headers: { Range: "bytes=0-65535" }, credentials: "same-origin", cache: "no-store", signal: controller.signal });
+      const headersAfter = Math.round(now() - started);
+      if (!response.ok && response.status !== 206) {
+        let message = "";
+        try {
+          message = ((await response.json()) as { error?: { message?: string } }).error?.message ?? "";
+        } catch {
+          /* not JSON */
+        }
+        controller.abort();
+        return `${label}: HTTP ${response.status}${message ? ` — ${message}` : ""}`;
+      }
+      let bytes = 0;
+      const readStarted = now();
+      const reader = response.body?.getReader();
+      while (reader && bytes < 65_536) {
+        const chunk = await reader.read();
+        if (chunk.done) break;
+        bytes += chunk.value.length;
+      }
+      const bodyMs = Math.round(now() - readStarted);
+      controller.abort();
+      return `${label}: HTTP ${response.status}, type ${response.headers.get("content-type") ?? "none"}; headers after ${headersAfter} ms, then ${bytes} bytes in ${bodyMs} ms`;
+    } catch (error) {
+      if (timedOut) return `${label}: no answer within ${Math.round(timeoutMs / 1000)} s`;
+      return `${label}: failed (${error instanceof Error ? error.message : "network error"})`;
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+
   const lines: string[] = [];
   const steps: Array<() => Promise<string>> = [() => run("Plain GET (what opening the link in a tab does)", {}), () => run("Range GET bytes=0-1 (what the video player does)", { Range: "bytes=0-1" }), inspect];
+  if (options.relayUrl) steps.push(viaRelay);
   for (const step of steps) {
     const line = await step();
     lines.push(line);

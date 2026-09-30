@@ -48,11 +48,14 @@ describe("browser playability", () => {
     expect(assessStream({ ...base, url: "magnet:?xt=urn:btih:abc" }, "https:")).toMatchObject({ level: "no", kind: "torrent" });
   });
   it("youtube-only sources are refused but identified", () => expect(assessStream({ ...base, ytId: "x" }, "https:")).toMatchObject({ level: "no", kind: "youtube" }));
-  it("http media on an https page is blocked; on an http page it's fine", () => {
-    expect(assessStream({ ...base, url: "http://cdn.example/v.mp4" }, "https:")).toMatchObject({ level: "no", kind: "insecure" });
+  it("http media on an https page can't be fetched by the browser, so it goes through the relay; on an http page it's direct", () => {
+    expect(assessStream({ ...base, url: "http://cdn.example/v.mp4" }, "https:")).toEqual({ level: "ok", relay: true });
     expect(assessStream({ ...base, url: "http://cdn.example/v.mp4" }, "http:")).toEqual({ level: "ok" });
   });
-  it("sources that need custom headers can't work in a browser", () => expect(assessStream({ ...base, url: "https://x/v.mp4", proxyHeaders: { Referer: "r" } }, "https:")).toMatchObject({ level: "no", kind: "headers" }));
+  it("sources that need custom headers (proxyHeaders) go through the relay, like Stremio's proxy", () => {
+    expect(assessStream({ ...base, url: "https://x/v.mp4", proxyHeaders: { Referer: "r" } }, "https:")).toEqual({ level: "ok", relay: true });
+    expect(assessStream({ ...base, url: "https://x/v.mp4", proxyHeaders: {} }, "https:")).toEqual({ level: "ok" });
+  });
   it("notWebReady and MKV are flagged as 'maybe'", () => {
     expect(assessStream({ ...base, url: "https://x/v.mp4", notWebReady: true }, "https:").level).toBe("maybe");
     expect(assessStream({ ...base, url: "https://x/v.mkv?token=1" }, "https:").level).toBe("maybe");
