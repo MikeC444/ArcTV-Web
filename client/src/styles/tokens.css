@@ -1,15 +1,14 @@
 /*
  * MangoTV design tokens — a 1:1 port of ui/theme/{Color,Dimens,Type,Motion}.kt
- * from the Firestick app.
+ * from the Firestick app, scaled for a desktop browser.
  *
- * The Fire TV layout is authored in dp on a 960 × 540 dp reference screen
- * (1080p at density 2). `--dp` reproduces that on the web: one dp is 1/960 of
- * the viewport width, never smaller than 1px and never larger than 2.667px
- * (2560 px wide). At 1920 px wide 1dp = 2px, i.e. exactly the Firestick
- * proportions; on phones it bottoms out at 1px per dp so tap targets stay usable.
+ * The Fire TV layout is authored in dp on a 960 × 540 dp reference screen (1080p at density 2, sized to be read from a sofa).
+ * On a laptop or monitor the same numbers are far too large, so one dp is 1 CSS pixel up to a 1745-px-wide window (laptops) and
+ * 1.1px at 1920 (body text 16–19px, headings 22–44px, 57px buttons), then grows with the window (1 / 1745 of its width, at
+ * most 2px) so a 1440p or 4K monitor keeps the same proportions. Phones and tablets also get 1px per dp.
  */
 :root {
-  --dp: clamp(1px, calc(100vw / 960), 2.667px);
+  --dp: clamp(1px, calc(100vw / 1745), 2px);
 
   /* Core surfaces — near-black, cinematic (Color.kt) */
   --bg: #08080a;
@@ -46,8 +45,8 @@
   --nav-h: calc(72 * var(--dp));
   --cw-w: calc(300 * var(--dp));
   --cw-h: calc(169 * var(--dp));
-  /* Posters per row — rows and grids share it. 9 on a desktop-sized window; fewer only where 9 would be too small to see or tap. */
-  --poster-cols: 9;
+  /* Posters per row — rows and grids share it. 10 on a 1920-wide window, 9 on a laptop; fewer only where that would be too small to see or tap. */
+  --poster-cols: 10;
   --poster-gap: calc(10 * var(--dp));
   --card-radius: calc(10 * var(--dp));
   --button-radius: calc(8 * var(--dp));
@@ -66,6 +65,7 @@
   --font: "Roboto", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
+@media (max-width: 1600px) { :root { --poster-cols: 9; } }
 @media (max-width: 1100px) { :root { --poster-cols: 7; } }
 @media (max-width: 900px) { :root { --poster-cols: 6; } }
 @media (max-width: 720px) { :root { --poster-cols: 4; --poster-gap: 10px; } }

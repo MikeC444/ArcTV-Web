@@ -63,7 +63,7 @@ test.describe("browsing", () => {
     await shot(page, "detail-series");
   });
 
-  test("Movies: 9-column grid, infinite scroll loads further pages, sort pills reorder", async ({ page, request }) => {
+  test("Movies: 10-column grid at 1920, infinite scroll loads further pages, sort pills reorder", async ({ page, request }) => {
     const account = await newAccount("movies");
     await openSignedIn(page, account, "/movies");
     await expect(cards(page).first()).toBeVisible();
@@ -71,7 +71,7 @@ test.describe("browsing", () => {
     expect(initial).toBe(100); // one addon page
     if (test.info().project.name === "desktop-1920") {
       const cols = await page.locator(".grid").evaluate((g) => getComputedStyle(g).gridTemplateColumns.split(" ").length);
-      expect(cols).toBe(9);
+      expect(cols).toBe(10);
     }
     await page.mouse.wheel(0, 20000);
     await expect.poll(() => cards(page).count(), { timeout: 15_000 }).toBeGreaterThan(100); // page 2 (skip=100)
@@ -85,9 +85,9 @@ test.describe("browsing", () => {
     expect(bestLabels).toContain(await cards(page).first().getAttribute("aria-label"));
   });
 
-  test("posters are small enough to fit at least 9 across on desktop and laptop windows (fewer only on narrow ones), on every tab", async ({ page }) => {
+  test("posters are small enough to fit 10 across at 1920 and 9 on a laptop (fewer only on narrow windows), on every tab", async ({ page }) => {
     const project = test.info().project.name;
-    const expected = project.startsWith("desktop") || project.startsWith("laptop") ? 9 : project.startsWith("tablet") ? 6 : 3;
+    const expected = project.startsWith("desktop") ? 10 : project.startsWith("laptop") ? 9 : project.startsWith("tablet") ? 6 : 3;
     const account = await newAccount("posters");
     await openSignedIn(page, account);
     const fitsAcross = (locator: ReturnType<Page["locator"]>) => locator.evaluateAll((els: Element[]) => els.filter((el: Element) => { const r = el.getBoundingClientRect(); return r.left >= 0 && r.right <= window.innerWidth + 1; }).length);
@@ -109,7 +109,7 @@ test.describe("browsing", () => {
     // Search: the Movies / TV Shows rows
     await page.goto("/search?q=a");
     await expect(page.locator(".card:not([data-cw])").first()).toBeVisible({ timeout: 20_000 });
-    expect(await fitsAcross(page.locator(".row").first().locator(".card:not([data-cw]) .card__surface"))).toBeGreaterThanOrEqual(Math.min(expected, 9));
+    expect(await fitsAcross(page.locator(".row").first().locator(".card:not([data-cw]) .card__surface"))).toBeGreaterThanOrEqual(expected);
     await shot(page, "posters-small");
   });
 
