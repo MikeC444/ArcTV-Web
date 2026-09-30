@@ -49,5 +49,7 @@ describe("static SPA hosting", () => {
     expect(csp).not.toMatch(/script-src[^;]*unsafe-inline/);
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp).toContain("object-src 'none'");
+    // media, image and addon requests to other sites must not reveal where the app is hosted
+    expect(res.headers["referrer-policy"]).toBe("same-origin");
   });
 });

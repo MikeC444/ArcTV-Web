@@ -81,7 +81,8 @@ export function createApp(config: AppConfig, options: CreateAppOptions = {}): Ex
       },
       hsts: config.isProduction ? { maxAge: 31_536_000, includeSubDomains: true } : false,
       crossOriginEmbedderPolicy: false, // would block cross-origin posters/media that don't send CORP
-      referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+      // cross-origin requests (video, images, addons) carry no Referer at all — like the TV app, and hosts that dislike embedding never see our address
+      referrerPolicy: { policy: "same-origin" },
     }),
   );
 
