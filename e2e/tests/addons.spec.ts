@@ -114,6 +114,14 @@ test.describe("addons are asked for streams", () => {
     await expect(details).toContainText("loadstart");
     expect(await details.textContent()).not.toMatch(/SECRET|apikey/i);
     await expect(alert.getByRole("button", { name: "Copy details" })).toBeVisible();
+
+    // "Test connection" asks the server the tab-style and player-style questions and reports that this one never answers
+    await alert.getByRole("button", { name: "Test connection" }).click();
+    await page.clock.fastForward(11_000);
+    await expect(details).toContainText("Plain GET (what opening the link in a tab does): no answer within 10 s");
+    await page.clock.fastForward(11_000);
+    await expect(details).toContainText("Range GET bytes=0-1 (what the video player does): no answer within 10 s");
+    expect(await details.textContent()).not.toMatch(/SECRET|apikey/i);
     await shot(page, "player-start-timeout");
     await alert.getByRole("button", { name: "Change Source" }).click();
     await expect(page.getByRole("heading", { name: "Select a Source" })).toBeVisible();

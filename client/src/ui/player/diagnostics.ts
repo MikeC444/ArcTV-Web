@@ -77,3 +77,43 @@ export function describeDiagnostics(input: { stream: Stream; snapshot: VideoSnap
   lines.push(`Events: ${trail.length ? trail.slice(-24).map((e) => `+${e.at}ms ${e.name}`).join(", ") : "none — the browser never reported anything for this source"}`);
   return lines.join("\n");
 }
+
+/**
+ * "Test connection": asks the source's server the same two questions a browser tab and the video player ask, and says how long
+ * each took to answer. Responses are opaque (the server's status can't be read across sites) — the point is whether, and how
+ * fast, the server answers at all. Nothing but timing is reported, and the link itself is never shown.
+ */
+export async function probeSource(url: string, options: { timeoutMs?: number; fetchImpl?: typeof fetch; now?: () => number; onLine?: (line: string) => void } = {}): Promise<string[]> {
+  const timeoutMs = options.timeoutMs ?? 10_000;
+  const doFetch = options.fetchImpl ?? ((...args: Parameters<typeof fetch>) => fetch(...args));
+  const now = options.now ?? (() => performance.now());
+
+  const run = async (label: string, headers: Record<string, string>): Promise<string> => {
+    const controller = new AbortController();
+    let timedOut = false;
+    const timer = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, timeoutMs);
+    const started = now();
+    try {
+      await doFetch(url, { method: "GET", headers, mode: "no-cors", credentials: "omit", referrerPolicy: "no-referrer", cache: "no-store", redirect: "follow", signal: controller.signal });
+      const ms = Math.round(now() - started);
+      controller.abort(); // only the answer mattered, not the video — stop the download
+      return `${label}: the server answered after ${ms} ms`;
+    } catch (error) {
+      if (timedOut) return `${label}: no answer within ${Math.round(timeoutMs / 1000)} s`;
+      return `${label}: failed after ${Math.round(now() - started)} ms (${error instanceof Error ? error.message : "network error"})`;
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+
+  const lines: string[] = [];
+  for (const [label, headers] of [["Plain GET (what opening the link in a tab does)", {}], ["Range GET bytes=0-1 (what the video player does)", { Range: "bytes=0-1" }]] as const) {
+    const line = await run(label, headers);
+    lines.push(line);
+    options.onLine?.(line); // show each answer as soon as it is known
+  }
+  return lines;
+}

@@ -18,7 +18,7 @@ import { useSettings } from "../../state/settings";
 import { IconButton, MangoButton } from "../components/Buttons";
 import { MangoLogo } from "../components/Logo";
 import { FullScreenError, Spinner } from "../components/States";
-import { describeDiagnostics, EVENTS_WORTH_KEEPING, snapshotVideo, type TrailEntry } from "../player/diagnostics";
+import { describeDiagnostics, EVENTS_WORTH_KEEPING, probeSource, snapshotVideo, type TrailEntry } from "../player/diagnostics";
 import { createEngine, mediaErrorToPlaybackError, pickDefaultSubtitle, type EngineTracks, type PlaybackError, type PlayerEngine } from "../player/engine";
 import { AdvancedPanel, PlaybackErrorOverlay, SettingsPanel, SourceInfoPanel, SpeedMenu, TrackMenu } from "../player/overlays";
 
@@ -617,6 +617,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
         <PlaybackErrorOverlay
           message={error.message}
           details={error.details}
+          onProbe={stream.url ? (onLine) => probeSource(stream.url as string, { onLine }) : undefined}
           ytId={stream.ytId}
           onTryAgain={() => setAttempt((a) => a + 1)}
           onChangeSource={onChangeSource}

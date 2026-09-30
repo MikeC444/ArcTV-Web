@@ -164,8 +164,11 @@ export function SourceInfoPanel({ stream, tracks, engine, onClose }: { stream: S
 }
 
 /** PlaybackErrorOverlay.kt — plain-language reason, plus the way out. */
-export function PlaybackErrorOverlay({ message, details, ytId, onTryAgain, onChangeSource, onBack }: { message: string; details?: string | null; ytId?: string | null; onTryAgain(): void; onChangeSource(): void; onBack(): void }) {
+export function PlaybackErrorOverlay({ message, details, onProbe, ytId, onTryAgain, onChangeSource, onBack }: { message: string; details?: string | null; onProbe?: (onLine: (line: string) => void) => Promise<unknown>; ytId?: string | null; onTryAgain(): void; onChangeSource(): void; onBack(): void }) {
   const [copied, setCopied] = useState(false);
+  const [probe, setProbe] = useState<{ state: "idle" | "running" | "done"; lines: string[] }>({ state: "idle", lines: [] });
+  const testing = probe.state === "running";
+  const fullDetails = details ? [details, ...(probe.state !== "idle" ? ["", "Connection test:", ...probe.lines, ...(testing ? ["Testing… (up to 20 seconds)"] : [])] : [])].join("\n") : "";
   return (
     <div className="perror" role="alertdialog" aria-modal="true" aria-label="Unable to play this source" data-spatial-trap="true">
       <h2 className="t-headline-sm" style={{ margin: 0 }}>Unable to play this source</h2>
@@ -173,16 +176,32 @@ export function PlaybackErrorOverlay({ message, details, ytId, onTryAgain, onCha
       {details ? (
         <details className="perror__details">
           <summary className="t-label-md c-text-2">Technical details</summary>
-          <pre className="perror__pre t-label-sm">{details}</pre>
-          <button
-            type="button"
-            className="perror__copy t-label-md"
-            onClick={() => {
-              void navigator.clipboard?.writeText(details).then(() => setCopied(true), () => setCopied(false));
-            }}
-          >
-            {copied ? "Copied" : "Copy details"}
-          </button>
+          <pre className="perror__pre t-label-sm">{fullDetails}</pre>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button
+              type="button"
+              className="perror__copy t-label-md"
+              onClick={() => {
+                void navigator.clipboard?.writeText(fullDetails).then(() => setCopied(true), () => setCopied(false));
+              }}
+            >
+              {copied ? "Copied" : "Copy details"}
+            </button>
+            {onProbe ? (
+              <button
+                type="button"
+                className="perror__copy t-label-md"
+                disabled={probe.state === "running"}
+                onClick={() => {
+                  setCopied(false);
+                  setProbe({ state: "running", lines: [] });
+                  void onProbe((line) => setProbe((p) => ({ ...p, lines: [...p.lines, line] }))).then(() => setProbe((p) => ({ ...p, state: "done" })));
+                }}
+              >
+                {probe.state === "running" ? "Testing…" : probe.state === "done" ? "Test again" : "Test connection"}
+              </button>
+            ) : null}
+          </div>
         </details>
       ) : null}
       <div className="perror__actions">
