@@ -113,6 +113,37 @@ test.describe("browsing", () => {
     await shot(page, "posters-small");
   });
 
+  test("hero dots: each one is a button that jumps to that title, with a slide animation in the right direction; the dots are bigger", async ({ page }) => {
+    const account = await newAccount("dots");
+    await openSignedIn(page, account);
+    await expect(page.locator(".hero__content h1").first()).toBeVisible();
+    const dots = page.locator(".hero__dot");
+    const count = await dots.count();
+    expect(count).toBeGreaterThan(3);
+    await expect(dots.first()).toHaveAttribute("aria-current", "true");
+    expect(await dots.first().evaluate((el) => parseFloat(getComputedStyle(el, "::before").width))).toBeGreaterThanOrEqual(12); // was 6px; 10px idle, 13px for the current one
+    expect(await dots.nth(1).evaluate((el) => parseFloat(getComputedStyle(el, "::before").width))).toBeGreaterThanOrEqual(10);
+    const first = (await page.locator(".hero__content h1").first().textContent())!;
+
+    await dots.nth(3).click(); // forward: the new title slides in from the right, the old one out to the left
+    await expect(page.locator(".hero__slide")).toHaveCount(2);
+    await expect(page.locator('.hero__slide[data-anim="in-next"]')).toHaveCount(1);
+    await expect(page.locator('.hero__slide[data-anim="out-next"]')).toHaveCount(1);
+    // it really is moving (a horizontal slide, not a fade): the incoming slide is offset sideways while it animates
+    expect(await page.locator('.hero__slide[data-anim="in-next"]').evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).m41)).toBeGreaterThan(0);
+    expect(await page.locator('.hero__slide[data-anim="out-next"]').evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).m41)).toBeLessThan(0.5);
+    await expect(page.locator(".hero__slide")).toHaveCount(1, { timeout: 5_000 }); // the old one is gone once it has left
+    await expect(dots.nth(3)).toHaveAttribute("aria-current", "true");
+    const fourth = (await page.locator(".hero__content h1").first().textContent())!;
+    expect(fourth).not.toBe(first);
+
+    await dots.nth(1).click(); // back to an earlier one: it slides in from the left
+    await expect(page.locator('.hero__slide[data-anim="in-prev"]')).toHaveCount(1);
+    await expect(page.locator(".hero__slide")).toHaveCount(1, { timeout: 5_000 });
+    await expect(dots.nth(1)).toHaveAttribute("aria-current", "true");
+    await expect(page.locator(".hero__content").getByRole("button", { name: "Play" })).toBeVisible();
+  });
+
   test("top nav: centred on desktop-width windows, and a hovered item's white ring is not clipped", async ({ page }) => {
     const account = await newAccount("nav");
     await openSignedIn(page, account);

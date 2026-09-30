@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { MdAdd, MdCheck, MdInfo, MdPlayArrow } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import type { Content } from "../../domain/types";
@@ -14,75 +14,89 @@ import { HomeSkeleton } from "../components/Skeletons";
 import { FullScreenError, HomeEmptyState } from "../components/States";
 
 const HERO_ROTATE_MS = 9000;
-const HERO_CROSSFADE_MS = 900;
+const HERO_SLIDE_MS = 650;
 
-/** ui/home/HeroSection.kt — rotating full-bleed featured title with Ken-Burns backdrop and Play / + / Info. */
+/** The next title slides in from the right (and the old one out to the left); picking an EARLIER title with the dots slides the other way. */
+type Leaving = { index: number; dir: "next" | "prev" };
+
+/** ui/home/HeroSection.kt — rotating full-bleed featured title with Ken-Burns backdrop and Play / + / Info. The dots at the bottom jump to a title. */
 function Hero({ items }: { items: Content[] }) {
   const navigate = useNavigate();
   const saved = useSavedIds();
   const toggle = useMyList((s) => s.toggle);
   const [index, setIndex] = useState(0);
-  const [previous, setPrevious] = useState<number | null>(null);
+  const [leaving, setLeaving] = useState<Leaving | null>(null);
+  const [dir, setDir] = useState<"next" | "prev">("next");
   const [loaded, setLoaded] = useState<Record<string, boolean>>({});
-  const lastIndex = useRef(0);
 
+  const goTo = (target: number, direction: "next" | "prev") => {
+    if (items.length < 2 || target === index) return;
+    setLeaving({ index, dir: direction });
+    setDir(direction);
+    setIndex(target);
+  };
+
+  // advance every few seconds; any change of title (automatic or from the dots) restarts the wait
   useEffect(() => {
     if (items.length <= 1) return;
-    const timer = window.setInterval(() => {
-      setIndex((current) => {
-        lastIndex.current = current;
-        setPrevious(current);
-        return (current + 1) % items.length;
-      });
-    }, HERO_ROTATE_MS);
-    return () => window.clearInterval(timer);
-  }, [items]);
-  useEffect(() => {
-    if (previous === null) return;
-    const timer = window.setTimeout(() => setPrevious(null), HERO_CROSSFADE_MS);
+    const timer = window.setTimeout(() => goTo((index + 1) % items.length, "next"), HERO_ROTATE_MS);
     return () => window.clearTimeout(timer);
-  }, [previous]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, index]);
+  useEffect(() => {
+    if (leaving === null) return;
+    const timer = window.setTimeout(() => setLeaving(null), HERO_SLIDE_MS);
+    return () => window.clearTimeout(timer);
+  }, [leaving]);
 
   const current = items[index % items.length];
   if (!current) return null;
-  const providerId = current.providerId;
-  const isSaved = saved.has(current.id);
-  const meta = [current.year, current.ageRating, current.runtimeMinutes ? formatRuntime(current.runtimeMinutes) : null, current.rating != null ? `★ ${current.rating.toFixed(1)}` : null].filter(Boolean);
-  const backdrop = (item: Content, fading: "in" | "out" | null) => (
-    <div key={`${item.id}-${fading}`} className="hero__layer" data-fade={fading ?? undefined}>
-      {item.backdropUrl ? <img src={item.backdropUrl} alt="" referrerPolicy="no-referrer" data-loaded={loaded[item.id] ? "true" : "false"} onLoad={() => setLoaded((l) => ({ ...l, [item.id]: true }))} /> : null}
-    </div>
-  );
 
-  return (
-    <section className="hero" aria-label="Featured">
-      {previous !== null && items[previous] ? backdrop(items[previous]!, "out") : null}
-      {backdrop(current, previous !== null ? "in" : null)}
-      <div className="hero__scrim-x" />
-      <div className="hero__scrim-y" />
-      <div className="hero__content">
-        {current.logoUrl ? <img className="hero__logo" src={current.logoUrl} alt={current.title} referrerPolicy="no-referrer" /> : <h1 className="t-display-md hero-shadow clamp-2">{current.title}</h1>}
-        {meta.length ? <p className="hero__meta hero-shadow">{meta.join("   •   ")}</p> : null}
-        {current.genres.length ? <p className="hero__genres hero-shadow">{current.genres.map((g) => g.name).join("  ·  ")}</p> : null}
-        {current.description ? <p className="hero__desc hero-shadow clamp-3">{current.description}</p> : null}
-        <div className="hero__actions">
-          <MangoButton text="Play" icon={<MdPlayArrow />} variant="light" dataAttrs={{ autofocus: true }} onClick={() => providerId && navigate(routes.sources(providerId, current.type, current.id))} />
-          <IconButton icon={isSaved ? <MdCheck /> : <MdAdd />} label={isSaved ? "Remove from My List" : "Add to My List"} onClick={() => toggle(current)} />
-          <IconButton
-            icon={<MdInfo />}
-            label="More Info"
-            onClick={() => {
-              if (!providerId) return;
-              stashDetailPreview(current);
-              navigate(routes.detail(providerId, current.type, current.id));
-            }}
-          />
+  const slide = (item: Content, anim: string | undefined, isCurrent: boolean) => {
+    const providerId = item.providerId;
+    const isSaved = saved.has(item.id);
+    const meta = [item.year, item.ageRating, item.runtimeMinutes ? formatRuntime(item.runtimeMinutes) : null, item.rating != null ? `★ ${item.rating.toFixed(1)}` : null].filter(Boolean);
+    // the slide on its way out is only a picture: hidden from assistive tech and not interactive
+    const passive = isCurrent ? {} : ({ "aria-hidden": true, inert: "" } as Record<string, unknown>);
+    return (
+      <div key={isCurrent ? item.id : `${item.id}-leaving`} className="hero__slide" data-anim={anim} {...passive}>
+        <div className="hero__layer">
+          {item.backdropUrl ? <img src={item.backdropUrl} alt="" referrerPolicy="no-referrer" data-loaded={loaded[item.id] ? "true" : "false"} onLoad={() => setLoaded((l) => ({ ...l, [item.id]: true }))} /> : null}
+        </div>
+        <div className="hero__scrim-x" />
+        <div className="hero__scrim-y" />
+        <div className="hero__content">
+          {item.logoUrl ? <img className="hero__logo" src={item.logoUrl} alt={item.title} referrerPolicy="no-referrer" /> : <h1 className="t-display-md hero-shadow clamp-2">{item.title}</h1>}
+          {meta.length ? <p className="hero__meta hero-shadow">{meta.join("   •   ")}</p> : null}
+          {item.genres.length ? <p className="hero__genres hero-shadow">{item.genres.map((g) => g.name).join("  ·  ")}</p> : null}
+          {item.description ? <p className="hero__desc hero-shadow clamp-3">{item.description}</p> : null}
+          <div className="hero__actions">
+            <MangoButton text="Play" icon={<MdPlayArrow />} variant="light" dataAttrs={isCurrent ? { autofocus: true } : undefined} onClick={() => providerId && navigate(routes.sources(providerId, item.type, item.id))} />
+            <IconButton icon={isSaved ? <MdCheck /> : <MdAdd />} label={isSaved ? "Remove from My List" : "Add to My List"} onClick={() => toggle(item)} />
+            <IconButton
+              icon={<MdInfo />}
+              label="More Info"
+              onClick={() => {
+                if (!providerId) return;
+                stashDetailPreview(item);
+                navigate(routes.detail(providerId, item.type, item.id));
+              }}
+            />
+          </div>
         </div>
       </div>
+    );
+  };
+
+  const leavingItem = leaving ? items[leaving.index] : undefined;
+  return (
+    <section className="hero" aria-label="Featured">
+      {leaving && leavingItem ? slide(leavingItem, `out-${leaving.dir}`, false) : null}
+      {slide(current, leaving ? `in-${dir}` : undefined, true)}
       {items.length > 1 ? (
-        <div className="hero__dots" aria-hidden="true">
+        <div className="hero__dots" role="group" aria-label="Featured titles">
           {items.map((c, i) => (
-            <span key={c.id} data-active={i === index} />
+            <button key={c.id} type="button" className="hero__dot" data-active={i === index} aria-label={`Show ${c.title}, ${i + 1} of ${items.length}`} aria-current={i === index ? "true" : undefined} onClick={() => goTo(i, i < index ? "prev" : "next")} />
           ))}
         </div>
       ) : null}
