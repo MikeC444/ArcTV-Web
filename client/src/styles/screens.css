@@ -87,6 +87,32 @@
 .detail__rating-value { font-weight: 700; font-size: calc(18 * var(--dp)); line-height: calc(24 * var(--dp)); }
 .detail[data-compact="true"] .detail__rating-value { font-size: calc(16 * var(--dp)); }
 @media (max-width: 720px) { .detail__rating { position: static; align-self: flex-start; margin: 0 var(--pad-x) 12px; } .detail__hero { flex-direction: column; justify-content: flex-end; } .detail[data-compact="true"] .detail__col { padding-top: calc(var(--nav-h) + 24px); } }
+/* ── Home hero and Detail hero: one set of sizes, one layout (logo / title, details, genres, description, buttons, vertically centred on the photo) ──
+   --hk scales the logo and text, --hb the buttons. Windows of 721px and up; phones keep their own rules. */
+@media (min-width: 721px) {
+  .hero, .detail__hero { --hk: 1; --hb: 1; }
+  .hero, .detail__hero, .detail[data-compact="true"] .detail__hero { min-height: max(74vh, 620px); }
+  .detail__hero { align-items: center; }
+  .hero__content, .detail__col { max-width: calc(760 * var(--dp) * var(--hk) + 2 * var(--pad-x)); }
+  .detail__col, .detail[data-compact="true"] .detail__col { align-self: center; padding: 0 var(--pad-x); }
+  .detail__spacer { display: none; }
+  .hero__logo, .detail__logo, .detail[data-compact="true"] .detail__logo { width: calc(380 * var(--dp) * var(--hk)); height: calc(90 * var(--dp) * var(--hk)); margin-left: 0; }
+  .hero__content h1, .detail__col h1 { font-size: calc(40 * var(--dp) * var(--hk)); line-height: calc(46 * var(--dp) * var(--hk)); letter-spacing: calc(-0.25 * var(--dp) * var(--hk)); }
+  .hero__meta, .detail__meta, .detail[data-compact="true"] .detail__meta { margin-top: calc(14 * var(--dp) * var(--hk)); font-size: calc(14 * var(--dp) * var(--hk)); line-height: calc(18 * var(--dp) * var(--hk)); font-weight: 500; }
+  .hero__genres, .detail__genres { margin: calc(6 * var(--dp) * var(--hk)) 0 0; color: #fff; font-weight: 500; font-size: calc(13 * var(--dp) * var(--hk)); line-height: calc(18 * var(--dp) * var(--hk)); }
+  .detail__age { font-size: calc(12 * var(--dp) * var(--hk)); }
+  .hero__desc, .detail__desc, .detail[data-compact="true"] .detail__desc { margin-top: calc(16 * var(--dp) * var(--hk)); max-width: calc(640 * var(--dp) * var(--hk)); font-size: calc(14 * var(--dp) * var(--hk)); line-height: calc(20 * var(--dp) * var(--hk)); letter-spacing: 0; font-weight: 400; -webkit-line-clamp: 3; }
+  .hero__actions, .detail__actions, .detail[data-compact="true"] .detail__actions { margin-top: calc(28 * var(--dp) * var(--hk)); gap: calc(16 * var(--dp) * var(--hb)); }
+  :is(.hero__actions, .detail__actions) .mbtn.mbtn { height: calc(52 * var(--dp) * var(--hb)); padding: 0 calc(26 * var(--dp) * var(--hb)); }
+  :is(.hero__actions, .detail__actions) .mbtn .mbtn__inner.mbtn__inner { gap: calc(10 * var(--dp) * var(--hb)); font-size: calc(15 * var(--dp) * var(--hb)); font-weight: 700; letter-spacing: calc(0.3 * var(--dp)); }
+  :is(.hero__actions, .detail__actions) .mbtn .mbtn__inner svg { width: calc(22 * var(--dp) * var(--hb)); height: calc(22 * var(--dp) * var(--hb)); }
+  :is(.hero__actions, .detail__actions) .ibtn.ibtn { width: calc(52 * var(--dp) * var(--hb)); height: calc(52 * var(--dp) * var(--hb)); }
+  :is(.hero__actions, .detail__actions) .ibtn svg { width: calc(24 * var(--dp) * var(--hb)); height: calc(24 * var(--dp) * var(--hb)); }
+  .detail__rating, .detail[data-compact="true"] .detail__rating { bottom: calc(32 * var(--dp)); }
+}
+@media (min-width: 1101px) {
+  .hero, .detail__hero { --hk: 1.45; --hb: 1.2; }
+}
 .detail__below { display: grid; grid-template-columns: 1fr 2fr; align-items: start; }
 .detail__below > * { min-width: 0; }
 @media (min-width: 901px) { .detail__similar { --poster-cols: 6; } } /* the "You May Also Like" row sits in two thirds of the page */

@@ -83,8 +83,8 @@ function DetailContent({ content, similar, providerId, trailerId, releaseDate }:
           <div className="detail__meta hero-shadow">
             {leading ? <span>{leading}</span> : null}
             {content.ageRating ? <span className="detail__age">{content.ageRating}</span> : null}
-            {content.genres.length ? <span>{content.genres.map((g) => g.name).join("  •  ")}</span> : null}
           </div>
+          {content.genres.length ? <p className="detail__genres hero-shadow">{content.genres.map((g) => g.name).join("  ·  ")}</p> : null}
           {compact ? <div className="detail__spacer" /> : null}
           {content.description ? <p className={`detail__desc hero-shadow ${compact ? "clamp-2" : "clamp-4"}`}>{content.description}</p> : null}
           <div className="detail__actions">

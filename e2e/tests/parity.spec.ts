@@ -39,13 +39,13 @@ test.describe("Fire TV layout parity @ 1920×1080 (1dp = 2px)", () => {
     await openSignedIn(page, account);
     const logo = page.locator(".topnav .logo");
     await expect(logo).toBeVisible();
-    near(await logo.evaluate((el) => parseFloat(getComputedStyle(el).fontSize)), 24 * DP); // MangoLogo 24.sp
+    near(await logo.evaluate((el) => parseFloat(getComputedStyle(el).fontSize)), 32 * DP); // MangoLogo: 24.sp on the TV, larger on a desktop window
     expect(await logo.evaluate((el) => getComputedStyle(el).fontWeight)).toBe("900"); // FontWeight.Black
     near(await page.locator(".topnav").evaluate((el) => parseFloat(getComputedStyle(el).paddingLeft)), 56 * DP); // ScreenPaddingHorizontal
     const items = await page.locator(".navitem").allTextContents();
     expect(items).toEqual(["Home", "Movies", "TV Shows", "Genres", "Search", "My List", "Settings"]);
-    near(await page.locator(".navitem").first().evaluate((el) => parseFloat(getComputedStyle(el).fontSize)), 13 * DP); // labelMedium
-    near(await page.locator(".navitem").first().evaluate((el) => parseFloat(getComputedStyle(el).borderTopLeftRadius)), 6 * DP);
+    near(await page.locator(".navitem").first().evaluate((el) => parseFloat(getComputedStyle(el).fontSize)), 17 * DP); // labelMedium 13.sp on the TV, larger on a desktop window
+    near(await page.locator(".navitem").first().evaluate((el) => parseFloat(getComputedStyle(el).borderTopLeftRadius)), 8 * DP);
   });
 
   test("Home: hero height, hero buttons, poster rows of 10 (HeroSection.kt, ContentRow.kt, ContentCard.kt)", async ({ page }) => {
@@ -55,8 +55,8 @@ test.describe("Fire TV layout parity @ 1920×1080 (1dp = 2px)", () => {
     await expect(page.locator(".hero")).toBeVisible();
     near(await page.locator(".hero").evaluate((el) => el.getBoundingClientRect().height), 0.74 * 1080, 2); // the TV uses screenHeight × 0.82; shorter here so Continue Watching shows above the fold
     const play = page.locator(".hero__actions .mbtn").first();
-    near(await play.evaluate((el) => el.getBoundingClientRect().height), 52 * DP); // MangoButton height
-    near(await page.locator(".hero__actions .ibtn").first().evaluate((el) => el.getBoundingClientRect().width), 52 * DP); // 24dp icon + 2×14dp padding
+    near(await play.evaluate((el) => el.getBoundingClientRect().height), 52 * 1.2 * DP); // MangoButton height × the desktop hero button scale
+    near(await page.locator(".hero__actions .ibtn").first().evaluate((el) => el.getBoundingClientRect().width), 52 * 1.2 * DP);
     // the logo / title, details and buttons sit in the vertical middle of the hero photo, left-aligned
     const contentBox = (await page.locator(".hero__content").boundingBox())!;
     const heroBox = (await page.locator(".hero").boundingBox())!;
@@ -102,6 +102,36 @@ test.describe("Fire TV layout parity @ 1920×1080 (1dp = 2px)", () => {
     await page.goto("/genres");
     await expect(page.locator(".genre-card").first()).toBeVisible();
     expect(await page.locator(".genre-grid").evaluate((el) => getComputedStyle(el).gridTemplateColumns.split(" ").length)).toBe(5); // GENRE_GRID_COLUMNS
+  });
+
+  test("Detail hero matches the Home hero: same layout (centred block), same type and button sizes", async ({ page }) => {
+    const account = await newAccount("parity-detail");
+    await openSignedIn(page, account);
+    await expect(page.locator(".hero__content h1")).toBeVisible();
+    const size = (selector: string) => page.locator(selector).first().evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+    const home = {
+      title: await size(".hero__content h1"),
+      meta: await size(".hero__meta"),
+      genres: await size(".hero__genres"),
+      desc: await size(".hero__desc"),
+      button: await page.locator(".hero__actions .mbtn").first().evaluate((el) => el.getBoundingClientRect().height),
+      round: await page.locator(".hero__actions .ibtn").first().evaluate((el) => el.getBoundingClientRect().height),
+      height: await page.locator(".hero").evaluate((el) => el.getBoundingClientRect().height),
+    };
+    for (const path of ["/detail/test.mangotv.fixture/MOVIE/fxm1", "/detail/test.mangotv.fixture/TV_SHOW/fxs1"]) {
+      await page.goto(path);
+      await expect(page.locator(".detail__col h1")).toBeVisible();
+      near(await size(".detail__col h1"), home.title, 0.6);
+      near(await size(".detail__meta"), home.meta, 0.6);
+      near(await size(".detail__genres"), home.genres, 0.6);
+      near(await size(".detail__desc"), home.desc, 0.6);
+      near(await page.locator(".detail__actions .mbtn").first().evaluate((el) => el.getBoundingClientRect().height), home.button, 0.6);
+      near(await page.locator(".detail__actions .ibtn").first().evaluate((el) => el.getBoundingClientRect().height), home.round, 0.6);
+      near(await page.locator(".detail__hero").evaluate((el) => el.getBoundingClientRect().height), home.height, 1);
+      const col = (await page.locator(".detail__col").boundingBox())!;
+      const hero = (await page.locator(".detail__hero").boundingBox())!;
+      near(col.y + col.height / 2, hero.y + hero.height / 2, 2); // a block centred on the photo, like the Home hero
+    }
   });
 
   test("Sources: 35 / 65 split, 76dp-ish rows; Settings: 1 : 3 panes (SourcesScreen.kt, SettingsScreen.kt)", async ({ page }) => {

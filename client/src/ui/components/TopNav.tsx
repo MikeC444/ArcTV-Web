@@ -17,7 +17,7 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
   return (
     <header className="topnav" data-transparent={transparent} role="banner">
       <Link to="/" className="topnav__logo tvs" aria-label="Mango TV — Home" style={{ ["--tvs-radius" as string]: "6px", ["--tvs-border" as string]: "var(--text)" }}>
-        <MangoLogo />
+        <MangoLogo size="1em" />
       </Link>
       <nav className="topnav__items hide-scroll" aria-label="Primary">
         {NAV_ITEMS.map((item, index) => (

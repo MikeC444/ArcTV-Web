@@ -86,3 +86,6 @@
     --nav-h: calc(72 * var(--dp) + 8px);
   }
 }
+@media (min-width: 1101px) {
+  :root { --nav-h: calc(92 * var(--dp)); } /* the larger desktop nav bar */
+}
