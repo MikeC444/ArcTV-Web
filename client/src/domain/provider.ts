@@ -1,4 +1,4 @@
-import { distinctBy, hashString, interleave, seededRandom, shuffled } from "../lib/format";
+import { distinctBy, interleave } from "../lib/format";
 import { AddonHttpError, describeAddonError, fetchCatalog, fetchMeta, fetchStreams } from "./stremio/client";
 import { metaToContent, previewToContent, streamToStream } from "./stremio/mapper";
 import type { AddonCatalogDef, AddonManifest, Content, ContentType, HomeSection, Stream } from "./types";
@@ -41,19 +41,6 @@ const SUPPORTED_CATALOG_TYPES = new Set(["movie", "series"]);
 const MAX_GENRE_ROWS = 30;
 /** Stremio's conventional catalog page size — `skip` is an item offset, not a page number. */
 const PAGE_SIZE = 100;
-/**
- * Home rows show a different set of titles each time the site is opened: every row starts at a random one of the first
- * few pages of its catalogue (the most popular 500 or so) and is shuffled. The choice is fixed per page load — coming
- * back to Home from a title must not reshuffle what you were looking at — so it is derived from this seed.
- */
-const HOME_RANDOM_PAGES = 5;
-const launchSeed = Math.floor(Math.random() * 2 ** 32);
-const supportsSkip = (catalog: AddonCatalogDef) => catalog.extra.some((extra) => extra.name === "skip");
-/** Which page of a catalogue the Home row starts from, for this page load (0 … HOME_RANDOM_PAGES − 1). */
-export function homeStartPage(seed: number, key: string): number {
-  return Math.floor(seededRandom(hashString(`${seed}|${key}|page`))() * HOME_RANDOM_PAGES);
-}
-
 /** Rows are fetched in small batches so the first rows appear fast and shared free addon servers aren't hammered. */
 const HOME_BATCH_SIZE = 4;
 
@@ -95,11 +82,11 @@ export class StremioAddonProvider implements CatalogProvider {
     if (baseCatalogs.length > 0) {
       // Prefer the catalog's own declared name ("Popular") over the addon's — it also lets the row rank first.
       const title = baseCatalogs.map((c) => c.name).find((n): n is string => !!n) ?? this.manifest.name;
-      fetches.push(() => this.fetchMergedSection(baseCatalogs, title, {}, "base", true));
+      fetches.push(() => this.fetchMergedSection(baseCatalogs, title, {}, "base"));
     }
     for (const genre of this.declaredGenres(this.supported)) {
       const catalogs = this.supported.filter((catalog) => (genreExtra(catalog)?.options ?? []).includes(genre));
-      fetches.push(() => this.fetchMergedSection(catalogs, genre, { genre }, genre, true));
+      fetches.push(() => this.fetchMergedSection(catalogs, genre, { genre }, genre));
     }
     for (let i = 0; i < fetches.length; i += HOME_BATCH_SIZE) {
       const batch = await Promise.all(fetches.slice(i, i + HOME_BATCH_SIZE).map((fetchRow) => fetchRow()));
@@ -223,20 +210,9 @@ export class StremioAddonProvider implements CatalogProvider {
   }
 
   /** Fetches every matched catalog in parallel and interleaves (movie[0], series[0], …) so a merged row reads as mixed content. */
-  private async fetchMergedSection(catalogs: AddonCatalogDef[], title: string, extra: Record<string, string>, rowKey: string, randomise = false): Promise<HomeSection | null> {
-    const perCatalog = await Promise.all(catalogs.map((catalog) => (randomise ? this.randomPageOf(catalog, extra, `${this.manifest.id}|${rowKey}`) : this.safeCatalog(catalog, extra))));
-    let items = distinctBy(interleave(perCatalog), (c) => c.id);
-    if (randomise) items = shuffled(items, seededRandom(hashString(`${launchSeed}|${this.manifest.id}|${rowKey}|order`)));
+  private async fetchMergedSection(catalogs: AddonCatalogDef[], title: string, extra: Record<string, string>, rowKey: string): Promise<HomeSection | null> {
+    const perCatalog = await Promise.all(catalogs.map((catalog) => this.safeCatalog(catalog, extra)));
+    const items = distinctBy(interleave(perCatalog), (c) => c.id);
     return items.length === 0 ? null : { id: `${this.manifest.id}_${rowKey}`, title, items, style: "STANDARD" };
-  }
-
-  /** One of the first pages of a catalogue (when it can be paged); the first page if that one turns out to be empty or fails. */
-  private async randomPageOf(catalog: AddonCatalogDef, extra: Record<string, string>, key: string): Promise<Content[]> {
-    const page = supportsSkip(catalog) ? homeStartPage(launchSeed, `${key}|${catalog.type}|${catalog.id}`) : 0;
-    if (page > 0) {
-      const items = await this.safeCatalog(catalog, { ...extra, skip: String(page * PAGE_SIZE) });
-      if (items.length > 0) return items;
-    }
-    return this.safeCatalog(catalog, extra);
   }
 }

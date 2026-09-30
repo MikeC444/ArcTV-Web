@@ -270,22 +270,4 @@ test.describe("browsing", () => {
     await page.keyboard.press("Enter");
     await expect(page).toHaveURL(/\/detail\//);
   });
-
-  test("Home rows keep their rows but show a different selection / order of titles each time the site is opened", async ({ page }) => {
-    const account = await newAccount("shuffle");
-    await openSignedIn(page, account);
-    const snapshot = async () => {
-      await expect(page.locator(".row").first().locator(".card").first()).toBeVisible({ timeout: 20_000 });
-      return page.locator(".row").evaluateAll((rows) => rows.map((row) => ({ title: row.querySelector(".row__title")?.textContent ?? "", titles: Array.from(row.querySelectorAll(".card__title")).map((t) => t.textContent ?? "") })));
-    };
-    const first = await snapshot();
-    let changed = false;
-    for (let attempt = 0; attempt < 3 && !changed; attempt++) {
-      await page.reload();
-      const next = await snapshot();
-      expect(next.map((r) => r.title)).toEqual(first.map((r) => r.title)); // the same rows, in the same order
-      changed = next.some((row, i) => row.titles.join("|") !== first[i]?.titles.join("|"));
-    }
-    expect(changed).toBe(true);
-  });
 });
