@@ -312,3 +312,10 @@
 /* ── Back buttons (Detail, genre results) ─────────────────────────────────── */
 .page__back { padding: 0 var(--pad-x) calc(4 * var(--dp)); }
 .detail__back { position: absolute; z-index: 3; top: calc(var(--nav-h) + 8px); left: var(--pad-x); }
+
+/* ── Desktop: the first row's title rides up onto the bottom of the hero picture (so the picture flows into the page), level with the slide-show dots ──
+   The row title is 50dp tall (12 + 26 + 12) under 4dp of padding, so its centre is (64 − 4 − 25) = 35dp above the hero's bottom edge; the 24px-tall dots get the same centre. */
+@media (min-width: 721px) {
+  .home__rows { position: relative; z-index: 2; margin-top: calc(-64 * var(--dp)); }
+  .hero__dots { z-index: 3; bottom: calc(35 * var(--dp) - 12px); }
+}
