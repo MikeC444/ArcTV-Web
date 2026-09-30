@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { MdArrowBack, MdFastForward, MdForward10, MdFullscreen, MdFullscreenExit, MdGraphicEq, MdHighQuality, MdPause, MdPlayArrow, MdReplay10, MdSettings, MdSkipNext, MdSubtitles, MdSwapHoriz, MdVolumeOff, MdVolumeUp } from "react-icons/md";
 import { useNavigate, useParams } from "react-router-dom";
-import { DEBRID_NAMES, deviceVerdict, getDeviceCaps } from "../../domain/deviceSupport";
+import { DEBRID_NAMES, deviceVerdict, getDeviceCaps, parseStreamFacts } from "../../domain/deviceSupport";
 import { buildRelayUrl, needsRelay, playbackUrl, relayRefusal } from "../../domain/relay";
 import { describeContentType, engineForContentType, getContentType } from "../../domain/contentType";
 import { assessStream, engineFor } from "../../domain/playability";
@@ -111,16 +111,17 @@ function startTimeoutError(stream: Stream, video: HTMLVideoElement | null, fellB
   const seconds = START_TIMEOUT_MS / 1000;
   const waiting = video?.networkState === HTMLMediaElement.NETWORK_LOADING;
   const notCached = stream.debrid && !stream.debrid.cached ? DEBRID_NAMES[stream.debrid.service] ?? stream.debrid.service : null;
+  const mkvNote = parseStreamFacts(stream).container === "mkv" ? " It's an MKV file, which browsers handle far less reliably than MP4 — an MP4 source will usually start much faster." : "";
   if (notCached) return { type: "network", message: `This source isn't cached on ${notCached} yet, so ${notCached} has to fetch it first — that can take several minutes and nothing plays until it's ready. Try again later, or choose a source marked "Cached".` };
-  if (fellBack) return { type: "network", message: `No video arrived from this source${where} — neither when your browser asked directly nor through this site's relay. The host may be busy, blocking requests, or still preparing the file. Try again in a few minutes, or choose another source.` };
+  if (fellBack) return { type: "network", message: `No video arrived from this source${where} — neither when your browser asked directly nor through this site's relay. The host may be busy, blocking requests, or still preparing the file. Try again in a few minutes, or choose another source.${mkvNote}` };
   // A browser needs a few MB of a video file (more for MKV) before it can show anything, so a host that answers but sends only tens of KB a second looks like "nothing".
   if (waiting && stream.debrid) {
-    return { type: "network", message: `This source didn't start playing within ${seconds} seconds. Its server${where} answered, but is delivering the file too slowly for a browser to start — typical of a release that few people share, or one the service is still fetching, even when it says "cached". Try a more popular release or another source, or try again later.` };
+    return { type: "network", message: `This source didn't start playing within ${seconds} seconds. Its server${where} answered, but is delivering the file too slowly for a browser to start — typical of a release that few people share, or one the service is still fetching, even when it says "cached". Try a more popular release or another source, or try again later.${mkvNote}` };
   }
   return {
     type: "network",
     message: waiting
-      ? `This source didn't start playing within ${seconds} seconds. Its server${where} is either very slow to send the file or is sending something your browser can't open. Try again, or choose another source.`
+      ? `This source didn't start playing within ${seconds} seconds. Its server${where} is either very slow to send the file or is sending something your browser can't open. Try again, or choose another source.${mkvNote}`
       : `This source didn't start playing within ${seconds} seconds — its server${where} didn't send any video. Try again, or choose another source.`,
   };
 }

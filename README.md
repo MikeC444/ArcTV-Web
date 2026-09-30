@@ -152,7 +152,7 @@ and no secrets.
 | Command | What it proves |
 |---|---|
 | `npm run lint && npm run typecheck` | ESLint (zero warnings) and strict TypeScript for client, server and e2e code |
-| `npm test` | **116 client** unit tests (Stremio mapping, stream ranking/playability/device support, relay addresses, stores, outbox, sync rules) and **97 server** tests (cookie sealing, CSRF, session refresh/rotation, allow-list, SSRF guard, stream relay, static hosting) |
+| `npm test` | **118 client** unit tests (Stremio mapping, stream ranking/playability/device support, relay addresses, stores, outbox, sync rules) and **97 server** tests (cookie sealing, CSRF, session refresh/rotation, allow-list, SSRF guard, stream relay, static hosting) |
 | `npm run test:integration` | The **real, unmodified backend** from the Firestick repo, all 14 migrations, on a throwaway local Postgres: an account created the way the TV creates it signs in on the web with the same user id and sees its synced data; TV ↔ web sync with last-write-wins; **two accounts cannot read or modify each other's data**; token refresh / expiry / revocation; QR flows; logout revocation |
 | `npm run test:e2e` | Playwright + Chromium against that backend, the built SPA and a local Stremio-protocol fixture addon: sign-in (existing account, wrong password, QR, sign-up, sign-out, remote revocation), browse, search, My List, Detail, Sources, real playback (WebM and HLS) with progress reported to the account, playback of sources a browser can't fetch itself via the stream relay, resume, autoplay-next, settings sync, keyboard navigation, layout parity with the Compose tokens at 1920 × 1080, and no-overflow layouts at 1920, 1366, 820 and 390 px |
 
@@ -199,7 +199,7 @@ or silently picking another source:
 | YouTube-only (`ytId`) | Explained; the trailer button opens YouTube in a new tab like the TV does |
 | Sources needing custom request headers (`proxyHeaders`) | Play **through the stream relay** from the start ("via this site's relay"), which adds the addon's headers server-side. The relay cannot help a host that refuses server-side requests outright (for example Torrentio's Cloudflare front does) — the error then says who refused it |
 | `http://` media on the https site | Play through the stream relay (a browser would block them) |
-| MKV / AVI / HEVC / AC-3 etc. | Checked against **this browser's own codec support** (see below); if it fails anyway, the error names the likely cause and offers **Change Source** |
+| MKV / AVI / HEVC / AC-3 etc. | Checked against **this browser's own codec support** (see below). **MKV is not a format browsers officially support**: an MKV is only "Should play here" when its release name confirms a decodable video codec *and* a usable audio track; otherwise it reads "Might not play", and MKVs rank below MP4 / WebM / HLS. If one fails anyway, the error names the likely cause and offers **Change Source** |
 | DRM (Widevine / FairPlay / PlayReady) | Not implemented — the Firestick app has no DRM path either |
 
 ### Which sources can this device play?

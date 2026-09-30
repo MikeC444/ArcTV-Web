@@ -198,8 +198,13 @@ export function deviceVerdict(stream: Stream, caps: DeviceCaps = getDeviceCaps()
   const viaRelay = needsRelay(stream, pageProtocol);
   if (stream.notWebReady) return { level: "unknown", label: "Might not play", detail: `Addon says not web-ready${viaRelay ? ", via this site's relay" : ""}`, reason: "The addon marks this source as not ready for web players; it may not play in a browser." };
 
-  const known = facts.container !== null || facts.video !== null || facts.audio.length > 0;
   const relayNote = viaRelay ? "via this site's relay" : "";
+  // MKV is not a format browsers officially support. Chromium opens some (a codec it can decode, with a usable audio track), but most releases are HEVC or Dolby/DTS,
+  // and even a good one needs far more of the file than an MP4 does before it can show a frame — on a slow host that is the difference between starting and not.
+  if (facts.container === "mkv" && !(facts.video && facts.audio.some((codec) => caps.audio[codec]))) {
+    return { level: "unknown", label: "Might not play", detail: relayNote ? `MKV — only some play in browsers, ${relayNote}` : "MKV — only some play in browsers", reason: "MKV isn't a format browsers officially support. Some play (H.264 or VP9 video with AAC or Opus audio), but many use codecs a browser can't decode, or need far more of the file than a browser will wait for. An MP4 source is the safe choice." };
+  }
+  const known = facts.container !== null || facts.video !== null || facts.audio.length > 0;
   return known
     ? { level: "yes", label: "Should play here", detail: relayNote, reason: `Its format is one this browser can play${relayNote ? `; it goes ${relayNote} because the link needs special headers or is plain http` : ""}.` }
     : { level: "unknown", label: "Format unknown", detail: relayNote ? `May play, ${relayNote}` : "May play", reason: "The source doesn't say what format it is, so it's worth a try." };
@@ -207,6 +212,15 @@ export function deviceVerdict(stream: Stream, caps: DeviceCaps = getDeviceCaps()
 
 /** Lower plays first: sources this device can play, then unknowns, then picture-only, then the ones it can't. */
 export const DEVICE_RANK: Record<DeviceLevel, number> = { yes: 0, unknown: 1, audio: 2, no: 3 };
+
+/**
+ * One number for "how likely is this source to just start here", lower is better: what the device can play first; within that, a
+ * plain file (MP4 / WebM / HLS) before an MKV; then sources that start at once before ones the debrid service still has to fetch.
+ */
+export function startRank(stream: Stream, caps?: DeviceCaps): number {
+  const mkv = parseStreamFacts(stream).container === "mkv" ? 1 : 0;
+  return DEVICE_RANK[deviceVerdict(stream, caps).level] * 4 + mkv * 2 + cacheRank(stream);
+}
 
 /** A one-line list of what this browser supports, for the "This device" panel. */
 export function describeCaps(caps: DeviceCaps): Array<{ label: string; supported: boolean }> {

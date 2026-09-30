@@ -85,6 +85,14 @@ describe("the verdict for this device", () => {
     expect(deviceVerdict(s, safari, "https:").level).toBe("no");
   });
 
+  it("an MKV whose codecs aren't confirmed is 'might not play' — browsers only open some MKVs — while a confirmed H.264 + AAC one still should", () => {
+    expect(deviceVerdict(mk("Movie.2024.1080p.WEB-DL"), chrome, "https:")).toMatchObject({ level: "unknown", label: "Might not play", detail: "MKV — only some play in browsers" });
+    expect(deviceVerdict(mk("Movie.2024.1080p.WEB-DL.H264"), chrome, "https:").level).toBe("unknown"); // video known, audio not: still unconfirmed
+    expect(deviceVerdict(mk("Movie.2024.1080p.WEB-DL.AAC2.0.H264"), chrome, "https:").level).toBe("yes");
+    expect(deviceVerdict(mk("Movie.2024.1080p.WEB-DL", "https://cdn.example/a.mp4"), chrome, "https:").level).toBe("yes"); // an MP4 is something every browser opens
+    expect(deviceVerdict(mk("Movie.2024.1080p.WEB-DL", "http://cdn.example/a.mkv"), chrome, "https:").detail).toBe("MKV — only some play in browsers, via this site's relay");
+  });
+
   it("HEVC / x265 can't play where the browser has no HEVC decoder", () => {
     const s = mk("Movie.2160p.BluRay.x265-GRP", "https://cdn.example/a.mp4");
     expect(deviceVerdict(s, chrome, "https:")).toMatchObject({ level: "no", detail: "HEVC (x265) video not supported" });
@@ -141,6 +149,15 @@ describe("ranking follows the device", () => {
     const hevcMp4 = mk("Movie.2160p.WEB-DL.x265", "https://cdn.example/d.mp4", { id: "hevcMp4", resolutionTier: "UHD_4K", qualityBadge: "4K", seeders: 300 });
     expect(recommendedStreamId([torrent4k, hevcMp4, good1080], chrome)).toBe("good1080"); // Chrome here has no HEVC
     expect(recommendedStreamId([torrent4k, hevcMp4, good1080], safari)).toBe("hevcMp4"); // Safari does, so the 4K file wins
+  });
+
+  it("within the same level a plain file beats an MKV, even when the MKV is sharper (an MP4 started where MKVs did not)", () => {
+    const mkv1080 = mk("Movie.1080p.WEB-DL.AAC2.0.H264", "https://cdn.example/e.mkv", { id: "mkv1080", seeders: 900 });
+    const mp4720 = mk("Movie.720p.WEB-DL.AAC2.0.H264", "https://cdn.example/f.mp4", { id: "mp4720", resolutionTier: "HD_720P", qualityBadge: "720p", seeders: 5 });
+    expect(deviceVerdict(mkv1080, chrome, "https:").level).toBe("yes");
+    expect(recommendedStreamId([mkv1080, mp4720], chrome)).toBe("mp4720");
+    expect(sortStreams([mkv1080, mp4720], "QUALITY", chrome).map((s) => s.id)).toEqual(["mp4720", "mkv1080"]);
+    expect(sortStreams([mkv1080, mp4720], "SEEDERS", chrome).map((s) => s.id)).toEqual(["mkv1080", "mp4720"]); // explicit sorts are untouched
   });
 
   it("'Quality' sort lists playable sources first, then picture-only, then the rest", () => {

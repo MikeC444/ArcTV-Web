@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { MdArrowBack, MdBolt, MdExpandMore, MdHourglassTop, MdRefresh, MdExtension, MdInfo, MdPerson, MdSearchOff, MdSecurity, MdStar, MdSurroundSound, MdCheckCircle, MdOutlineCheckCircle, MdWifi, MdPlayArrow, MdWarningAmber } from "react-icons/md";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { cacheRank, DEBRID_NAMES, DEVICE_RANK, describeCaps, deviceVerdict, getDeviceCaps, type DeviceCaps } from "../../domain/deviceSupport";
+import { DEBRID_NAMES, describeCaps, deviceVerdict, getDeviceCaps, startRank, type DeviceCaps } from "../../domain/deviceSupport";
 import { resolutionOrdinal, SOURCE_HEALTH_LABEL, type Content, type ContentType, type ResolutionTier, type Stream } from "../../domain/types";
 import { formatRuntime } from "../../lib/format";
 import { parseOptionalInt, routes } from "../../lib/routes";
@@ -30,7 +30,7 @@ const SORTS: Array<{ id: SourceSort; label: string }> = [
 export function sortStreams(streams: Stream[], sort: SourceSort, caps?: DeviceCaps): Stream[] {
   const copy = streams.slice();
   if (sort === "QUALITY") {
-    const rank = new Map(copy.map((stream) => [stream.id, DEVICE_RANK[deviceVerdict(stream, caps).level] * 2 + cacheRank(stream)]));
+    const rank = new Map(copy.map((stream) => [stream.id, startRank(stream, caps)]));
     return copy.sort((a, b) => (rank.get(a.id) ?? 0) - (rank.get(b.id) ?? 0) || resolutionOrdinal(a.resolutionTier) - resolutionOrdinal(b.resolutionTier) || (b.seeders ?? -1) - (a.seeders ?? -1));
   }
   if (sort === "SEEDERS") return copy.sort((a, b) => (b.seeders ?? -1) - (a.seeders ?? -1));

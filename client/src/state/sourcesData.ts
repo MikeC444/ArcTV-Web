@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { cacheRank, DEVICE_RANK, deviceVerdict, type DeviceCaps } from "../domain/deviceSupport";
+import { startRank, type DeviceCaps } from "../domain/deviceSupport";
 import type { StreamLookup } from "../domain/provider";
 import { activeProviders } from "../domain/registry";
 import { resolutionOrdinal, type Content, type ContentType, type Stream } from "../domain/types";
@@ -21,7 +21,7 @@ export type SourcesState =
 
 /** Best stream = highest resolution, then most seeders; sources this device can play win over ones it can't (or can only show without sound). */
 export function recommendedStreamId(streams: Stream[], caps?: DeviceCaps): string | null {
-  const rank = (s: Stream) => DEVICE_RANK[deviceVerdict(s, caps).level] * 2 + cacheRank(s); // playable here first; within that, sources that start at once beat ones the debrid service still has to fetch
+  const rank = (s: Stream) => startRank(s, caps); // playable here first; within that a plain file beats an MKV, and sources that start at once beat ones the debrid service still has to fetch
   return (
     streams
       .slice()

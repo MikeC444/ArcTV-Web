@@ -50,6 +50,16 @@ open the link in a browser tab (it downloads) and look at the download speed in 
 of KB/s, the source is slow and only a different release or source will help; if the tab download is fast, there is more to
 find.
 
+5. **"One source plays — an MP4. Every MKV I tried does not."** That points at the container rather than the network. An MP4
+   (with its index at the front) lets a browser start after a few hundred kB. An MKV is not a format browsers officially
+   support: Chromium opens some, but it has to read far more of the file before it can show a frame, most releases use HEVC or
+   Dolby/DTS audio that a browser can't decode, and on a slow host the extra data is the difference between starting and
+   spinning. The app had been treating every MKV as "Should play here" in Chromium — an assumption, now corrected: an MKV is
+   "Should play here" only when its release name confirms a decodable video codec **and** a usable audio track, otherwise
+   "Might not play", and **MP4 / WebM / HLS sources now rank above MKVs** in Recommended and the Quality sort. A start-up
+   timeout on an MKV says so. (This is an inference from one person's results plus how browsers work; the codecs inside their
+   particular MKVs were not visible to the app, because the release names didn't say.)
+
 ## What Stremio Web does, and what was adapted
 
 Read from the source of `@stremio/stremio-video` (MIT) and Stremio Web (GPL-2.0, **not copied**):
