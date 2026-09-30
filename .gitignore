@@ -1,0 +1,25 @@
+# dependencies / build output
+node_modules/
+dist/
+client/dist/
+server/dist/
+coverage/
+*.tsbuildinfo
+
+# secrets — never commit real values, see .env.example
+.env
+.env.*
+!.env.example
+
+# test harness scratch (backend under test is cloned here, never committed)
+.backend-under-test/
+.pg-test/
+test-results/
+playwright-report/
+e2e/screenshots/*.actual.png
+
+# editor / os
+.DS_Store
+.idea/
+.vscode/
+*.log
