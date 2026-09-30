@@ -1,0 +1,81 @@
+/*
+ * MangoTV design tokens — a 1:1 port of ui/theme/{Color,Dimens,Type,Motion}.kt
+ * from the Firestick app.
+ *
+ * The Fire TV layout is authored in dp on a 960 × 540 dp reference screen
+ * (1080p at density 2). `--dp` reproduces that on the web: one dp is 1/960 of
+ * the viewport width, never smaller than 1px and never larger than 2.667px
+ * (2560 px wide). At 1920 px wide 1dp = 2px, i.e. exactly the Firestick
+ * proportions; on phones it bottoms out at 1px per dp so tap targets stay usable.
+ */
+:root {
+  --dp: clamp(1px, calc(100vw / 960), 2.667px);
+
+  /* Core surfaces — near-black, cinematic (Color.kt) */
+  --bg: #08080a;
+  --bg-elevated: #141417;
+  --surface: #1c1c20;
+  --surface-high: #26262b;
+
+  /* Brand gradient — amber gold → tangerine → coral */
+  --amber: #ffb020;
+  --tangerine: #ff7a3d;
+  --coral: #ff3d68;
+  --azure: #3d8bff;
+  --teal: #2dd9a8;
+  /* Compose's linearGradient runs corner-to-corner; these angles reproduce that for a wide / near-square box. */
+  --brand-gradient: linear-gradient(139deg, var(--amber), var(--tangerine), var(--coral));
+  --brand-gradient-wide: linear-gradient(103deg, var(--amber), var(--tangerine), var(--coral));
+
+  /* Text */
+  --text: #f6f6f8;
+  --text-2: #afafb8;
+  --text-3: #75757e;
+
+  /* Structural / focus / progress */
+  --divider: rgba(255, 255, 255, 0.122);
+  --focus-glow: var(--amber);
+  --focus-border: #ffc873;
+  --progress-track: rgba(255, 255, 255, 0.2);
+  --progress-fill: var(--coral);
+  --watched: #2ecc71;
+
+  /* Dimens.kt */
+  --pad-x: calc(56 * var(--dp));
+  --pad-y: calc(32 * var(--dp));
+  --nav-h: calc(72 * var(--dp));
+  --poster-w: calc(168 * var(--dp));
+  --poster-h: calc(252 * var(--dp));
+  --cw-w: calc(300 * var(--dp));
+  --cw-h: calc(169 * var(--dp));
+  --card-radius: calc(10 * var(--dp));
+  --button-radius: calc(8 * var(--dp));
+  --row-spacing: calc(16 * var(--dp));
+  --card-spacing: calc(18 * var(--dp));
+  /* room a focused (scaled) card needs inside a scrolling row — MangoMotion.CardEdgeSafeBufferDp */
+  --edge-safe: calc(20 * var(--dp));
+
+  /* Motion.kt */
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --t-fast: 150ms;
+  --t-medium: 280ms;
+  --t-slow: 550ms;
+  --focus-scale: 1.08;
+
+  --font: "Roboto", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* Phones / small tablets: same product, tighter gutters and a two-row header. */
+@media (max-width: 720px) {
+  :root {
+    --pad-x: 16px;
+    --pad-y: 16px;
+    --nav-h: 96px;
+  }
+}
+@media (min-width: 721px) and (max-width: 1100px) {
+  :root {
+    --pad-x: 28px;
+    --nav-h: calc(72 * var(--dp) + 8px);
+  }
+}
