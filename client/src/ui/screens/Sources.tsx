@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { MdArrowBack, MdExpandMore, MdRefresh, MdExtension, MdInfo, MdPerson, MdSearchOff, MdSecurity, MdStar, MdSurroundSound, MdCheckCircle, MdOutlineCheckCircle, MdWifi, MdPlayArrow, MdWarningAmber } from "react-icons/md";
+import { MdArrowBack, MdBolt, MdExpandMore, MdHourglassTop, MdRefresh, MdExtension, MdInfo, MdPerson, MdSearchOff, MdSecurity, MdStar, MdSurroundSound, MdCheckCircle, MdOutlineCheckCircle, MdWifi, MdPlayArrow, MdWarningAmber } from "react-icons/md";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { DEVICE_RANK, describeCaps, deviceVerdict, getDeviceCaps, type DeviceCaps } from "../../domain/deviceSupport";
+import { cacheRank, DEBRID_NAMES, DEVICE_RANK, describeCaps, deviceVerdict, getDeviceCaps, type DeviceCaps } from "../../domain/deviceSupport";
 import { resolutionOrdinal, SOURCE_HEALTH_LABEL, type Content, type ContentType, type ResolutionTier, type Stream } from "../../domain/types";
 import { formatRuntime } from "../../lib/format";
 import { parseOptionalInt, routes } from "../../lib/routes";
@@ -30,7 +30,7 @@ const SORTS: Array<{ id: SourceSort; label: string }> = [
 export function sortStreams(streams: Stream[], sort: SourceSort, caps?: DeviceCaps): Stream[] {
   const copy = streams.slice();
   if (sort === "QUALITY") {
-    const rank = new Map(copy.map((stream) => [stream.id, DEVICE_RANK[deviceVerdict(stream, caps).level]]));
+    const rank = new Map(copy.map((stream) => [stream.id, DEVICE_RANK[deviceVerdict(stream, caps).level] * 2 + cacheRank(stream)]));
     return copy.sort((a, b) => (rank.get(a.id) ?? 0) - (rank.get(b.id) ?? 0) || resolutionOrdinal(a.resolutionTier) - resolutionOrdinal(b.resolutionTier) || (b.seeders ?? -1) - (a.seeders ?? -1));
   }
   if (sort === "SEEDERS") return copy.sort((a, b) => (b.seeders ?? -1) - (a.seeders ?? -1));
@@ -306,7 +306,7 @@ function SourceRow({ stream, recommended, onClick, autoFocus }: { stream: Stream
   const color = TIER_COLOR[stream.resolutionTier];
   return (
     <div className="source" role="listitem" data-unplayable={play.level === "no" || undefined} data-device={play.level}>
-      <Surface className="source__surface" background="var(--surface-high)" alwaysBorder={recommended} borderColor={recommended ? "var(--amber)" : undefined} onClick={onClick} dataAttrs={{ autofocus: autoFocus }} ariaLabel={`${stream.qualityBadge} ${stream.releaseTitle}, ${stream.providerLabel}${recommended ? ", recommended" : ""}. ${play.label}${play.detail ? `: ${play.detail}` : ""}`}>
+      <Surface className="source__surface" background="var(--surface-high)" alwaysBorder={recommended} borderColor={recommended ? "var(--amber)" : undefined} onClick={onClick} dataAttrs={{ autofocus: autoFocus }} ariaLabel={`${stream.qualityBadge} ${stream.releaseTitle}, ${stream.providerLabel}${recommended ? ", recommended" : ""}. ${play.label}${play.detail ? `: ${play.detail}` : ""}${stream.debrid ? (stream.debrid.cached ? ". Cached" : ". Not cached, may take minutes to start") : ""}`}>
         <span className="source__badge" style={{ borderColor: color, color }}>
           <span className="t-label-lg">{stream.qualityBadge}</span>
           {stream.sourceTag ? <span className="t-label-sm">{stream.sourceTag}</span> : null}
@@ -318,6 +318,12 @@ function SourceRow({ stream, recommended, onClick, autoFocus }: { stream: Stream
             {stream.seedersLabel ? <span className="source__fact"><MdPerson aria-hidden="true" />{stream.seedersLabel} seeders</span> : null}
             {stream.sourceHealth ? <span className="source__fact" style={{ color: HEALTH_COLOR[stream.sourceHealth] }}><MdOutlineCheckCircle aria-hidden="true" />{SOURCE_HEALTH_LABEL[stream.sourceHealth]}</span> : null}
             {stream.audioTag ? <span className="source__fact"><MdSurroundSound aria-hidden="true" />{stream.audioTag}</span> : null}
+            {stream.debrid ? (
+              <span className="source__fact source__cache" data-cached={stream.debrid.cached} title={stream.debrid.cached ? "Already stored at the debrid service, so it starts straight away." : "The debrid service still has to fetch this file, which can take several minutes — the player may sit on a spinner meanwhile."}>
+                {stream.debrid.cached ? <MdBolt aria-hidden="true" /> : <MdHourglassTop aria-hidden="true" />}
+                {stream.debrid.cached ? `Cached on ${DEBRID_NAMES[stream.debrid.service] ?? stream.debrid.service}` : `Not cached on ${DEBRID_NAMES[stream.debrid.service] ?? stream.debrid.service} — may take minutes`}
+              </span>
+            ) : null}
             <span className="source__fact source__device" data-tone={VERDICT_TONE[play.level]} title={play.reason}>
               {play.level === "yes" ? <MdCheckCircle aria-hidden="true" /> : <MdWarningAmber aria-hidden="true" />}
               {play.label}{play.detail ? ` — ${play.detail}` : ""}

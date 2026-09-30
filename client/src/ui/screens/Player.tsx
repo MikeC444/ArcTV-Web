@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { MdArrowBack, MdFastForward, MdForward10, MdFullscreen, MdFullscreenExit, MdGraphicEq, MdHighQuality, MdPause, MdPlayArrow, MdReplay10, MdSettings, MdSkipNext, MdSubtitles, MdSwapHoriz, MdVolumeOff, MdVolumeUp } from "react-icons/md";
 import { useNavigate, useParams } from "react-router-dom";
-import { deviceVerdict, getDeviceCaps } from "../../domain/deviceSupport";
+import { DEBRID_NAMES, deviceVerdict, getDeviceCaps } from "../../domain/deviceSupport";
 import { assessStream, engineFor } from "../../domain/playability";
 import { activeProviders } from "../../domain/registry";
 import type { Content, ContentType, Episode, Stream } from "../../domain/types";
@@ -105,6 +105,8 @@ function startTimeoutError(stream: Stream, video: HTMLVideoElement | null): Play
   const where = host ? ` (${host})` : "";
   const seconds = START_TIMEOUT_MS / 1000;
   const waiting = video?.networkState === HTMLMediaElement.NETWORK_LOADING;
+  const notCached = stream.debrid && !stream.debrid.cached ? DEBRID_NAMES[stream.debrid.service] ?? stream.debrid.service : null;
+  if (notCached) return { type: "network", message: `This source isn't cached on ${notCached} yet, so ${notCached} has to fetch it first — that can take several minutes and nothing plays until it's ready. Try again later, or choose a source marked "Cached".` };
   return {
     type: "network",
     message: waiting
@@ -563,7 +565,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
       {(phase === "loading" || phase === "buffering") && slowStart && !error && (video.current?.readyState ?? 0) === 0 ? (
         <div className="player__slow" role="status">
           <p className="t-title-md" style={{ margin: 0 }}>Still trying to start this source…</p>
-          <p className="t-body-md c-text-2" style={{ margin: 0 }}>Some sources take a while to prepare. You can keep waiting or pick another one.</p>
+          <p className="t-body-md c-text-2" style={{ margin: 0 }}>{stream.debrid && !stream.debrid.cached ? `This source isn't cached on ${DEBRID_NAMES[stream.debrid.service] ?? stream.debrid.service} yet, so it can take several minutes. Sources marked “Cached” start straight away.` : "Some sources take a while to prepare. You can keep waiting or pick another one."}</p>
           <MangoButton text="Choose a Different Source" icon={<MdSwapHoriz />} compact borderColor="#fff" onClick={onChangeSource} />
         </div>
       ) : null}

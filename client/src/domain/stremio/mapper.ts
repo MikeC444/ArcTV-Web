@@ -114,6 +114,13 @@ function formatSeederCount(count: number): string {
   return count >= 1000 ? `${(count / 1000).toFixed(1)}K` : String(count);
 }
 
+/** "[RD+] Torrentio" → cached on Real-Debrid; "[RD download] Torrentio" → not cached (the service has to fetch it first). */
+const DEBRID_TAG = /^\s*\[\s*([A-Za-z]{2,3})\s*(\+|download)\s*\]/i;
+export function parseDebridTag(name: string | null | undefined): { service: string; cached: boolean } | null {
+  const match = DEBRID_TAG.exec(name ?? "");
+  return match ? { service: match[1]!.toUpperCase(), cached: match[2] === "+" } : null;
+}
+
 export function streamToStream(stream: StremioStream, providerId: string, providerLabel: string): Stream {
   const haystack = [stream.title, stream.name, stream.description].filter((s): s is string => !!s).join("\n");
 
@@ -154,6 +161,7 @@ export function streamToStream(stream: StremioStream, providerId: string, provid
     sourceTag,
     codec,
     audioTag,
+    debrid: parseDebridTag(stream.name),
     descriptor: haystack,
     sizeLabel,
     sizeBytes,

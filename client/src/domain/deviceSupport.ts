@@ -221,3 +221,8 @@ export function describeCaps(caps: DeviceCaps): Array<{ label: string; supported
     { label: "DTS", supported: caps.audio.dts },
   ];
 }
+
+export const DEBRID_NAMES: Record<string, string> = { RD: "Real-Debrid", AD: "AllDebrid", PM: "Premiumize", DL: "Debrid-Link", TB: "TorBox", OC: "Offcloud", PP: "PikPak", ED: "EasyDebrid" };
+
+/** 0 = starts at once (cached, or not a debrid link at all); 1 = the debrid service still has to fetch it, which can take minutes. */
+export const cacheRank = (stream: Pick<Stream, "debrid">): number => (stream.debrid && !stream.debrid.cached ? 1 : 0);

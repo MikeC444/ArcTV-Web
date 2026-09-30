@@ -116,6 +116,7 @@ const requestLog = [];
 //   /broken/…                declares streams but answers HTTP 500
 //   /empty/…                 declares streams but has none for any title
 //   /nostreams/…             catalog + meta only, like Cinemeta (must never be asked for streams)
+//   /debrid/…                a cached ("[RD+]") and a not-yet-cached ("[RD download]") debrid-style stream
 //   /stall/…                 one stream whose media request is accepted and then never answered (a hung debrid link)
 const extraManifest = (id, name, resources) => ({ id, name, version: "1.0.0", description: "Local test addon", resources, types: ["movie", "series"], idPrefixes: ["fx"], catalogs: [] });
 
@@ -134,6 +135,11 @@ function handleExtraAddon(p, res, cors) {
       { name: `Stream ${tag} 720p`, title: `${title}.720p.WEB-DL.VP9\n👤 120 💾 1.1 GB`, url: `${BASE}/media/sample.webm?via=${tag}-2` },
     ] }, cors), true;
   }
+  if (p === "/debrid/manifest.json") return json(res, extraManifest("test.mangotv.debrid", "Fixture Debrid", ["stream"]), cors), true;
+  if (/^\/debrid\/stream\//.test(p)) return json(res, { streams: [
+    { name: "[RD+] Fixture Debrid", title: "Debrid.cached.1080p.WEB-DL.VP9\n👤 50 💾 2 GB", url: `${BASE}/media/sample.webm?via=debrid-cached` },
+    { name: "[RD download] Fixture Debrid", title: "Debrid.uncached.2160p.WEB-DL.VP9\n👤 900 💾 9 GB", url: `${BASE}/media/stall.webm?via=debrid-uncached` },
+  ] }, cors), true;
   if (p === "/stall/manifest.json") return json(res, extraManifest("test.mangotv.stall", "Fixture Stall", ["stream"]), cors), true;
   if (/^\/stall\/stream\//.test(p)) return json(res, { streams: [{ name: "Stream stall 1080p", title: "Extra.stall.1080p.WEB-DL.VP9\n👤 99 💾 1 GB", url: `${BASE}/media/stall.webm?apikey=SECRET-KEY-123` }] }, cors), true;
   if (p === "/broken/manifest.json") return json(res, extraManifest("test.mangotv.broken", "Fixture Broken", ["stream"]), cors), true;

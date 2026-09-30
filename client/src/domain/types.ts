@@ -84,6 +84,8 @@ export interface Stream {
   sourceTag?: string | null;
   codec?: string | null;
   audioTag?: string | null;
+  /** Debrid service tag Torrentio-style addons put in the name: "[RD+]" = already cached (starts at once), "[RD download]" = not cached (the service must fetch it first). */
+  debrid?: { service: string; cached: boolean } | null;
   /** The addon's raw title/name/description text — only used to work out the file's format (see deviceSupport). */
   descriptor?: string | null;
   sizeLabel?: string | null;

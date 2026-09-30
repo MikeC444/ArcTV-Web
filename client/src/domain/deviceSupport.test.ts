@@ -139,3 +139,19 @@ describe("ranking follows the device", () => {
     expect(sortStreams(all, "SEEDERS", chrome).map((s) => s.id)).toEqual([torrent4k.id, "hevc4k", "dolby1080", "good1080"]); // explicit sorts are untouched
   });
 });
+
+describe("debrid cache ranking", () => {
+  const cached720 = mk("Movie.720p.WEB-DL.AAC2.0.H264", "https://cdn.example/a.mp4", { id: "cached720", debrid: { service: "RD", cached: true }, resolutionTier: "HD_720P", qualityBadge: "720p", seeders: 10 });
+  const uncached4k = mk("Movie.2160p.WEB-DL.AAC2.0.H264", "https://cdn.example/b.mp4", { id: "uncached4k", debrid: { service: "RD", cached: false }, resolutionTier: "UHD_4K", qualityBadge: "4K", seeders: 900 });
+  const plain1080 = mk("Movie.1080p.WEB-DL.AAC2.0.H264", "https://cdn.example/c.mp4", { id: "plain1080", resolutionTier: "FHD_1080P", seeders: 100 });
+
+  it("a source that starts at once beats a higher-quality one the debrid service still has to fetch", () => {
+    expect(recommendedStreamId([uncached4k, cached720], chrome)).toBe("cached720");
+    expect(sortStreams([uncached4k, cached720, plain1080], "QUALITY", chrome).map((s) => s.id)).toEqual(["plain1080", "cached720", "uncached4k"]);
+  });
+
+  it("only demotes within the same device level — a source the device can't play never outranks one it can", () => {
+    const cachedButHevc = mk("Movie.2160p.x265", "https://cdn.example/d.mp4", { id: "cachedButHevc", debrid: { service: "RD", cached: true }, resolutionTier: "UHD_4K" });
+    expect(recommendedStreamId([cachedButHevc, uncached4k], chrome)).toBe("uncached4k");
+  });
+});

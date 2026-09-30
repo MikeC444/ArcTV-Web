@@ -153,6 +153,9 @@
 .source__fact { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
 .source__fact svg { width: calc(13 * var(--dp)); height: calc(13 * var(--dp)); min-width: 12px; min-height: 12px; }
 .source__warn { color: var(--amber); }
+.source__cache { font-weight: 700; }
+.source__cache[data-cached="true"] { color: var(--teal); }
+.source__cache[data-cached="false"] { color: var(--amber); }
 .source__device { font-weight: 700; }
 .source__device[data-tone="ok"] { color: var(--teal); }
 .source__device[data-tone="muted"] { color: var(--text-3); }

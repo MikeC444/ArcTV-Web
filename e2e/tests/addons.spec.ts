@@ -128,4 +128,33 @@ test.describe("addons are asked for streams", () => {
     await alert.getByRole("button", { name: "Change Source" }).click();
     await expect(page.getByRole("heading", { name: "Select a Source" })).toBeVisible();
   });
+
+  test("debrid sources say whether they are cached; not-cached ones rank lower and explain a long wait", async ({ page }) => {
+    const account = await newAccount("debrid");
+    await account.tv.installAddon(`${ADDON}/debrid/manifest.json`, 1);
+    await page.clock.install();
+    await openSignedIn(page, account);
+    await page.goto("/sources/test.mangotv.fixture/MOVIE/fxm1/-1/-1");
+    const cached = page.locator(".source", { hasText: "Debrid.cached.1080p" });
+    const uncached = page.locator(".source", { hasText: "Debrid.uncached.2160p" });
+    await expect(cached).toContainText("Cached on Real-Debrid");
+    await expect(uncached).toContainText("Not cached on Real-Debrid — may take minutes");
+    await shot(page, "sources-debrid-cache");
+
+    // a 4K source that isn't cached sits below every playable, ready-to-go source (but above unknowns)
+    const order = await page.locator(".source").evaluateAll((rows) => rows.map((r) => r.textContent ?? ""));
+    const at = (needle: string) => order.findIndex((text) => text.includes(needle));
+    expect(at("Debrid.uncached.2160p")).toBeGreaterThan(at("Debrid.cached.1080p"));
+    expect(at("Debrid.uncached.2160p")).toBeGreaterThan(at("Fixture HLS"));
+    expect(at("Debrid.uncached.2160p")).toBeLessThan(at("Fixture Web-unready"));
+
+    // opening it: a stalled start is explained by the missing cache, not left as a mystery
+    await uncached.locator(".source__surface").click();
+    await expect(page).toHaveURL(/\/player\//);
+    await expect(page.locator("video.player__video")).toBeAttached(); // the start-up timers begin once the player has mounted
+    await page.clock.fastForward(16_000);
+    await expect(page.getByText("isn't cached on Real-Debrid yet")).toBeVisible();
+    await page.clock.fastForward(30_000);
+    await expect(page.getByRole("alertdialog", { name: "Unable to play this source" })).toContainText("isn't cached on Real-Debrid yet");
+  });
 });

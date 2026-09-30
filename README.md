@@ -213,6 +213,10 @@ reads each source's file name and link for its container, video codec and audio 
 | **Can't play here — HEVC (x265) video not supported** / **MKV not supported** / **Torrent source** … | Won't work in this browser; the reason is on the row |
 | **Format unknown — May play** / **Might not play** | The source doesn't say what it is, or its addon says it isn't web-ready |
 
+Debrid-style names are read too: `[RD+]` means the file is already **cached** at the debrid service (starts at once),
+`[RD download]` means the service still has to fetch it, which can take minutes — such sources show "Not cached on
+Real-Debrid — may take minutes", rank below ready ones, and if one sits on a spinner the player says why.
+
 "Sort by: Quality" lists playable sources first, **Recommended** is always the best playable one, the **Plays on this
 device** pill hides everything else, and **This device** (under the list) shows what your browser supports. The badges are
 a strong hint rather than a promise — they are derived from text — and a source whose server never answers can still

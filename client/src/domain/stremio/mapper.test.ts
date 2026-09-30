@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { javaHashCode, metaToContent, parseRuntimeMinutes, parseYear, previewToContent, streamToStream, videosToSeasons } from "./mapper";
+import { javaHashCode, metaToContent, parseDebridTag, parseRuntimeMinutes, parseYear, previewToContent, streamToStream, videosToSeasons } from "./mapper";
 import { normalizeManifestUrl, resourceBase } from "./url";
 
 describe("Stremio → Content mapping (port of StremioMapper.kt)", () => {
@@ -100,5 +100,25 @@ describe("addon URLs", () => {
 
   it("derives the resource base", () => {
     expect(resourceBase("https://a.example/x/manifest.json")).toBe("https://a.example/x");
+  });
+});
+
+describe("debrid cache tags (Torrentio-style names)", () => {
+  it("[XX+] means cached, [XX download] means the service still has to fetch it", () => {
+    expect(parseDebridTag("[RD+] Torrentio")).toEqual({ service: "RD", cached: true });
+    expect(parseDebridTag("[RD download] Torrentio")).toEqual({ service: "RD", cached: false });
+    expect(parseDebridTag("[tb+] Torrentio")).toEqual({ service: "TB", cached: true });
+    expect(parseDebridTag("  [AD download]Torrentio")).toEqual({ service: "AD", cached: false });
+  });
+
+  it("ignores names that aren't debrid tags", () => {
+    for (const name of ["Torrentio", "[HD] Movie", "[YTS] Movie", "[RD] Movie", "Movie [RD+]", "", null, undefined]) expect(parseDebridTag(name as string | null | undefined)).toBeNull();
+  });
+
+  it("is carried onto the stream, without changing its label", () => {
+    const s = streamToStream({ name: "[RD download] Torrentio", title: "Movie.2024.1080p.WEB-DL\n👤 12 💾 2 GB", url: "https://x/y.mkv" }, "prov", "Prov");
+    expect(s.debrid).toEqual({ service: "RD", cached: false });
+    expect(s.providerLabel).toBe("Torrentio");
+    expect(streamToStream({ name: "Torrentio", url: "https://x/y.mkv" }, "prov", "Prov").debrid).toBeNull();
   });
 });
