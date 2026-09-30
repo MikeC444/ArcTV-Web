@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { javaHashCode, metaToContent, parseDebridTag, parseRuntimeMinutes, parseYear, previewToContent, streamToStream, videosToSeasons } from "./mapper";
+import { castOf, javaHashCode, metaToContent, parseDebridTag, parseRuntimeMinutes, parseYear, previewToContent, streamToStream, videosToSeasons } from "./mapper";
 import { normalizeManifestUrl, resourceBase } from "./url";
 
 describe("Stremio → Content mapping (port of StremioMapper.kt)", () => {
@@ -120,5 +120,22 @@ describe("debrid cache tags (Torrentio-style names)", () => {
     expect(s.debrid).toEqual({ service: "RD", cached: false });
     expect(s.providerLabel).toBe("Torrentio");
     expect(streamToStream({ name: "Torrentio", url: "https://x/y.mkv" }, "prov", "Prov").debrid).toBeNull();
+  });
+
+  it("cast: uses the photos and roles an addon sends (app_extras.cast), keeps names it lacks, and falls back to plain names", () => {
+    const withPhotos = castOf({
+      id: "tt",
+      type: "movie",
+      name: "M",
+      cast: ["Ana", "Bo", "Cy"],
+      app_extras: { cast: [{ name: "Ana", character: "Neo", photo: "https://img/ana.jpg" }, { name: "Bo", character: "", photo: null }, { name: "  " }] },
+    });
+    expect(withPhotos).toEqual([
+      { name: "Ana", role: "Neo", photoUrl: "https://img/ana.jpg" },
+      { name: "Bo", role: null, photoUrl: null },
+      { name: "Cy" },
+    ]);
+    expect(castOf({ id: "tt", type: "movie", name: "M", cast: ["A", "B"] })).toEqual([{ name: "A" }, { name: "B" }]);
+    expect(castOf({ id: "tt", type: "movie", name: "M" })).toEqual([]);
   });
 });

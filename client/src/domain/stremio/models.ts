@@ -22,9 +22,16 @@ export interface StremioVideo {
   description?: string | null;
   thumbnail?: string | null;
 }
+/** Stremio's extended cast (Cinemeta sends it): names with the character played and a photo. */
+export interface StremioCastExtra {
+  name?: string | null;
+  character?: string | null;
+  photo?: string | null;
+}
 export interface StremioMeta extends StremioMetaPreview {
   director?: string[] | null;
   cast?: string[] | null;
+  app_extras?: { cast?: StremioCastExtra[] | null } | null;
   videos?: StremioVideo[] | null;
 }
 export interface StremioBehaviorHints {

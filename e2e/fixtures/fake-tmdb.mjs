@@ -16,7 +16,13 @@ export function handleFakeTmdb(res, p, url, svg) {
     res.end(JSON.stringify(body));
     return true;
   };
-  let m = /^\/tmdb-img\/(w\d+)\/([pb])(\d+)\.svg$/.exec(p);
+  let m = /^\/tmdb-img\/w185\/actor(\d+)\.svg$/.exec(p);
+  if (m) {
+    res.writeHead(200, { "Content-Type": "image/svg+xml", "Cache-Control": "public, max-age=3600", "Access-Control-Allow-Origin": "*" });
+    res.end(svg("poster", `${m[1]}-actor`));
+    return true;
+  }
+  m = /^\/tmdb-img\/(w\d+)\/([pb])(\d+)\.svg$/.exec(p);
   if (m) {
     res.writeHead(200, { "Content-Type": "image/svg+xml", "Cache-Control": "public, max-age=3600", "Access-Control-Allow-Origin": "*" });
     res.end(svg(m[2] === "p" ? "poster" : "bg", `${m[3]}-tmdb`));
@@ -51,7 +57,7 @@ export function handleFakeTmdb(res, p, url, svg) {
   if ((m = /^\/movie\/(\d+)$/.exec(q))) {
     const item = MOVIES[Number(m[1]) - 1];
     if (!item) return send({ status_message: "not found" }, 404);
-    return send({ ...item, runtime: 100 + (item.id % 50), genres: item.genre_ids.map((id) => ({ id, name: `g${id}` })), credits: { cast: [{ name: "Fake Actor" }, { name: "Other Actor" }], crew: [{ job: "Director", name: "Fake Director" }] }, images: { logos: [] }, external_ids: { imdb_id: imdbOfMovie(item.id) } });
+    return send({ ...item, runtime: 100 + (item.id % 50), genres: item.genre_ids.map((id) => ({ id, name: `g${id}` })), credits: { cast: [{ name: "Fake Actor", character: "Hero", profile_path: "/actor1.svg" }, { name: "Other Actor" }], crew: [{ job: "Director", name: "Fake Director" }] }, images: { logos: [] }, external_ids: { imdb_id: imdbOfMovie(item.id) } });
   }
   if ((m = /^\/tv\/(\d+)$/.exec(q))) {
     const item = SHOWS[Number(m[1]) - 501];

@@ -76,6 +76,9 @@ test.describe("built-in catalog", () => {
     await page.goto("/detail/tv.mango.catalog/MOVIE/tt8000001");
     await expect(page.getByRole("heading", { name: "Tmdb Movie 1" })).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText("Fake Actor")).toBeVisible();
+    await expect(page.getByText("Hero", { exact: true })).toBeVisible(); // the character
+    await expect(page.locator(".cast__member", { hasText: "Fake Actor" }).locator("img")).toHaveAttribute("src", /\/tmdb-img\/w185\/actor1\.svg$/);
+    await expect(page.locator(".cast__member", { hasText: "Other Actor" }).locator("img")).toHaveCount(0); // no photo on file: the placeholder stays
     await page.getByRole("button", { name: /Play/ }).first().click();
     await expect(page).toHaveURL(/\/auth$/);
   });

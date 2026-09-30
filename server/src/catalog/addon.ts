@@ -36,7 +36,7 @@ interface TmdbDetail extends TmdbListItem {
   runtime?: number | null;
   episode_run_time?: number[];
   genres?: Array<{ id: number; name: string }>;
-  credits?: { cast?: Array<{ name: string }>; crew?: Array<{ job?: string; name: string }> };
+  credits?: { cast?: Array<{ name: string; character?: string; profile_path?: string | null }>; crew?: Array<{ job?: string; name: string }> };
   images?: { logos?: Array<{ file_path: string; iso_639_1?: string | null; vote_average?: number }> };
   external_ids?: { imdb_id?: string | null };
   created_by?: Array<{ name: string }>;
@@ -206,6 +206,7 @@ export class CatalogService {
     const genres = (detail.genres ?? []).map((g) => genreName(g.id) ?? g.name);
     const directors = kind === "movie" ? (detail.credits?.crew ?? []).filter((c) => c.job === "Director").map((c) => c.name) : (detail.created_by ?? []).map((c) => c.name);
     const date = kind === "movie" ? detail.release_date : detail.first_air_date;
+    const cast = (detail.credits?.cast ?? []).slice(0, 15);
 
     const meta: Record<string, unknown> = {
       id: imdb,
@@ -221,7 +222,9 @@ export class CatalogService {
       runtime: minutes ? `${minutes} min` : undefined,
       imdbRating: rating(detail.vote_average),
       genres: genres.length ? Array.from(new Set(genres)) : undefined,
-      cast: (detail.credits?.cast ?? []).slice(0, 12).map((c) => c.name),
+      cast: cast.map((c) => c.name),
+      // Stremio's extended cast, which the web app shows as round photos with the character's name
+      app_extras: { cast: cast.map((c) => ({ name: c.name, character: c.character || undefined, photo: this.tmdb.image(c.profile_path, "w185") })) },
       director: directors.length ? directors : undefined,
     };
     if (kind === "tv") meta.videos = await this.episodes(imdb, tmdbId, detail);

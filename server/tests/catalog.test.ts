@@ -31,7 +31,7 @@ function fakeTmdb() {
       return json({ movie_results: [], tv_results: [] });
     }
     if (p === "/movie/1")
-      return json({ ...movie(1), runtime: 142, genres: [{ id: 878, name: "Science Fiction" }, { id: 28, name: "Action" }], credits: { cast: [{ name: "Ana" }, { name: "Bo" }], crew: [{ job: "Director", name: "Sam" }, { job: "Writer", name: "Kit" }] }, images: { logos: [{ file_path: "/fr.png", iso_639_1: "fr", vote_average: 9 }, { file_path: "/en.png", iso_639_1: "en", vote_average: 5 }] } });
+      return json({ ...movie(1), runtime: 142, genres: [{ id: 878, name: "Science Fiction" }, { id: 28, name: "Action" }], credits: { cast: [{ name: "Ana", character: "Neo", profile_path: "/ana.jpg" }, { name: "Bo" }], crew: [{ job: "Director", name: "Sam" }, { job: "Writer", name: "Kit" }] }, images: { logos: [{ file_path: "/fr.png", iso_639_1: "fr", vote_average: 9 }, { file_path: "/en.png", iso_639_1: "en", vote_average: 5 }] } });
     if (p === "/tv/500") return json({ id: 500, name: "Show 500", overview: "A show", poster_path: "/s500.jpg", backdrop_path: "/sb500.jpg", first_air_date: "2019-01-01", vote_average: 8.04, episode_run_time: [45], genres: [{ id: 10759, name: "Action & Adventure" }], created_by: [{ name: "Maker" }], seasons: [{ season_number: 0 }, { season_number: 1 }, { season_number: 2 }], credits: { cast: [{ name: "Cy" }] }, images: { logos: [] } });
     if ((m = /^\/tv\/500\/season\/(\d+)$/.exec(p))) return json({ episodes: [{ episode_number: 1, name: `S${m[1]}E1`, overview: "x", still_path: "/still.jpg", air_date: "2019-02-03" }, { episode_number: 2, name: `S${m[1]}E2` }] });
     return json({ status_message: "not found" }, 404);
@@ -128,6 +128,7 @@ describe("built-in catalog addon", () => {
       runtime: "142 min",
       genres: ["Sci-Fi", "Action"],
       cast: ["Ana", "Bo"],
+      app_extras: { cast: [{ name: "Ana", character: "Neo", photo: "http://img.test/t/p/w185/ana.jpg" }, { name: "Bo" }] },
       director: ["Sam"],
       releaseInfo: "2021",
       released: "2021-05-06T00:00:00.000Z",

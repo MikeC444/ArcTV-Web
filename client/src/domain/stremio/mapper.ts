@@ -1,5 +1,5 @@
 import { distinctBy } from "../../lib/format";
-import type { Content, Episode, ResolutionTier, Season, SourceHealth, Stream } from "../types";
+import type { CastMember, Content, Episode, ResolutionTier, Season, SourceHealth, Stream } from "../types";
 import type { StremioMeta, StremioMetaPreview, StremioStream, StremioVideo } from "./models";
 
 /** Java's String.hashCode — keeps stream ids compatible with the Android app's `"$providerId:${idSeed.hashCode()}"`. */
@@ -84,12 +84,25 @@ export function videosToSeasons(videos: StremioVideo[] | null | undefined): Seas
     }));
 }
 
+/**
+ * Cast with photos and roles when the addon sends them (`app_extras.cast`, like Cinemeta); otherwise the plain list of names.
+ * Names the extended list lacks are kept, after it, so nobody in `cast` disappears.
+ */
+export function castOf(meta: StremioMeta): CastMember[] {
+  const photographed: CastMember[] = (meta.app_extras?.cast ?? [])
+    .filter((c): c is { name: string; character?: string | null; photo?: string | null } => typeof c?.name === "string" && c.name.trim() !== "")
+    .map((c) => ({ name: c.name, role: c.character || null, photoUrl: c.photo || null }));
+  const known = new Set(photographed.map((c) => c.name));
+  const rest = (meta.cast ?? []).filter((name) => name && !known.has(name)).map((name) => ({ name }));
+  return [...photographed, ...rest];
+}
+
 export function metaToContent(meta: StremioMeta, providerId: string): Content {
   const base = previewToContent(meta, providerId);
   const directors = (meta.director ?? []).filter(Boolean);
   return {
     ...base,
-    cast: (meta.cast ?? []).map((name) => ({ name })),
+    cast: castOf(meta),
     director: directors.length ? directors.join(", ") : null,
     seasons: videosToSeasons(meta.videos),
   };
