@@ -49,7 +49,7 @@ describe("static SPA hosting", () => {
     expect(csp).not.toMatch(/script-src[^;]*unsafe-inline/);
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp).toContain("object-src 'none'");
-    // other sites learn which site asked (as with any browser-based player) but never which page, and nothing at all over plain http
-    expect(res.headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
+    // media, image and addon requests to other sites must not reveal where the app is hosted
+    expect(res.headers["referrer-policy"]).toBe("same-origin");
   });
 });

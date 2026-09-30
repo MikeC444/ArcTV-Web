@@ -84,7 +84,7 @@ test.describe("addons are asked for streams", () => {
     await expect(page).toHaveURL(/\/settings\/addons/);
   });
 
-  test("a source that never starts: a reassuring note after 15 s, then a clear reason after 45 s — direct, then via the relay (never an endless spinner)", async ({ page }) => {
+  test("a source that never starts: a reassuring note after 15 s, then a clear reason after 45 s (never an endless spinner)", async ({ page }) => {
     const account = await newAccount("stall");
     await account.tv.installAddon(`${ADDON}/stall/manifest.json`, 1);
     await page.clock.install(); // lets the test jump past the watchdog timers instead of waiting a minute
@@ -104,13 +104,13 @@ test.describe("addons are asked for streams", () => {
 
     await page.clock.fastForward(30_000);
     const alert = page.getByRole("alertdialog", { name: "Unable to play this source" });
-    // still nothing 45 s after the first request — the direct request got one try, the stream relay the rest of the budget
-    await expect(alert).toContainText("neither when your browser asked directly nor through this site's relay");
+    await expect(alert).toContainText("didn't start playing within 45 seconds");
     await expect(alert).toContainText(new URL(ADDON).host); // names the server, never the full link
+    // a slow source is not abandoned for the relay: the same host would be asked again, and bytes arriving slowly look like nothing arriving
+    await expect(alert).not.toContainText("relay");
     // a technical account is one click away, and never contains the link's query / key
     await alert.getByText("Technical details").click();
     const details = alert.locator(".perror__pre");
-    await expect(details).toContainText("route direct, then relay");
     await expect(details).toContainText("network LOADING");
     await expect(details).toContainText("file type .webm");
     await expect(details).toContainText("loadstart");
@@ -129,6 +129,22 @@ test.describe("addons are asked for streams", () => {
     await shot(page, "player-start-timeout");
     await alert.getByRole("button", { name: "Change Source" }).click();
     await expect(page.getByRole("heading", { name: "Select a Source" })).toBeVisible();
+  });
+
+  test("a source marked cached that still never delivers says the host is too slow — and is not sent to the relay", async ({ page }) => {
+    const account = await newAccount("slowcached");
+    await account.tv.installAddon(`${ADDON}/slowdebrid/manifest.json`, 1);
+    await page.clock.install();
+    await openSignedIn(page, account);
+    await page.goto("/sources/test.mangotv.fixture/MOVIE/fxm1/-1/-1");
+    await page.locator(".source", { hasText: "Debrid.slow" }).locator(".source__surface").click();
+    await expect(page.locator("video.player__video")).toBeAttached();
+    await page.clock.fastForward(46_000);
+    const alert = page.getByRole("alertdialog", { name: "Unable to play this source" });
+    await expect(alert).toContainText("answered, but is delivering the file too slowly for a browser to start");
+    await expect(alert).not.toContainText("relay");
+    await alert.getByText("Technical details").click();
+    await expect(alert.locator(".perror__pre")).toContainText("Debrid: Real-Debrid, marked cached");
   });
 
   test("debrid sources say whether they are cached; not-cached ones rank lower and explain a long wait", async ({ page }) => {

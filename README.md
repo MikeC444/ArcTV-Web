@@ -194,7 +194,7 @@ or silently picking another source:
 
 | Source | Behaviour |
 |---|---|
-| Direct HTTPS MP4 / WebM / HLS / DASH | Plays if the codecs are supported by the browser. Requested directly first; if the host delivers nothing for 12 s or refuses, the player retries **once through the stream relay** (below) |
+| Direct HTTPS MP4 / WebM / HLS / DASH | Plays if the codecs are supported by the browser. Requested directly first; if the browser's request fails outright (the host refuses it), the player retries **once through the stream relay** (below). A host that answers but sends data slowly is *not* sent to the relay — the player waits, then says the host is too slow |
 | Torrent (`infoHash`) / magnet | Listed, badged "Can't play here — Torrent source", explains why on click. Use an addon that returns direct (debrid) links |
 | YouTube-only (`ytId`) | Explained; the trailer button opens YouTube in a new tab like the TV does |
 | Sources needing custom request headers (`proxyHeaders`) | Play **through the stream relay** from the start ("via this site's relay"), which adds the addon's headers server-side. The relay cannot help a host that refuses server-side requests outright (for example Torrentio's Cloudflare front does) — the error then says who refused it |
@@ -256,9 +256,8 @@ but won't play, the reason is in the table above (torrent-only, MKV/HEVC/Dolby a
   ranges blocked, https-only outside tests, JSON only, ≤ 2 MB, redirects re-validated, timeouts.
 * The stream relay is session-only, same-origin, GET/HEAD, media-only, SSRF-guarded like the addon proxy, and never
   forwards cookies, `Referer` or the addon's headers to a redirect target.
-* Content-Security-Policy without inline scripts, `frame-ancestors 'none'`, HSTS, per-IP rate limits, and the browser-default
-  referrer policy (other sites see this site's origin, never a page address — Stremio Web does the same, and some stream
-  hosts treat a request with no Referer as "not a browser").
+* Content-Security-Policy without inline scripts, `frame-ancestors 'none'`, HSTS, per-IP rate limits, and `Referrer-Policy: same-origin`
+  (video hosts, addons and image CDNs never learn where the app is hosted).
 * Payment state is never trusted from the client — there are no payments in this product today; if added, verification
   must stay in the backend.
 * Passwords are only ever sent to the backend over TLS and are not logged or stored by the web server.

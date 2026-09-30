@@ -1,4 +1,4 @@
-import { parseStreamFacts, type DeviceVerdict } from "../../domain/deviceSupport";
+import { DEBRID_NAMES, parseStreamFacts, type DeviceVerdict } from "../../domain/deviceSupport";
 import type { Stream } from "../../domain/types";
 
 /**
@@ -71,7 +71,7 @@ export function describeDiagnostics(input: { stream: Stream; snapshot: VideoSnap
     "MangoTV player diagnostics",
     `Browser: ${browser} (${/(Chrome|Edg|Firefox|Version)\/[\d.]+/.exec(userAgent)?.[0] ?? "unknown version"})`,
     `Source: server ${host}, file type .${ext}, engine ${engine}${route ? `, route ${route}` : ""}`,
-    ...(stream.debrid ? [`Debrid: ${stream.debrid.service}, ${stream.debrid.cached ? "marked cached" : "marked NOT cached (the service has to fetch it first)"}`] : []),
+    ...(stream.debrid ? [`Debrid: ${DEBRID_NAMES[stream.debrid.service] ?? stream.debrid.service}, ${stream.debrid.cached ? "marked cached" : "marked NOT cached (the service has to fetch it first)"}`] : []),
     `Detected: container ${facts.container ?? "?"}, video ${facts.video ?? "?"}${facts.tenBit ? " 10-bit" : ""}, audio ${facts.audio.join("+") || "?"}`,
     `This device: ${verdict.label}${verdict.detail ? ` (${verdict.detail})` : ""}`,
   ];

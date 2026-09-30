@@ -89,8 +89,6 @@ const HIDE_AFTER_MS = 4000;
 /** A source that hasn't produced a picture yet: reassure after this long, give up (with a reason) after the second. */
 const SLOW_START_MS = 15_000;
 const START_TIMEOUT_MS = 45_000;
-/** Still no video this long after asking the host directly → ask again through this site's stream relay (Stremio's answer to hosts that don't play well with browsers: proxy them). */
-const RELAY_AFTER_MS = 12_000;
 /** How long the content-type probe may hold the video back (Stremio Web waits without limit; a host that never answers must not do that to us). */
 const CONTENT_TYPE_WAIT_MS = 4_000;
 type Route = "direct" | "relay";
@@ -115,10 +113,14 @@ function startTimeoutError(stream: Stream, video: HTMLVideoElement | null, fellB
   const notCached = stream.debrid && !stream.debrid.cached ? DEBRID_NAMES[stream.debrid.service] ?? stream.debrid.service : null;
   if (notCached) return { type: "network", message: `This source isn't cached on ${notCached} yet, so ${notCached} has to fetch it first — that can take several minutes and nothing plays until it's ready. Try again later, or choose a source marked "Cached".` };
   if (fellBack) return { type: "network", message: `No video arrived from this source${where} — neither when your browser asked directly nor through this site's relay. The host may be busy, blocking requests, or still preparing the file. Try again in a few minutes, or choose another source.` };
+  // A browser needs a few MB of a video file (more for MKV) before it can show anything, so a host that answers but sends only tens of KB a second looks like "nothing".
+  if (waiting && stream.debrid) {
+    return { type: "network", message: `This source didn't start playing within ${seconds} seconds. Its server${where} answered, but is delivering the file too slowly for a browser to start — typical of a release that few people share, or one the service is still fetching, even when it says "cached". Try a more popular release or another source, or try again later.` };
+  }
   return {
     type: "network",
     message: waiting
-      ? `This source didn't start playing within ${seconds} seconds. Its server${where} is either very slow to prepare the file (some debrid links are) or is sending something your browser can't open. Try again, or choose another source.`
+      ? `This source didn't start playing within ${seconds} seconds. Its server${where} is either very slow to send the file or is sending something your browser can't open. Try again, or choose another source.`
       : `This source didn't start playing within ${seconds} seconds — its server${where} didn't send any video. Try again, or choose another source.`,
   };
 }
@@ -277,7 +279,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
     let cancelled = false;
     let subtitleChosen = false;
     let triedHls = false;
-    /** A relay can fix blocked / unreachable / header-locked fetches, not a file the device can't decode. */
+    /** A relay can fix blocked / refused / header-locked fetches, not a file the device can't decode and not a host that is merely slow. */
     const shouldTryRelay = (e: PlaybackError): boolean => route === "direct" && e.type !== "decode" && ["yes", "unknown"].includes(deviceVerdict(stream).level);
 
     const start = async (kind: ReturnType<typeof engineFor>) => {
@@ -344,7 +346,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
     v.addEventListener("volumechange", onVolume);
     v.addEventListener("error", onNativeError);
     // a fresh trail for this route — but say when it only exists because the direct request delivered nothing
-    trail.current = fellBack ? [{ at: 0, name: "relay-fallback (the direct request delivered no video)" }] : [];
+    trail.current = fellBack ? [{ at: 0, name: "relay-fallback (the direct request failed)" }] : [];
     trailStart.current = performance.now();
     let progressSeen = 0;
     const noteEvent = (e: Event) => {
@@ -392,19 +394,17 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
   // has learned anything about the file (metadata, a frame, playback); a video that is merely paused or buffering later doesn't count.
   useEffect(() => {
     const stalled = () => (video.current?.readyState ?? 0) === 0 && !video.current?.error;
-    // The budget (note after 15 s, give up after 45 s) runs from the first request, so switching to the relay never makes the wait longer.
+    // The budget (note after 15 s, give up after 45 s) runs from the first request, so a switch to the relay (after the direct request failed outright) never makes the wait longer.
+    // A slow source is NOT sent to the relay: bytes arriving slowly look exactly like nothing arriving (a <video> reports no progress until it has parsed the file's header), and the relay asks the same host.
     const left = (budget: number) => Math.max(0, budget - (Date.now() - startedAt.current));
     setSlowStart(left(SLOW_START_MS) === 0 && stalled());
-    // no video yet from a direct request → ask again through the relay (once)
-    const relay = route === "direct" ? window.setTimeout(() => stalled() && fallBackToRelay(), left(RELAY_AFTER_MS)) : null;
     const slow = window.setTimeout(() => stalled() && setSlowStart(true), left(SLOW_START_MS));
     const giveUp = window.setTimeout(() => stalled() && fail(startTimeoutError(stream, video.current, fellBack)), left(START_TIMEOUT_MS));
     return () => {
-      if (relay !== null) window.clearTimeout(relay);
       window.clearTimeout(slow);
       window.clearTimeout(giveUp);
     };
-  }, [stream, attempt, fail, route, fellBack, fallBackToRelay]);
+  }, [stream, attempt, fail, route, fellBack]);
 
   // pause → report; end → report completed + up-next
   useEffect(() => {

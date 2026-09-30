@@ -82,10 +82,9 @@ export function createApp(config: AppConfig, options: CreateAppOptions = {}): Ex
       },
       hsts: config.isProduction ? { maxAge: 31_536_000, includeSubDomains: true } : false,
       crossOriginEmbedderPolicy: false, // would block cross-origin posters/media that don't send CORP
-      // The browser default, and what Stremio Web uses: other sites (video hosts, addons, image CDNs) see this site's ORIGIN, never a page
-      // address. Some stream hosts decide what to serve by whether a browser is asking — for example debrid resolvers hand a browser
-      // an HLS stream and everything else the raw file — and treat a request with no Referer as "not a browser".
-      referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+      // cross-origin requests (video, images, addons) carry no Referer at all — like the TV app, and hosts that dislike embedding never see our address.
+      // (Sending the origin like Stremio Web does was tried for a stream that wouldn't start and made no difference, so the stricter setting stays.)
+      referrerPolicy: { policy: "same-origin" },
     }),
   );
 

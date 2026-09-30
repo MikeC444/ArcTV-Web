@@ -96,7 +96,7 @@ gone to sleep make this more likely, because the first requests after a cold sta
 
 ### Stream relay (bandwidth)
 
-Sources that need addon request headers, are plain `http://`, or whose host never answers a browser's own request are
+Sources that need addon request headers, are plain `http://`, or whose host refuses a browser's own request are
 played through `/api/relay/…` on this service (see [`PLAYBACK.md`](PLAYBACK.md)). Direct playback is always tried first,
 so most viewing costs nothing, but **relayed video flows through this server** and counts against your host's bandwidth
 (on a free Render plan that allowance is small, and free services are slower to stream). It is per-user capped at 6

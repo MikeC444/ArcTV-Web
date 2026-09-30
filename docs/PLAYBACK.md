@@ -1,205 +1,102 @@
-# Playback: why some sources never started, and the stream relay
+# Playback: what happens when a source won't start
 
-This page records the investigation behind the "select a source → spinner at 0:00 forever" bug, how Stremio Web handles
-the same situation, what MangoTV now does, and what has and has not been verified.
+This page records what was learned chasing "I pick a source and the player sits at `0:00` with a spinner", what was wrong in
+the first diagnosis, what MangoTV does now, and what has and has not been verified.
 
-## Symptom
+## Status
 
-Picking a source opens the player, which stays at `0:00 / 0:00` with a spinner. The browser's network tab shows the media
-request as *loading* forever, and opening that request's URL in a new tab downloads the file. Copied from the in-app
-diagnostics of a real Torrentio / Real-Debrid `.mkv` source (Chrome):
+* **The reported Torrentio `.mkv` stream does not play in MangoTV, and the player cannot fix that.** A network capture of the
+  failing request shows the stream host *is* answering the browser — but sending the file at a trickle (see below). The
+  relay cannot help: that host's Cloudflare front refuses this site's server.
+* What the player does about it now: it keeps waiting on the direct request (no longer abandoning it), tells the viewer the
+  host is too slow when it gives up, and keeps the evidence in the technical details.
+* The stream relay, the content-type probe and the diagnostics are real, tested improvements — for *other* failure types.
+  None of them is evidence-backed for the original complaint, and this page says so.
 
-```
-network NETWORK_LOADING, ready HAVE_NOTHING, no media error
-Events: emptied, waiting, loadstart, stalled@~3.2s      ← no "progress", no "loadedmetadata"
-Connection test: plain GET answered in ~1 s · Range GET answered in ~1 s · reading the answer cross-origin: not possible
-```
+## The evidence, in the order it arrived
 
-`emptied → waiting → loadstart → stalled` with no `progress` is what Chrome reports when the server has answered a
-**browser-style media request** (one carrying `Sec-Fetch-Dest: video`, `Range: bytes=0-`, `Referer`, `Origin` …) with
-headers but is withholding the body. The same host answers a plain GET or a Range GET made without those browser
-headers immediately, which is why the source works in a download tab and in native players.
+1. **First reports (diagnostics from the browser).** `emptied → waiting → loadstart → stalled`, no `progress`, `readyState 0`,
+   and a connection test where a plain GET and a Range GET both "answered" in about a second. **Wrong inference drawn from
+   this:** that the host sent headers and then withheld the body from browser-style requests. A `<video>` reports no
+   `progress` until it has parsed enough of the file's header, so "bytes arriving slowly" and "nothing arriving" look
+   identical from JavaScript. The relay and its 12-second stall fallback were built on that inference.
+2. **The relay, tried for real.** Through the relay the stream host answered `HTTP 403` — and once the relay learned to say
+   who refused it: *"from torrentio.strem.fun; server: cloudflare; it said: Attention Required! | Cloudflare"*. That is
+   Cloudflare's block page on Torrentio's own address: a hosting provider's server is not a person's browser, and it is
+   refused. That is the host's access control; the relay does not try to get around it (no pretending to be a browser).
+3. **Referer and content-type probe, tried for real.** Stremio Web sends a Referer and asks the server what a stream is
+   before playing it. MangoTV did neither, so both were added on a hypothesis that Torrentio answers browsers differently.
+   The direct request still did not start. The HEAD probe could not even read the answer (the redirect doesn't allow web
+   pages to), which is exactly what Stremio Web would see too. The Referer change was **reverted** (no effect, small privacy
+   cost); the content-type probe stays because it is Stremio's own flow and finds HLS behind file-like addresses.
+4. **The network capture (Chrome DevTools, filter "Media").** Both attempts look the same:
 
-## Where it breaks — the trace
+   | Request | Status | Size | Time |
+   |---|---|---|---|
+   | Torrentio `…/Run Hide Fight….mkv` | 302 (from cache) | | 2 ms |
+   | the debrid service's `requestdl?token=…` | 307 | 0.3 kB | 2.0 s |
+   | the file host `bde9aab9-…` | **206 Partial Content** | **94.8 kB** | 7.6 s |
+   | *(second attempt)* the file host | 206 | **238 kB** | 10.6 s |
 
-| Stage | What MangoTV did | Result |
-|---|---|---|
-| Stream resolution (`domain/stremio/mapper.ts`) | Kept `url`, `behaviorHints.notWebReady`, `proxyHeaders.request`; dropped `proxyHeaders.response` | Sources resolved correctly |
-| Playability (`domain/playability.ts`) | `proxyHeaders` → "can't play here"; `http://` on https → "can't play here" | Playable-through-a-proxy sources were refused up front |
-| Playback URL (`Player.tsx`) | `video.src = stream.url`, always | The **only** route to the host is the browser's own media request |
-| Player initialisation | Native `<video>` (or hls.js / dash.js) on that URL; a 15 s watchdog reported "no data" | When the host withholds the body from browsers there is no second route, so the user waits and then gets an error |
+   So nothing is blocked and nothing is withheld: the chain resolves in about two seconds and the file host answers `206` —
+   and then delivers only **95–238 kB in 8–11 seconds** — an average of at most 10–25 KB per second, including the wait for the first byte. A browser cannot start an MKV on that: it needs a few MB of the file
+   before it can show a frame (and a stream needs ~0.5 MB/s to keep playing). The `502` rows are the relay being refused. The
+   player used to give up on this slow-but-alive request after 12 seconds and switch to the relay — which is refused — so
+   the person saw "format not supported" for a request that was in fact making (slow) progress.
 
-The defect is therefore not in resolution, the URL or the `<video>` setup: each is correct. It is that the web player has
-**exactly one way to fetch media — the browser's own request — and no fallback when a host refuses that request style.**
+The likely cause is on the source side — a release few people share, or a file the debrid service is still fetching even
+though the addon labels it "cached" — but that cannot be proven from here. **One check separates it from a player problem:**
+open the link in a browser tab (it downloads) and look at the download speed in Chrome's downloads bar. If that is also tens
+of KB/s, the source is slow and only a different release or source will help; if the tab download is fast, there is more to
+find.
 
-## How Stremio Web does it
+## What Stremio Web does, and what was adapted
 
-Stremio Web itself plays with `stremio-video` (`HTMLVideo`), which also sets `video.src = url` — the same as MangoTV.
-What differs is what sits in front of it (`src/withStreamingServer/convertStream.js` and `buildProxyUrl.js`):
+Read from the source of `@stremio/stremio-video` (MIT) and Stremio Web (GPL-2.0, **not copied**):
 
-* When a stream carries `behaviorHints.proxyHeaders`, or the page is https and the URL is http, or the stream is not
-  web-ready, Stremio rewrites the URL to go through its **streaming server**:
-  `<server>/proxy/d=<origin>&h=Header:Value&r=Header:Value/<pathname><search>`
-* The streaming server (a process the user runs next to the app, which a static website cannot have) fetches the file
-  like a native player would — no browser headers — adds the addon's request headers, applies the addon's response-header
-  overrides, and streams the bytes back, including `Range` support.
+| Stremio | MangoTV |
+|---|---|
+| `video.src = url` on a native `<video>`; `crossOrigin` deliberately not set | same |
+| `getContentType()`: a HEAD request before playing; an HLS answer behind a file-like address is played with hls.js | adapted in `client/src/domain/contentType.ts` (wait capped at 4 s; unreadable → the address decides, like Stremio) |
+| Streams with `proxyHeaders` (and mixed-content `http://`) go through the streaming server's `/proxy/<origin>&h=…&r=…/<path>` | same address shape, served by MangoTV's own web server: the stream relay (`client/src/domain/relay.ts`, adapted from `buildProxyUrl.js`, MIT — see `THIRD_PARTY_NOTICES.md`) |
+| Everything else the streaming server does (transcoding, torrents) | not available to a hosted website |
 
-So Stremio's working logic has two parts: (1) **decide to route through a proxy** and (2) **build the proxy address in a
-form that carries the origin, request headers and response headers in the path**. MangoTV had neither.
+## The stream relay
 
-## What changed
+`/api/relay/d=<origin>&h=<Header:Value>&r=<Header:Value>/<path>?<query>` (`server/src/streamRelay.ts`) fetches a stream from
+the web server, like a native player, and passes the bytes through with `Range` support. It is **not** an open proxy:
 
-1. **A stream relay on MangoTV's own web server** (`server/src/streamRelay.ts`) — the equivalent of Stremio's `/proxy/`.
-   Address shape: `/api/relay/d=<origin>&h=<Header:Value>&r=<Header:Value>/<path>?<query>`, the same shape Stremio uses, so
-   the address builder is an adaptation of Stremio's `buildProxyUrl` (MIT, attribution in
-   [`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md)). The server-side relay is original code.
-2. **The player routes through it** (`client/src/domain/relay.ts`, `ui/screens/Player.tsx`):
-   * sources with `proxyHeaders`, or `http://` on an https page, use the relay from the first request (the Stremio rule);
-   * everything else starts **direct** (no bandwidth cost) and switches to the relay **once** if the direct request has
-     delivered nothing after 12 s, or fails with a network/unsupported error — never on a decode error, which the relay
-     can't fix;
-   * if the relay fails too, the error says both routes were tried and **Technical details → Test connection** has a
-     fourth probe, "Through this site's relay", showing the HTTP status or the error the stream host returned.
-3. **Sources that used to be refused up front** (`proxyHeaders`, plain-http) are now listed as playable, with
-   "via this site's relay" in the row detail.
+* signed-in sessions only, same-origin only (`Sec-Fetch-Site`), `GET`/`HEAD` only, http(s) only, no credentials in URLs;
+* private, loopback, link-local and metadata addresses refused at the address **and at connect time**; every redirect hop is
+  re-validated (≤ 6); the addon's `h` headers go to the first origin only;
+* only media types are relayed (video, audio, octet-stream, HLS, DASH, WebVTT); responses are `nosniff`, sandboxed, `inline`;
+* no cookies, `Referer` or `Origin` sent upstream; forbidden request headers rejected; ≤ 6 concurrent streams per user; upstream
+  aborted when the viewer leaves; `STREAM_RELAY=0` turns it off.
 
-### What the relay does and does not do
+**When the player uses it:** straight away for sources with `proxyHeaders` or plain `http://` links; and once, after the
+browser's own request *fails outright* (the host refuses it — e.g. hotlink protection). A source that is merely slow is not
+sent to the relay. **When a host refuses the relay** the error says who and why (host, redirect depth, `server`, a bot-check
+marker, the title of an error page or the first words of a text error — links removed), and the details keep what the
+direct attempt did.
 
-Same-origin, signed-in sessions only (`Sec-Fetch-Site: same-origin` when sent; no session → 401), `GET`/`HEAD` only,
-http(s) only, no credentials in URLs, and it is **not an open proxy or a general page fetcher**:
-
-* private, loopback, link-local and cloud-metadata addresses are refused at the IP literal **and at connect time**
-  (DNS-rebinding safe); every redirect hop is re-validated (≤ 6); the addon's `h` headers go to the first origin only,
-  never to a redirect target;
-* only media types are relayed (video, audio, octet-stream, HLS, DASH, WebVTT) — HTML/JSON/scripts are refused, so the
-  relay can't be used to read or host web pages; responses carry `Content-Disposition: inline`, `nosniff` and a sandboxing
-  CSP;
-* the upstream request has no cookies, `Referer` or `Origin`, advertises `MangoTV-Web/0.1 (stream relay)` and asks for
-  `identity` encoding; forbidden request headers (host, range, sec-*, proxy-*, x-forwarded-* …) in `h` are rejected; `r`
-  overrides are limited to `content-type`; a single-range `Range` is passed on so seeking works;
-* ≤ 6 concurrent relayed streams per user, upstream aborted when the viewer leaves, timeouts on connect/headers/body;
-* `STREAM_RELAY=0` switches it off (404 `relay_disabled`) and the player then behaves exactly as before.
-
-It is a relay for **the user's own addon streams**. It adds no catalogue, no caching and stores nothing.
-
-## Costs and caveats of relaying
-
-* **Bandwidth.** Relayed video flows through the web server. On a free Render plan that counts against its bandwidth
-  allowance and is slower than a direct CDN link. That is why direct is tried first and the relay is a fallback.
-* **The debrid service sees the server's IP, not the viewer's.** Some services restrict a link to the IP that resolved it,
-  or limit simultaneous IPs; a relay keeps it to one (the server's) — but conversely, sharing one site among many people
-  who use one debrid account can trip the service's own limits. Decide if that is acceptable for your deployment.
-* **HLS through the relay** proxies the playlist and same-origin relative segments. Playlists that point to absolute URLs on
-  other hosts are not rewritten, so those segments still go direct.
-* **The relay cannot fix what the browser can't decode** (HEVC, Dolby audio, unsupported containers) — the device-support
-  badges still apply — and it cannot make an uncached `[RD download]` file start sooner.
+**What it cannot do:** help a host that refuses servers (Cloudflare-protected addons such as Torrentio; debrid links locked to
+the address that asked for them), fix a slow host, or fix a file the browser can't decode. **Costs:** relayed video flows
+through the web server's bandwidth (small on Render's free plan) and the stream host sees the server's address.
 
 ## Verification
 
-Reproduced and fixed **with a fixture host that emulates the observed signature** (headers and flush for browser-style
-requests, nothing after that; full file for any other client). See `e2e/tests/relay.spec.ts`:
+* Unit and server tests cover the relay (auth, headers, redirects, SSRF guards, media-only, limits, refusal reporting), the
+  address builder, the content-type probe and the diagnostics.
+* End-to-end (Chromium against fixture hosts, `e2e/tests/relay.spec.ts`, `addons.spec.ts`): a host that refuses browser
+  requests is played through the relay with a real picture; `proxyHeaders` sources play through it while the browser never
+  contacts the host; a host that refuses both says so; a link that looks like an `.mp4` but redirects to HLS plays with
+  hls.js; a host that never delivers is **not** sent to the relay and ends with the "too slow" message.
+* These fixtures are **inventions of the test author**. They prove the code paths work, not that any real host behaves that
+  way. The real Torrentio/debrid stream could not be reached from the development sandbox at all.
 
-| Case | Before (commit `ee990c9`) | After |
-|---|---|---|
-| Host withholds the body from browsers | spinner at 0:00, `readyState 0`, `NETWORK_LOADING`, then "no data" error | after 12 s switches route, plays with a real picture, `currentSrc` is `/api/relay/…`, the host saw the relay's UA and no `Referer` |
-| Source needs `proxyHeaders` | refused as "can't play here" | listed "via this site's relay"; plays; the browser never contacts the host; the host received the required header |
-| Host refuses both routes | generic start-up timeout | error says both routes were tried; diagnostics show `route direct, then relay`; the connection test shows "Through this site's relay: HTTP 502 — The stream host answered HTTP 403" |
-| Relay is not an open proxy | — | 401 without a session |
+## If a source still won't start
 
-Running `relay.spec.ts` against the pre-fix code fails, which is what shows the fixture really reproduces the problem.
-Server-side behaviour (auth, headers, redirects, SSRF guards, media-only, limits) has its own unit tests in
-`server/tests/relay.test.ts`.
-
-### Not verified
-
-* **The user's real Torrentio / Real-Debrid stream** — and, per the second round above, the relay alone did **not** fix it. The development sandbox cannot reach `torrentio.strem.fun`,
-  Real-Debrid or Stremio hosts, so the exact failure could not be reproduced with the real host. The fixture copies its
-  observable signature (Chrome event sequence, plain/Range answered in ~1 s); whether that host answers a server-side
-  request depends on the host. If the real cause is an uncached file or a throttled host, the relay will not help — the
-  Test connection "Through this site's relay" line and the **cached** badge will tell you which.
-* Bandwidth behaviour and performance on Render's free plan.
-* HLS through the relay with real multi-host playlists.
-
-## Second round: what the first real test showed
-
-After the relay was deployed, the real Torrentio / Real-Debrid `.mkv` **still did not play**. The technical details of that
-attempt:
-
-```
-Source: server torrentio.strem.fun, file type .mkv, engine native, route direct, then relay
-Video element: network NO_SOURCE, ready HAVE_NOTHING … Media error: SRC_NOT_SUPPORTED   (the relay's JSON error, not a video)
-Plain GET … answered after 1381 ms · Range GET … answered after 1019 ms · reading the answer: not possible
-Through this site's relay: HTTP 502 — The stream host answered HTTP 403.
-```
-
-So the relay does **not** rescue this stream: the host (Torrentio itself, or the debrid CDN it redirects to) refuses a request
-from the web server. The first version of the relay could not say which of them, or why; it now reports the host, how many
-redirects deep, a couple of well-known headers (`server`, a Cloudflare bot-check marker) and the first words of a text/JSON
-error body (links removed). The next failure will therefore name the refuser.
-
-### Two real differences from Stremio Web, read from its source
-
-| | Stremio Web (`stremio-video`) | MangoTV before |
-|---|---|---|
-| Before `video.src = url` | `getContentType()`: a `HEAD` request (redirects followed); a `application/vnd.apple.mpegurl` answer is played with hls.js **even though the address says `.mkv`** | none — the address alone chose the player |
-| What the host sees | a browser with the browser's default referrer policy: `Referer: <the site's origin>` | `Referrer-Policy: same-origin` since the first version → **no Referer to any stream host, ever** |
-| `crossOrigin` on the `<video>` | not set (the line is commented out) | not set — same |
-
-Both were changed: `client/src/domain/contentType.ts` (adapted from `getContentType.js`, MIT — the wait is capped at 4 s,
-and an unreadable answer falls back to the address exactly as Stremio does) and the server now sends
-`Referrer-Policy: strict-origin-when-cross-origin`. The connection test's probes were changed to send what the player sends,
-and gained a "HEAD for the content type" line.
-
-### The hypothesis behind this — **unverified**
-
-Some debrid resolvers answer a request that looks like a web page (it carries a `Referer`) differently from a bare client,
-for instance by returning a browser-playable HLS stream instead of the raw file. If Torrentio does that, then (a) a
-Referer-less request gets the raw file, which is the stall we saw, and (b) the playable answer is HLS behind an address that
-ends in `.mkv`, which only a content-type probe notices. **This could not be checked**: the development sandbox cannot reach
-Torrentio or Real-Debrid, and Torrentio's source was not available to read. The end-to-end test named "a resolver link that
-looks like an .mp4 but is HLS for browsers" (`e2e/tests/relay.spec.ts`) uses a fixture that *emulates* such a host; it
-proves that MangoTV now sends the Referer and plays HLS found behind a file-like address (the test fails without the
-Referer), not that Torrentio behaves this way.
-
-If the stream still does not play after this change, the **Technical details** will now say what the content-type probe
-saw (`content-type …` in the event list), whether a Referer-bearing HEAD could be read at all, and — for the relay — who
-refused it. The remaining suspects are then a host that refuses datacenter addresses (the relay case) or one that really
-withholds the video from this browser for a reason that can only be seen on the wire.
-
-## Third round: what the second real test showed
-
-With the Referer and content-type changes deployed, the same stream's details read:
-
-```
-HEAD for the content type (what Stremio Web asks first): not readable by web pages … after 385 ms
-Through this site's relay: HTTP 502 — The stream host answered HTTP 403 (from torrentio.strem.fun; server: cloudflare;
-  it said: "Attention Required! | Cloudflare …")
-```
-
-1. **The relay is a dead end for Torrentio.** The refusal comes from `torrentio.strem.fun` itself (no redirect was followed) and
-   its page is Cloudflare's "Attention Required!" block page: Torrentio's Cloudflare front refuses this site's server — a
-   hosting-provider address that is not a person's browser. That is the host's access control, and the relay does not try to
-   get around it (no pretending to be a browser, no rotating addresses). The same will be true of any addon that blocks
-   server-side requests, and of debrid links that are locked to the address that asked for them. The relay remains useful for
-   hosts that only need headers or plain-http access (what it was tested against), not for these.
-2. **The Referer hypothesis did not fix the direct request.** The player still reported "the direct request delivered no
-   video" after 12 s. It is not ruled out as a *contributing* factor, but it is not the cause.
-3. **The content-type probe learns nothing from this host** — Stremio Web's own HEAD would fail the same way (the host's
-   redirect doesn't allow web pages to read it) and fall back to the address, as ours now does.
-
-So what remains is the direct `<video>` request, which gets response headers within ~1–2 s (the connection test's plain and
-Range GET) and then no video data at all, while opening the same address in a browser tab starts a download. Nothing in a web
-page can see what that request's redirect target answers, so the next evidence has to come from the browser's own network
-tool (see "What to capture" below). The details now also keep what the *direct* attempt did (`Direct attempt (replaced by the
-relay): …`) instead of losing it when the relay takes over, say whether the source is marked cached at the debrid service,
-and — when the relay is refused — put the refusal's reason in the error message instead of the browser's generic "format not
-supported".
-
-### What to capture
-
-Chrome DevTools → **Network** → tick *Disable cache*, filter **Media** (or type `resolve` in the filter box) → start the
-source. For the request that stays "pending" or "stalled", and for the one it redirects to, note: *Status*, the response
-headers `content-type`, `content-length`, `content-range`, `accept-ranges`, `location` (host only) and the *Timing* tab.
-That shows whether the debrid host answers the video request with a redirect, with headers only, or with a playlist, which is
-what decides the next step. (If another source from the same addon — ideally an `.mp4`, or one marked cached — plays, the
-problem is that particular file rather than the route.)
+Chrome DevTools → Network → filter **Media** → start the source. For each row note *Status*, *Size* and *Time* (and the
+`content-type`, `content-length`, `content-range`, `location` host in its Headers). Redirect, `206` with a tiny size over many
+seconds = a slow host; `403`/`401` = refused; `200` with `text/html` = not a video. The **Technical details → Test connection**
+output in the player error shows the same from inside the app.

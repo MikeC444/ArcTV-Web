@@ -30,8 +30,8 @@ describe("player diagnostics", () => {
 
   it("says whether the debrid service had the file ready", () => {
     const base = { snapshot, engine: "native", trail: [], verdict: deviceVerdict(stream, caps, "https:"), browser: "Chrome", userAgent: "" };
-    expect(describeDiagnostics({ ...base, stream: { ...stream, debrid: { service: "realdebrid", cached: true } } })).toContain("Debrid: realdebrid, marked cached");
-    expect(describeDiagnostics({ ...base, stream: { ...stream, debrid: { service: "realdebrid", cached: false } } })).toContain("marked NOT cached (the service has to fetch it first)");
+    expect(describeDiagnostics({ ...base, stream: { ...stream, debrid: { service: "RD", cached: true } } })).toContain("Debrid: Real-Debrid, marked cached");
+    expect(describeDiagnostics({ ...base, stream: { ...stream, debrid: { service: "RD", cached: false } } })).toContain("marked NOT cached (the service has to fetch it first)");
     expect(describeDiagnostics({ ...base, stream })).not.toContain("Debrid:");
   });
 

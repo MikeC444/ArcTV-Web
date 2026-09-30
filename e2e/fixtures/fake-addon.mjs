@@ -119,12 +119,10 @@ const mediaLog = [];
 //   /empty/…                 declares streams but has none for any title
 //   /nostreams/…             catalog + meta only, like Cinemeta (must never be asked for streams)
 //   /relay/…                 streams whose hosts don't play well with a browser (see the /media/* routes below):
-//                              hostile  – accepts a browser-style request (one carrying Sec-Fetch-*) and never sends the video, but serves everyone else
+//                              hostile  – refuses a browser-style request (one carrying Sec-Fetch-*) with 403, like hotlink protection, but serves everyone else
 //                              headers  – needs the addon's proxyHeaders (X-Required) or answers 403
-//                              dead     – stalls browsers and answers every other client 403
-//                              resolver – a debrid-style link that ends in .mp4 but redirects a request that carries a Referer (a web page asking)
-//                                         to an HLS stream, and leaves every other request hanging. This emulates a mechanism we HYPOTHESISE for real
-//                                         debrid resolvers; it is not evidence about any real host.
+//                              dead     – answers every client 403
+//                              resolver – a debrid-style link that ends in .mp4 but redirects to an HLS stream (a file-like address that isn't a file)
 //   /debrid/…                a cached ("[RD+]") and a not-yet-cached ("[RD download]") debrid-style stream
 //   /stall/…                 one stream whose media request is accepted and then never answered (a hung debrid link)
 const extraManifest = (id, name, resources) => ({ id, name, version: "1.0.0", description: "Local test addon", resources, types: ["movie", "series"], idPrefixes: ["fx"], catalogs: [] });
@@ -158,6 +156,8 @@ function handleExtraAddon(p, res, cors) {
   ] }, cors), true;
   if (p === "/stall/manifest.json") return json(res, extraManifest("test.mangotv.stall", "Fixture Stall", ["stream"]), cors), true;
   if (/^\/stall\/stream\//.test(p)) return json(res, { streams: [{ name: "Stream stall 1080p", title: "Extra.stall.1080p.WEB-DL.VP9\n👤 99 💾 1 GB", url: `${BASE}/media/stall.webm?apikey=SECRET-KEY-123` }] }, cors), true;
+  if (p === "/slowdebrid/manifest.json") return json(res, extraManifest("test.mangotv.slowdebrid", "Fixture Slow Debrid", ["stream"]), cors), true;
+  if (/^\/slowdebrid\/stream\//.test(p)) return json(res, { streams: [{ name: "[RD+] Fixture Slow", title: "Debrid.slow.1080p.WEB-DL.VP9\n👤 2 💾 2 GB", url: `${BASE}/media/stall.webm?via=debrid-slow` }] }, cors), true; // "cached", but the host never delivers
   if (p === "/broken/manifest.json") return json(res, extraManifest("test.mangotv.broken", "Fixture Broken", ["stream"]), cors), true;
   if (/^\/broken\/stream\//.test(p)) return res.writeHead(500, cors ? CORS : {}), res.end("boom"), true;
   if (p === "/empty/manifest.json") return json(res, extraManifest("test.mangotv.empty", "Fixture Empty", ["stream"]), cors), true;
@@ -229,24 +229,15 @@ export function createAddonServer() {
     if (p === "/manifest.json") return json(res, manifest, cors);
     if (p === "/media/stall.webm") return; // accepted, never answered
     if (p === "/media/browser-hostile.webm" || p === "/media/dead.webm") {
-      if (req.headers["sec-fetch-dest"]) {
-        res.writeHead(200, { "Content-Type": "video/webm", "Content-Length": fs.statSync(path.join(mediaDir, "sample.webm")).size, "Accept-Ranges": "bytes", ...CORS });
-        if (req.method === "HEAD") return res.end(); // a HEAD has no body to withhold (and an unfinished response would block the connection's next request)
-        res.flushHeaders(); // headers now, video never — the signature seen with a real debrid host
-        return;
-      }
-      if (p === "/media/dead.webm") {
+      if (p === "/media/dead.webm" || req.headers["sec-fetch-dest"]) {
         res.writeHead(403, CORS);
         return res.end("forbidden");
       }
       return serveFile(req, res, path.join(mediaDir, "sample.webm"));
     }
     if (p === "/media/resolve/movie.mp4") {
-      if (req.headers.referer) {
-        res.writeHead(302, { Location: `${BASE}/media/hls/master.m3u8`, ...CORS });
-        return res.end();
-      }
-      return; // accepted, never answered
+      res.writeHead(302, { Location: `${BASE}/media/hls/master.m3u8`, ...CORS });
+      return res.end();
     }
     if (p === "/media/needs-headers.webm") {
       if (req.headers["x-required"] !== "let-me-in") {
