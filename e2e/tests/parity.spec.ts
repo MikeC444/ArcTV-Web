@@ -48,7 +48,7 @@ test.describe("Fire TV layout parity @ 1920×1080 (1dp = 2px)", () => {
     near(await page.locator(".navitem").first().evaluate((el) => parseFloat(getComputedStyle(el).borderTopLeftRadius)), 6 * DP);
   });
 
-  test("Home: hero height, hero buttons, poster rows at 0.75 scale (HeroSection.kt, ContentRow.kt, ContentCard.kt)", async ({ page }) => {
+  test("Home: hero height, hero buttons, poster rows of 9 (HeroSection.kt, ContentRow.kt, ContentCard.kt)", async ({ page }) => {
     const account = await newAccount("parity-home");
     await account.tv.seedContinueWatching({ contentId: "fxm4", title: "CW" });
     await openSignedIn(page, account);
@@ -59,35 +59,39 @@ test.describe("Fire TV layout parity @ 1920×1080 (1dp = 2px)", () => {
     near(await page.locator(".hero__actions .ibtn").first().evaluate((el) => el.getBoundingClientRect().width), 52 * DP); // 24dp icon + 2×14dp padding
     near(await page.locator(".hero__content").evaluate((el) => parseFloat(getComputedStyle(el).bottom)), 56 * DP);
 
+    // deliberately NOT the TV's 168dp × 0.75 posters: the web shows at least 9 across (--poster-cols), with 10dp gaps
     const poster = page.locator(".home__rows .card:not([data-cw]) .card__surface").first();
     const box = (await poster.boundingBox())!;
-    near(box.width, 168 * 0.75 * DP); // PosterWidth × posterScale
-    near(box.height, 252 * 0.75 * DP);
+    const slot = (1920 - 2 * 56 * DP - 8 * 10 * DP) / 9;
+    near(box.width, slot, 1.5);
+    near(box.height / box.width, 1.5, 0.01); // 2 : 3 poster
     near(await poster.evaluate((el) => parseFloat(getComputedStyle(el).borderTopLeftRadius)), 10 * DP); // CardCornerRadius
     const cw = (await page.locator('.home__rows .card[data-cw="true"] .card__surface').first().boundingBox())!;
-    near(cw.width, 300 * 0.75 * DP); // ContinueWatchingWidth
-    near(cw.height, 169 * 0.75 * DP);
+    near(cw.width, 2 * slot + 10 * DP, 1.5); // Continue Watching: two poster columns wide
+    near(cw.width / cw.height, 16 / 9, 0.02);
+    const firstRow = page.locator(".home__rows .row").filter({ has: page.locator(".card:not([data-cw])") }).first();
+    const fullyInView = await firstRow.locator(".card:not([data-cw]) .card__surface").evaluateAll((els) => els.filter((el) => el.getBoundingClientRect().right <= window.innerWidth).length);
+    expect(fullyInView).toBeGreaterThanOrEqual(9);
     const title = page.locator(".home__rows .row__title").first();
     near(await title.evaluate((el) => parseFloat(getComputedStyle(el).fontSize)), 20 * DP); // headlineSmall 20.sp
     expect(await title.evaluate((el) => getComputedStyle(el).fontWeight)).toBe("700");
-    // gap between cards = CardSpacing 18dp × posterScale
     const second = (await page.locator(".home__rows .card:not([data-cw]) .card__surface").nth(1).boundingBox())!;
-    near(second.x - (box.x + box.width), 18 * 0.75 * DP);
+    near(second.x - (box.x + box.width), 10 * DP); // --poster-gap
     // rows start 56dp from the left screen edge
     near(box.x, 56 * DP, 2);
   });
 
-  test("Movies grid: 7 columns with 18dp gaps; Genres: 5 columns (RowsBrowseScreen.kt, GenresScreen.kt)", async ({ page }) => {
+  test("Movies grid: 9 columns with 10dp gaps; Genres: 5 columns (RowsBrowseScreen.kt, GenresScreen.kt)", async ({ page }) => {
     const account = await newAccount("parity-grid");
     await openSignedIn(page, account, "/movies");
     await expect(page.locator(".grid .card").first()).toBeVisible();
     const cols = await page.locator(".grid").evaluate((el) => getComputedStyle(el).gridTemplateColumns.split(" ").length);
-    expect(cols).toBe(7); // GRID_COLUMNS
+    expect(cols).toBe(9); // --poster-cols (the TV shows 7; the web fits more)
     const a = (await page.locator(".grid .card__surface").nth(0).boundingBox())!;
     const b = (await page.locator(".grid .card__surface").nth(1).boundingBox())!;
-    near(b.x - (a.x + a.width), 18 * DP); // CardSpacing
-    near(a.width, (1920 - 2 * 56 * DP - 6 * 18 * DP) / 7, 1.5); // cardWidth formula from the Compose grid
-    near(a.height / a.width, 1.5, 0.01); // 168 × 252 poster ratio
+    near(b.x - (a.x + a.width), 10 * DP); // --poster-gap
+    near(a.width, (1920 - 2 * 56 * DP - 8 * 10 * DP) / 9, 1.5);
+    near(a.height / a.width, 1.5, 0.01); // 2 : 3 poster
     near(await page.locator(".page__title").evaluate((el) => parseFloat(getComputedStyle(el).fontSize)), 40 * DP); // displayMedium
 
     await page.goto("/genres");

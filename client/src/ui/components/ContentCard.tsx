@@ -8,15 +8,13 @@ import { Surface } from "./Surface";
 interface ContentCardProps {
   content: Content;
   style?: RowStyle;
-  /** posterScale — Home shrinks its rows to 0.75, grids compute their own. */
-  scale?: number;
   autoFocus?: boolean;
   /** Where a click goes; defaults to the Detail page (Continue Watching resumes via the menu / Detail). */
   to?: string;
 }
 
-/** ui/components/ContentCard.kt — poster (or 16:9 backdrop for Continue Watching), watched tick, rating on focus, progress bar. */
-export function ContentCard({ content, style = "STANDARD", scale = 1, autoFocus, to }: ContentCardProps) {
+/** ui/components/ContentCard.kt — poster (or 16:9 backdrop for Continue Watching), watched tick, rating on focus, progress bar. Its size comes from the row / grid it sits in (--poster-cols). */
+export function ContentCard({ content, style = "STANDARD", autoFocus, to }: ContentCardProps) {
   const openMenu = useCardMenu((s) => s.open);
   const isCw = style === "CONTINUE_WATCHING";
   const image = isCw ? content.backdropUrl : content.posterUrl;
@@ -26,7 +24,7 @@ export function ContentCard({ content, style = "STANDARD", scale = 1, autoFocus,
   const target = to ?? (providerId ? routes.detail(providerId, content.type, content.id) : undefined);
 
   return (
-    <div className="card" data-cw={isCw || undefined} data-small={scale < 0.85 || undefined} style={{ ["--scale" as string]: scale }}>
+    <div className="card" data-cw={isCw || undefined}>
       <Surface
         to={target}
         className="card__surface"

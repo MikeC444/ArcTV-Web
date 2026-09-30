@@ -8,15 +8,10 @@
 .page__pad { padding-left: var(--pad-x); padding-right: var(--pad-x); margin: 0; }
 .page__body { padding: calc(28 * var(--dp)) var(--pad-x); }
 
-/* 7-column poster grid (GRID_COLUMNS = 7) — cards scale to fill the cell, as RowsBrowseScreen computes. */
-.grid { --cols: 7; display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); column-gap: var(--card-spacing); row-gap: calc(16 * var(--dp)); padding: calc(8 * var(--dp)) var(--pad-x) 0; }
+/* Poster grid: the same column count as the rows (--poster-cols, 9 on a desktop-sized window) — cards fill their cell. */
+.grid { display: grid; grid-template-columns: repeat(var(--poster-cols), minmax(0, 1fr)); column-gap: var(--poster-gap); row-gap: calc(16 * var(--dp)); padding: calc(8 * var(--dp)) var(--pad-x) 0; }
 .grid .card { width: 100%; }
-.grid .card__surface { height: auto; aspect-ratio: 2 / 3; }
-@media (max-width: 1100px) { .grid { --cols: 6; } }
-@media (max-width: 900px) { .grid { --cols: 5; } }
-@media (max-width: 720px) { .grid { --cols: 4; column-gap: 10px; row-gap: 14px; } }
-@media (max-width: 540px) { .grid { --cols: 3; } }
-@media (max-width: 360px) { .grid { --cols: 2; } }
+@media (max-width: 720px) { .grid { row-gap: 14px; } }
 
 .genre-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--card-spacing); }
 @media (max-width: 900px) { .genre-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
@@ -93,6 +88,7 @@
 @media (max-width: 720px) { .detail__rating { position: static; align-self: flex-start; margin: 0 var(--pad-x) 12px; } .detail__hero { flex-direction: column; justify-content: flex-end; } .detail[data-compact="true"] .detail__col { padding-top: calc(var(--nav-h) + 24px); } }
 .detail__below { display: grid; grid-template-columns: 1fr 2fr; align-items: start; }
 .detail__below > * { min-width: 0; }
+@media (min-width: 901px) { .detail__similar { --poster-cols: 6; } } /* the "You May Also Like" row sits in two thirds of the page */
 @media (max-width: 900px) { .detail__below { grid-template-columns: 1fr; } }
 .cast { min-width: 0; }
 .cast__list { --scale: 1; gap: calc(20 * var(--dp)) !important; padding-left: var(--pad-x) !important; }

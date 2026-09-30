@@ -5,15 +5,17 @@ export const Shimmer = ({ width, height, radius, style }: { width?: string; heig
 
 const dp = (n: number) => `calc(${n} * var(--dp))`;
 
-function SkeletonRow({ cards = 6 }: { cards?: number }) {
+const POSTER_SLOT = "calc((100% - (var(--poster-cols) - 1) * var(--poster-gap)) / var(--poster-cols))";
+
+function SkeletonRow({ cards = 10 }: { cards?: number }) {
   return (
     <div style={{ marginBottom: dp(32) }}>
       <div style={{ padding: `0 var(--pad-x)` }}>
         <Shimmer width={dp(180)} height={dp(20)} />
       </div>
-      <div style={{ display: "flex", gap: "var(--card-spacing)", padding: `${dp(14)} var(--pad-x) 0`, overflow: "hidden" }}>
+      <div style={{ display: "flex", gap: "var(--poster-gap)", padding: `${dp(14)} var(--pad-x) 0`, overflow: "hidden" }}>
         {Array.from({ length: cards }, (_, i) => (
-          <Shimmer key={i} width="var(--poster-w)" height="var(--poster-h)" style={{ flex: "none" }} />
+          <Shimmer key={i} width={POSTER_SLOT} style={{ flex: "none", aspectRatio: "2 / 3" }} />
         ))}
       </div>
     </div>

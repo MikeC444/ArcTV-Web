@@ -104,7 +104,7 @@ export function Home() {
       <Hero items={state.hero} />
       <div className="home__rows">
         {state.sections.map((section) => (
-          <ContentRow key={section.id} section={section} scale={0.75} />
+          <ContentRow key={section.id} section={section} />
         ))}
       </div>
     </div>

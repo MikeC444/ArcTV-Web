@@ -114,7 +114,7 @@ export function ContentGrid({ items, onLoadMore }: { items: Content[]; onLoadMor
       <div className="grid" role="list">
         {items.map((content) => (
           <div role="listitem" key={content.id} style={{ display: "contents" }}>
-            <ContentCard content={content} scale={0.629} />
+            <ContentCard content={content} />
           </div>
         ))}
       </div>

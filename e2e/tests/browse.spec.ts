@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { ADDON, cards, newAccount, openSignedIn, shot } from "./helpers";
 
 test.describe("browsing", () => {
@@ -63,7 +63,7 @@ test.describe("browsing", () => {
     await shot(page, "detail-series");
   });
 
-  test("Movies: 7-column grid, infinite scroll loads further pages, sort pills reorder", async ({ page, request }) => {
+  test("Movies: 9-column grid, infinite scroll loads further pages, sort pills reorder", async ({ page, request }) => {
     const account = await newAccount("movies");
     await openSignedIn(page, account, "/movies");
     await expect(cards(page).first()).toBeVisible();
@@ -71,7 +71,7 @@ test.describe("browsing", () => {
     expect(initial).toBe(100); // one addon page
     if (test.info().project.name === "desktop-1920") {
       const cols = await page.locator(".grid").evaluate((g) => getComputedStyle(g).gridTemplateColumns.split(" ").length);
-      expect(cols).toBe(7);
+      expect(cols).toBe(9);
     }
     await page.mouse.wheel(0, 20000);
     await expect.poll(() => cards(page).count(), { timeout: 15_000 }).toBeGreaterThan(100); // page 2 (skip=100)
@@ -83,6 +83,34 @@ test.describe("browsing", () => {
     const best = Math.max(...all.map((m) => Number(m.imdbRating)));
     const bestLabels = all.filter((m) => Number(m.imdbRating) === best).map((m) => `${m.name} (${m.releaseInfo})`);
     expect(bestLabels).toContain(await cards(page).first().getAttribute("aria-label"));
+  });
+
+  test("posters are small enough to fit at least 9 across on desktop and laptop windows (fewer only on narrow ones), on every tab", async ({ page }) => {
+    const project = test.info().project.name;
+    const expected = project.startsWith("desktop") || project.startsWith("laptop") ? 9 : project.startsWith("tablet") ? 6 : 3;
+    const account = await newAccount("posters");
+    await openSignedIn(page, account);
+    const fitsAcross = (locator: ReturnType<Page["locator"]>) => locator.evaluateAll((els: Element[]) => els.filter((el: Element) => { const r = el.getBoundingClientRect(); return r.left >= 0 && r.right <= window.innerWidth + 1; }).length);
+
+    // Home: the first poster row
+    await expect(page.locator(".home__rows .card:not([data-cw])").first()).toBeVisible();
+    const homeRow = page.locator(".home__rows .row").filter({ has: page.locator(".card:not([data-cw])") }).first();
+    expect(await fitsAcross(homeRow.locator(".card:not([data-cw]) .card__surface"))).toBeGreaterThanOrEqual(expected);
+
+    // Movies, TV Shows: grids with that many columns, every card inside the window
+    for (const path of ["/movies", "/tv"]) {
+      await page.goto(path);
+      await expect(page.locator(".grid .card").first()).toBeVisible();
+      expect(await page.locator(".grid").evaluate((g) => getComputedStyle(g).gridTemplateColumns.split(" ").length), path).toBe(expected);
+      const firstRowWidth = await page.locator(".grid .card__surface").evaluateAll((els) => { const top = els[0]!.getBoundingClientRect().top; return els.filter((el) => Math.abs(el.getBoundingClientRect().top - top) < 2 && el.getBoundingClientRect().right <= window.innerWidth + 1).length; });
+      expect(firstRowWidth, path).toBe(expected);
+    }
+
+    // Search: the Movies / TV Shows rows
+    await page.goto("/search?q=a");
+    await expect(page.locator(".card:not([data-cw])").first()).toBeVisible({ timeout: 20_000 });
+    expect(await fitsAcross(page.locator(".row").first().locator(".card:not([data-cw]) .card__surface"))).toBeGreaterThanOrEqual(Math.min(expected, 9));
+    await shot(page, "posters-small");
   });
 
   test("Genres: coloured icon cards lead to a genre's results", async ({ page }) => {
@@ -178,7 +206,8 @@ test.describe("browsing", () => {
     await page.keyboard.press("ArrowRight");
     await expect(cards(page).nth(1)).toBeFocused();
     await page.keyboard.press("ArrowDown"); // next grid row
-    await expect(cards(page).nth(8)).toBeFocused(); // 7 columns: same column, one row down
+    const columns = await page.locator(".grid").evaluate((g) => getComputedStyle(g).gridTemplateColumns.split(" ").length);
+    await expect(cards(page).nth(1 + columns)).toBeFocused(); // same column, one row down
     await page.keyboard.press("Enter");
     await expect(page).toHaveURL(/\/detail\//);
   });

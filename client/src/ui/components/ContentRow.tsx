@@ -5,14 +5,12 @@ import { ContentCard } from "./ContentCard";
 
 interface ContentRowProps {
   section: HomeSection;
-  /** Home / grids shrink the posters (posterScale 0.75). */
-  scale?: number;
   compact?: boolean;
   headingLevel?: 2 | 3;
 }
 
-/** ui/components/ContentRow.kt — titled horizontal row; on desktop, hover arrows page it for mouse users. */
-export function ContentRow({ section, scale = 1, compact, headingLevel = 2 }: ContentRowProps) {
+/** ui/components/ContentRow.kt — titled horizontal row (poster size comes from --poster-cols); on desktop, hover arrows page it for mouse users. */
+export function ContentRow({ section, compact, headingLevel = 2 }: ContentRowProps) {
   const scroller = useRef<HTMLDivElement>(null);
   const [edges, setEdges] = useState({ left: false, right: false });
 
@@ -41,10 +39,10 @@ export function ContentRow({ section, scale = 1, compact, headingLevel = 2 }: Co
       <button type="button" className="row__nav" data-side="left" data-visible={edges.left} aria-label={`Scroll ${section.title} left`} tabIndex={-1} onClick={() => page(-1)}>
         <MdChevronLeft />
       </button>
-      <div ref={scroller} className="row__scroller hide-scroll" style={{ ["--scale" as string]: scale }} onScroll={measure} role="list">
+      <div ref={scroller} className="row__scroller row__scroller--posters hide-scroll" onScroll={measure} role="list">
         {section.items.map((content) => (
           <div role="listitem" key={content.id} style={{ display: "contents" }}>
-            <ContentCard content={content} style={section.style} scale={scale} />
+            <ContentCard content={content} style={section.style} />
           </div>
         ))}
       </div>

@@ -44,10 +44,11 @@
   --pad-x: calc(56 * var(--dp));
   --pad-y: calc(32 * var(--dp));
   --nav-h: calc(72 * var(--dp));
-  --poster-w: calc(168 * var(--dp));
-  --poster-h: calc(252 * var(--dp));
   --cw-w: calc(300 * var(--dp));
   --cw-h: calc(169 * var(--dp));
+  /* Posters per row — rows and grids share it. 9 on a desktop-sized window; fewer only where 9 would be too small to see or tap. */
+  --poster-cols: 9;
+  --poster-gap: calc(10 * var(--dp));
   --card-radius: calc(10 * var(--dp));
   --button-radius: calc(8 * var(--dp));
   --row-spacing: calc(16 * var(--dp));
@@ -64,6 +65,12 @@
 
   --font: "Roboto", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
+
+@media (max-width: 1100px) { :root { --poster-cols: 7; } }
+@media (max-width: 900px) { :root { --poster-cols: 6; } }
+@media (max-width: 720px) { :root { --poster-cols: 4; --poster-gap: 10px; } }
+@media (max-width: 540px) { :root { --poster-cols: 3; } }
+@media (max-width: 360px) { :root { --poster-cols: 2; } }
 
 /* Phones / small tablets: same product, tighter gutters and a two-row header. */
 @media (max-width: 720px) {

@@ -87,7 +87,7 @@ Everything in the Fire TV app that can run in a browser:
 * Cold-start boot video, Welcome, **Log in / Sign up** (email + password with the app's validation rules) and **QR
   sign-in** (uses the existing pairing endpoints; a phone finishes it on the backend's own activation page).
 * **Home** (rotating hero, Continue Watching, one row per addon catalogue, your Home-row order and hidden rows),
-  **Movies**, **TV Shows** (7-column grids, sort pills, infinite scroll), **Genres**, **Search**, **My List** (All / Watched).
+  **Movies**, **TV Shows** (grids of 9 posters across on a desktop-sized window — 7 / 6 / 4 / 3 on narrower ones — with sort pills and infinite scroll), **Genres**, **Search**, **My List** (All / Watched).
 * **Detail** pages (Resume / Play, trailer, watched, watchlist, seasons and episodes, cast, similar titles) and the
   card quick-actions menu (right-click, long-press or `M`).
 * **Select a Source** with quality badges, health, sizes, "Recommended", filters and sort, remembering your last source.

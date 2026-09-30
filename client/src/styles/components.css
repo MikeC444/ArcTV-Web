@@ -193,6 +193,7 @@
   scroll-snap-type: none;
   overscroll-behavior-x: contain;
 }
+.row__scroller--posters { gap: var(--poster-gap); }
 .row__nav {
   position: absolute;
   top: 50%;
@@ -219,37 +220,43 @@
   .row:hover .row__nav[data-visible="true"], .row__nav:focus-visible { opacity: 1; }
 }
 
-.card { flex: none; width: calc(var(--poster-w) * var(--scale, 1)); }
-.card[data-cw="true"] { width: calc(var(--cw-w) * var(--scale, 1)); }
+/* A poster is one column of --poster-cols across its container (a row or a grid); Continue Watching takes two columns, 16:9.
+   container-type lets the text and badges scale with the card instead of staying TV-sized. */
+.card {
+  --slot: calc((100% - (var(--poster-cols) - 1) * var(--poster-gap)) / var(--poster-cols));
+  flex: none;
+  container-type: inline-size;
+  width: var(--slot);
+}
+.card[data-cw="true"] { width: calc(2 * var(--slot) + var(--poster-gap)); }
 .card__surface {
   width: 100%;
-  height: calc(var(--poster-h) * var(--scale, 1));
+  aspect-ratio: 2 / 3;
   --tvs-bg: var(--surface);
 }
-.card[data-cw="true"] .card__surface { height: calc(var(--cw-h) * var(--scale, 1)); }
+.card[data-cw="true"] .card__surface { aspect-ratio: 16 / 9; }
 .card__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .card__watched {
-  position: absolute; top: calc(6 * var(--dp)); left: calc(6 * var(--dp)); z-index: 2;
-  width: calc(22 * var(--dp)); height: calc(22 * var(--dp)); min-width: 18px; min-height: 18px;
+  position: absolute; top: 5px; left: 5px; z-index: 2;
+  width: clamp(16px, 13cqw, calc(22 * var(--dp))); height: clamp(16px, 13cqw, calc(22 * var(--dp)));
   border-radius: 50%; background: var(--watched); color: #fff; display: flex; align-items: center; justify-content: center;
 }
 .card__watched svg { width: 64%; height: 64%; }
 .card__rating {
-  position: absolute; inset: auto 0 0 0; z-index: 1; padding: calc(10 * var(--dp));
+  position: absolute; inset: auto 0 0 0; z-index: 1; padding: clamp(5px, 6cqw, calc(10 * var(--dp)));
   background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.85));
-  color: var(--text); font-weight: 500; font-size: calc(12 * var(--dp)); letter-spacing: calc(0.5 * var(--dp));
-  opacity: 0; transition: opacity var(--t-medium) var(--ease); min-height: calc(34 * var(--dp));
+  color: var(--text); font-weight: 500; font-size: clamp(11px, 8cqw, calc(12 * var(--dp))); letter-spacing: 0.02em;
+  opacity: 0; transition: opacity var(--t-medium) var(--ease);
 }
 .card:hover .card__rating, .card__surface:focus-visible .card__rating { opacity: 1; }
 .card[data-cw="true"] .card__rating { display: none; }
 .card__cw-scrim { position: absolute; inset: auto 0 0 0; height: calc(56 * var(--dp)); background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.75)); z-index: 1; }
 .card__progress { position: absolute; inset: auto 0 0 0; height: calc(4 * var(--dp)); min-height: 3px; background: var(--progress-track); z-index: 2; }
 .card__progress > span { display: block; height: 100%; background: var(--progress-fill); }
-.card__title { margin-top: calc(8 * var(--dp)); color: var(--text-2); font-weight: 700; font-size: calc(16 * var(--dp)); line-height: calc(22 * var(--dp)); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.card[data-small="true"] .card__title { margin-top: calc(6 * var(--dp)); font-size: calc(13 * var(--dp)); font-weight: 500; line-height: calc(18 * var(--dp)); letter-spacing: calc(0.2 * var(--dp)); }
+.card__title { margin-top: clamp(4px, 4cqw, calc(8 * var(--dp))); color: var(--text-2); font-weight: 600; font-size: clamp(12px, 8.5cqw, calc(16 * var(--dp))); line-height: 1.35; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .card:hover .card__title, .card:focus-within .card__title { color: var(--text); }
-.card__sub { color: var(--text-3); font-weight: 500; font-size: calc(12 * var(--dp)); line-height: calc(16 * var(--dp)); letter-spacing: calc(0.5 * var(--dp)); }
-.card__placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 8px; text-align: center; color: var(--text-3); background: linear-gradient(160deg, var(--surface-high), var(--surface)); font-weight: 700; font-size: calc(14 * var(--dp)); }
+.card__sub { color: var(--text-3); font-weight: 500; font-size: clamp(11px, 7.5cqw, calc(12 * var(--dp))); line-height: 1.35; letter-spacing: 0.02em; }
+.card__placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 8px; text-align: center; color: var(--text-3); background: linear-gradient(160deg, var(--surface-high), var(--surface)); font-weight: 700; font-size: clamp(11px, 8cqw, calc(14 * var(--dp))); }
 
 /* ── Skeletons / states ──────────────────────────────────────────────────── */
 @keyframes shimmer { from { opacity: 0.35; } to { opacity: 0.65; } }
