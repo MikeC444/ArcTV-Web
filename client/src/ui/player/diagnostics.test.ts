@@ -66,7 +66,7 @@ describe("connection test", () => {
     expect(lines[1]).toBe("Range GET bytes=0-1 (what the video player does): the server answered after 250 ms");
     expect(lines[2]).toContain("not possible — the server doesn't let web pages read its answer");
     const calls = fetchImpl.mock.calls as unknown as Array<[string, RequestInit]>;
-    expect(calls[0]![1]).toMatchObject({ method: "GET", mode: "no-cors", credentials: "omit", referrerPolicy: "no-referrer", headers: {} });
+    expect(calls[0]![1]).toMatchObject({ method: "GET", mode: "no-cors", credentials: "omit", headers: {} });
     expect(calls[1]![1].headers).toEqual({ Range: "bytes=0-1" });
     expect(calls[2]![1]).toMatchObject({ mode: "cors", headers: { Range: "bytes=0-65535" } });
     expect(lines.join("\n")).not.toMatch(/secret|abc/); // timing and headers only, never the link
@@ -88,9 +88,9 @@ describe("connection test", () => {
     try {
       const fetchImpl = vi.fn((_url: string, init: RequestInit) => new Promise<Response>((_resolve, reject) => init.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")))));
       const pending = probeSource("https://slow.example/v.mkv", { fetchImpl: asFetch(fetchImpl), timeoutMs: 2000 });
-      for (let i = 0; i < 3; i++) await vi.advanceTimersByTimeAsync(2000);
+      for (let i = 0; i < 4; i++) await vi.advanceTimersByTimeAsync(2000);
       const lines = await pending;
-      expect(lines).toHaveLength(3);
+      expect(lines).toHaveLength(4);
       expect(lines.every((l) => l.endsWith("no answer within 2 s"))).toBe(true);
     } finally {
       vi.useRealTimers();

@@ -77,6 +77,18 @@ export function AuthMethodScreen() {
   );
 }
 
+/** Whole seconds left until `until` (ms epoch), ticking once a second; 0 when there is nothing to wait for. */
+function useCountdown(until: number | null): number {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (until === null) return;
+    setNow(Date.now());
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [until]);
+  return until === null ? 0 : Math.max(0, Math.ceil((until - now) / 1000));
+}
+
 /** PasswordSignInScreen.kt — email + password (+ display name when creating). Same validation rules as the TV. */
 export function PasswordSignInScreen() {
   const { intent: raw } = useParams();
@@ -90,10 +102,14 @@ export function PasswordSignInScreen() {
   const [visible, setVisible] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** Set when the service says "too many attempts": the time (ms epoch) the button works again. */
+  const [waitUntil, setWaitUntil] = useState<number | null>(null);
+  const waitLeft = useCountdown(waitUntil);
   const isRegister = mode === "register";
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
+    if (waitLeft > 0) return;
     const problem = validateCredentials(email, password);
     if (problem) return setError(problem);
     setBusy(true);
@@ -104,7 +120,15 @@ export function PasswordSignInScreen() {
       afterAuth();
     } catch (e) {
       const err = e as ApiClientError;
-      setError(err.code === "invalid_credentials" ? "Invalid email or password." : err.message || "Something went wrong. Please try again.");
+      if (err.status === 429) {
+        // The service only accepts a few sign-ins a minute, and every visitor of this site counts toward the same allowance. Pressing the
+        // button again only uses more of it, so say how long to wait and keep the button off until then.
+        const seconds = Math.min(Math.max(err.retryAfterSeconds ?? 30, 5), 90);
+        setWaitUntil(Date.now() + seconds * 1000);
+        setError(null);
+      } else {
+        setError(err.code === "invalid_credentials" ? "Invalid email or password." : err.message || "Something went wrong. Please try again.");
+      }
       setBusy(false);
     }
   };
@@ -127,7 +151,12 @@ export function PasswordSignInScreen() {
           <MangoButton text={visible ? "Hide Password" : "Show Password"} icon={visible ? <MdVisibilityOff /> : <MdVisibility />} compact onClick={() => setVisible((v) => !v)} />
         </div>
         {error ? <p className="c-coral t-body-md" role="alert" style={{ margin: 0, textAlign: "center" }}>{error}</p> : null}
-        <MangoButton text={isRegister ? "Create Account" : "Log In"} icon={isRegister ? <MdAdd /> : <MdPerson />} variant="filled" fullWidth type="submit" disabled={busy} />
+        {waitLeft > 0 ? (
+          <p className="c-coral t-body-md" role="alert" style={{ margin: 0, textAlign: "center" }}>
+            Too many sign-in attempts right now — MangoTV only accepts a few a minute, shared by everyone using this site. You can try again in {waitLeft} s.
+          </p>
+        ) : null}
+        <MangoButton text={waitLeft > 0 ? `Try again in ${waitLeft} s` : isRegister ? "Create Account" : "Log In"} icon={isRegister ? <MdAdd /> : <MdPerson />} variant="filled" fullWidth type="submit" disabled={busy || waitLeft > 0} />
         {busy ? <div style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "center" }}><Spinner small /><span className="c-text-2 t-body-md">{isRegister ? "Creating account…" : "Signing in…"}</span></div> : null}
         <MangoButton text={isRegister ? "Already have an account? Log in" : "New here? Create an account"} icon={<MdChevronRight />} compact onClick={() => { setMode(isRegister ? "login" : "register"); setError(null); }} />
       </form>

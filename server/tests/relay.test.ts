@@ -30,6 +30,10 @@ const listen = (server: http.Server) => new Promise<string>((resolve) => server.
 beforeAll(async () => {
   other = http.createServer((req, res) => {
     seen.other = req.headers;
+    if (req.url === "/refuse") {
+      res.writeHead(403, { "Content-Type": "application/json" });
+      return res.end('{"error":"ip_not_allowed"}');
+    }
     res.writeHead(200, { "Content-Type": "video/mp4", "Content-Length": MOVIE.length });
     res.end(MOVIE);
   });
@@ -69,6 +73,12 @@ beforeAll(async () => {
       case "/data.json":
         res.writeHead(200, { "Content-Type": "application/json" });
         return res.end("{}");
+      case "/refused":
+        res.writeHead(403, { "Content-Type": "text/html", Server: "cloudflare", "cf-mitigated": "challenge" });
+        return res.end("<html><title>Attention Required!</title>Sorry, you have been blocked. See https://secret.example/key=abc\u2014 Cloudflare</html>");
+      case "/hop-refused":
+        res.writeHead(302, { Location: `${otherBase}/refuse` });
+        return res.end();
       case "/missing":
         res.writeHead(404);
         return res.end("nope");
@@ -233,6 +243,24 @@ describe("stream relay", () => {
     expect(badRange.status).toBe(416);
     const down = await client.get(relayUrl("http://127.0.0.1:1/x.mp4"));
     expect(down.status).toBe(502);
+  });
+
+  it("says who refused and how when the stream host answers 403 — host, redirects, a few headers, the first words of its answer; never the path or a link", async () => {
+    const { client } = await signedIn();
+    const direct = await client.get(relayUrl(`${base}/refused`));
+    expect(direct.status).toBe(502);
+    const message = direct.body.error.message as string;
+    expect(message).toContain(`HTTP 403 (from ${new URL(base).host}`);
+    expect(message).toContain("server: cloudflare");
+    expect(message).toContain("a bot check was demanded");
+    expect(message).toContain("Attention Required!");
+    expect(message).toContain("<link>");
+    expect(message).not.toMatch(/secret\.example|key=abc|\/refused/);
+
+    const viaRedirect = await client.get(relayUrl(`${base}/hop-refused`));
+    expect(viaRedirect.status).toBe(502);
+    expect(viaRedirect.body.error.message).toContain(`from ${new URL(otherBase).host} after 1 redirect`);
+    expect(viaRedirect.body.error.message).toContain("ip_not_allowed");
   });
 
   it("rejects unsupported Range headers (multi-range) and malformed relay addresses", async () => {

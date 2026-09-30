@@ -87,6 +87,20 @@ test.describe("stream relay (Stremio-style proxy) — content that used to fail 
     await shot(page, "player-relay-both-failed");
   });
 
+  test("a resolver link that looks like an .mp4 but is HLS for browsers: the player asks the server what it is first, and sends the page's origin as a Referer — like Stremio Web", async ({ page }) => {
+    const account = await newAccount("resolver");
+    await openFixtureSources(page, account);
+    await pick(page, "Relay.resolver");
+    await expect.poll(() => video(page).evaluate((v: HTMLVideoElement) => v.currentTime), { timeout: 30_000 }).toBeGreaterThan(0.5);
+    expect(await video(page).evaluate((v: HTMLVideoElement) => v.currentSrc)).toMatch(/^blob:/); // hls.js over Media Source, not the native element on a playlist
+    expect(await video(page).evaluate((v: HTMLVideoElement) => v.videoWidth)).toBeGreaterThan(0);
+
+    const asked = (await mediaLog()).filter((r) => r.path === "/media/resolve/movie.mp4");
+    expect(asked.length).toBeGreaterThan(0);
+    expect(asked.every((r) => r.referer !== null && /^http:\/\/127\.0\.0\.1:\d+\/$/.test(r.referer))).toBe(true); // the site's origin only, never a page address
+    expect(await video(page).evaluate((v: HTMLVideoElement) => v.error)).toBeNull();
+  });
+
   test("the relay is for signed-in sessions only and is not an open proxy", async ({ request }) => {
     const target = `/api/relay/d=${encodeURIComponent(new URL(ADDON).origin)}/media/sample.webm`;
     expect((await request.get(target)).status()).toBe(401); // no session cookie

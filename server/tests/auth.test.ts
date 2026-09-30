@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import request from "supertest";
 import { agentFor, appWith, setCookies } from "./helpers/app.js";
 import { createMockBackend } from "./helpers/mockBackend.js";
@@ -164,6 +164,23 @@ describe("session lifetime", () => {
     expect(setCookies(res).some((c) => /mtv_session=;|Max-Age=0/.test(c))).toBe(true);
     // and the browser really is signed out afterwards
     expect((await client.get("/api/auth/session")).status).toBe(401);
+  });
+
+  it("a rate-limited refresh is not retried on every request — the sign-in allowance is shared by every visitor", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] }); // only the clock: supertest still needs real sockets
+    try {
+      const { backend, client } = await loggedIn(45_000); // valid for 45 s, but inside the refresh skew
+      backend.state.refreshRateLimit = 20;
+      for (let i = 0; i < 6; i++) expect((await client.get("/api/user/watchlist")).status).toBe(200); // the old token still works
+      expect(backend.state.refreshCalls).toBe(1); // asked once, then left the backend alone
+
+      vi.setSystemTime(Date.now() + 21_000); // Retry-After has passed
+      backend.state.refreshRateLimit = null;
+      expect((await client.get("/api/user/watchlist")).status).toBe(200);
+      expect(backend.state.refreshCalls).toBe(2);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("a backend outage never signs the user out", async () => {

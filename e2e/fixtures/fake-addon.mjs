@@ -122,6 +122,9 @@ const mediaLog = [];
 //                              hostile  – accepts a browser-style request (one carrying Sec-Fetch-*) and never sends the video, but serves everyone else
 //                              headers  – needs the addon's proxyHeaders (X-Required) or answers 403
 //                              dead     – stalls browsers and answers every other client 403
+//                              resolver – a debrid-style link that ends in .mp4 but redirects a request that carries a Referer (a web page asking)
+//                                         to an HLS stream, and leaves every other request hanging. This emulates a mechanism we HYPOTHESISE for real
+//                                         debrid resolvers; it is not evidence about any real host.
 //   /debrid/…                a cached ("[RD+]") and a not-yet-cached ("[RD download]") debrid-style stream
 //   /stall/…                 one stream whose media request is accepted and then never answered (a hung debrid link)
 const extraManifest = (id, name, resources) => ({ id, name, version: "1.0.0", description: "Local test addon", resources, types: ["movie", "series"], idPrefixes: ["fx"], catalogs: [] });
@@ -146,6 +149,7 @@ function handleExtraAddon(p, res, cors) {
     { name: "Stream hostile 1080p", title: "Relay.hostile.1080p.WEB-DL.VP9\n👤 400 💾 2 GB", url: `${BASE}/media/browser-hostile.webm` },
     { name: "Stream headers 1080p", title: "Relay.headers.1080p.WEB-DL.VP9\n👤 300 💾 2 GB", url: `${BASE}/media/needs-headers.webm`, behaviorHints: { proxyHeaders: { request: { "X-Required": "let-me-in" } } } },
     { name: "Stream dead 1080p", title: "Relay.dead.1080p.WEB-DL.VP9\n👤 200 💾 2 GB", url: `${BASE}/media/dead.webm` },
+    { name: "Stream resolver 1080p", title: "Relay.resolver.1080p.WEB-DL.VP9\n👤 100 💾 2 GB", url: `${BASE}/media/resolve/movie.mp4` },
   ] }, cors), true;
   if (p === "/debrid/manifest.json") return json(res, extraManifest("test.mangotv.debrid", "Fixture Debrid", ["stream"]), cors), true;
   if (/^\/debrid\/stream\//.test(p)) return json(res, { streams: [
@@ -227,6 +231,7 @@ export function createAddonServer() {
     if (p === "/media/browser-hostile.webm" || p === "/media/dead.webm") {
       if (req.headers["sec-fetch-dest"]) {
         res.writeHead(200, { "Content-Type": "video/webm", "Content-Length": fs.statSync(path.join(mediaDir, "sample.webm")).size, "Accept-Ranges": "bytes", ...CORS });
+        if (req.method === "HEAD") return res.end(); // a HEAD has no body to withhold (and an unfinished response would block the connection's next request)
         res.flushHeaders(); // headers now, video never — the signature seen with a real debrid host
         return;
       }
@@ -235,6 +240,13 @@ export function createAddonServer() {
         return res.end("forbidden");
       }
       return serveFile(req, res, path.join(mediaDir, "sample.webm"));
+    }
+    if (p === "/media/resolve/movie.mp4") {
+      if (req.headers.referer) {
+        res.writeHead(302, { Location: `${BASE}/media/hls/master.m3u8`, ...CORS });
+        return res.end();
+      }
+      return; // accepted, never answered
     }
     if (p === "/media/needs-headers.webm") {
       if (req.headers["x-required"] !== "let-me-in") {

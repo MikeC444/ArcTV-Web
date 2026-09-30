@@ -34,6 +34,13 @@ interface TokenResponse {
 
 const REFRESH_SKEW_MS = 60_000;
 const GRACE_MS = 60_000;
+/**
+ * After a refresh the backend couldn't answer, stop asking for a moment. The backend limits /auth/* per IP address and every
+ * visitor of this site arrives from ours, so a retry on each incoming request would use up the allowance that sign-in needs.
+ * A 429 is honoured for as long as the backend says (capped); a timeout or 5xx only pauses briefly.
+ */
+const REFRESH_RETRY_PAUSE_MS = 5_000;
+const REFRESH_RATE_LIMIT_MAX_PAUSE_MS = 60_000;
 
 function isTokenResponse(json: unknown): json is TokenResponse {
   if (!json || typeof json !== "object") return false;
@@ -62,7 +69,7 @@ export function sessionFromTokenResponse(json: unknown, fallbackUser?: SessionUs
   };
 }
 
-type RefreshOutcome = { kind: "ok"; session: SessionData } | { kind: "rejected" } | { kind: "unavailable" };
+type RefreshOutcome = { kind: "ok"; session: SessionData } | { kind: "rejected" } | { kind: "unavailable"; retryAfterMs?: number };
 
 export class SessionManager {
   private readonly key: Buffer;
@@ -72,6 +79,8 @@ export class SessionManager {
   private readonly inflight = new Map<string, Promise<RefreshOutcome>>();
   /** …and for a short grace window after it, so parallel requests already in flight don't sign the user out. */
   private readonly recent = new Map<string, { outcome: RefreshOutcome; until: number }>();
+  /** No refresh is sent to the backend before this time (ms epoch) — see REFRESH_RETRY_PAUSE_MS. */
+  private refreshPausedUntil = 0;
 
   constructor(
     private readonly config: AppConfig,
@@ -168,10 +177,12 @@ export class SessionManager {
     if (cached) return Promise.resolve(cached.outcome);
     const running = this.inflight.get(id);
     if (running) return running;
+    if (this.refreshPausedUntil > now) return Promise.resolve({ kind: "unavailable" });
 
     const promise = this.doRefresh(refreshToken, user, clientIp)
       .then((outcome) => {
-        if (outcome.kind !== "unavailable") this.recent.set(id, { outcome, until: Date.now() + GRACE_MS });
+        if (outcome.kind === "unavailable") this.refreshPausedUntil = Date.now() + (outcome.retryAfterMs ?? REFRESH_RETRY_PAUSE_MS);
+        else this.recent.set(id, { outcome, until: Date.now() + GRACE_MS });
         return outcome;
       })
       .finally(() => this.inflight.delete(id));
@@ -187,7 +198,10 @@ export class SessionManager {
         const session = sessionFromTokenResponse(response.json, user);
         return session ? { kind: "ok", session } : { kind: "unavailable" };
       }
-      if (response.status === 429) return { kind: "unavailable" };
+      if (response.status === 429) {
+        const seconds = Number(response.retryAfter);
+        return { kind: "unavailable", retryAfterMs: Number.isFinite(seconds) && seconds > 0 ? Math.min(seconds * 1000, REFRESH_RATE_LIMIT_MAX_PAUSE_MS) : REFRESH_RATE_LIMIT_MAX_PAUSE_MS / 2 };
+      }
       return { kind: "unavailable" };
     } catch {
       return { kind: "unavailable" };

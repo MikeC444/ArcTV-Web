@@ -84,6 +84,16 @@ modify): key the `/user/*` limiter on the authenticated user id (or the bearer t
 `/auth/*` limiter read the client IP the web service forwards (for example via an explicit trusted-proxy setting).
 Until then, watch for `429` in the logs and keep the number of simultaneous new sign-ins per minute low.
 
+**"Too many requests right now" when signing in.** That wording is the *backend's* limiter answering (the web service's own
+limiter says "Too many attempts. Please wait a minute…"). The backend allows **10 requests a minute to `/auth/*` per IP
+address**, and sign-in, sign-up, token refresh and QR creation all count; to the backend every visitor of this site is the
+same address. The sign-in form therefore shows the wait (from `Retry-After`) with a countdown and keeps its button off, and
+the web service no longer re-sends a refresh the backend has just refused — it waits out `Retry-After` (a timeout or 5xx
+pauses it for 5 s) so a slow or rate-limited backend can't be hammered by every page request of a signed-in tab. The
+allowance refills within a minute. If it does **not**, something keeps calling the backend from this service: check the
+backend's request log for a steady stream of `/auth/*` calls and which device they belong to. Free-tier backends that have
+gone to sleep make this more likely, because the first requests after a cold start time out and get retried by people.
+
 ### Stream relay (bandwidth)
 
 Sources that need addon request headers, are plain `http://`, or whose host never answers a browser's own request are

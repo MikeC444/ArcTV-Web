@@ -3,6 +3,7 @@ import { MdArrowBack, MdFastForward, MdForward10, MdFullscreen, MdFullscreenExit
 import { useNavigate, useParams } from "react-router-dom";
 import { DEBRID_NAMES, deviceVerdict, getDeviceCaps } from "../../domain/deviceSupport";
 import { buildRelayUrl, needsRelay, playbackUrl } from "../../domain/relay";
+import { describeContentType, engineForContentType, getContentType } from "../../domain/contentType";
 import { assessStream, engineFor } from "../../domain/playability";
 import { activeProviders } from "../../domain/registry";
 import type { Content, ContentType, Episode, Stream } from "../../domain/types";
@@ -90,6 +91,8 @@ const SLOW_START_MS = 15_000;
 const START_TIMEOUT_MS = 45_000;
 /** Still no video this long after asking the host directly → ask again through this site's stream relay (Stremio's answer to hosts that don't play well with browsers: proxy them). */
 const RELAY_AFTER_MS = 12_000;
+/** How long the content-type probe may hold the video back (Stremio Web waits without limit; a host that never answers must not do that to us). */
+const CONTENT_TYPE_WAIT_MS = 4_000;
 type Route = "direct" | "relay";
 
 /** When we already knew this device can't handle the file, say so in the error instead of a generic failure. */
@@ -335,9 +338,20 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
       if (trail.current.length < 80) trail.current.push({ at: Math.round(performance.now() - trailStart.current), name: e.type });
     };
     EVENTS_WORTH_KEEPING.forEach((name) => v.addEventListener(name, noteEvent));
-    void start(engineFor(url));
+    // Like Stremio Web: ask the server what this really is BEFORE handing the address to a player (a link ending in .mkv can be an
+    // HLS playlist), but never wait long for it — if it can't be read, the address decides.
+    const probe = new AbortController();
+    void (async () => {
+      const fromAddress = engineFor(url);
+      if (fromAddress !== "native") return start(fromAddress);
+      const contentType = await getContentType(stream, url, { timeoutMs: CONTENT_TYPE_WAIT_MS, signal: probe.signal });
+      if (cancelled) return;
+      if (trail.current.length < 80) trail.current.push({ at: Math.round(performance.now() - trailStart.current), name: describeContentType(contentType) });
+      return start(engineForContentType(contentType, fromAddress));
+    })();
     return () => {
       cancelled = true;
+      probe.abort();
       v.removeEventListener("loadedmetadata", onMeta);
       v.removeEventListener("timeupdate", onTime);
       v.removeEventListener("durationchange", onTime);

@@ -2,8 +2,12 @@
 
 ## @stremio/stremio-video
 
-`client/src/domain/relay.ts` (`buildRelayUrl`) is adapted from `src/withStreamingServer/buildProxyUrl.js` in
-[@stremio/stremio-video](https://github.com/Stremio/stremio-video), author Smart Code OOD, licensed under the MIT License
+Two files are adapted from [@stremio/stremio-video](https://github.com/Stremio/stremio-video):
+
+* `client/src/domain/relay.ts` (`buildRelayUrl`) from `src/withStreamingServer/buildProxyUrl.js`;
+* `client/src/domain/contentType.ts` (`getContentType`) from `src/HTMLVideo/getContentType.js`.
+
+The author is Smart Code OOD and the package is licensed under the MIT License
 (declared as `"license": "MIT"` in that package's `package.json`; the repository ships no separate LICENSE file, so the
 standard MIT text is reproduced below with the copyright holder named in the package's `author` field).
 
@@ -33,8 +37,9 @@ SOFTWARE.
 
 ## Stremio Web (reference only — no code copied)
 
-[Stremio Web](https://github.com/Stremio/stremio-web) is licensed under the GNU GPL v2. It, and the Torrentio addon
-(Apache-2.0), were **read** to understand how streams are resolved and played; none of their code is included in this
-project, so no GPL or Apache obligations attach to it. The playback *behaviour* that was adopted (proxying header-locked
+[Stremio Web](https://github.com/Stremio/stremio-web) is licensed under the GNU GPL v2. It was **read** to understand how
+streams are resolved and played; none of its code is included in this project, so no GPL obligations attach to it. The
+Torrentio addon (Apache-2.0) was not read at all — how its links behave is only inferred from what its responses look
+like, and is labelled as such in `docs/PLAYBACK.md`. The playback *behaviour* that was adopted (proxying header-locked
 and mixed-content streams through a server, keeping the stream's path in the proxy URL) is described in
 `docs/PLAYBACK.md`.

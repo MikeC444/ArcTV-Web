@@ -126,6 +126,40 @@ function mediaTypeOf(contentType: string | undefined, url: URL): string | null {
 const SAFE_RANGE = /^bytes=\d*-\d*$/;
 const header = (value: string | string[] | undefined): string | undefined => (Array.isArray(value) ? value[0] : value);
 
+/**
+ * When the stream host refuses the relay, say WHO refused and how — the signed-in viewer is the one trying to play it, and "HTTP 403"
+ * alone can't tell a debrid service's IP rule from a CDN's bot protection from a dead link. Host name only (never the path, which can
+ * carry keys), a few well-known headers, and the first words of a text/JSON error body with any link in it removed.
+ */
+async function describeRefusal(upstream: Awaited<ReturnType<typeof undiciRequest>>, url: URL, hops: number, status: number): Promise<string> {
+  const facts: string[] = [`from ${url.host}${hops ? ` after ${hops} redirect${hops > 1 ? "s" : ""}` : ""}`];
+  const server = header(upstream.headers.server)?.replace(/[^\w ./()-]/g, "").slice(0, 40).trim();
+  if (server) facts.push(`server: ${server}`);
+  if (/challenge/i.test(header(upstream.headers["cf-mitigated"]) ?? "")) facts.push("a bot check was demanded");
+  const type = header(upstream.headers["content-type"]) ?? "";
+  let said = "";
+  if (/^(text\/|application\/(json|problem\+json|xml))/i.test(type)) {
+    let timer: NodeJS.Timeout | undefined;
+    const chunks: Buffer[] = [];
+    let size = 0;
+    const read = (async () => {
+      for await (const chunk of upstream.body) {
+        chunks.push(chunk as Buffer);
+        size += (chunk as Buffer).length;
+        if (size >= 400) break;
+      }
+    })().catch(() => undefined);
+    await Promise.race([read, new Promise<void>((resolve) => (timer = setTimeout(resolve, 2_000)))]);
+    clearTimeout(timer);
+    upstream.body.destroy();
+    said = Buffer.concat(chunks).toString("utf8").replace(/<[^>]*>/g, " ").replace(/https?:\/\/\S+/gi, "<link>").replace(/[^\x20-\x7e]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 120);
+  } else {
+    void upstream.body.dump?.().catch(() => undefined);
+  }
+  if (said) facts.push(`it said: "${said}"`);
+  return `The stream host answered HTTP ${status} (${facts.join("; ")}).`;
+}
+
 export function createStreamRelay(config: Pick<AppConfig, "allowPrivateAddonHosts" | "streamRelay">) {
   const agent = new Agent({
     connect: { lookup: guardedLookup(config.allowPrivateAddonHosts) as never, timeout: 10_000 },
@@ -166,6 +200,7 @@ export function createStreamRelay(config: Pick<AppConfig, "allowPrivateAddonHost
       const ifRange = header(req.headers["if-range"]);
 
       let url = target.url;
+      let hops = 0;
       let sendCustom = true;
       let upstream: Awaited<ReturnType<typeof undiciRequest>> | null = null;
       for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
@@ -191,6 +226,7 @@ export function createStreamRelay(config: Pick<AppConfig, "allowPrivateAddonHost
           validateUrl(next, config.allowPrivateAddonHosts, req.headers.host);
           if (next.origin !== url.origin) sendCustom = false; // never hand the addon's headers to a different site
           url = next;
+          hops = hop + 1;
           continue;
         }
         upstream = response;
@@ -209,8 +245,7 @@ export function createStreamRelay(config: Pick<AppConfig, "allowPrivateAddonHost
         return;
       }
       if (status < 200 || status >= 300) {
-        void upstream.body.dump?.().catch(() => undefined);
-        throw new ApiError(502, "upstream_error", `The stream host answered HTTP ${status}.`);
+        throw new ApiError(502, "upstream_error", await describeRefusal(upstream, url, hops, status));
       }
 
       const override = target.responseHeaders.find(([name]) => name === "content-type")?.[1];

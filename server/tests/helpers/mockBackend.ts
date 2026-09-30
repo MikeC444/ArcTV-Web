@@ -22,7 +22,8 @@ export function createMockBackend(options: { accessTtlMs?: number } = {}) {
   const refresh = new Map<string, { userId: string; used: boolean }>();
   const data = new Map<string, Map<string, unknown>>(); // userId → key → value
   const calls: BackendRequest[] = [];
-  const state = { down: false, refreshCalls: 0, rejectAllTokens: false, tokenSeq: 0 };
+  /** `refreshRateLimit`: answer /auth/refresh with 429 and this Retry-After (seconds), like the backend's per-IP limiter. */
+  const state = { down: false, refreshCalls: 0, refreshRateLimit: null as number | null, rejectAllTokens: false, tokenSeq: 0 };
   const accessTtl = options.accessTtlMs ?? 3_600_000;
 
   function issue(userId: string) {
@@ -59,6 +60,7 @@ export function createMockBackend(options: { accessTtlMs?: number } = {}) {
     }
     if (request.path === "/auth/refresh") {
       state.refreshCalls++;
+      if (state.refreshRateLimit !== null) return { status: 429, json: { error: "Too many requests" }, retryAfter: String(state.refreshRateLimit) };
       const entry = refresh.get(body.refreshToken!);
       if (!entry || entry.used) return json(401, { error: "Unauthorized" });
       entry.used = true;

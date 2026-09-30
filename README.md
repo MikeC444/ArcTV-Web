@@ -152,7 +152,7 @@ and no secrets.
 | Command | What it proves |
 |---|---|
 | `npm run lint && npm run typecheck` | ESLint (zero warnings) and strict TypeScript for client, server and e2e code |
-| `npm test` | **105 client** unit tests (Stremio mapping, stream ranking/playability/device support, relay addresses, stores, outbox, sync rules) and **95 server** tests (cookie sealing, CSRF, session refresh/rotation, allow-list, SSRF guard, stream relay, static hosting) |
+| `npm test` | **112 client** unit tests (Stremio mapping, stream ranking/playability/device support, relay addresses, stores, outbox, sync rules) and **97 server** tests (cookie sealing, CSRF, session refresh/rotation, allow-list, SSRF guard, stream relay, static hosting) |
 | `npm run test:integration` | The **real, unmodified backend** from the Firestick repo, all 14 migrations, on a throwaway local Postgres: an account created the way the TV creates it signs in on the web with the same user id and sees its synced data; TV ↔ web sync with last-write-wins; **two accounts cannot read or modify each other's data**; token refresh / expiry / revocation; QR flows; logout revocation |
 | `npm run test:e2e` | Playwright + Chromium against that backend, the built SPA and a local Stremio-protocol fixture addon: sign-in (existing account, wrong password, QR, sign-up, sign-out, remote revocation), browse, search, My List, Detail, Sources, real playback (WebM and HLS) with progress reported to the account, playback of sources a browser can't fetch itself via the stream relay, resume, autoplay-next, settings sync, keyboard navigation, layout parity with the Compose tokens at 1920 × 1080, and no-overflow layouts at 1920, 1366, 820 and 390 px |
 
@@ -256,7 +256,9 @@ but won't play, the reason is in the table above (torrent-only, MKV/HEVC/Dolby a
   ranges blocked, https-only outside tests, JSON only, ≤ 2 MB, redirects re-validated, timeouts.
 * The stream relay is session-only, same-origin, GET/HEAD, media-only, SSRF-guarded like the addon proxy, and never
   forwards cookies, `Referer` or the addon's headers to a redirect target.
-* Content-Security-Policy without inline scripts, `frame-ancestors 'none'`, HSTS, referrer policy, per-IP rate limits.
+* Content-Security-Policy without inline scripts, `frame-ancestors 'none'`, HSTS, per-IP rate limits, and the browser-default
+  referrer policy (other sites see this site's origin, never a page address — Stremio Web does the same, and some stream
+  hosts treat a request with no Referer as "not a browser").
 * Payment state is never trusted from the client — there are no payments in this product today; if added, verification
   must stay in the backend.
 * Passwords are only ever sent to the backend over TLS and are not logged or stored by the web server.
@@ -268,7 +270,9 @@ but won't play, the reason is in the table above (torrent-only, MKV/HEVC/Dolby a
    one proxy hop. All web users arrive from the web server's address, so at real scale they share those buckets. The web
    server forwards the real client IP and adds its own limiter, but the proper fix is a small change in the backend (key
    `/user/*` on the user id, trust the web server's forwarded IP for `/auth/*`). It was **not** made because the
-   Firestick repository is out of scope for this work — see [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md#rate-limits).
+   Firestick repository is out of scope for this work — see [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md#rate-limits). Until
+   then the sign-in form shows a countdown when the backend says "too many requests", and a refused token refresh is not
+   re-sent on every request.
 3. **Prefer a single web-server instance** (or sticky sessions): refresh-token rotation is de-duplicated in memory.
    Sessions are self-contained in the cookie, so several instances do work, but if two of them rotate the same refresh
    token at the same moment the backend may reject the second, and that user has to sign in again.

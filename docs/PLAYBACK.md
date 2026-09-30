@@ -112,10 +112,56 @@ Server-side behaviour (auth, headers, redirects, SSRF guards, media-only, limits
 
 ### Not verified
 
-* **The user's real Torrentio / Real-Debrid stream.** The development sandbox cannot reach `torrentio.strem.fun`,
+* **The user's real Torrentio / Real-Debrid stream** — and, per the second round above, the relay alone did **not** fix it. The development sandbox cannot reach `torrentio.strem.fun`,
   Real-Debrid or Stremio hosts, so the exact failure could not be reproduced with the real host. The fixture copies its
   observable signature (Chrome event sequence, plain/Range answered in ~1 s); whether that host answers a server-side
   request depends on the host. If the real cause is an uncached file or a throttled host, the relay will not help — the
   Test connection "Through this site's relay" line and the **cached** badge will tell you which.
 * Bandwidth behaviour and performance on Render's free plan.
 * HLS through the relay with real multi-host playlists.
+
+## Second round: what the first real test showed
+
+After the relay was deployed, the real Torrentio / Real-Debrid `.mkv` **still did not play**. The technical details of that
+attempt:
+
+```
+Source: server torrentio.strem.fun, file type .mkv, engine native, route direct, then relay
+Video element: network NO_SOURCE, ready HAVE_NOTHING … Media error: SRC_NOT_SUPPORTED   (the relay's JSON error, not a video)
+Plain GET … answered after 1381 ms · Range GET … answered after 1019 ms · reading the answer: not possible
+Through this site's relay: HTTP 502 — The stream host answered HTTP 403.
+```
+
+So the relay does **not** rescue this stream: the host (Torrentio itself, or the debrid CDN it redirects to) refuses a request
+from the web server. The first version of the relay could not say which of them, or why; it now reports the host, how many
+redirects deep, a couple of well-known headers (`server`, a Cloudflare bot-check marker) and the first words of a text/JSON
+error body (links removed). The next failure will therefore name the refuser.
+
+### Two real differences from Stremio Web, read from its source
+
+| | Stremio Web (`stremio-video`) | MangoTV before |
+|---|---|---|
+| Before `video.src = url` | `getContentType()`: a `HEAD` request (redirects followed); a `application/vnd.apple.mpegurl` answer is played with hls.js **even though the address says `.mkv`** | none — the address alone chose the player |
+| What the host sees | a browser with the browser's default referrer policy: `Referer: <the site's origin>` | `Referrer-Policy: same-origin` since the first version → **no Referer to any stream host, ever** |
+| `crossOrigin` on the `<video>` | not set (the line is commented out) | not set — same |
+
+Both were changed: `client/src/domain/contentType.ts` (adapted from `getContentType.js`, MIT — the wait is capped at 4 s,
+and an unreadable answer falls back to the address exactly as Stremio does) and the server now sends
+`Referrer-Policy: strict-origin-when-cross-origin`. The connection test's probes were changed to send what the player sends,
+and gained a "HEAD for the content type" line.
+
+### The hypothesis behind this — **unverified**
+
+Some debrid resolvers answer a request that looks like a web page (it carries a `Referer`) differently from a bare client,
+for instance by returning a browser-playable HLS stream instead of the raw file. If Torrentio does that, then (a) a
+Referer-less request gets the raw file, which is the stall we saw, and (b) the playable answer is HLS behind an address that
+ends in `.mkv`, which only a content-type probe notices. **This could not be checked**: the development sandbox cannot reach
+Torrentio or Real-Debrid, and Torrentio's source was not available to read. The end-to-end test named "a resolver link that
+looks like an .mp4 but is HLS for browsers" (`e2e/tests/relay.spec.ts`) uses a fixture that *emulates* such a host; it
+proves that MangoTV now sends the Referer and plays HLS found behind a file-like address (the test fails without the
+Referer), not that Torrentio behaves this way.
+
+If the stream still does not play after this change, the **Technical details** will now say what the content-type probe
+saw (`content-type …` in the event list), whether a Referer-bearing HEAD could be read at all, and — for the relay — who
+refused it. The remaining suspects are then a host that refuses datacenter addresses (the relay case) or one that really
+withholds the video from this browser for a reason that can only be seen on the wire.

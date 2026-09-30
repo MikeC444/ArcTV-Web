@@ -53,6 +53,36 @@ test.describe("sign-in flows", () => {
     await expect(page).toHaveURL(/\/auth\/password\/login$/);
   });
 
+  test("when the service says \"too many attempts\", the form says how long to wait and keeps the button off until then", async ({ page }) => {
+    const account = await newAccount("ratelimited", { addon: false });
+    await preparePage(page);
+    await useClientIp(page.context());
+    await page.clock.install();
+    let attempts = 0;
+    await page.route("**/api/auth/login", (route) => {
+      attempts++;
+      if (attempts > 1) return route.continue(); // after the wait the real server answers
+      return route.fulfill({ status: 429, headers: { "Content-Type": "application/json", "Retry-After": "20" }, body: JSON.stringify({ error: { code: "rate_limited", message: "Too many requests right now. Please wait a moment and try again." } }) });
+    });
+    await page.goto("/auth/password/login");
+    await page.getByPlaceholder("Email").fill(account.email);
+    await page.getByPlaceholder("Password").fill(PASSWORD);
+    await page.getByRole("button", { name: "Log In" }).click();
+
+    const notice = page.getByRole("alert");
+    await expect(notice).toContainText("Too many sign-in attempts right now");
+    await expect(notice).toContainText("try again in 20 s");
+    const button = page.getByRole("button", { name: /Try again in \d+ s/ });
+    await expect(button).toBeDisabled(); // pressing it would only use up more of the shared allowance
+    await shot(page, "signin-rate-limited");
+
+    await page.clock.fastForward(21_000);
+    await expect(notice).toHaveCount(0);
+    await page.getByRole("button", { name: "Log In" }).click();
+    await expect(page).toHaveURL(/\/$/); // the second attempt went through
+    expect(attempts).toBe(2);
+  });
+
   test("creating an account in the browser makes a real account the TV can also sign in to", async ({ page }) => {
     const email = uniqueEmail("newweb");
     await preparePage(page);

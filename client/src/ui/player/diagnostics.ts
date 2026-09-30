@@ -97,7 +97,7 @@ export async function probeSource(url: string, options: { timeoutMs?: number; fe
     }, timeoutMs);
     const started = now();
     try {
-      await doFetch(url, { method: "GET", headers, mode: "no-cors", credentials: "omit", referrerPolicy: "no-referrer", cache: "no-store", redirect: "follow", signal: controller.signal });
+      await doFetch(url, { method: "GET", headers, mode: "no-cors", credentials: "omit", cache: "no-store", redirect: "follow", signal: controller.signal });
       const ms = Math.round(now() - started);
       controller.abort(); // only the answer mattered, not the video — stop the download
       return `${label}: the server answered after ${ms} ms`;
@@ -120,7 +120,7 @@ export async function probeSource(url: string, options: { timeoutMs?: number; fe
     }, timeoutMs);
     const started = now();
     try {
-      const response = await doFetch(url, { method: "GET", headers: { Range: "bytes=0-65535" }, mode: "cors", credentials: "omit", referrerPolicy: "no-referrer", cache: "no-store", redirect: "follow", signal: controller.signal });
+      const response = await doFetch(url, { method: "GET", headers: { Range: "bytes=0-65535" }, mode: "cors", credentials: "omit", cache: "no-store", redirect: "follow", signal: controller.signal });
       const headersAfter = Math.round(now() - started);
       const header = (name: string) => response.headers.get(name);
       const facts = [
@@ -146,6 +146,28 @@ export async function probeSource(url: string, options: { timeoutMs?: number; fe
     } catch (error) {
       if (timedOut) return `${label}: no answer within ${Math.round(timeoutMs / 1000)} s`;
       if (error instanceof TypeError) return `${label}: not possible — the server doesn't let web pages read its answer (normal for video hosts; it doesn't stop the video player from using it)`;
+      return `${label}: failed (${error instanceof Error ? error.message : "network error"})`;
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+
+  /** What Stremio Web asks first (stremio-video's getContentType): a HEAD request, read for the content type. Follows redirects like the player. */
+  const headType = async (): Promise<string> => {
+    const label = "HEAD for the content type (what Stremio Web asks first)";
+    const controller = new AbortController();
+    let timedOut = false;
+    const timer = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, timeoutMs);
+    const started = now();
+    try {
+      const response = await doFetch(url, { method: "HEAD", mode: "cors", credentials: "omit", cache: "no-store", redirect: "follow", signal: controller.signal });
+      return `${label}: HTTP ${response.status}, type ${response.headers.get("content-type") ?? "none"}${response.redirected ? ", redirected" : ""}, after ${Math.round(now() - started)} ms`;
+    } catch (error) {
+      if (timedOut) return `${label}: no answer within ${Math.round(timeoutMs / 1000)} s`;
+      if (error instanceof TypeError) return `${label}: not readable by web pages (the server or a redirect target doesn't allow it), after ${Math.round(now() - started)} ms`;
       return `${label}: failed (${error instanceof Error ? error.message : "network error"})`;
     } finally {
       clearTimeout(timer);
@@ -195,7 +217,7 @@ export async function probeSource(url: string, options: { timeoutMs?: number; fe
   };
 
   const lines: string[] = [];
-  const steps: Array<() => Promise<string>> = [() => run("Plain GET (what opening the link in a tab does)", {}), () => run("Range GET bytes=0-1 (what the video player does)", { Range: "bytes=0-1" }), inspect];
+  const steps: Array<() => Promise<string>> = [() => run("Plain GET (what opening the link in a tab does)", {}), () => run("Range GET bytes=0-1 (what the video player does)", { Range: "bytes=0-1" }), inspect, headType];
   if (options.relayUrl) steps.push(viaRelay);
   for (const step of steps) {
     const line = await step();
