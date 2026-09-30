@@ -43,8 +43,12 @@ npm run build      # client → client/dist, server → server/dist
 npm start          # node server/dist/index.js  (serves the SPA + /api on $PORT)
 ```
 
-* **Render / Railway / Heroku-style buildpacks** — Build command `npm ci && npm run build`, start command `npm start`,
-  health check path `/api/health`, set the environment variables above.
+* **Render / Railway / Heroku-style buildpacks** — Build command `npm ci --include=dev && npm run build`, start command
+  `npm start`, health check path `/api/health`, set the environment variables above.
+  **Use `--include=dev`:** these platforms expose environment variables (including `NODE_ENV=production`) to the build
+  step too, and with `NODE_ENV=production` a plain `npm ci` / `npm install` skips the TypeScript and Vite tooling the
+  build needs, so the build fails with `tsc`/`vite: not found`. (Verified from a fresh clone: the plain command fails,
+  this one builds and starts.) Pin Node with `NODE_VERSION=22` if the platform picks an older one.
 * **Fly.io / any container host** — use the same two commands in a `node:22-slim` image (copy the repo, `npm ci`,
   `npm run build`, `CMD ["npm","start"]`, expose `$PORT`).
 * **VPS** — run `npm start` under systemd or pm2 behind nginx/Caddy that terminates TLS and forwards to `$PORT`
