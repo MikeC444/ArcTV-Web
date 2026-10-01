@@ -4,6 +4,7 @@ One sentence per update, newest first. When updating the Firestick app, tick the
 **Keep this file current: every new change gets one line at the top** (`- [ ] hash — sentence`). Reverted and removed work is listed too, marked so you can skip it.
 
 ## Look and layout
+- [ ] (logo in nav) — Top-left of the site now shows the Arc TV mark plus "ArcTV" instead of plain text.
 - [ ] (logos) — Arc TV favicon, home-screen icons, install manifest and link-preview image added (the Firestick needs its own launcher icon and banner).
 - [ ] (rebrand) — Mango TV renamed to Arc TV in all visible text and the wordmark (logo images, colours, storage keys and env vars unchanged; the Firestick app needs the same rename and new artwork).
 - [ ] 3c512ff — Home hero is shaded along its left and right edges (same soft dark fade as the top bar).
