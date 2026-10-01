@@ -13,6 +13,7 @@ One sentence per update, newest first. When updating the Firestick app, tick the
 - [ ] 8512e53 — Posters are 8 across at 1920 wide (smaller than the TV size).
 
 ## Navigation behaviour
+- [ ] (this fix) — Clicking the top bar with the mouse no longer keeps it on screen while you scroll (only keyboard / remote focus does).
 - [ ] 1da9033 — The top bar comes back as soon as you scroll up.
 - [ ] dbf8a97 — The top bar slides away when you scroll down (desktop only).
 - [ ] 29a638f — Back buttons return to the exact page, scroll position and row; Continue Watching has no repeats.
