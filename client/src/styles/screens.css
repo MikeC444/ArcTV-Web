@@ -343,6 +343,7 @@
 .genrepick__panel { position: absolute; z-index: 30; top: calc(100% + 10px); left: 0; width: max-content; max-width: calc(100vw - 2 * var(--pad-x)); padding: calc(14 * var(--dp)) calc(16 * var(--dp)) calc(18 * var(--dp)); border-radius: calc(16 * var(--dp)); background: #17171a; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.65); }
 .genrepick__all { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; min-height: 44px; padding: 0 calc(12 * var(--dp)); margin-bottom: calc(8 * var(--dp)); border: 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1); border-radius: 0; background: none; color: var(--text); font: inherit; font-weight: 700; font-size: calc(18 * var(--dp)); text-align: left; cursor: pointer; }
 .genrepick__grid { display: grid; grid-template-columns: repeat(2, minmax(calc(150 * var(--dp)), 1fr)); gap: 2px calc(24 * var(--dp)); }
+.sortpick .genrepick__grid { grid-template-columns: minmax(calc(190 * var(--dp)), 1fr); }
 .genrepick__option { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; padding: 0 calc(12 * var(--dp)); border: 0; border-radius: calc(8 * var(--dp)); background: none; color: var(--text); font: inherit; font-size: calc(16 * var(--dp)); text-align: left; cursor: pointer; }
 .genrepick__option:hover, .genrepick__option:focus-visible { background: rgba(255, 255, 255, 0.1); }
 .genrepick__option:focus-visible { outline: 2px solid var(--focus-border); outline-offset: -2px; }

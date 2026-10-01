@@ -14,6 +14,7 @@ import { BackButton } from "../components/BackButton";
 import { Pill } from "../components/Buttons";
 import { ContentCard } from "../components/ContentCard";
 import { GenrePicker } from "../components/GenrePicker";
+import { SortPicker } from "../components/SortPicker";
 import { GridSkeleton } from "../components/Skeletons";
 import { EmptyState, FullScreenError } from "../components/States";
 
@@ -256,11 +257,10 @@ export function MyListScreen() {
   return (
     <Page
       title="My List"
+      headExtra={<SortPicker<ListSort> options={LIST_SORTS} value={sort} onChange={setSort} />}
       filters={[
         <Pill key="ALL" label="All" selected={filter === "ALL"} large onClick={() => setFilter("ALL")} dataAttrs={{ autofocus: true }} />,
         <Pill key="WATCHED" label="Watched" selected={filter === "WATCHED"} large onClick={() => setFilter("WATCHED")} />,
-        <span key="sortLabel" className="t-label" style={{ alignSelf: "center", marginLeft: "calc(16 * var(--dp))", color: "var(--text-3)" }}>Sort by</span>,
-        ...LIST_SORTS.map((s) => <Pill key={s.id} label={s.label} selected={sort === s.id} large onClick={() => setSort(s.id)} />),
       ]}
     >
       {content.length === 0 ? (

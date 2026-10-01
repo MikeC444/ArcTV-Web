@@ -24,6 +24,7 @@ One sentence per update, newest first. When updating the Firestick app, tick the
 
 ## Home and lists
 - [ ] (blocked genres) — New Settings → Blocked Genres tab hides chosen genres from Home, Movies, TV Shows, Search, Genres and "You may also like" (stored per browser, not synced; the Firestick would need its own storage).
+- [ ] (sort drop-down) — My List's sort is now a "Sort by" drop-down beside the title (same style as the genre drop-down) instead of a row of buttons.
 - [ ] 800068e — My List has a "Sort by" row: Recently Added, A–Z, Highest Rated, Newest.
 - [ ] b7566d5 — Each title shows in only one Home row.
 - [ ] c0c9f2f — The hero's ten titles come from the enabled Home rows.
