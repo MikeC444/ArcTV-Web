@@ -148,6 +148,7 @@ Set on the **server only**. Nothing here is exposed to the browser and nothing h
 | `PORT` | no | Default `8080`. |
 | `TRUST_PROXY` | no | How many reverse proxies are in front (`0`–`3`, default `0`). `1` for a single proxy; **Render sends two addresses (a CDN in front of its proxy), so it usually needs `2`** — the start-up log line `[proxy]` says whether the value fits. Needed so visitors' addresses (rate limits) and HTTPS are read correctly. |
 | `CSP_EXTRA_CONNECT_SRC` | no | Extra origins for the Content-Security-Policy `connect-src`, comma separated. |
+| `TMDB_API_KEY` | no | Free TMDB key. Fills in cast photos and characters on Detail (Cinemeta sends names only). Kept on the server. |
 | `STREAM_RELAY` | no | Default `1`. The [stream relay](docs/PLAYBACK.md) that plays sources a browser can't fetch itself. `0` turns it off. Relayed video uses this server's bandwidth. |
 
 `.env.example` contains placeholders only; `.env*` files are git-ignored. The client bundle contains no configuration

@@ -33,6 +33,7 @@ You do **not** need the database URL, and the web service must never be given it
 | `PORT` | whatever the platform injects (default `8080`) |
 | `CSP_EXTRA_CONNECT_SRC` | leave empty unless you need extra origins |
 | `STREAM_RELAY` | `1` (default) or `0`. See "Stream relay" below. |
+| `TMDB_API_KEY` | optional. A free key from themoviedb.org (Settings → API: the "API Key" or the "API Read Access Token"). With it, Detail shows cast photos and characters that Cinemeta doesn't send. Set it as a secret; it never reaches the browser. Without it the site works as before, with grey icons. |
 
 The server refuses to start in production without a valid `SESSION_SECRET` and an `https://` API URL.
 
