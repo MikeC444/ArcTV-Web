@@ -12,11 +12,13 @@ interface ScrollRowProps {
   role?: string;
   ariaLabel?: string;
   tabIndex?: number;
+  /** Where the arrows' centre sits, measured from the strip's top (a CSS length): the middle of the pictures, not of the whole strip. */
+  navCenter?: string;
   children: ReactNode;
 }
 
 /** A sideways-scrolling strip with the same hover arrows the Home rows have, so a mouse (which only scrolls up and down) can reach the rest. */
-export function ScrollRow({ label, className, style, contentKey, role, ariaLabel, tabIndex, children }: ScrollRowProps) {
+export function ScrollRow({ label, className, style, contentKey, role, ariaLabel, tabIndex, navCenter, children }: ScrollRowProps) {
   const scroller = useRef<HTMLDivElement>(null);
   const [edges, setEdges] = useState({ left: false, right: false });
 
@@ -38,7 +40,7 @@ export function ScrollRow({ label, className, style, contentKey, role, ariaLabel
   const page = (direction: 1 | -1) => scroller.current?.scrollBy({ left: direction * scroller.current.clientWidth * 0.85, behavior: "smooth" });
 
   return (
-    <div className="row scrollrow">
+    <div className="row scrollrow" style={navCenter ? ({ ["--nav-center" as string]: navCenter } as CSSProperties) : undefined}>
       <button type="button" className="row__nav" data-side="left" data-visible={edges.left} aria-label={`Scroll ${label} left`} tabIndex={-1} onClick={() => page(-1)}>
         <MdChevronLeft />
       </button>

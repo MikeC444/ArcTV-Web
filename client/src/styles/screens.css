@@ -382,5 +382,27 @@
   /* the rating's centre on the buttons' centre: half a button (52 dp × --hb) above the row's bottom edge */
   .detail:not([data-compact="true"]) .detail__rating { bottom: calc(20 * var(--dp) + 26 * var(--dp) * var(--hb, 1)); transform: translateY(50%); }
 }
-/* The arrows' wrapper around the episode and cast strips: no row spacing of its own, and the strip keeps its own overlap margin. */
+/* The arrows' wrapper around the episode and cast strips: no row spacing of its own, and the strip keeps its own overlap margin.
+   --nav-center is where the arrows' centre sits from the strip's top: the middle of the episode picture / the cast photo, not of the whole strip. */
 .scrollrow { margin-bottom: 0; }
+.scrollrow .row__nav {
+  top: var(--nav-center, 50%);
+  transform: translateY(-50%);
+  width: calc(48 * var(--dp));
+  min-width: 44px;
+  height: calc(48 * var(--dp));
+  min-height: 44px;
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(20, 20, 23, 0.66);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  transition: opacity var(--t-fast) var(--ease), background var(--t-fast) var(--ease), color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
+}
+.scrollrow .row__nav svg { width: 26px; height: 26px; }
+.scrollrow .row__nav:hover, .scrollrow .row__nav:focus-visible { background: var(--brand-gradient); color: #07101a; border-color: transparent; transform: translateY(-50%) scale(1.08); }
+.scrollrow .row__nav[data-side="left"] { left: calc(var(--pad-x) / 2 - 6px); }
+.scrollrow .row__nav[data-side="right"] { right: calc(var(--pad-x) / 2 - 6px); }
