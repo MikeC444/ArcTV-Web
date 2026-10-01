@@ -92,7 +92,7 @@ export function CardActionsMenu() {
             {state.watched ? "Remove from Watched" : "Mark as watched"}
           </Surface>
           {providerId ? (
-            <Surface className="actionrow" onClick={() => go(routes.detail(providerId, content.type, content.id))}>
+            <Surface className="actionrow" onClick={() => go(routes.detail(providerId, content.type, content.id, content.title))}>
               <MdInfo />
               View Details
             </Surface>

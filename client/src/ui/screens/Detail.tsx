@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { MdAdd, MdCheck, MdCheckCircle, MdMoreVert, MdOutlineCheckCircle, MdPerson, MdPlayArrow, MdStar, MdTheaters } from "react-icons/md";
-import { useNavigate, useParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 import type { Content, ContentType, Episode, Season } from "../../domain/types";
 import type { LookupState } from "../../state/detailData";
 import { formatReleaseDate, formatRuntime } from "../../lib/format";
-import { routes } from "../../lib/routes";
+import { CINEMETA_PROVIDER_ID, idFromSlug, routes } from "../../lib/routes";
 import { useAuth } from "../../state/auth";
 import { useContinueWatching } from "../../state/continueWatching";
 import { useDetail } from "../../state/detailData";
@@ -20,11 +20,20 @@ import { FullScreenError } from "../components/States";
 import { ScrollRow } from "../components/ScrollRow";
 import { Surface } from "../components/Surface";
 
-export function DetailScreen() {
-  const params = useParams<{ providerId: string; type: string; id: string }>();
-  const providerId = params.providerId ?? "";
-  const id = params.id ?? "";
-  const type: ContentType = params.type === "TV_SHOW" ? "TV_SHOW" : "MOVIE";
+/**
+ * A title page. Reached by the long address (/detail/<addon>/<TYPE>/<id>) or, for Cinemeta titles, a readable one
+ * (/movies/inception-tt1375666, /tv-shows/prison-break-tt0455275) — `kind` says which of those two routes this is.
+ */
+export function DetailScreen({ kind }: { kind?: ContentType }) {
+  const params = useParams<{ providerId: string; type: string; id: string; slug: string }>();
+  if (kind) {
+    const slugId = idFromSlug(params.slug);
+    return slugId ? <DetailPage providerId={CINEMETA_PROVIDER_ID} type={kind} id={slugId} /> : <Navigate to={routes.home} replace />;
+  }
+  return <DetailPage providerId={params.providerId ?? ""} type={params.type === "TV_SHOW" ? "TV_SHOW" : "MOVIE"} id={params.id ?? ""} />;
+}
+
+function DetailPage({ providerId, type, id }: { providerId: string; type: ContentType; id: string }) {
   const watchedIds = useWatchedIds();
   const { state, trailer, releaseDate, reload } = useDetail(providerId, type, id, watchedIds);
 
@@ -208,7 +217,7 @@ function SimilarRow({ items }: { items: Content[] }) {
       <h2 className="t-title-lg" style={{ margin: 0, padding: `calc(6 * var(--dp)) var(--pad-x)` }}>You May Also Like</h2>
       <div className="row__scroller hide-scroll" style={{ ["--scale" as string]: 0.7 }}>
         {items.map((c) => (
-          <Surface key={c.id} to={c.providerId ? routes.detail(c.providerId, c.type, c.id) : undefined} className="similar__card" background="var(--surface)" onClick={() => stashDetailPreview(c)}>
+          <Surface key={c.id} to={c.providerId ? routes.detail(c.providerId, c.type, c.id, c.title) : undefined} className="similar__card" background="var(--surface)" onClick={() => stashDetailPreview(c)}>
             {(c.backdropUrl ?? c.posterUrl) ? <img className="card__img" src={(c.backdropUrl ?? c.posterUrl) as string} alt="" loading="lazy" referrerPolicy="no-referrer" /> : null}
             <span className="similar__shade" />
             <span className="similar__text">

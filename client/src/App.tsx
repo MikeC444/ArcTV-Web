@@ -88,6 +88,8 @@ export function App() {
           <Route path="settings/addons/add" element={<RequireAuth><AddAddonScreen /></RequireAuth>} />
           <Route path="settings/:tab" element={<RequireAuth><SettingsScreen /></RequireAuth>} />
           <Route path="detail/:providerId/:type/:id" element={<DetailScreen />} />
+          <Route path="movies/:slug" element={<DetailScreen kind="MOVIE" />} />
+          <Route path="tv-shows/:slug" element={<DetailScreen kind="TV_SHOW" />} />
           <Route path="sources/:providerId/:type/:id/:season/:episode" element={<RequireAuth><SourcesScreen /></RequireAuth>} />
           <Route path="*" element={<NotFound />} />
         </Route>

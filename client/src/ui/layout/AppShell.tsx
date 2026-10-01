@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { getModality } from "../../lib/modality";
+import { isDetailPath } from "../../lib/routes";
 import { useScrollMemory } from "../../lib/scrollMemory";
 import { CardActionsMenu } from "../components/CardActionsMenu";
 import { OfflineBanner } from "../components/OfflineBanner";
@@ -23,7 +24,7 @@ export function AppShell() {
   const { pathname } = useLocation();
   useRouteFocus();
   useScrollMemory();
-  const overHero = pathname === "/" || pathname.startsWith("/detail");
+  const overHero = pathname === "/" || isDetailPath(pathname);
   const fullScreen = pathname.startsWith("/sources"); // like the TV's SourcesScreen: its own back arrow, no top navigation
   return (
     <>

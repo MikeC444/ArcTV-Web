@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { MdCategory, MdHome, MdMovie, MdOutlineBookmarkBorder, MdSearch, MdSettings, MdTv } from "react-icons/md";
-import { NAV_ITEMS, routes } from "../../lib/routes";
+import { isDetailPath, NAV_ITEMS, routes } from "../../lib/routes";
 import { useAuth } from "../../state/auth";
 import { MangoLogo } from "./Logo";
 import { Surface } from "./Surface";
 
 /** Which nav item a path belongs to (Detail counts as Home, like the TV app). */
 export function selectedNavIndex(pathname: string): number {
-  if (pathname === "/" || pathname.startsWith("/detail")) return 0;
+  if (pathname === "/" || isDetailPath(pathname)) return 0;
   const found = NAV_ITEMS.findIndex((item, i) => i > 0 && (pathname === item.to || pathname.startsWith(`${item.to}/`)));
   return found < 0 ? 0 : found;
 }

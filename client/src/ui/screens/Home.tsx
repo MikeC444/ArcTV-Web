@@ -117,7 +117,7 @@ function Hero({ items }: { items: Content[] }) {
                 onClick={() => {
                   if (!providerId) return;
                   stashDetailPreview(item);
-                  navigate(routes.detail(providerId, item.type, item.id));
+                  navigate(routes.detail(providerId, item.type, item.id, item.title));
                 }}
               />
               <span className="hero__actlabel" aria-hidden="true">

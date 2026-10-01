@@ -21,7 +21,7 @@ export function ContentCard({ content, style = "STANDARD", autoFocus, to }: Cont
   const progress = content.watchProgress;
   const fraction = progress && progress.durationMs > 0 ? Math.min(1, Math.max(0, progress.positionMs / progress.durationMs)) : 0;
   const providerId = content.providerId ?? "";
-  const target = to ?? (providerId ? routes.detail(providerId, content.type, content.id) : undefined);
+  const target = to ?? (providerId ? routes.detail(providerId, content.type, content.id, content.title) : undefined);
 
   return (
     <div className="card" data-cw={isCw || undefined}>
