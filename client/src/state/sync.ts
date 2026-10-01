@@ -49,7 +49,8 @@ export async function syncAll(): Promise<void> {
   if (settings.ok && watchlist && continueWatching && addons.ok && settings.empty && addons.empty && useMyList.getState().items.length === 0 && useContinueWatching.getState().items.length === 0) {
     useAddons.getState().bootstrapDefault();
   }
-  void useMyList.getState().backfillWatchedFromHistory();
+  // Only once the cloud list has really been read: an unread (offline) list looks empty and would wrongly count as a fresh account.
+  if (watchlist) void useMyList.getState().backfillWatchedFromHistory();
 }
 
 export function startBackgroundSync(): void {

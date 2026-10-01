@@ -62,6 +62,14 @@ describe("watched catch-up from history", () => {
     expect(useMyList.getState().items).toHaveLength(0);
   });
 
+  it("leaves an account that already has a My List alone — a new browser or address must not put removed titles back", async () => {
+    respond = answer;
+    hydrateAll("u1");
+    useMyList.setState({ items: [{ id: "tt9", type: "MOVIE", title: "Kept", posterUrl: null, backdropUrl: null, year: null, rating: null, providerId: "prov", watched: false, updatedAt: "2026-01-01T00:00:00.000Z" }] });
+    await useMyList.getState().backfillWatchedFromHistory();
+    expect(useMyList.getState().items.map((i) => i.id)).toEqual(["tt9"]); // tt1 / tt2 (removed elsewhere) stay out
+  });
+
   it("skips a dismissed title even on a browser that has not run the catch-up yet", async () => {
     respond = answer;
     hydrateAll("u1");

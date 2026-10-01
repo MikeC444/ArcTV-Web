@@ -257,6 +257,12 @@ export const useMyList = create<MyListState>((set, get) => {
       const flag = backfillFlagKey(userId);
       const dismissed = new Set(readJson<string[]>(dismissedKey(userId), []));
       if (readJson<boolean>(flag, false)) return;
+      // The catch-up is for an account whose My List is empty. One that already has titles has been used before — here or on another device or
+      // address — and the titles it removed are only remembered by the browser that removed them, so a fresh browser would put them all back.
+      if (get().items.length > 0) {
+        writeJson(flag, true);
+        return;
+      }
       try {
         let before: string | undefined;
         for (;;) {
