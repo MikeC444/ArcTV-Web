@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { MdCategory, MdHome, MdMovie, MdOutlineBookmarkBorder, MdSearch, MdSettings, MdTv } from "react-icons/md";
 import { NAV_ITEMS, routes } from "../../lib/routes";
@@ -26,11 +27,26 @@ const TABS = [
 export function TopNav({ transparent = false }: { transparent?: boolean }) {
   const { pathname } = useLocation();
   const selected = selectedNavIndex(pathname);
+  // The bar slides away while scrolling down and comes back on scroll up (or at the top) (or when it takes keyboard / remote focus).
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    let last = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (y <= 40) setScrolled(false);
+      else if (y > last + 4) setScrolled(true); // scrolling down hides the bar
+      else if (y < last - 4) setScrolled(false); // scrolling up brings it back
+      last = y;
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [pathname]);
   const guest = useAuth((s) => s.status !== "signedIn");
   // Without an account the Settings link becomes "Sign In" (and Settings itself is unreachable).
   const items = guest ? NAV_ITEMS.map((item) => (item.to === "/settings" ? { label: "Sign In", to: routes.auth } : item)) : NAV_ITEMS;
   return (
-    <header className="topnav" data-transparent={transparent} role="banner">
+    <header className="topnav" data-transparent={transparent} data-scrolled={scrolled} role="banner">
       <Link to="/" className="topnav__logo tvs" aria-label="Mango TV — Home" style={{ ["--tvs-radius" as string]: "6px", ["--tvs-border" as string]: "var(--text)" }}>
         <MangoLogo size="1em" />
       </Link>

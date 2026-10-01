@@ -138,6 +138,11 @@
   gap: calc(56 * var(--dp));
   padding: calc(8 * var(--dp)) var(--pad-x) calc(20 * var(--dp));
 }
+/* Desktop: the bar slides out of view while the page is scrolled (phones keep their bottom tab bar). */
+@media (min-width: 721px) {
+  .topnav { transition: transform 300ms ease, opacity 300ms ease; }
+  .topnav[data-scrolled="true"]:not(:focus-within) { transform: translateY(-100%); opacity: 0; pointer-events: none; }
+}
 .topnav::before {
   content: "";
   position: absolute;
