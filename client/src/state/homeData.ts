@@ -23,7 +23,7 @@ export type HomeState =
   | { kind: "loading" }
   | { kind: "empty" }
   | { kind: "error"; message: string }
-  | { kind: "success"; hero: Content[]; sections: HomeSection[] };
+  | { kind: "success"; hero: Content[]; sections: HomeSection[]; pool: Content[] };
 
 interface HomeCache {
   at: number;
@@ -166,7 +166,9 @@ export function useHome(): { state: HomeState; reload(): void; ready: boolean } 
       if (titles.length > 0) heroLock = { key: lockKey, titles };
     }
     const hero = (heroLock?.titles ?? []).map((c) => (watchedIds.has(c.id) ? { ...c, watched: true } : c));
-    if (hero.length > 0 || sections.length > 0) return { kind: "success", hero, sections };
+    // every movie the addons listed on Home (hidden rows included) is a candidate for "Picked for you"
+    const recommendationPool = distinctBy(rawSections.flatMap((s) => s.items), (c) => c.id).filter((c) => c.type === "MOVIE");
+    if (hero.length > 0 || sections.length > 0) return { kind: "success", hero, sections, pool: recommendationPool };
     if (failed) return { kind: "error", message: "Couldn't reach your installed addons. Check your connection and try again." };
     return { kind: "empty" };
   }, [fetched, addonsReady, raw, prefs, blocked, cw, watchedIds, cacheOnly, failed, complete]);

@@ -12,6 +12,7 @@ import { useAddons, CINEMETA_MANIFEST_URL } from "../../state/addons";
 import { useAuth } from "../../state/auth";
 import { useAddonsReady } from "../../state/hooks";
 import { buildGenreList } from "./Genres";
+import { useHasPlus } from "../../state/plusAccess";
 import { useBlockedGenres } from "../../state/blockedGenres";
 import { useSettings } from "../../state/settings";
 import { signOutAndWipe } from "../../state/sync";
@@ -30,24 +31,28 @@ const CATEGORIES: Array<{ id: Tab; icon: ReactNode; title: string; subtitle: str
   { id: "subtitles", icon: <MdSubtitles />, title: "Subtitles", subtitle: "Default on/off and preferred language" },
 ];
 const isTab = (value: string | undefined): value is Tab => CATEGORIES.some((c) => c.id === value);
+/** ArcTV Plus is hidden from everyone but the private preview until it launches. */
+const visibleCategories = (hasPlus: boolean) => CATEGORIES.filter((c) => c.id !== "plus" || hasPlus);
 
 /** ui/settings/SettingsScreen.kt — two panes: categories on the left, the selected category's settings on the right. */
 export function SettingsScreen() {
   const { tab } = useParams<{ tab?: string }>();
   const navigate = useNavigate();
-  const selected: Tab = isTab(tab) ? tab : "account";
+  const hasPlus = useHasPlus();
+  const categories = visibleCategories(hasPlus);
+  const selected: Tab = isTab(tab) && categories.some((c) => c.id === tab) ? tab : "account";
   const category = CATEGORIES.find((c) => c.id === selected)!;
   useEffect(() => {
     document.title = `Settings · ${category.title} · Arc TV`;
   }, [category]);
-  if (tab && !isTab(tab) && tab !== "addons") return <Navigate to="/settings" replace />;
+  if (tab && (!isTab(tab) || (tab === "plus" && !hasPlus)) && tab !== "addons") return <Navigate to="/settings" replace />;
 
   return (
     <div className="page">
       <h1 className="t-display-md page__title">Settings</h1>
       <div className="settings">
         <nav className="settings__side" aria-label="Settings categories">
-          {CATEGORIES.map((c) => (
+          {categories.map((c) => (
             <Surface key={c.id} className="settings__cat" onClick={() => navigate(routes.settings(c.id))} alwaysBorder={c.id === selected} borderColor="var(--text)" scale={1.02} ariaCurrent={c.id === selected ? "page" : undefined} dataAttrs={{ selected: c.id === selected, autofocus: c.id === selected }}>
               {c.icon}
               <span className="t-title-md">{c.title}</span>

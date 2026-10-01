@@ -63,6 +63,8 @@ export function ContentCard({ content, style = "STANDARD", autoFocus, to }: Cont
         progress?.seasonNumber != null && progress.episodeNumber != null ? (
           <div className="card__sub ellipsis">{`S${progress.seasonNumber} E${progress.episodeNumber}`}</div>
         ) : null
+      ) : content.recommendReason ? (
+        <div className="card__sub card__why clamp-2">{content.recommendReason}</div>
       ) : content.year ? (
         <div className="card__sub">{content.year}</div>
       ) : null}

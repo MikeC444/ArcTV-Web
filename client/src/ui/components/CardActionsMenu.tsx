@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
-import { MdAdd, MdCheck, MdCheckCircle, MdDelete, MdInfo, MdList, MdOutlineCheckCircle, MdPlayArrow } from "react-icons/md";
+import { MdAdd, MdCheck, MdCheckCircle, MdDelete, MdInfo, MdList, MdOutlineCheckCircle, MdPlayArrow, MdThumbDown, MdThumbUp, MdOutlineThumbDown, MdOutlineThumbUp } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import { formatElapsed } from "../../lib/format";
 import { routes } from "../../lib/routes";
@@ -8,7 +8,9 @@ import { useCardMenu } from "../../state/cardMenu";
 import { useContinueWatching } from "../../state/continueWatching";
 import { useAccountAction } from "../../state/hooks";
 import { findLastStreamId } from "../../state/lastSource";
+import { useFeedback } from "../../state/feedback";
 import { useMyList } from "../../state/myList";
+import { useHasPlus } from "../../state/plusAccess";
 import { Surface } from "./Surface";
 
 /** ui/components/CardActionsMenu.kt — what holding OK on a poster (or right-click / long-press) opens. */
@@ -21,6 +23,9 @@ export function CardActionsMenu() {
   const toggle = useAccountAction(useMyList((s) => s.toggle));
   const toggleWatched = useAccountAction(useMyList((s) => s.toggleWatched));
   const reportProgress = useContinueWatching((s) => s.reportProgress);
+  const hasPlus = useHasPlus();
+  const feedback = useFeedback((s) => (content ? s.entries[content.id]?.value : undefined));
+  const toggleFeedback = useAccountAction(useFeedback((s) => s.toggle));
   const first = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -91,6 +96,30 @@ export function CardActionsMenu() {
             {state.watched ? <MdCheckCircle /> : <MdOutlineCheckCircle />}
             {state.watched ? "Remove from Watched" : "Mark as watched"}
           </Surface>
+          {hasPlus && content.type === "MOVIE" ? (
+            <>
+              <Surface
+                className="actionrow"
+                onClick={() => {
+                  toggleFeedback(content, "like");
+                  close();
+                }}
+              >
+                {feedback === "like" ? <MdThumbUp /> : <MdOutlineThumbUp />}
+                {feedback === "like" ? "Remove like" : "Like"}
+              </Surface>
+              <Surface
+                className="actionrow"
+                onClick={() => {
+                  toggleFeedback(content, "dislike");
+                  close();
+                }}
+              >
+                {feedback === "dislike" ? <MdThumbDown /> : <MdOutlineThumbDown />}
+                {feedback === "dislike" ? "Remove “Not for me”" : "Not for me"}
+              </Surface>
+            </>
+          ) : null}
           {providerId ? (
             <Surface className="actionrow" onClick={() => go(routes.detail(providerId, content.type, content.id, content.title))}>
               <MdInfo />

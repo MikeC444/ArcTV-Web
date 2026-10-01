@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { MdAdd, MdCheck, MdInfo, MdPause, MdPlayArrow, MdTheaters } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
-import type { Content } from "../../domain/types";
+import type { Content, HomeSection } from "../../domain/types";
 import { formatRuntime } from "../../lib/format";
 import { sharpBackdrop } from "../../lib/imageSize";
 import { preloadHero } from "../../lib/preload";
 import { routes } from "../../lib/routes";
 import { useHome } from "../../state/homeData";
+import { usePickedForYou } from "../../state/recommendations";
 import { useAuth } from "../../state/auth";
 import { useTrailer } from "../../state/trailer";
 import { useAccountAction, useSavedIds } from "../../state/hooks";
@@ -171,8 +172,16 @@ function Hero({ items }: { items: Content[] }) {
   );
 }
 
+/** "Picked for you" goes right after Continue Watching (or first when there is none). */
+function withPicked(sections: HomeSection[], picked: HomeSection | null): HomeSection[] {
+  if (!picked) return sections;
+  const at = sections[0]?.style === "CONTINUE_WATCHING" ? 1 : 0;
+  return [...sections.slice(0, at), picked, ...sections.slice(at)];
+}
+
 export function Home() {
   const { state, reload } = useHome();
+  const picked = usePickedForYou(state.kind === "success" ? state.pool : undefined);
   useEffect(() => {
     document.title = "Arc TV";
   }, []);
@@ -184,7 +193,7 @@ export function Home() {
     <div className="home">
       <Hero items={state.hero} />
       <div className="home__rows">
-        {state.sections.map((section, index) => (
+        {withPicked(state.sections, picked.section).map((section, index) => (
           <LazyRow key={section.id} section={section} eager={index < 3} />
         ))}
       </div>

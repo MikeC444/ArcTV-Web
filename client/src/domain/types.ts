@@ -46,6 +46,8 @@ export interface Content {
   genres: Genre[];
   cast: CastMember[];
   director?: string | null;
+  /** Why "Picked for you" chose this title, taken from what actually raised its score. Only set on that row. */
+  recommendReason?: string | null;
   providerId?: string | null;
   watchProgress?: WatchProgress | null;
   seasons: Season[];

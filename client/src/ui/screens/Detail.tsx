@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { MdAdd, MdCheck, MdCheckCircle, MdMoreVert, MdOutlineCheckCircle, MdPerson, MdPlayArrow, MdStar, MdTheaters } from "react-icons/md";
+import { MdAdd, MdCheck, MdCheckCircle, MdMoreVert, MdOutlineCheckCircle, MdPerson, MdPlayArrow, MdStar, MdTheaters, MdThumbDown, MdThumbUp, MdOutlineThumbDown, MdOutlineThumbUp } from "react-icons/md";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import type { Content, ContentType, Episode, Season } from "../../domain/types";
 import type { LookupState } from "../../state/detailData";
@@ -18,6 +18,8 @@ import { ContentRow } from "../components/ContentRow";
 import { HomeSkeleton } from "../components/Skeletons";
 import { FullScreenError } from "../components/States";
 import { ScrollRow } from "../components/ScrollRow";
+import { useFeedback } from "../../state/feedback";
+import { useHasPlus } from "../../state/plusAccess";
 import { Surface } from "../components/Surface";
 
 /**
@@ -56,6 +58,9 @@ function DetailContent({ content, similar, providerId, trailer, releaseDate }: {
   const openTrailer = useAccountAction((videoId: string | null) => {
     if (videoId) window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`, "_blank", "noopener,noreferrer");
   });
+  const hasPlus = useHasPlus();
+  const feedback = useFeedback((s) => s.entries[content.id]?.value);
+  const toggleFeedback = useAccountAction(useFeedback((s) => s.toggle));
   const resume = useContinueWatching((s) => s.items.find((e) => e.providerId === providerId && e.contentId === content.id && e.contentType === content.type));
   const inList = items.some((i) => i.id === content.id);
   const [expanded, setExpanded] = useState(false);
@@ -120,6 +125,12 @@ function DetailContent({ content, similar, providerId, trailer, releaseDate }: {
               <div className="detail__extra">
                 <IconButton compact={compact} icon={isWatched ? <MdCheckCircle /> : <MdOutlineCheckCircle />} label={isWatched ? "Remove from Watched" : "Mark as watched"} onClick={() => toggleWatched(withProvider)} />
                 <IconButton compact={compact} icon={inList ? <MdCheck /> : <MdAdd />} label={inList ? "Remove from Watchlist" : "Add to Watchlist"} onClick={() => toggle(withProvider)} />
+                {hasPlus && content.type === "MOVIE" ? (
+                  <>
+                    <IconButton compact={compact} icon={feedback === "like" ? <MdThumbUp /> : <MdOutlineThumbUp />} label={feedback === "like" ? "Remove like" : "Like"} ariaPressed={feedback === "like"} onClick={() => toggleFeedback(content, "like")} />
+                    <IconButton compact={compact} icon={feedback === "dislike" ? <MdThumbDown /> : <MdOutlineThumbDown />} label={feedback === "dislike" ? "Remove “Not for me”" : "Not for me"} ariaPressed={feedback === "dislike"} onClick={() => toggleFeedback(content, "dislike")} />
+                  </>
+                ) : null}
               </div>
             ) : null}
             <IconButton compact={compact} icon={<MdMoreVert />} label="More options" ariaPressed={expanded} onClick={() => setExpanded((e) => !e)} />

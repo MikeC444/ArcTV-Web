@@ -1,3 +1,4 @@
+import { featuresFromMeta, type Features } from "./recommend/features";
 import { distinctBy, interleave } from "../lib/format";
 import { AddonHttpError, describeAddonError, fetchCatalog, fetchMeta, fetchStreams } from "./stremio/client";
 import { metaToContent, previewToContent, streamToStream } from "./stremio/mapper";
@@ -35,6 +36,8 @@ export interface CatalogProvider {
   search(query: string): Promise<Content[]>;
   getMoreItemsByType(type: ContentType, page: number, genre?: string): Promise<Content[]>;
   getMoreGenreItems(genre: string, page: number): Promise<Content[]>;
+  /** Genres / directors / cast of one title (normalised), for the recommendation engine. Null when the addon has no metadata for it. Never throws. */
+  getFeatures?(type: ContentType, id: string): Promise<Features | null>;
 }
 
 const SUPPORTED_CATALOG_TYPES = new Set(["movie", "series"]);
@@ -152,6 +155,15 @@ export class StremioAddonProvider implements CatalogProvider {
     const perBase = await Promise.all(this.supported.filter(isBaseCatalog).map((catalog) => this.safeCatalog(catalog, {})));
     const needle = query.toLowerCase();
     return distinctBy(interleave(perBase), (c) => c.id).filter((c) => c.title.toLowerCase().includes(needle));
+  }
+
+  async getFeatures(type: ContentType, id: string): Promise<Features | null> {
+    try {
+      const meta = await fetchMeta(this.manifestUrl, stremioTypeOf(type), id);
+      return meta ? featuresFromMeta(meta) : null;
+    } catch {
+      return null;
+    }
   }
 
   async getDetails(type: ContentType, id: string): Promise<Content | null> {

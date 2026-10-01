@@ -1,7 +1,9 @@
 import { useAddons } from "./addons";
 import { useAuth } from "./auth";
+import { useFeedback } from "./feedback";
 import { useContinueWatching } from "./continueWatching";
 import { useMyList } from "./myList";
+import { clearRecommendationCache } from "./recommendations";
 import { wipeUser } from "./persist";
 import { useSettings } from "./settings";
 
@@ -22,6 +24,7 @@ export function hydrateAll(userId: string): void {
   useMyList.getState().hydrate(userId);
   useContinueWatching.getState().hydrate(userId);
   useAddons.getState().hydrate(userId);
+  useFeedback.getState().hydrate(userId);
 }
 
 export async function retryPendingAll(): Promise<void> {
@@ -81,6 +84,8 @@ export function resetAllStores(): void {
   useMyList.getState().reset();
   useContinueWatching.getState().reset();
   useAddons.getState().reset();
+  useFeedback.getState().reset();
+  clearRecommendationCache();
 }
 
 /** Explicit sign-out: flush → revoke → wipe. Never leaves this user's data or queued writes behind. */

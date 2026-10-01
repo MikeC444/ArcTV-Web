@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Route, Routes, useParams } from "react-router-dom";
+import { installPlusPreviewFlag } from "./state/plusAccess";
 import { installModalityTracking } from "./lib/modality";
 import { installSpatialNavigation } from "./lib/spatialNav";
 import { useAuth } from "./state/auth";
@@ -51,6 +52,7 @@ function NotFound() {
 export function App() {
   const init = useAuth((s) => s.init);
   useEffect(() => {
+    installPlusPreviewFlag();
     const removeModality = installModalityTracking();
     const removeNav = installSpatialNavigation();
     void init();

@@ -6,7 +6,7 @@ test.describe("settings", () => {
     const account = await newAccount("settings");
     await openSignedIn(page, account, "/settings");
     await expect(page.getByRole("heading", { name: "Settings", level: 1 })).toBeVisible();
-    for (const name of ["Account", "Addons", "Home Rows", "Blocked Genres", "ArcTV Plus", "Sounds", "Subtitles"]) await expect(page.locator(".settings__cat", { hasText: name })).toBeVisible();
+    for (const name of ["Account", "Addons", "Home Rows", "Blocked Genres", "Sounds", "Subtitles"]) await expect(page.locator(".settings__cat", { hasText: name })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Account", level: 2 })).toBeVisible();
     await expect(page.getByText("Manage your ArcTV account")).toBeVisible();
     await shot(page, "settings");
