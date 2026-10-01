@@ -375,4 +375,3 @@
   .detail__rating, .detail[data-compact] .detail__rating { position: absolute; top: calc(var(--nav-h) + 8px); right: var(--pad-x); bottom: auto; margin: 0; align-self: auto; }
   .detail__back { position: fixed; top: calc(var(--nav-h) + 8px + env(safe-area-inset-top)); z-index: 44; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6)); }
 }
-.detail__below + .seasons { margin-top: calc(28 * var(--dp)); }
