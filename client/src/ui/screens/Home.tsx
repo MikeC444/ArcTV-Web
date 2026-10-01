@@ -102,18 +102,14 @@ function Hero({ items }: { items: Content[] }) {
                 My List
               </span>
             </span>
-            <span className="hero__act" data-act="trailer">
-              <IconButton
-                icon={<MdTheaters />}
-                label="Trailer"
-                disabled={isCurrent && signedIn && trailer.kind !== "found"}
-                title={isCurrent && signedIn && trailer.kind === "notFound" ? "No trailer found for this title" : "Trailer"}
-                onClick={() => openTrailer(trailer.kind === "found" ? trailer.value : null)}
-              />
-              <span className="hero__actlabel" aria-hidden="true">
-                Trailer
-              </span>
-            </span>
+            <MangoButton
+              text="Trailer"
+              icon={<MdTheaters />}
+              className="hero__trailer"
+              disabled={isCurrent && signedIn && trailer.kind !== "found"}
+              title={isCurrent && signedIn && trailer.kind === "notFound" ? "No trailer found for this title" : undefined}
+              onClick={() => openTrailer(trailer.kind === "found" ? trailer.value : null)}
+            />
             <span className="hero__act" data-act="info">
               <IconButton
                 icon={<MdInfo />}

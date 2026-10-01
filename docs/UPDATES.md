@@ -25,7 +25,7 @@ One sentence per update, newest first. When updating the Firestick app, tick the
 - [ ] 29a638f — Back buttons return to the exact page, scroll position and row; Continue Watching has no repeats.
 
 ## Home and lists
-- [ ] (hero trailer) — The Home hero has a Trailer button beside My List and Info (looked up once per slide, dimmed when a title has no trailer; visitors are asked to sign in).
+- [ ] (hero trailer) — The Home hero has a Trailer button styled like the title page's (looked up once per slide, dimmed when a title has no trailer; visitors are asked to sign in).
 - [ ] (removed titles stay removed) — Fix: titles removed from My List / Watched no longer reappear after signing back in (the one-time "watched" catch-up from history was re-running on every sign-in; it now runs once per browser and skips removed titles) — the Firestick app may have the same catch-up.
 - [ ] (blocked genres) — New Settings → Blocked Genres tab hides chosen genres from Home, Movies, TV Shows, Search, Genres and "You may also like" (stored per browser, not synced; the Firestick would need its own storage).
 - [ ] (sort drop-down) — My List's sort is now a "Sort by" drop-down beside the title (same style as the genre drop-down) instead of a row of buttons.
