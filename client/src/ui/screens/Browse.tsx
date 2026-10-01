@@ -223,20 +223,39 @@ export const MoviesScreen = () => <TypeScreen title="Movies" type="MOVIE" />;
 export const TvShowsScreen = () => <TypeScreen title="TV Shows" type="TV_SHOW" />;
 export const GenreResultsScreen = ({ genre }: { genre: string }) => <CatalogPage title={genre} pager={usePager({ type: "genre", value: genre })} emptyMessage={`Nothing found for ${genre} right now.`} back={routes.genres} />;
 
-/** MyListScreen.kt — newest-added first, All / Watched filter. */
+type ListSort = "RECENT" | "TITLE" | "HIGHEST_RATED" | "NEWEST";
+const LIST_SORTS: Array<{ id: ListSort; label: string }> = [
+  { id: "RECENT", label: "Recently Added" },
+  { id: "TITLE", label: "A–Z" },
+  { id: "HIGHEST_RATED", label: "Highest Rated" },
+  { id: "NEWEST", label: "Newest" },
+];
+
+const sortSaved = (items: SavedListItem[], sort: ListSort): SavedListItem[] => {
+  const recent = items.slice().reverse();
+  if (sort === "RECENT") return recent;
+  if (sort === "TITLE") return recent.sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: "base" }));
+  if (sort === "HIGHEST_RATED") return recent.sort((a, b) => (b.rating ?? -1) - (a.rating ?? -1));
+  return recent.sort((a, b) => (b.year ?? -1) - (a.year ?? -1));
+};
+
+/** MyListScreen.kt — All / Watched filter, sorted by recently added (default), A–Z, rating or year. */
 export function MyListScreen() {
   const items = useMyList((s) => s.items);
   const [filter, setFilter] = useState<"ALL" | "WATCHED">("ALL");
+  const [sort, setSort] = useState<ListSort>("RECENT");
   const content = useMemo<Content[]>(() => {
     const filtered = filter === "WATCHED" ? items.filter((i) => i.watched) : items;
-    return filtered.slice().reverse().map(savedToContent);
-  }, [items, filter]);
+    return sortSaved(filtered, sort).map(savedToContent);
+  }, [items, filter, sort]);
   return (
     <Page
       title="My List"
       filters={[
         <Pill key="ALL" label="All" selected={filter === "ALL"} large onClick={() => setFilter("ALL")} dataAttrs={{ autofocus: true }} />,
         <Pill key="WATCHED" label="Watched" selected={filter === "WATCHED"} large onClick={() => setFilter("WATCHED")} />,
+        <span key="sortLabel" className="t-label" style={{ alignSelf: "center", marginLeft: "calc(16 * var(--dp))", color: "var(--text-3)" }}>Sort by</span>,
+        ...LIST_SORTS.map((s) => <Pill key={s.id} label={s.label} selected={sort === s.id} large onClick={() => setSort(s.id)} />),
       ]}
     >
       {content.length === 0 ? (
