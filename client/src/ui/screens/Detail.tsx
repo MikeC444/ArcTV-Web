@@ -17,6 +17,7 @@ import { BackButton } from "../components/BackButton";
 import { ContentRow } from "../components/ContentRow";
 import { HomeSkeleton } from "../components/Skeletons";
 import { FullScreenError } from "../components/States";
+import { ScrollRow } from "../components/ScrollRow";
 import { Surface } from "../components/Surface";
 
 export function DetailScreen() {
@@ -161,7 +162,7 @@ function SeasonsSection({ seasons, initialSeason, onPlay }: { seasons: Season[];
         <h3 className="t-headline-sm" style={{ margin: 0 }}>{season.name}</h3>
         <span className="c-text-3 t-body-md">{season.episodes.length} Episodes</span>
       </div>
-      <div className="row__scroller hide-scroll seasons__eps" style={{ ["--scale" as string]: 1 }}>
+      <ScrollRow label={season.name} className="row__scroller hide-scroll seasons__eps" style={{ ["--scale" as string]: 1 }} contentKey={season.seasonNumber}>
         {season.episodes.map((episode) => (
           <div className="episode" key={episode.id}>
             <Surface className="episode__thumb" background="var(--surface-high)" onClick={() => onPlay(episode)} ariaLabel={`Play episode ${episode.episodeNumber}: ${episode.title}`}>
@@ -175,7 +176,7 @@ function SeasonsSection({ seasons, initialSeason, onPlay }: { seasons: Season[];
             {episode.description ? <p className="c-text-2 t-body-md clamp-2" style={{ marginTop: "calc(4 * var(--dp))" }}>{episode.description}</p> : null}
           </div>
         ))}
-      </div>
+      </ScrollRow>
     </section>
   );
 }
@@ -185,7 +186,7 @@ function CastRow({ cast, compact }: { cast: Content["cast"]; compact: boolean })
   return (
     <section className="cast" data-compact={compact} aria-label="Cast">
       <h2 className={compact ? "t-title-lg" : "t-headline-sm"} style={{ margin: 0, padding: `0 0 calc(${compact ? 6 : 12} * var(--dp)) var(--pad-x)` }}>Cast</h2>
-      <div className="row__scroller hide-scroll cast__list" style={{ ["--scale" as string]: 1 }} role="group" aria-label="Cast members" tabIndex={0}>
+      <ScrollRow label="Cast" className="row__scroller hide-scroll cast__list" style={{ ["--scale" as string]: 1 }} contentKey={cast.length} role="group" ariaLabel="Cast members" tabIndex={0}>
         {cast.map((member) => (
           <div className="cast__member" key={member.name}>
             <span className="cast__avatar" aria-hidden="true">
@@ -195,7 +196,7 @@ function CastRow({ cast, compact }: { cast: Content["cast"]; compact: boolean })
             {member.role ? <span className="ellipsis t-label-sm c-text-2">{member.role}</span> : null}
           </div>
         ))}
-      </div>
+      </ScrollRow>
     </section>
   );
 }

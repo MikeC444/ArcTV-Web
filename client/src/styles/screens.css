@@ -382,3 +382,5 @@
   /* the rating's centre on the buttons' centre: half a button (52 dp × --hb) above the row's bottom edge */
   .detail:not([data-compact="true"]) .detail__rating { bottom: calc(20 * var(--dp) + 26 * var(--dp) * var(--hb, 1)); transform: translateY(50%); }
 }
+/* The arrows' wrapper around the episode and cast strips: no row spacing of its own, and the strip keeps its own overlap margin. */
+.scrollrow { margin-bottom: 0; }
