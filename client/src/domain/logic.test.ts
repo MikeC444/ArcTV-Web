@@ -8,7 +8,7 @@ import { decideProgress, nextEpisodeAfter, nextHoldSeekDelta } from "../state/pr
 import { buildGenreList } from "../ui/screens/Genres";
 import { validateCredentials } from "../state/auth";
 import { sortContent } from "../ui/screens/Browse";
-import { sortStreams } from "../ui/screens/Sources";
+import { orderSources, sortStreams } from "../ui/screens/Sources";
 import { recommendedStreamId } from "../state/sourcesData";
 import { detectDeviceCaps } from "./deviceSupport";
 import type { Content, Stream } from "./types";
@@ -209,6 +209,24 @@ describe("catalog and source sorting", () => {
     expect(sortStreams(list, "QUALITY", anyDevice).map((x) => x.id)).toEqual(["4k-hi", "4k-low", "720"]);
     expect(sortStreams(list, "SEEDERS").map((x) => x.id)).toEqual(["720", "4k-hi", "4k-low"]);
     expect(sortStreams(list, "SIZE").map((x) => x.id)).toEqual(["4k-low", "4k-hi", "720"]);
+  });
+
+  it("puts the recommended source first whatever the filter and sort are", () => {
+    const list = [s("720", "HD_720P", 900, 1), s("4k-low", "UHD_4K", 5, 50), s("best", "FHD_1080P", 500, 20)];
+    const anyDevice = detectDeviceCaps({ canPlayType: () => "probably", hasMediaSource: true, userAgent: "Chrome/130 Safari/537.36" });
+    for (const sort of ["QUALITY", "SEEDERS", "SIZE"] as const) {
+      expect(orderSources(list, list, "best", sort, anyDevice).list[0]!.id, sort).toBe("best");
+    }
+    // sorted by size the rest follows biggest-first, with "best" lifted out of its own place
+    expect(orderSources(list, list, "best", "SIZE", anyDevice).list.map((x) => x.id)).toEqual(["best", "4k-low", "720"]);
+    // a filter that leaves it out doesn't remove it: it is still the first row, and "rest" is only what the filter kept
+    const only720 = list.filter((x) => x.id === "720");
+    const filtered = orderSources(list, only720, "best", "SIZE", anyDevice);
+    expect(filtered.list.map((x) => x.id)).toEqual(["best", "720"]);
+    expect(filtered.rest.map((x) => x.id)).toEqual(["720"]);
+    // when it is among the filtered it appears once; with no recommendation nothing is pinned
+    expect(orderSources(list, list, "720", "SIZE", anyDevice).list.map((x) => x.id)).toEqual(["720", "4k-low", "best"]);
+    expect(orderSources(list, list, null, "SIZE", anyDevice).list.map((x) => x.id)).toEqual(["4k-low", "best", "720"]);
   });
 
   it("recommends the best source a BROWSER can play, not an unplayable torrent", () => {

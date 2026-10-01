@@ -27,6 +27,16 @@ const SORTS: Array<{ id: SourceSort; label: string }> = [
   { id: "SIZE", label: "Size" },
 ];
 
+/**
+ * The rows of Select a Source: the recommended source first — always, whatever is filtered out and however the rest is sorted —
+ * then the filtered sources in the chosen order. `rest` is everything after the recommended row.
+ */
+export function orderSources(all: Stream[], filtered: Stream[], recommendedId: string | null, sort: SourceSort, caps?: DeviceCaps): { list: Stream[]; rest: Stream[] } {
+  const recommended = recommendedId ? all.find((s) => s.id === recommendedId) ?? null : null;
+  const rest = sortStreams(filtered, sort, caps).filter((s) => s.id !== recommended?.id);
+  return { list: recommended ? [recommended, ...rest] : rest, rest };
+}
+
 /** "Quality" puts what this device can play first (then best resolution, then seeders); Seeders / Size are exactly what they say. */
 export function sortStreams(streams: Stream[], sort: SourceSort, caps?: DeviceCaps): Stream[] {
   const copy = streams.slice();
@@ -108,7 +118,7 @@ function SourcesLoaded({ state, onBack, onSelect, onManage, onRetry }: { state: 
     const byQuality = filter === "ALL" ? state.streams : state.streams.filter((s) => s.resolutionTier === filter);
     return playableOnly ? byQuality.filter((s) => ["yes", "unknown"].includes(deviceVerdict(s, caps).level)) : byQuality;
   }, [state.streams, filter, playableOnly, caps]);
-  const sorted = useMemo(() => sortStreams(filtered, sort, caps), [filtered, sort, caps]);
+  const { list: sorted, rest } = useMemo(() => orderSources(state.streams, filtered, state.recommendedId, sort, caps), [state.streams, filtered, state.recommendedId, sort, caps]);
   const { content } = state;
   const nextSort = () => setSort((s) => SORTS[(SORTS.findIndex((x) => x.id === s) + 1) % SORTS.length]!.id);
 
@@ -154,6 +164,11 @@ function SourcesLoaded({ state, onBack, onSelect, onManage, onRetry }: { state: 
               {sorted.map((stream, index) => (
                 <SourceRow key={stream.id} stream={stream} recommended={stream.id === state.recommendedId} onClick={() => onSelect(stream)} autoFocus={index === 0} />
               ))}
+              {rest.length === 0 && state.streams.length > 1 ? (
+                <p className="sources__note t-label-md c-text-2">
+                  No other sources match these filters. <button type="button" className="linkbtn" onClick={() => { setFilter("ALL"); setPlayableOnly(false); }}>Show all sources</button>
+                </p>
+              ) : null}
             </>
           )}
         </div>

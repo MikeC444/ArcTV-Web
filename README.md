@@ -96,7 +96,7 @@ Everything in the Fire TV app that can run in a browser:
   **Movies**, **TV Shows** (grids of 8 posters across at 1920 and 7 on a laptop — 6 / 5 / 4 / 3 on narrower windows — with sort pills and infinite scroll), **Genres**, **Search**, **My List** (All / Watched).
 * **Detail** pages (Resume / Play, trailer, watched, watchlist, seasons and episodes, cast, similar titles) and the
   card quick-actions menu (right-click, long-press or `M`).
-* **Select a Source** with quality badges, health, sizes, "Recommended", filters and sort, remembering your last source.
+* **Select a Source** with quality badges, health, sizes, "Recommended" (always the first row, whatever the filters and sort), filters and sort, remembering your last source.
 * **Player**: quality / audio / subtitle / speed menus that list the stream's real tracks, seek bar with a hover-time tooltip,
   skip ±10 s, volume, fullscreen, Media Session controls, wake lock, resume, progress saved to your account every 30 s and
   on pause / exit, "watched" at 85 %, **autoplay next episode** with the 5-second countdown.
@@ -144,7 +144,7 @@ use IMDb ids (`tt…`), exactly like Cinemeta, so stream addons and the TV app k
 
 * **Everyone gets it, nobody's account changes.** The web app adds it to the providers in the browser, after the person's own addons.
   It is never installed into an account, never synced, and not shown as an installed addon (Settings → Addons just mentions it).
-  Visitors without an account browse with it instead of Cinemeta. Hide any of its rows under Settings → Home Rows.
+  Visitors without an account browse with it instead of Cinemeta. Hide any of its rows under Settings → Home Rows, or turn the whole catalog off with its switch under Settings → Addons (that choice is kept in this browser only, never in the account).
 * **Without a key, or if TMDB is unreachable,** nothing is added and the app behaves as before.
 * Ratings on its titles are TMDB's score, and Detail labels them "TMDB Rating".
 * Answers are cached (30 min for lists, days for ids) and requests to TMDB are capped and retried; `/addon` is public, rate-limited

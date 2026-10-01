@@ -43,8 +43,38 @@ test.describe("built-in catalog", () => {
 
     // Settings → Addons lists only what the account installed, with a note about the built-in catalog
     await page.goto("/settings/addons");
-    await expect(page.locator(".addon")).toHaveCount(addonsBefore.length);
-    await expect(page.getByText("is built into Mango TV")).toBeVisible();
+    await expect(page.locator(".addon:not(.addon--builtin)")).toHaveCount(addonsBefore.length);
+    await expect(page.locator(".addon--builtin")).toContainText("Mango TV Catalog");
+    await expect(page.getByRole("switch", { name: "Mango TV Catalog enabled" })).toHaveAttribute("aria-checked", "true");
+  });
+
+  test("it can be turned off (for this browser only) and back on, and the account stays untouched", async ({ page }) => {
+    const account = await newAccount("builtin-toggle");
+    const addonsBefore = (await account.tv.get("/user/addons")).body.items;
+    const settingsBefore = (await account.tv.get("/user/settings")).body;
+    await openSignedIn(page, account);
+    await expect.poll(() => rowTitles(page), { timeout: 20_000 }).toEqual(expect.arrayContaining(["Trending"]));
+
+    await page.goto("/settings/addons");
+    const toggle = page.getByRole("switch", { name: "Mango TV Catalog enabled" });
+    await toggle.click();
+    await expect(toggle).toHaveAttribute("aria-checked", "false");
+    await page.goto("/");
+    await expect(page.locator(".home__rows .card:not([data-cw])").first()).toBeVisible({ timeout: 20_000 });
+    expect(await rowTitles(page)).not.toContain("Trending"); // its rows are gone, the account's own addon's remain
+    expect(await page.locator(".home__rows .card__title", { hasText: /^Tmdb / }).count()).toBe(0);
+
+    await page.reload(); // remembered on this device
+    await expect(page.locator(".home__rows .card:not([data-cw])").first()).toBeVisible({ timeout: 20_000 });
+    expect(await rowTitles(page)).not.toContain("Trending");
+
+    await page.goto("/settings/addons");
+    await page.getByRole("switch", { name: "Mango TV Catalog enabled" }).click();
+    await page.goto("/");
+    await expect.poll(() => rowTitles(page), { timeout: 20_000 }).toEqual(expect.arrayContaining(["Trending"]));
+
+    expect((await account.tv.get("/user/addons")).body.items).toEqual(addonsBefore);
+    expect((await account.tv.get("/user/settings")).body).toEqual(settingsBefore);
   });
 
   test("an account with no addons at all still gets Home rows from it", async ({ page }) => {

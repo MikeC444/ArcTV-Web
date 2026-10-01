@@ -25,6 +25,30 @@ describe("providers: the person's addons plus the built-in catalog", () => {
     expect(useProviders.getState().providers).toEqual([]);
   });
 
+  it("can be turned off and on for this browser (and the choice is remembered on this device, not in an account)", async () => {
+    localStorage.clear();
+    useProviders.getState().replaceAll([provider("own.a")]);
+    useProviders.getState().setBuiltin(provider("tv.mango.catalog"));
+    expect(useProviders.getState().providers.map((p) => p.id)).toEqual(["own.a", "tv.mango.catalog"]);
+
+    useProviders.getState().setBuiltinEnabled(false);
+    expect(useProviders.getState().providers.map((p) => p.id)).toEqual(["own.a"]);
+    expect(localStorage.getItem("mtv:builtinCatalogOff")).toBe("1");
+    useProviders.getState().replaceAll([provider("own.b")]); // their addons changing doesn't bring it back
+    expect(useProviders.getState().providers.map((p) => p.id)).toEqual(["own.b"]);
+
+    // a fresh page load remembers it
+    vi.resetModules();
+    const again = (await import("./registry")).useProviders;
+    expect(again.getState().builtinEnabled).toBe(false);
+    again.getState().setBuiltin(provider("tv.mango.catalog"));
+    expect(again.getState().providers).toEqual([]);
+
+    again.getState().setBuiltinEnabled(true);
+    expect(again.getState().providers.map((p) => p.id)).toEqual(["tv.mango.catalog"]);
+    expect(localStorage.getItem("mtv:builtinCatalogOff")).toBeNull();
+  });
+
   it("never lists it twice if the person installed the very same addon", () => {
     useProviders.getState().setBuiltin(provider("tv.mango.catalog"));
     useProviders.getState().replaceAll([provider("tv.mango.catalog")]);
@@ -86,5 +110,16 @@ describe("what visitors without an account browse with", () => {
     expect(useAddons.getState().addons).toEqual([]);
     expect(useAddons.getState().ready).toBe(true);
     expect(localStorage.length).toBe(0);
+  });
+
+  it("falls back to Cinemeta when the built-in catalog is turned off on this device", async () => {
+    vi.resetModules();
+    localStorage.setItem("mtv:builtinCatalogOff", "1");
+    const { useProviders } = await import("./registry");
+    const { useAddons } = await import("../state/addons");
+    useProviders.getState().setBuiltin(provider("tv.mango.catalog"));
+    useAddons.getState().loadGuestDefault();
+    expect(useProviders.getState().providers.map((p) => p.id)).toEqual([(cinemeta as { id: string }).id]);
+    localStorage.clear();
   });
 });

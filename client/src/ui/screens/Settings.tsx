@@ -102,6 +102,8 @@ function AddonsPane() {
   const [confirming, setConfirming] = useState<string | null>(null);
   const target = addons.find((a) => a.manifestUrl === confirming);
   const builtin = useProviders((s) => s.builtin);
+  const builtinEnabled = useProviders((s) => s.builtinEnabled);
+  const setBuiltinEnabled = useProviders((s) => s.setBuiltinEnabled);
   return (
     <div className="addons">
       <div className="addons__head">
@@ -109,9 +111,20 @@ function AddonsPane() {
         <MangoButton text="Add Addon" icon={<MdAdd />} variant="filled" compact onClick={() => navigate(routes.addAddon)} />
       </div>
       {builtin?.id === BUILTIN_ADDON_ID ? (
-        <p className="t-body-sm c-text-2" style={{ margin: "0 0 14px" }}>
-          <strong className="c-text">{builtin.name}</strong> is built into Mango TV and adds its own rows (Popular, Trending, Top Rated and genres) next to your addons. It isn't part of your account; hide any of its rows under Home Rows.
-        </p>
+        <ul className="addons__list" style={{ marginBottom: 14 }}>
+          <li className="addon addon--builtin">
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: "flex", gap: 10, alignItems: "baseline", flexWrap: "wrap" }}>
+                <span className="t-title-md">{builtin.name}</span>
+                <span className="t-label-sm c-text-3">Built in</span>
+              </div>
+              <p className="t-body-sm c-text-2" style={{ margin: "4px 0 0" }}>Adds Popular, Trending, Top Rated and genre rows to Home, Movies and TV Shows. It isn't one of your account's addons — this switch only affects this browser.</p>
+            </div>
+            <button type="button" role="switch" aria-checked={builtinEnabled} aria-label={`${builtin.name} enabled`} className="switchbtn" onClick={() => setBuiltinEnabled(!builtinEnabled)}>
+              <Switch checked={builtinEnabled} />
+            </button>
+          </li>
+        </ul>
       ) : null}
       {addons.length === 0 ? (
         <div style={{ marginTop: 14 }}>

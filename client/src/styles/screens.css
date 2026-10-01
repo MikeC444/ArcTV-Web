@@ -319,3 +319,6 @@
   .home__rows { position: relative; z-index: 2; margin-top: calc(-64 * var(--dp)); }
   .hero__dots { z-index: 3; bottom: calc(35 * var(--dp) - 12px); }
 }
+
+.sources__note { margin: 4px 0 0; padding: 6px 4px; }
+.linkbtn { background: none; border: 0; padding: 0; color: var(--text); font: inherit; text-decoration: underline; cursor: pointer; }

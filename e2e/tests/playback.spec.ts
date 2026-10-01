@@ -28,9 +28,10 @@ test.describe("sources and playback", () => {
     await expect(row(page, "Fixture Web-unready")).toContainText("Might not play");
     await expect(row(page, "Fixture MKV")).toContainText(/Should play here|Can't play here/); // depends on the codecs of the browser running the test
     await expect(row(page, "Fixture Direct")).toContainText("250 seeders");
-    // the list starts sorted by size, biggest first (the recommendation is marked on its own row, wherever it sits)
+    // the list starts sorted by size, biggest first — after the recommended source, which is always the first row
     await expect(page.getByRole("button", { name: /Sort by Size/ })).toBeVisible();
-    await expect(page.locator(".source").first()).toContainText("Fixture Torrent"); // 40 GB
+    await expect(page.locator(".source").first()).toContainText("Fixture HLS");
+    await expect(page.locator(".source").nth(1)).toContainText("Fixture Torrent"); // 40 GB
     await expect(page.locator(".source").last()).toContainText("Fixture Web-unready"); // 700 MB
     // "Quality" lists playable sources first
     await page.getByRole("button", { name: /Sort by Size/ }).click();
@@ -53,13 +54,38 @@ test.describe("sources and playback", () => {
     await expect(page.locator(".source")).toHaveCount(6);
 
     await page.getByRole("button", { name: "4K", exact: true }).click();
-    await expect(page.locator(".source")).toHaveCount(1);
+    await expect(page.locator(".source")).toHaveCount(2); // the recommended source, then the one 4K source
     await page.getByRole("button", { name: "All Sources" }).click();
     await expect(page.locator(".source")).toHaveCount(6);
     await page.getByRole("button", { name: /Sort by Quality/ }).click();
     await expect(page.getByRole("button", { name: /Sort by Seeders/ })).toBeVisible();
-    const first = await page.locator(".source .source__body span").first().textContent();
-    expect(first).toContain("2160p"); // 1500 seeders → first by Seeders
+    const second = await page.locator(".source").nth(1).locator(".source__body span").first().textContent();
+    expect(second).toContain("2160p"); // 1500 seeders → first by Seeders, after the recommended source
+  });
+
+  test("the recommended source is always the first row — whatever the sort or the quality filter", async ({ page }) => {
+    const account = await newAccount("pinned");
+    await openSignedIn(page, account);
+    await openSources(page);
+    const first = page.locator(".source").first();
+    await expect(first).toContainText("Recommended");
+    await expect(first).toContainText("Fixture HLS");
+
+    for (let i = 0; i < 3; i++) {
+      await page.getByRole("button", { name: /^Sort by/ }).click(); // Size → Quality → Seeders → Size
+      await expect(page.locator(".source").first()).toContainText("Recommended");
+      await expect(page.locator(".source__reco")).toHaveCount(1);
+    }
+
+    // a quality filter that doesn't include it leaves it on top, followed by what the filter kept
+    await page.getByRole("button", { name: "720p", exact: true }).click();
+    await expect(page.locator(".source").first()).toContainText("Fixture HLS");
+    await expect(page.locator(".source").first()).toContainText("Recommended");
+    const rows = await page.locator(".source").count();
+    expect(rows).toBeGreaterThan(1);
+    // …and when nothing else matches, it is still there with a way back to everything
+    await page.getByRole("button", { name: "Other", exact: true }).click();
+    await expect(page.locator(".source").first()).toContainText("Recommended");
   });
 
   test("a progressive WebM source plays, reports progress to the account, and Resume restarts where you left off", async ({ page }) => {
