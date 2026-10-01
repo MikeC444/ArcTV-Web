@@ -18,7 +18,7 @@ describe("static SPA hosting", () => {
   const app = () => appWith(createMockBackend().fetch, { staticDir: dir });
 
   it("serves the app shell for client-side routes (deep links)", async () => {
-    for (const route of ["/", "/movies", "/detail/x/MOVIE/tt1", "/player/a/b/c/-1/-1/s"]) {
+    for (const route of ["/", "/movies", "/detail/x/MOVIE/tt1", "/player/a/b/c/-1/-1/s", "/player/com.linvo.cinemeta/MOVIE/tt0068646/-1/-1/com.stremio.torrentio.addon%3A-945807928"]) {
       const res = await request(app()).get(route).set("Accept", "text/html");
       expect(res.status, route).toBe(200);
       expect(res.text).toContain("<title>MangoTV</title>");

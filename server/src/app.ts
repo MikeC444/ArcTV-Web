@@ -41,6 +41,12 @@ function noStore(_req: Request, res: Response, next: NextFunction): void {
   next();
 }
 
+/**
+ * A path that ends in one of these is a file (a missing one must 404). Anything else is a page address for the app — including player
+ * links, whose ids contain dots ("/player/com.linvo.cinemeta/MOVIE/tt1/-1/-1/com.stremio.torrentio.addon%3A-123").
+ */
+const FILE_EXTENSION = /\.(?:m?js|css|map|json|webmanifest|txt|xml|ico|png|jpe?g|gif|webp|avif|svg|woff2?|ttf|otf|eot|mp[34]|webm|wasm)$/i;
+
 function findStaticDir(config: AppConfig): string | undefined {
   const candidates = [config.staticDir, path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../client/dist")];
   return candidates.find((dir): dir is string => !!dir && fs.existsSync(path.join(dir, "index.html")));
@@ -177,7 +183,7 @@ export function createApp(config: AppConfig, options: CreateAppOptions = {}): Ex
     app.use(express.static(staticDir, { index: false, maxAge: "1h" }));
     app.get(/^(?!\/api\/).*/, (req, res, next) => {
       // client-side routes only: a missing asset / file must 404 (never HTML posing as a script or image)
-      if (!req.accepts("html") || req.path.startsWith("/assets/") || path.extname(req.path)) return next();
+      if (!req.accepts("html") || req.path.startsWith("/assets/") || FILE_EXTENSION.test(req.path)) return next();
       res.setHeader("Cache-Control", "no-cache");
       res.sendFile(path.join(staticDir, "index.html"));
     });
