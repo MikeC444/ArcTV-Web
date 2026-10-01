@@ -2,15 +2,12 @@ import type { Request, Response } from "express";
 import type { AppConfig } from "./config.js";
 import type { BackendFetch, BackendRequest, BackendResponse } from "./backend.js";
 import { ApiError } from "./errors.js";
-import type { InternalTokens } from "./internalAuth.js";
 import type { SessionManager } from "./session.js";
 
 export interface AppContext {
   config: AppConfig;
   backend: BackendFetch;
   sessions: SessionManager;
-  /** Tokens for this server's own helper processes (see internalAuth.ts). */
-  internal: InternalTokens;
 }
 
 /**

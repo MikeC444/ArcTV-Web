@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { buildCompatUrl, buildRelayUrl, fetchCompatInfo, isRelayUrl, needsRelay, playbackUrl, relayRefusal } from "./relay";
-import { canDecodeAudioCodec, detectDeviceCaps } from "./deviceSupport";
+import { buildRelayUrl, isRelayUrl, needsRelay, playbackUrl, relayRefusal } from "./relay";
 
 describe("relay addresses (adapted from stremio-video's buildProxyUrl)", () => {
   it("keeps Stremio's shape: d=<origin>&h=…&r=… first, then the stream's own path and query", () => {
@@ -55,40 +54,5 @@ describe("relayRefusal — the relay's own explanation, which a <video> can't re
     expect(await relayRefusal("/api/relay/d=x/y", { fetchImpl: (async () => Promise.reject(new TypeError("offline"))) as unknown as typeof fetch })).toBeNull();
     expect(await relayRefusal("/api/relay/d=x/y", { fetchImpl: (async () => json(502, { error: { message: "x".repeat(2000) } })) as unknown as typeof fetch })).toBeNull();
     expect(await relayRefusal("/api/relay/d=x/y", { fetchImpl: (async () => ({ ok: false, status: 502, json: async () => Promise.reject(new Error("not json")) }) as unknown as Response) as unknown as typeof fetch })).toBeNull();
-  });
-});
-
-describe("audio compatibility mode (client side)", () => {
-  const stream = { url: "https://cdn.example.com/m.mkv?sig=1", proxyHeaders: { Referer: "https://r.example/" }, proxyResponseHeaders: undefined };
-
-  it("addresses the converted stream by the relay address of the source, with an optional start (seconds)", () => {
-    const relay = buildRelayUrl(stream.url, stream.proxyHeaders);
-    expect(buildCompatUrl(stream)).toBe(`/api/transcode?src=${encodeURIComponent(relay)}`);
-    expect(buildCompatUrl(stream, 0)).not.toContain("start");
-    expect(buildCompatUrl(stream, 754.3216)).toBe(`/api/transcode?src=${encodeURIComponent(relay)}&start=754.322`);
-  });
-
-  const json = (status: number, body: unknown) => ({ ok: status >= 200 && status < 300, status, json: async () => body }) as unknown as Response;
-
-  it("asks the server what is in the source, and tells apart 'this server can't' from 'it didn't work'", async () => {
-    const info = { durationSeconds: 5400, video: "h264", audio: [{ codec: "eac3", language: "eng" }], output: "mp4" };
-    const seen: string[] = [];
-    const ok = (async (url: string) => (seen.push(url), json(200, info))) as unknown as typeof fetch;
-    expect(await fetchCompatInfo(stream, { fetchImpl: ok })).toEqual({ kind: "ok", info });
-    expect(seen[0]).toBe(`/api/transcode/info?src=${encodeURIComponent(buildRelayUrl(stream.url, stream.proxyHeaders))}`);
-
-    expect(await fetchCompatInfo(stream, { fetchImpl: (async () => json(404, { error: { code: "transcode_disabled" } })) as unknown as typeof fetch })).toEqual({ kind: "unavailable" });
-    expect(await fetchCompatInfo(stream, { fetchImpl: (async () => json(502, { error: { message: "The source couldn't be read as video." } })) as unknown as typeof fetch })).toEqual({ kind: "failed", message: "The source couldn't be read as video." });
-    expect(await fetchCompatInfo(stream, { fetchImpl: (async () => json(503, null)) as unknown as typeof fetch })).toEqual({ kind: "failed", message: "The server answered 503." });
-    expect((await fetchCompatInfo(stream, { fetchImpl: (async () => Promise.reject(new TypeError("offline"))) as unknown as typeof fetch })).kind).toBe("failed");
-  });
-
-  it("knows which audio codecs a device can decode (and says nothing about ones it has no test for)", () => {
-    const env = (supported: RegExp[]) => ({ canPlayType: (t: string) => (supported.some((r) => r.test(t)) ? ("probably" as const) : ("" as const)), hasMediaSource: true, userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36" });
-    const chrome = detectDeviceCaps(env([/mp4a\.40\.2/, /opus/]));
-    expect(canDecodeAudioCodec("aac", chrome)).toBe(true);
-    expect(canDecodeAudioCodec("eac3", chrome)).toBe(false);
-    expect(canDecodeAudioCodec("truehd", chrome)).toBe(false);
-    expect(canDecodeAudioCodec("vorbis", chrome)).toBeNull();
   });
 });

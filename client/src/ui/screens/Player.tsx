@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { MdArrowBack, MdFastForward, MdForward10, MdFullscreen, MdFullscreenExit, MdGraphicEq, MdHighQuality, MdPause, MdPlayArrow, MdReplay10, MdSettings, MdSkipNext, MdSubtitles, MdSwapHoriz, MdVolumeOff, MdVolumeUp } from "react-icons/md";
 import { useNavigate, useParams } from "react-router-dom";
-import { canDecodeAudioCodec, DEBRID_NAMES, deviceVerdict, getDeviceCaps, parseStreamFacts } from "../../domain/deviceSupport";
-import { buildCompatUrl, buildRelayUrl, fetchCompatInfo, needsRelay, playbackUrl, relayRefusal, type CompatInfo } from "../../domain/relay";
+import { DEBRID_NAMES, deviceVerdict, getDeviceCaps, parseStreamFacts } from "../../domain/deviceSupport";
+import { buildRelayUrl, needsRelay, playbackUrl, relayRefusal } from "../../domain/relay";
 import { describeContentType, engineForContentType, getContentType } from "../../domain/contentType";
 import { assessStream, engineFor } from "../../domain/playability";
 import { activeProviders } from "../../domain/registry";
@@ -91,7 +91,7 @@ const SLOW_START_MS = 15_000;
 const START_TIMEOUT_MS = 45_000;
 /** How long the content-type probe may hold the video back (Stremio Web waits without limit; a host that never answers must not do that to us). */
 const CONTENT_TYPE_WAIT_MS = 4_000;
-type Route = "direct" | "relay" | "compat";
+type Route = "direct" | "relay";
 
 /** When we already knew this device can't handle the file, say so in the error instead of a generic failure. */
 function withDeviceHint(stream: Stream, error: PlaybackError): PlaybackError {
@@ -129,22 +129,6 @@ const REPORT_EVERY_MS = 30_000;
 const EMPTY_TRACKS: EngineTracks = { audio: [], subtitles: [], quality: [] };
 const KNOWN_NATIVE_EXT = /\.(mp4|m4v|webm|mov|ogv|ogg|mkv)(\?|#|$)/i;
 
-interface CompatState {
-  active: boolean;
-  base: number;
-  duration: number | null;
-  info: CompatInfo | null;
-}
-/** Where the film is, in real time (a converted stream starts `base` seconds in, so its own clock is behind by that much). */
-const positionOf = (v: HTMLVideoElement, c: CompatState): number => v.currentTime + (c.active ? c.base : 0);
-const durationOf = (v: HTMLVideoElement, c: CompatState): number => (c.active ? (c.duration ?? NaN) : v.duration);
-const bufferedEnd = (v: HTMLVideoElement): number => (v.buffered.length ? v.buffered.end(v.buffered.length - 1) : 0);
-
-/** Sources whose sound this device can't decode (Dolby Digital, DTS …) start in audio compatibility mode. */
-function wantsAudioConversion(stream: Stream): boolean {
-  return /^https?:\/\//i.test(stream.url ?? "") && engineFor(stream.url as string) === "native" && deviceVerdict(stream).level === "audio";
-}
-
 interface PlaybackProps {
   content: Content;
   episode: Episode | null;
@@ -179,15 +163,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
   const [slowStart, setSlowStart] = useState(false);
   const [attempt, setAttempt] = useState(0);
   /** How the media is fetched: straight from the host, or through this site's relay (needed for header-locked / plain-http links; also the fallback when a direct request never delivers video). */
-  const [route, setRoute] = useState<Route>(() => (wantsAudioConversion(stream) ? "compat" : needsRelay(stream) ? "relay" : "direct"));
-  /**
-   * Audio compatibility mode: the server converts the sound (Dolby / DTS → stereo AAC or Opus). The converted stream can't be seeked inside,
-   * so a seek outside what has arrived restarts it at the new place: `base` is where (in the real film) the stream on screen begins, and
-   * every time shown or reported is `base + the video's own clock`. `epoch` makes the media effect run again for such a restart.
-   */
-  const compat = useRef<CompatState>({ active: false, base: 0, duration: null, info: null });
-  const [compatEpoch, setCompatEpoch] = useState(0);
-
+  const [route, setRoute] = useState<Route>(() => (needsRelay(stream) ? "relay" : "direct"));
   const [fellBack, setFellBack] = useState(false);
   /** What the direct request did before the relay replaced it — the evidence would otherwise be lost with the old event trail. */
   const directAttempt = useRef("");
@@ -250,36 +226,13 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
     })(),
   );
 
-  /** True when the person switched audio conversion on themselves (then it is not second-guessed by what the source is said to contain). */
-  const compatForced = useRef(false);
-  /** Back to playing the source as it is, from where the film is now. */
-  const leaveCompat = useCallback(
-    (note?: string) => {
-      const v = video.current;
-      if (v && compat.current.active) resumeMs.current = Math.round(positionOf(v, compat.current) * 1000) || resumeMs.current;
-      compat.current.active = false;
-      compat.current.base = 0;
-      compatForced.current = false;
-      if (note) setPill(note);
-      setRoute(needsRelay(stream) ? "relay" : "direct");
-    },
-    [stream],
-  );
-  const startCompat = useCallback(() => {
-    const v = video.current;
-    compat.current.base = v ? positionOf(v, compat.current) : 0; // carry on from here
-    resumeMs.current = null;
-    compatForced.current = true;
-    setRoute("compat");
-  }, []);
-
   // ── progress reporting ──────────────────────────────────────────────────────
   const report = useCallback(
     (completed: boolean, keepalive = false) => {
       const v = video.current;
-      if (!v || !Number.isFinite(durationOf(v, compat.current))) return;
-      const durationMs = Math.round(durationOf(v, compat.current) * 1000);
-      const positionMs = completed ? durationMs : Math.round(positionOf(v, compat.current) * 1000);
+      if (!v || !Number.isFinite(v.duration)) return;
+      const durationMs = Math.round(v.duration * 1000);
+      const positionMs = completed ? durationMs : Math.round(v.currentTime * 1000);
       const decision = decideProgress(type, positionMs, durationMs, completed);
       if (!decision.report) return;
       if (decision.rememberSource && userId) setLastStreamId(userId, providerId, content.id, type, season, episodeNumber, stream.id);
@@ -323,8 +276,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
       setError({ type: "unsupported", message: verdict.reason });
       return;
     }
-    compat.current.active = false; // set again once the server has said what it found
-    let url = route === "compat" ? "" : playbackUrl(stream, route);
+    const url = playbackUrl(stream, route);
     let cancelled = false;
     let subtitleChosen = false;
     let triedHls = false;
@@ -353,7 +305,6 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
             void start("hls");
             return;
           }
-          if (route === "compat") return leaveCompat("The converted audio stream didn't start — playing as it is");
           if (shouldTryRelay(e) && fallBackToRelay()) return;
           fail(e);
         },
@@ -364,52 +315,12 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
       v.play().catch(() => !cancelled && setPhase("paused")); // autoplay blocked (e.g. page reloaded) → the big play button
     };
 
-    /** Asks the server about the source (once), takes the resume point as the place to start, and points the player at the converted stream. */
-    const prepareCompat = async (): Promise<boolean> => {
-      const c = compat.current;
-      if (!c.info) {
-        const answer = await fetchCompatInfo(stream);
-        if (cancelled) return false;
-        if (answer.kind === "unavailable") {
-          leaveCompat("Audio conversion isn't available on this server — playing as it is");
-          return false;
-        }
-        if (answer.kind === "failed") {
-          leaveCompat(`Audio conversion didn't work (${answer.message.replace(/[.\s]+$/, "")}) — playing as it is`);
-          return false;
-        }
-        const first = answer.info.audio[0];
-        // the release name suggested Dolby / DTS, but what is really inside plays here: nothing to convert
-        if (!compatForced.current && first && canDecodeAudioCodec(first.codec, getDeviceCaps()) !== false) {
-          leaveCompat();
-          return false;
-        }
-        c.info = answer.info;
-        c.duration = answer.info.durationSeconds;
-        const r = resumeMs.current;
-        if (r && r > 0 && c.duration && c.duration * 1000 - r > 10_000) c.base = r / 1000;
-        resumeMs.current = null;
-      }
-      c.active = true;
-      url = buildCompatUrl(stream, c.base);
-      return true;
-    };
-
     const onMeta = () => {
-      if (compat.current.active) {
-        resumeMs.current = null; // the converted stream already starts at the resume point
-        return;
-      }
       const r = resumeMs.current;
       if (r && r > 0 && Number.isFinite(v.duration) && v.duration * 1000 - r > 10_000) v.currentTime = r / 1000;
       resumeMs.current = null;
     };
-    const onTime = () => {
-      const c = compat.current;
-      const offset = c.active ? c.base : 0;
-      const length = durationOf(v, c);
-      setTime((t) => ({ pos: positionOf(v, c), dur: Number.isFinite(length) ? length : 0, buffered: v.buffered.length ? offset + bufferedEnd(v) : t.buffered }));
-    };
+    const onTime = () => setTime((t) => ({ pos: v.currentTime, dur: Number.isFinite(v.duration) ? v.duration : 0, buffered: v.buffered.length ? v.buffered.end(v.buffered.length - 1) : t.buffered }));
     const onPlaying = () => setPhase("playing");
     const onPause = () => !v.ended && setPhase("paused");
     const onWaiting = () => setPhase((p) => (p === "paused" ? p : "buffering"));
@@ -422,7 +333,6 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
       if (engine.current?.kind === "native" || !engine.current) return; // native engine reports its own errors
       if (!v.error) return;
       const e = mediaErrorToPlaybackError(v.error);
-      if (route === "compat") return leaveCompat("The converted audio stream didn't start — playing as it is");
       if (shouldTryRelay(e) && fallBackToRelay()) return;
       fail(e);
     };
@@ -449,10 +359,6 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
     // HLS playlist), but never wait long for it — if it can't be read, the address decides.
     const probe = new AbortController();
     void (async () => {
-      if (route === "compat") {
-        if (!(await prepareCompat()) || cancelled) return;
-        return start("native");
-      }
       const fromAddress = engineFor(url);
       if (fromAddress !== "native") return start(fromAddress);
       // An address that names a media file (.mkv, .mp4 …) is played as one. Asking first would cost a request to the stream host — and, for a debrid
@@ -482,7 +388,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
     };
     // `speed` is applied once at start; later changes go through changeSpeed().
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stream, attempt, route, compatEpoch]);
+  }, [stream, attempt, route]);
 
   useEffect(() => {
     startedAt.current = Date.now(); // a new source or "Try Again" restarts the start-up budget; a route switch does not
@@ -545,7 +451,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
   }, [controls, overlay, phase, tickInteraction]);
 
   useEffect(() => {
-    const t = pill ? window.setTimeout(() => setPill(null), pill.length > 24 ? 4500 : 900) : undefined;
+    const t = pill ? window.setTimeout(() => setPill(null), 900) : undefined;
     return () => window.clearTimeout(t);
   }, [pill]);
   useEffect(() => {
@@ -573,38 +479,17 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
     bump();
   }, [bump]);
 
-  /** Moves to a place in the film (real time). A converted stream can only be seeked within what has arrived; further than that it starts again from there. */
-  function seekAbs(seconds: number) {
-    const v = video.current;
-    if (!v) return;
-    const c = compat.current;
-    const length = durationOf(v, c);
-    const target = Number.isFinite(length) ? Math.min(Math.max(seconds, 0), length) : Math.max(seconds, 0);
-    if (!c.active) {
-      v.currentTime = target;
-      return;
-    }
-    const within = target - c.base;
-    if (within >= 0 && within <= bufferedEnd(v) - 0.5) {
-      v.currentTime = within;
-      return;
-    }
-    c.base = target;
-    setCompatEpoch((n) => n + 1); // the media effect starts the converted stream again from here
-  }
-  const seekAbsRef = useRef(seekAbs);
-  seekAbsRef.current = seekAbs;
-
   function seekBy(deltaSeconds: number) {
     const v = video.current;
     if (!v) return;
-    seekAbs(positionOf(v, compat.current) + deltaSeconds);
+    const target = v.currentTime + deltaSeconds;
+    v.currentTime = Number.isFinite(v.duration) ? Math.min(Math.max(target, 0), v.duration) : Math.max(target, 0);
     setPill(deltaSeconds < 0 ? `«« ${Math.abs(deltaSeconds)} seconds` : `${deltaSeconds} seconds »»`);
     bump();
   }
   const seekTo = (seconds: number) => {
     const v = video.current;
-    if (v && Number.isFinite(durationOf(v, compat.current))) seekAbs(seconds);
+    if (v && Number.isFinite(v.duration)) v.currentTime = Math.min(Math.max(seconds, 0), v.duration);
     bump();
   };
   const changeSpeed = (s: number) => {
@@ -669,8 +554,8 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
           if (document.querySelector('[data-spatial-trap="true"]')) return; // e.g. the Up-next card: arrows move between its buttons
           e.preventDefault();
           const dir = e.key === "ArrowLeft" ? -1 : 1;
-          if (!Number.isFinite(durationOf(v, compat.current))) return;
-          if (!e.repeat && !hold.current) hold.current = { anchor: positionOf(v, compat.current), delta: 0 };
+          if (!Number.isFinite(v.duration)) return;
+          if (!e.repeat && !hold.current) hold.current = { anchor: v.currentTime, delta: 0 };
           const h = hold.current!;
           h.delta = nextHoldSeekDelta(h.delta * 1000, dir, !e.repeat) / 1000;
           setPill(h.delta < 0 ? `«« ${Math.abs(h.delta)} seconds` : `${h.delta} seconds »»`);
@@ -713,7 +598,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
     const onKeyUp = (e: KeyboardEvent) => {
       if ((e.key === "ArrowLeft" || e.key === "ArrowRight") && hold.current) {
         const v = video.current;
-        if (v && Number.isFinite(durationOf(v, compat.current))) seekAbsRef.current(hold.current.anchor + hold.current.delta);
+        if (v && Number.isFinite(v.duration)) v.currentTime = Math.min(Math.max(hold.current.anchor + hold.current.delta, 0), v.duration);
         hold.current = null;
       }
     };
@@ -790,9 +675,9 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
         </div>
       </div>
 
-      {overlay === "settings" ? <SettingsPanel tracks={tracks} speed={speed} autoplayNext={prefs.autoplayNextEpisode} onAutoplayChange={(v) => setPlayer({ autoplayNextEpisode: v })} audioConversion={/^https?:\/\//i.test(stream.url ?? "") && engineFor(stream.url as string) === "native" ? { on: route === "compat", onToggle: () => { if (route === "compat") leaveCompat("Playing the source as it is"); else startCompat(); setOverlays([]); } } : undefined} onOpen={push} onClose={pop} /> : null}
+      {overlay === "settings" ? <SettingsPanel tracks={tracks} speed={speed} autoplayNext={prefs.autoplayNextEpisode} onAutoplayChange={(v) => setPlayer({ autoplayNextEpisode: v })} onOpen={push} onClose={pop} /> : null}
       {overlay === "advanced" ? <AdvancedPanel skipIntro={prefs.skipIntroEnabled} onSkipIntro={(v) => setPlayer({ skipIntroEnabled: v })} onSourceInfo={() => push("info")} onChangeSource={onChangeSource} onClose={pop} /> : null}
-      {overlay === "info" ? <SourceInfoPanel stream={stream} tracks={tracks} engine={engine.current?.kind ?? "native"} converted={route === "compat" && compat.current.active ? compat.current.info?.output ?? null : null} onClose={pop} /> : null}
+      {overlay === "info" ? <SourceInfoPanel stream={stream} tracks={tracks} engine={engine.current?.kind ?? "native"} onClose={pop} /> : null}
       {overlay === "subtitles" ? <TrackMenu title="Subtitles" options={tracks.subtitles} offLabel="Off" onClose={pop} onSelect={(id) => { engine.current?.selectSubtitle(id); setTracks((t) => ({ ...t, subtitles: t.subtitles.map((o) => ({ ...o, selected: o.id === id })) })); pop(); }} /> : null}
       {overlay === "audio" ? <TrackMenu title="Audio" options={tracks.audio} onClose={pop} onSelect={(id) => { if (id) engine.current?.selectAudio(id); setTracks((t) => ({ ...t, audio: t.audio.map((o) => ({ ...o, selected: o.id === id })) })); pop(); }} /> : null}
       {overlay === "quality" ? <TrackMenu title="Quality" options={tracks.quality} onClose={pop} onSelect={(id) => { if (id) engine.current?.selectQuality(id); setTracks((t) => ({ ...t, quality: t.quality.map((o) => ({ ...o, selected: o.id === id })) })); pop(); }} /> : null}
@@ -807,9 +692,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
           ytId={stream.ytId}
           onTryAgain={() => {
             setFellBack(false);
-            compat.current = { active: false, base: 0, duration: null, info: null };
-            compatForced.current = false;
-            setRoute(wantsAudioConversion(stream) ? "compat" : needsRelay(stream) ? "relay" : "direct"); // start over the way a first attempt would
+            setRoute(needsRelay(stream) ? "relay" : "direct"); // start over the way a first attempt would
             setAttempt((a) => a + 1);
           }}
           onChangeSource={onChangeSource}

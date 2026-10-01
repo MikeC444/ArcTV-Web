@@ -14,9 +14,7 @@ import type { AppContext } from "./context.js";
 import { ApiError, sendError } from "./errors.js";
 import { createAuthRouter } from "./routes/auth.js";
 import { createStreamRelay } from "./streamRelay.js";
-import { InternalTokens } from "./internalAuth.js";
 import { createUserRouter } from "./routes/user.js";
-import { createTranscodeRouter, resolveFfmpeg } from "./transcode.js";
 import { SessionManager } from "./session.js";
 
 /**
@@ -59,7 +57,7 @@ export interface CreateAppOptions {
 
 export function createApp(config: AppConfig, options: CreateAppOptions = {}): Express {
   const backend = options.backend ?? createBackendClient(config.apiUrl);
-  const ctx: AppContext = { config, backend, sessions: new SessionManager(config, backend), internal: new InternalTokens() };
+  const ctx: AppContext = { config, backend, sessions: new SessionManager(config, backend) };
 
   const app = express();
   app.disable("x-powered-by");
@@ -131,18 +129,13 @@ export function createApp(config: AppConfig, options: CreateAppOptions = {}): Ex
   const relayStream = createStreamRelay(config);
   api.get("/relay/*rest", perClient(1200), async (req, res, next) => {
     try {
-      // a signed-in browser, or this server's own ffmpeg (audio compatibility mode) acting for one, over loopback
-      const userId = ctx.sessions.read(req)?.user.id ?? ctx.internal.userFor(req);
-      if (!userId) throw new ApiError(401, "unauthorized", "Sign in to continue.");
-      await relayStream(req, res, userId);
+      const session = ctx.sessions.read(req);
+      if (!session) throw new ApiError(401, "unauthorized", "Sign in to continue.");
+      await relayStream(req, res, session.user.id);
     } catch (error) {
       next(error);
     }
   });
-
-  // Audio compatibility mode: only when ffmpeg is there (bundled or on the PATH) and it isn't switched off.
-  const ffmpeg = config.audioConversion ? resolveFfmpeg(config.ffmpegPath) : null;
-  api.use("/transcode", perClient(240), createTranscodeRouter(ctx, ffmpeg, { maxSessions: config.audioConversionMax }));
 
   api.use((_req, _res, next) => next(new ApiError(404, "not_found", "Not found")));
   app.use("/api", api);

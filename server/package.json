@@ -15,7 +15,6 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "cookie": "^1.0.2",
     "express": "^5.0.1",
     "express-rate-limit": "^7.5.0",

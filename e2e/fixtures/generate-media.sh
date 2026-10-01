@@ -1,20 +1,16 @@
 #!/usr/bin/env bash
 # Regenerates the tiny synthetic media used by the browser tests (already committed — only needed if you change them).
-# Needs an ffmpeg with libvpx-vp9 + libopus + ac3:  FFMPEG=/path/to/ffmpeg bash e2e/fixtures/generate-media.sh
+# Needs an ffmpeg with libvpx-vp9 + libopus:  FFMPEG=/path/to/ffmpeg bash e2e/fixtures/generate-media.sh
 set -euo pipefail
 FF="${FFMPEG:-ffmpeg}"
 cd "$(dirname "$0")/media"
-rm -rf hls sample.webm ac3.mkv && mkdir hls
+rm -rf hls sample.webm && mkdir hls
 
 # 1) progressive WebM (VP9 + Opus), 12 s
 $FF -hide_banner -loglevel error -y -f lavfi -i "testsrc2=size=480x270:rate=25:duration=12" -f lavfi -i "sine=frequency=440:duration=12" \
   -c:v libvpx-vp9 -b:v 90k -deadline realtime -cpu-used 8 -g 25 -c:a libopus -b:a 32k -shortest sample.webm
 
 # 2) HLS with two video qualities and two subtitle tracks (fMP4 segments, video only)
-# 1b) VP9 + Dolby Digital 5.1 in Matroska (what a browser without Dolby support plays silent) — used by the audio compatibility mode tests, 12 s
-$FF -hide_banner -loglevel error -y -f lavfi -i "testsrc2=size=480x270:rate=25:duration=12" -f lavfi -i "sine=frequency=330:duration=12" \
-  -c:v libvpx-vp9 -b:v 90k -deadline realtime -cpu-used 8 -g 25 -c:a ac3 -ac 6 -b:a 192k -shortest ac3.mkv
-
 cd hls
 for spec in "v360:480x270:110k" "v180:320x180:50k"; do
   IFS=: read -r name size rate <<<"$spec"

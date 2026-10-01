@@ -43,10 +43,3 @@ Torrentio addon (Apache-2.0) was not read at all — how its links behave is onl
 like, and is labelled as such in `docs/PLAYBACK.md`. The playback *behaviour* that was adopted (proxying header-locked
 and mixed-content streams through a server, keeping the stream's path in the proxy URL) is described in
 `docs/PLAYBACK.md`.
-
-## FFmpeg (via @ffmpeg-installer/ffmpeg)
-
-Audio compatibility mode runs the `ffmpeg` command-line program as a separate process (it is not linked into this code). The
-`@ffmpeg-installer/ffmpeg` npm package (LGPL-2.1, per its `package.json`) supplies prebuilt FFmpeg binaries from
-[johnvansickle.com/ffmpeg](https://johnvansickle.com/ffmpeg/); those static builds are distributed under the GPL — their own licence
-text is in the package's platform folder (`node_modules/@ffmpeg-installer/<platform>/`). Set `FFMPEG_PATH` to use your own build.

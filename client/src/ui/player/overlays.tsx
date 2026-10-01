@@ -113,28 +113,17 @@ export interface SettingsPanelProps {
   speed: number;
   autoplayNext: boolean;
   onAutoplayChange(v: boolean): void;
-  /** Present when the server can convert this source's audio: whether it is on, and how to flip it. */
-  audioConversion?: { on: boolean; onToggle(): void };
   onOpen(target: "quality" | "subtitles" | "audio" | "speed" | "advanced"): void;
   onClose(): void;
 }
 
-export function SettingsPanel({ tracks, speed, autoplayNext, onAutoplayChange, audioConversion, onOpen, onClose }: SettingsPanelProps) {
+export function SettingsPanel({ tracks, speed, autoplayNext, onAutoplayChange, onOpen, onClose }: SettingsPanelProps) {
   const label = (list: TrackOption[], fallback: string) => list.find((t) => t.selected)?.label ?? fallback;
   return (
     <SettingsCard icon={<MdSettings />} title="Settings" subtitle="Adjust your playback preferences" onClose={onClose}>
       {tracks.quality.length > 1 ? <SettingsRow icon={<MdHighQuality />} title="Quality" subtitle={label(tracks.quality, "Auto")} onClick={() => onOpen("quality")} /> : null}
       {tracks.subtitles.length > 0 ? <SettingsRow icon={<MdSubtitles />} title="Subtitles" subtitle={label(tracks.subtitles, "Off")} onClick={() => onOpen("subtitles")} /> : null}
       {tracks.audio.length > 1 ? <SettingsRow icon={<MdGraphicEq />} title="Audio" subtitle={label(tracks.audio, "Auto")} onClick={() => onOpen("audio")} /> : null}
-      {audioConversion ? (
-        <SettingsRow
-          icon={<MdGraphicEq />}
-          title="No sound? Convert audio"
-          subtitle={audioConversion.on ? "On — Dolby / DTS sound is converted to stereo for this device" : "Off — turn on if the picture plays without sound"}
-          onClick={audioConversion.onToggle}
-          trailing={<Switch checked={audioConversion.on} />}
-        />
-      ) : null}
       <SettingsRow icon={<MdSpeed />} title="Playback Speed" subtitle={formatSpeed(speed)} onClick={() => onOpen("speed")} />
       <SettingsRow icon={<MdPlayCircle />} title="Auto Play Next Episode" subtitle={autoplayNext ? "On" : "Off"} onClick={() => onAutoplayChange(!autoplayNext)} trailing={<Switch checked={autoplayNext} />} />
       <SettingsRow icon={<MdTune />} title="Advanced" subtitle="Additional settings" onClick={() => onOpen("advanced")} />
@@ -152,11 +141,10 @@ export function AdvancedPanel({ skipIntro, onSkipIntro, onSourceInfo, onChangeSo
   );
 }
 
-export function SourceInfoPanel({ stream, tracks, engine, converted, onClose }: { stream: Stream; tracks: EngineTracks; engine: string; converted?: "mp4" | "webm" | null; onClose: () => void }) {
+export function SourceInfoPanel({ stream, tracks, engine, onClose }: { stream: Stream; tracks: EngineTracks; engine: string; onClose: () => void }) {
   const rows: Array<[string, string]> = [["Provider", stream.providerLabel], ["Resolution", stream.qualityBadge]];
   if (stream.codec) rows.push(["Video codec", stream.codec]);
   if (stream.audioTag) rows.push(["Audio", stream.audioTag]);
-  if (converted) rows.push(["Audio conversion", converted === "webm" ? "On — stereo Opus (WebM)" : "On — stereo AAC (MP4)"]);
   if (tracks.audio.length) rows.push(["Audio tracks", String(tracks.audio.length)]);
   rows.push(["Subtitles", tracks.subtitles.length ? `${tracks.subtitles.length} available` : "None"]);
   if (stream.sizeLabel) rows.push(["File size", stream.sizeLabel]);
