@@ -55,7 +55,7 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
   const items = guest ? NAV_ITEMS.map((item) => (item.to === "/settings" ? { label: "Sign In", to: routes.auth } : item)) : NAV_ITEMS;
   return (
     <header className="topnav" data-transparent={transparent} data-scrolled={scrolled} role="banner">
-      <Link to="/" className="topnav__logo tvs" aria-label="Mango TV — Home" style={{ ["--tvs-radius" as string]: "6px", ["--tvs-border" as string]: "var(--text)" }}>
+      <Link to="/" className="topnav__logo tvs" aria-label="Arc TV — Home" style={{ ["--tvs-radius" as string]: "6px", ["--tvs-border" as string]: "var(--text)" }}>
         <MangoLogo size="1em" />
       </Link>
       <nav className="topnav__items hide-scroll" aria-label="Primary">

@@ -1,4 +1,4 @@
-# MangoTV for the web
+# ArcTV for the web (formerly MangoTV)
 
 A browser version of the **MangoTV Fire TV / Android TV app**. Same look, same screens, same accounts.
 

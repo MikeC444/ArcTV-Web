@@ -27,7 +27,7 @@ export function DetailScreen() {
   const { state, trailer, releaseDate, reload } = useDetail(providerId, type, id, watchedIds);
 
   useEffect(() => {
-    if (state.kind === "success") document.title = `${state.content.title} · Mango TV`;
+    if (state.kind === "success") document.title = `${state.content.title} · Arc TV`;
   }, [state]);
 
   if (state.kind === "loading") return <HomeSkeleton />;

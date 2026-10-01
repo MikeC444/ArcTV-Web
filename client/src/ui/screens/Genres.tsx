@@ -41,7 +41,7 @@ export function GenresScreen() {
   const ready = useAddonsReady();
   const [genres, setGenres] = useState<string[] | null>(null);
   useEffect(() => {
-    document.title = "Genres · Mango TV";
+    document.title = "Genres · Arc TV";
     if (!ready || providers.length === 0) return setGenres(null);
     let cancelled = false;
     setGenres(null);

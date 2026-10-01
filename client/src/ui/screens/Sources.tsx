@@ -77,7 +77,7 @@ export function SourcesScreen() {
   }, [auto, state, navigate, providerId, type, id, season, episode]);
 
   useEffect(() => {
-    document.title = state.kind === "loaded" ? `Select a Source · ${state.content.title}` : "Select a Source · Mango TV";
+    document.title = state.kind === "loaded" ? `Select a Source · ${state.content.title}` : "Select a Source · Arc TV";
   }, [state]);
 
   if (state.kind === "error") return <FullScreenError message={state.message} onRetry={reload} />;
@@ -207,7 +207,7 @@ function SourcesHelp({ onClose }: { onClose: () => void }) {
       <div className="dialog" role="dialog" aria-modal="true" aria-label="How sources work" data-spatial-trap="true" style={{ flexDirection: "column", maxWidth: 560 }}>
         <h2 className="t-title-lg" style={{ margin: 0 }}>How sources work</h2>
         <p className="c-text-2 t-body-md">Each installed addon can offer its own streams for a title. Pick one — the recommended source is the highest quality one your browser can play.</p>
-        <p className="c-text-2 t-body-md">In a web browser, torrent and YouTube sources, plain-HTTP links, and links that need special headers can't be played. They are marked so you can choose a different source, or use the MangoTV app for those.</p>
+        <p className="c-text-2 t-body-md">In a web browser, torrent and YouTube sources, plain-HTTP links, and links that need special headers can't be played. They are marked so you can choose a different source, or use the ArcTV app for those.</p>
         <MangoButton text="Got it" icon={<MdCheckCircle />} variant="filled" onClick={onClose} dataAttrs={{ autofocus: true }} />
       </div>
     </div>

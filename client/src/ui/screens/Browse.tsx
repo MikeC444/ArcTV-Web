@@ -163,7 +163,7 @@ export function ContentGrid({ items, onLoadMore }: { items: Content[]; onLoadMor
 
 function Page({ title, children, filters, back }: { title: string; children: ReactNode; filters?: ReactNode; back?: string }) {
   useEffect(() => {
-    document.title = `${title} · Mango TV`;
+    document.title = `${title} · Arc TV`;
   }, [title]);
   return (
     <div className="page">
@@ -186,7 +186,7 @@ function CatalogPage({ title, pager, emptyMessage, back }: { title: string; page
   if (activeProviders().length === 0)
     return (
       <Page title={title} back={back}>
-        <EmptyState icon={<MdExtension size={48} />} title="No addons installed" message="Install an addon to bring movies and TV shows into Mango TV." actionLabel="Browse Addons" actionIcon={<MdExtension />} onAction={() => navigate(routes.settings("addons"))} />
+        <EmptyState icon={<MdExtension size={48} />} title="No addons installed" message="Install an addon to bring movies and TV shows into Arc TV." actionLabel="Browse Addons" actionIcon={<MdExtension />} onAction={() => navigate(routes.settings("addons"))} />
       </Page>
     );
   return (

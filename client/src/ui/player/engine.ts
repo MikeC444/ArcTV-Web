@@ -61,7 +61,7 @@ export function mediaErrorToPlaybackError(error: MediaError | null): PlaybackErr
     case MediaError.MEDIA_ERR_NETWORK:
       return { type: "network", message: "The video couldn't be downloaded. The connection dropped, or the server refused the request." };
     case MediaError.MEDIA_ERR_DECODE:
-      return { type: "decode", message: "Your browser couldn't decode this video (its codec or encoding isn't supported here). Try another source, or the MangoTV app." };
+      return { type: "decode", message: "Your browser couldn't decode this video (its codec or encoding isn't supported here). Try another source, or the ArcTV app." };
     case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
       return { type: "unsupported", message: "This source's format isn't supported by your browser (or the server blocks web playback). Try another source." };
     default:
@@ -157,7 +157,7 @@ async function createHlsEngine(video: HTMLVideoElement, url: string, cb: EngineC
       // response (CORS) — the same stream plays fine in an app because apps aren't subject to CORS.
       if (status === 0 || status === undefined) {
         if (retriedNetwork++ < 1) return void hls.startLoad();
-        return cb.onError({ type: "cors", message: "This source's server doesn't allow playback from a web page (blocked by the browser's cross-origin rules), or it isn't reachable. It may work in the MangoTV app; try another source here." });
+        return cb.onError({ type: "cors", message: "This source's server doesn't allow playback from a web page (blocked by the browser's cross-origin rules), or it isn't reachable. It may work in the ArcTV app; try another source here." });
       }
       if (status === 401 || status === 403) return cb.onError({ type: "network", message: "The source's server refused access (HTTP " + status + "). The link may have expired." });
       if (status === 404) return cb.onError({ type: "network", message: "The source couldn't be found any more (HTTP 404)." });
@@ -169,7 +169,7 @@ async function createHlsEngine(video: HTMLVideoElement, url: string, cb: EngineC
         recoveredMedia = true;
         return void hls.recoverMediaError();
       }
-      return cb.onError({ type: "decode", message: "Your browser couldn't decode this stream (unsupported codec). Try another source, or the MangoTV app." });
+      return cb.onError({ type: "decode", message: "Your browser couldn't decode this stream (unsupported codec). Try another source, or the ArcTV app." });
     }
     cb.onError({ type: "unknown", message: data.error?.message || "The selected stream could not be played." });
   });
@@ -231,8 +231,8 @@ async function createDashEngine(video: HTMLVideoElement, url: string, cb: Engine
     const error = (event as { error?: { code?: number; message?: string } }).error;
     const code = error?.code ?? 0;
     // 25–34: manifest/content download problems; 10–13: MSE / codec problems (dash.js ErrorsBase)
-    if (code >= 25 && code <= 34) cb.onError({ type: "cors", message: "This source's server doesn't allow playback from a web page, or isn't reachable. It may work in the MangoTV app; try another source here." });
-    else if (code >= 10 && code <= 24) cb.onError({ type: "decode", message: "Your browser couldn't decode this stream (unsupported codec or protection). Try another source, or the MangoTV app." });
+    if (code >= 25 && code <= 34) cb.onError({ type: "cors", message: "This source's server doesn't allow playback from a web page, or isn't reachable. It may work in the ArcTV app; try another source here." });
+    else if (code >= 10 && code <= 24) cb.onError({ type: "decode", message: "Your browser couldn't decode this stream (unsupported codec or protection). Try another source, or the ArcTV app." });
     else cb.onError({ type: "unknown", message: error?.message || "The selected stream could not be played." });
   });
   player.initialize(video, url, false);

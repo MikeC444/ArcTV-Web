@@ -8,7 +8,7 @@ test.describe("settings", () => {
     await expect(page.getByRole("heading", { name: "Settings", level: 1 })).toBeVisible();
     for (const name of ["Account", "Addons", "Home Rows", "Sounds", "Subtitles"]) await expect(page.locator(".settings__cat", { hasText: name })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Account", level: 2 })).toBeVisible();
-    await expect(page.getByText("Manage your MangoTV account")).toBeVisible();
+    await expect(page.getByText("Manage your ArcTV account")).toBeVisible();
     await shot(page, "settings");
   });
 

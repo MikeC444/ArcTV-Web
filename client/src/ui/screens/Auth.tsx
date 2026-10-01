@@ -27,7 +27,7 @@ export function AuthStartScreen() {
   const notice = useAuth((s) => s.notice);
   const clearNotice = useAuth((s) => s.clearNotice);
   useEffect(() => {
-    document.title = "Welcome · Mango TV";
+    document.title = "Welcome · Arc TV";
   }, []);
   return (
     <main className="authstart" id="main">
@@ -153,7 +153,7 @@ export function PasswordSignInScreen() {
         {error ? <p id="auth-error" className="c-coral t-body-md" role="alert" style={{ margin: 0, textAlign: "center" }}>{error}</p> : null}
         {waitLeft > 0 ? (
           <p className="c-coral t-body-md" role="alert" style={{ margin: 0, textAlign: "center" }}>
-            Too many sign-in attempts right now — MangoTV only accepts a few a minute, shared by everyone using this site. You can try again in {waitLeft} s.
+            Too many sign-in attempts right now — ArcTV only accepts a few a minute, shared by everyone using this site. You can try again in {waitLeft} s.
           </p>
         ) : null}
         <MangoButton text={waitLeft > 0 ? `Try again in ${waitLeft} s` : isRegister ? "Create Account" : "Log In"} icon={isRegister ? <MdAdd /> : <MdPerson />} variant="filled" fullWidth type="submit" disabled={busy || waitLeft > 0} />
@@ -168,7 +168,7 @@ const POLL_INTERVAL_MS = 2500;
 const MAX_CONSECUTIVE_FAILURES = 4;
 
 /**
- * QrSignInScreen.kt — this browser shows a QR code; the person scans it with their phone, which opens MangoTV's own
+ * QrSignInScreen.kt — this browser shows a QR code; the person scans it with their phone, which opens ArcTV's own
  * activation page to sign in or create the account. The browser polls every 2.5 s and is signed in the moment the phone
  * finishes. An expired code is silently replaced.
  */
@@ -249,7 +249,7 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
   const init = useAuth((s) => s.init);
   const location = useLocation();
   if (status === "signedOut") return <Navigate to={routes.auth} replace state={{ from: location.pathname + location.search }} />;
-  if (status === "offline") return <FullScreenError title="You're offline" message="MangoTV can't reach its servers and there's no saved session on this browser yet. Check your connection and try again." onRetry={() => void init()} />;
+  if (status === "offline") return <FullScreenError title="You're offline" message="ArcTV can't reach its servers and there's no saved session on this browser yet. Check your connection and try again." onRetry={() => void init()} />;
   if (status === "unknown") return <div className="gate" aria-busy="true"><MangoLogo size={32} /></div>;
   return <>{children}</>;
 }

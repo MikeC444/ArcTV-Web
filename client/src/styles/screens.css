@@ -291,7 +291,7 @@
 .authform > h1 { margin-bottom: calc(14 * var(--dp)) !important; text-align: center; }
 .qr { width: min(280px, 70vw); height: auto; aspect-ratio: 1; border-radius: 12px; background: #fff; padding: 8px; margin: 12px 0; image-rendering: pixelated; }
 
-/* ── Phones: a poster-style, centred hero (MangoTV flavour: mango glow, amber Play) ── */
+/* ── Phones: a poster-style, centred hero (ArcTV flavour: warm glow, amber Play) ── */
 .hero__actlabel { display: none; }
 @media (max-width: 720px) {
   .hero { min-height: min(82vh, 760px); }

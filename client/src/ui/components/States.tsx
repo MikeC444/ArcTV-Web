@@ -37,7 +37,7 @@ export function EmptyState({ icon, title, message, actionLabel, actionIcon, onAc
 
 export function HomeEmptyState() {
   const navigate = useNavigate();
-  return <EmptyState icon={<MdExtension size={48} />} title="Your library is empty" message="Install an addon to bring movies and TV shows into Mango TV." actionLabel="Browse Addons" actionIcon={<MdExtension />} onAction={() => navigate("/settings/addons")} />;
+  return <EmptyState icon={<MdExtension size={48} />} title="Your library is empty" message="Install an addon to bring movies and TV shows into Arc TV." actionLabel="Browse Addons" actionIcon={<MdExtension />} onAction={() => navigate("/settings/addons")} />;
 }
 
 export function Spinner({ small, white }: { small?: boolean; white?: boolean }) {

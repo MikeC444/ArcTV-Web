@@ -46,7 +46,7 @@ export function SearchScreen() {
   }, []);
 
   useEffect(() => {
-    document.title = "Search · Mango TV";
+    document.title = "Search · Arc TV";
     if (urlQuery) void submit(urlQuery);
     // run once for a deep link / back navigation with ?q=
     // eslint-disable-next-line react-hooks/exhaustive-deps
