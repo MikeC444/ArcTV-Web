@@ -7,6 +7,8 @@ import type { Content, ContentType } from "../../domain/types";
 import { distinctBy, interleave, shuffled } from "../../lib/format";
 import { routes } from "../../lib/routes";
 import { useAddonsReady, useWatchedIds, withWatched } from "../../state/hooks";
+import { withoutBlocked } from "../../domain/blockedGenres";
+import { useBlockedSet } from "../../state/blockedGenres";
 import { useMyList, type SavedListItem } from "../../state/myList";
 import { BackButton } from "../components/BackButton";
 import { Pill } from "../components/Buttons";
@@ -185,7 +187,8 @@ function CatalogPage({ title, pager, emptyMessage, back, headExtra }: { title: s
   const watched = useWatchedIds();
   const [sort, setSort] = useState<SortMode>("FEATURED");
   const navigate = useNavigate();
-  const items = useMemo(() => sortContent(pager.items, sort).map((c) => withWatched(c, watched)), [pager.items, sort, watched]);
+  const blocked = useBlockedSet();
+  const items = useMemo(() => sortContent(withoutBlocked(pager.items, blocked), sort).map((c) => withWatched(c, watched)), [pager.items, sort, watched, blocked]);
 
   if (pager.status === "loading") return <GridSkeleton title={title} back={back} headExtra={headExtra} />;
   if (pager.status === "error") return <div className="page"><FullScreenError message="Couldn't reach your installed addons. Check your connection and try again." onRetry={pager.retry} /></div>;
@@ -214,9 +217,11 @@ function CatalogPage({ title, pager, emptyMessage, back, headExtra }: { title: s
 function TypeScreen({ title, type }: { title: string; type: ContentType }) {
   const [params, setParams] = useSearchParams();
   const requested = params.get("genre");
-  const genre = requested && GENRE_OPTIONS[type].includes(requested) ? requested : null;
+  const blockedGenres = useBlockedSet();
+  const options = useMemo(() => GENRE_OPTIONS[type].filter((g) => !blockedGenres.has(g.toLowerCase())), [type, blockedGenres]);
+  const genre = requested && options.includes(requested) ? requested : null;
   const pager = usePager({ type: "type", value: type, genre });
-  const picker = <GenrePicker genres={GENRE_OPTIONS[type]} value={genre} onChange={(g) => setParams(g ? { genre: g } : {}, { replace: true })} />;
+  const picker = <GenrePicker genres={options} value={genre} onChange={(g) => setParams(g ? { genre: g } : {}, { replace: true })} />;
   return <CatalogPage title={title} pager={pager} headExtra={picker} emptyMessage={genre ? `No ${genre} ${title.toLowerCase()} found right now.` : "Nothing to show here right now."} />;
 }
 export const MoviesScreen = () => <TypeScreen title="Movies" type="MOVIE" />;

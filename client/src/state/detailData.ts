@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useProviders } from "../domain/registry";
 import type { Content, ContentType } from "../domain/types";
 import { api } from "../lib/api";
+import { blockedSet, withoutBlocked } from "../domain/blockedGenres";
+import { useBlockedGenres } from "./blockedGenres";
 import { distinctBy } from "../lib/format";
 import { useAddonsReady, withWatched } from "./hooks";
 import { consumeDetailPreview } from "./pendingDetail";
@@ -69,7 +71,7 @@ export function useDetail(providerId: string, type: ContentType, id: string, wat
         const all: Content[] = [];
         for await (const batch of provider.getHomeSections()) all.push(...batch.flatMap((s) => s.items));
         if (cancelled) return;
-        const pool = distinctBy(all, (c) => c.id).filter((c) => c.id !== detail.id);
+        const pool = withoutBlocked(distinctBy(all, (c) => c.id).filter((c) => c.id !== detail.id), blockedSet(useBlockedGenres.getState().genres));
         const genreIds = new Set(detail.genres.map((g) => g.id));
         const matches = genreIds.size ? pool.filter((c) => c.genres.some((g) => genreIds.has(g.id))) : [];
         setSimilar((matches.length ? matches : pool).slice(0, 15));

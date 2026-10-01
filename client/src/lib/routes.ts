@@ -21,7 +21,7 @@ export const routes = {
   genre: (genre: string) => `/genres/${enc(genre)}`,
   search: "/search",
   myList: "/my-list",
-  settings: (tab?: "account" | "addons" | "home-rows" | "sounds" | "subtitles") => (tab ? `/settings/${tab}` : "/settings"),
+  settings: (tab?: "account" | "addons" | "home-rows" | "blocked-genres" | "sounds" | "subtitles") => (tab ? `/settings/${tab}` : "/settings"),
   addAddon: "/settings/addons/add",
   detail: (providerId: string, type: ContentType, id: string) => `/detail/${enc(providerId)}/${type}/${enc(id)}`,
   sources: (providerId: string, type: ContentType, id: string, season?: number | null, episode?: number | null, skipAutoSelect = false) =>
