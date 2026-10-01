@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { MdAdd, MdChevronRight, MdEdit, MdPerson, MdQrCode2, MdVisibility, MdVisibilityOff, MdWifiOff } from "react-icons/md";
+import { MdAdd, MdArrowBack, MdChevronRight, MdEdit, MdPerson, MdQrCode2, MdVisibility, MdVisibilityOff, MdWifiOff } from "react-icons/md";
 import QRCode from "qrcode";
-import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Navigate, Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
 import heroImage from "../../assets/img/auth_hero_living_room.webp";
 import { api, ApiClientError } from "../../lib/api";
 import { routes } from "../../lib/routes";
@@ -20,7 +20,33 @@ function useAfterAuth(): () => void {
 
 const intentOf = (value: string | undefined): "login" | "register" => (value === "register" ? "register" : "login");
 
-/** AuthStartScreen.kt — "Your Entertainment, Your Way", hero photo fading into the background, Log In / Sign Up. */
+/**
+ * The page every sign-in step shares: the hero photo, the scrim and the logo stay put while the left column swaps between
+ * Log In / Sign Up, the method choice, the password form and the QR code — so choosing "Log In" never leaves the page.
+ */
+export function AuthLayout() {
+  return (
+    <RedirectIfAuthed>
+      <main className="authstart" id="main">
+        <img className="authstart__hero" src={heroImage} alt="" />
+        <div className="authstart__scrim" />
+        <div className="authstart__col">
+          <MangoLogo size={32} />
+          <Outlet />
+        </div>
+      </main>
+    </RedirectIfAuthed>
+  );
+}
+
+/** A "Back" button for the steps after Log In / Sign Up; returns to the first step on the same page. */
+function BackButton() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  return <MangoButton text="Back" icon={<MdArrowBack />} compact onClick={() => navigate(routes.auth, { state: location.state })} />;
+}
+
+/** AuthStartScreen.kt — "Your Entertainment, Your Way", Log In / Sign Up (the hero photo is drawn by AuthLayout). */
 export function AuthStartScreen() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -30,31 +56,26 @@ export function AuthStartScreen() {
     document.title = "Welcome · Arc TV";
   }, []);
   return (
-    <main className="authstart" id="main">
-      <img className="authstart__hero" src={heroImage} alt="" />
-      <div className="authstart__scrim" />
-      <div className="authstart__col">
-        <MangoLogo size={32} />
-        {notice ? (
-          <p className="authstart__notice" role="status" onAnimationEnd={undefined}>
-            {notice}
-          </p>
-        ) : null}
-        <h1 className="t-display-md authstart__headline">
-          Your Entertainment,
-          <br />
-          <span className="brand-text">Your Way</span>
-        </h1>
-        <p className="t-body-lg c-text-2">Stream the latest movies, TV shows and more. Create an account to get the full experience.</p>
-        <div className="authstart__buttons">
-          <MangoButton text="Log In" icon={<MdPerson />} trailingChevron variant="filled" fullWidth dataAttrs={{ autofocus: true }} onClick={() => { clearNotice(); navigate(routes.authMethod("login"), { state: location.state }); }} />
-          <MangoButton text="Sign Up" icon={<MdAdd />} trailingChevron fullWidth onClick={() => { clearNotice(); navigate(routes.authMethod("register"), { state: location.state }); }} />
-        </div>
-        <p className="authstart__qr t-label-md c-text-3">
-          <MdQrCode2 aria-hidden="true" /> Scan a QR code to create an account from your phone
+    <>
+      {notice ? (
+        <p className="authstart__notice" role="status" onAnimationEnd={undefined}>
+          {notice}
         </p>
+      ) : null}
+      <h1 className="t-display-md authstart__headline">
+        Your Entertainment,
+        <br />
+        <span className="brand-text">Your Way</span>
+      </h1>
+      <p className="t-body-lg c-text-2">Stream the latest movies, TV shows and more. Create an account to get the full experience.</p>
+      <div className="authstart__buttons">
+        <MangoButton text="Log In" icon={<MdPerson />} trailingChevron variant="filled" fullWidth dataAttrs={{ autofocus: true }} onClick={() => { clearNotice(); navigate(routes.authMethod("login"), { state: location.state }); }} />
+        <MangoButton text="Sign Up" icon={<MdAdd />} trailingChevron fullWidth onClick={() => { clearNotice(); navigate(routes.authMethod("register"), { state: location.state }); }} />
       </div>
-    </main>
+      <p className="authstart__qr t-label-md c-text-3">
+        <MdQrCode2 aria-hidden="true" /> Scan a QR code to create an account from your phone
+      </p>
+    </>
   );
 }
 
@@ -65,15 +86,16 @@ export function AuthMethodScreen() {
   const navigate = useNavigate();
   const location = useLocation();
   return (
-    <main className="authcenter" id="main">
+    <div className="authpane">
       <div className="authcenter__col">
-        <h1 className="t-headline-sm" style={{ textAlign: "center", margin: 0 }}>{intent === "register" ? "How would you like to create your account?" : "How would you like to sign in?"}</h1>
+        <h1 className="t-headline-sm" style={{ margin: 0 }}>{intent === "register" ? "How would you like to create your account?" : "How would you like to sign in?"}</h1>
         <div className="authcenter__buttons">
           <MangoButton text="Scan a QR Code" icon={<MdQrCode2 />} variant="filled" fullWidth dataAttrs={{ autofocus: true }} onClick={() => navigate(routes.authQr(intent), { state: location.state })} />
           <MangoButton text="Use Email & Password" icon={<MdEdit />} fullWidth onClick={() => navigate(routes.authPassword(intent), { state: location.state })} />
         </div>
+        <div><BackButton /></div>
       </div>
-    </main>
+    </div>
   );
 }
 
@@ -134,7 +156,7 @@ export function PasswordSignInScreen() {
   };
 
   return (
-    <main className="authcenter" id="main">
+    <div className="authpane">
       <form className="authcenter__col authform" onSubmit={submit} noValidate>
         <h1 className="t-headline-sm" style={{ margin: 0 }}>{isRegister ? "Create Your Account" : "Log In"}</h1>
         <label className="sr-only" htmlFor="email">Email</label>
@@ -159,8 +181,9 @@ export function PasswordSignInScreen() {
         <MangoButton text={waitLeft > 0 ? `Try again in ${waitLeft} s` : isRegister ? "Create Account" : "Log In"} icon={isRegister ? <MdAdd /> : <MdPerson />} variant="filled" fullWidth type="submit" disabled={busy || waitLeft > 0} />
         {busy ? <div style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "center" }}><Spinner small /><span className="c-text-2 t-body-md">{isRegister ? "Creating account…" : "Signing in…"}</span></div> : null}
         <MangoButton text={isRegister ? "Already have an account? Log in" : "New here? Create an account"} icon={<MdChevronRight />} compact onClick={() => { setMode(isRegister ? "login" : "register"); setError(null); }} />
+        <div><BackButton /></div>
       </form>
-    </main>
+    </div>
   );
 }
 
@@ -227,11 +250,11 @@ export function QrSignInScreen() {
   }, [start]);
 
   return (
-    <main className="authcenter" id="main">
+    <div className="authpane">
       {state.kind === "loading" ? <Spinner /> : null}
       {state.kind === "error" ? <FullScreenError message={state.message} onRetry={() => void start()} /> : null}
       {state.kind === "ready" ? (
-        <div className="authcenter__col" style={{ alignItems: "center", textAlign: "center" }}>
+        <div className="authcenter__col">
           <h1 className="t-headline-sm" style={{ margin: 0 }}>{intent === "register" ? "Scan to create your account" : "Scan to sign in"}</h1>
           <img className="qr" src={state.qr} alt={`QR code that opens ${state.activationUrl}`} width={280} height={280} />
           <a className="t-body-md c-text-2" href={state.activationUrl} target="_blank" rel="noopener noreferrer" style={{ wordBreak: "break-all" }}>{state.activationUrl}</a>
@@ -239,7 +262,8 @@ export function QrSignInScreen() {
           {degraded ? <p className="t-label-sm c-text-3" style={{ display: "flex", gap: 8, alignItems: "center", margin: 0 }} role="status"><MdWifiOff aria-hidden="true" /> Can't reach the server right now — still trying…</p> : null}
         </div>
       ) : null}
-    </main>
+      <div style={{ marginTop: 16 }}><BackButton /></div>
+    </div>
   );
 }
 
