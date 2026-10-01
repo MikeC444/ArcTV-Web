@@ -38,9 +38,17 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
       else if (y < last - 4) setScrolled(false); // scrolling up brings it back
       last = y;
     };
+    // Moving the mouse up to where the bar was brings it back.
+    const onMove = (e: MouseEvent) => {
+      if (e.clientY <= 60) setScrolled(false);
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    window.addEventListener("mousemove", onMove, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("mousemove", onMove);
+    };
   }, [pathname]);
   const guest = useAuth((s) => s.status !== "signedIn");
   // Without an account the Settings link becomes "Sign In" (and Settings itself is unreachable).
