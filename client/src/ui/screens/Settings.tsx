@@ -33,7 +33,7 @@ export function SettingsScreen() {
   const selected: Tab = isTab(tab) ? tab : "account";
   const category = CATEGORIES.find((c) => c.id === selected)!;
   useEffect(() => {
-    document.title = `Settings · ${category.title} · ArcTV`;
+    document.title = `Settings · ${category.title} · Arc TV`;
   }, [category]);
   if (tab && !isTab(tab) && tab !== "addons") return <Navigate to="/settings" replace />;
 
@@ -110,7 +110,7 @@ function AddonsPane() {
         <div style={{ marginTop: 14 }}>
           <MdExtension className="c-text-3" size={32} aria-hidden="true" />
           <div className="t-title-md" style={{ marginTop: 12 }}>No addons installed yet</div>
-          <p className="t-body-sm c-text-2" style={{ margin: "6px 0 0" }}>Add a Stremio-compatible addon to bring its catalog into ArcTV.</p>
+          <p className="t-body-sm c-text-2" style={{ margin: "6px 0 0" }}>Add a Stremio-compatible addon to bring its catalog into Arc TV.</p>
         </div>
       ) : (
         <ul className="addons__list">
@@ -165,7 +165,7 @@ export function AddAddonScreen() {
   const [url, setUrl] = useState("");
   const [state, setState] = useState<{ kind: "idle" } | { kind: "installing" } | { kind: "success"; name: string } | { kind: "error"; message: string }>({ kind: "idle" });
   useEffect(() => {
-    document.title = "Add Addon · ArcTV";
+    document.title = "Add Addon · Arc TV";
   }, []);
   useEffect(() => {
     if (state.kind !== "success") return;

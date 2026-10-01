@@ -120,6 +120,7 @@
 
 /* ── Logo ────────────────────────────────────────────────────────────────── */
 .logo { display: inline-flex; align-items: center; gap: 0.4em; font-weight: 900; letter-spacing: 0.03em; line-height: 1; white-space: nowrap; }
+.logo__img { height: 1.5em; width: auto; display: block; }
 .logo__tv {
   background: var(--brand-gradient);
   -webkit-background-clip: text;

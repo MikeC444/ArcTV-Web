@@ -155,7 +155,7 @@ test.describe("browsing", () => {
       const box = (await nav.boundingBox())!;
       expect(Math.abs(box.x + box.width / 2 - width / 2), "nav items are centred in the window").toBeLessThanOrEqual(2);
       const logo = (await page.locator(".topnav__logo").boundingBox())!;
-      expect(logo.x + logo.width, "the ArcTV logo stays at the left").toBeLessThan(box.x);
+      expect(logo.x + logo.width, "the ARC TV logo stays at the left").toBeLessThan(box.x);
     }
     for (const name of ["Home", "Settings"]) {
       const item = nav.getByRole("link", { name });

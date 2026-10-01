@@ -27,7 +27,7 @@ export function AuthStartScreen() {
   const notice = useAuth((s) => s.notice);
   const clearNotice = useAuth((s) => s.clearNotice);
   useEffect(() => {
-    document.title = "Welcome · ArcTV";
+    document.title = "Welcome · Arc TV";
   }, []);
   return (
     <main className="authstart" id="main">

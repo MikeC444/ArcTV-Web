@@ -432,7 +432,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
   useEffect(() => {
     if (!("mediaSession" in navigator)) return;
     const ms = navigator.mediaSession;
-    ms.metadata = new MediaMetadata({ title: episode ? `${content.title} — S${episode.seasonNumber}E${episode.episodeNumber}` : content.title, artist: "ArcTV", artwork: content.posterUrl ? [{ src: content.posterUrl }] : [] });
+    ms.metadata = new MediaMetadata({ title: episode ? `${content.title} — S${episode.seasonNumber}E${episode.episodeNumber}` : content.title, artist: "Arc TV", artwork: content.posterUrl ? [{ src: content.posterUrl }] : [] });
     ms.setActionHandler("play", () => void video.current?.play());
     ms.setActionHandler("pause", () => video.current?.pause());
     ms.setActionHandler("seekbackward", () => seekBy(-10));

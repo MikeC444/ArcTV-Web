@@ -77,7 +77,7 @@ export function SourcesScreen() {
   }, [auto, state, navigate, providerId, type, id, season, episode]);
 
   useEffect(() => {
-    document.title = state.kind === "loaded" ? `Select a Source · ${state.content.title}` : "Select a Source · ArcTV";
+    document.title = state.kind === "loaded" ? `Select a Source · ${state.content.title}` : "Select a Source · Arc TV";
   }, [state]);
 
   if (state.kind === "error") return <FullScreenError message={state.message} onRetry={reload} />;

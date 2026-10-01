@@ -166,7 +166,7 @@ export function ContentGrid({ items, onLoadMore }: { items: Content[]; onLoadMor
 
 function Page({ title, children, filters, back, headExtra }: { title: string; children: ReactNode; filters?: ReactNode; back?: string; headExtra?: ReactNode }) {
   useEffect(() => {
-    document.title = `${title} · ArcTV`;
+    document.title = `${title} · Arc TV`;
   }, [title]);
   return (
     <div className="page">
@@ -192,7 +192,7 @@ function CatalogPage({ title, pager, emptyMessage, back, headExtra }: { title: s
   if (activeProviders().length === 0)
     return (
       <Page title={title} back={back} headExtra={headExtra}>
-        <EmptyState icon={<MdExtension size={48} />} title="No addons installed" message="Install an addon to bring movies and TV shows into ArcTV." actionLabel="Browse Addons" actionIcon={<MdExtension />} onAction={() => navigate(routes.settings("addons"))} />
+        <EmptyState icon={<MdExtension size={48} />} title="No addons installed" message="Install an addon to bring movies and TV shows into Arc TV." actionLabel="Browse Addons" actionIcon={<MdExtension />} onAction={() => navigate(routes.settings("addons"))} />
       </Page>
     );
   return (
