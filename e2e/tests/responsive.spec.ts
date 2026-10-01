@@ -58,4 +58,27 @@ test.describe("responsive layouts", () => {
     await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
     await expect(page).toHaveURL(/\/detail\//);
   });
+
+  test("touch: every poster has a menu button in its corner that opens the quick-actions menu (hidden with a mouse)", async ({ page }, info) => {
+    const account = await newAccount("morebtn");
+    await openSignedIn(page, account, "/movies");
+    const card = page.locator(".grid .card").first();
+    await expect(card.locator(".card__surface")).toBeVisible();
+    const more = card.getByRole("button", { name: /^More options for / });
+    if (!info.project.name.startsWith("mobile") && !info.project.name.startsWith("tablet")) {
+      await expect(more).toBeHidden(); // mouse users right-click
+      return;
+    }
+    await expect(more).toBeVisible();
+    const box = (await more.boundingBox())!;
+    expect(Math.min(box.width, box.height)).toBeGreaterThanOrEqual(44); // a proper tap target
+    const poster = (await card.locator(".card__surface").boundingBox())!;
+    expect(box.x + box.width).toBeGreaterThan(poster.x + poster.width - 4); // top right of the poster
+    expect(box.y).toBeLessThan(poster.y + 4);
+    await more.tap();
+    const dialog = page.getByRole("dialog", { name: /Actions for/ });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole("button", { name: /Add to My List|Remove from My List/ })).toBeVisible();
+    await expect(page).toHaveURL(/\/movies$/); // it did not open the title
+  });
 });

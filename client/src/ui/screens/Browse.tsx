@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { MdExtension } from "react-icons/md";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { GENRE_OPTIONS } from "../../domain/genreOptions";
 import { activeProviders, useProviders } from "../../domain/registry";
 import type { Content, ContentType } from "../../domain/types";
 import { distinctBy, interleave, shuffled } from "../../lib/format";
@@ -10,6 +11,7 @@ import { useMyList, type SavedListItem } from "../../state/myList";
 import { BackButton } from "../components/BackButton";
 import { Pill } from "../components/Buttons";
 import { ContentCard } from "../components/ContentCard";
+import { GenrePicker } from "../components/GenrePicker";
 import { GridSkeleton } from "../components/Skeletons";
 import { EmptyState, FullScreenError } from "../components/States";
 
@@ -42,10 +44,11 @@ interface PagerSnapshot {
 const pagerCache = new Map<string, PagerSnapshot>();
 
 /** TypeBrowseViewModel / GenreResultsViewModel — first page from every provider, then "skip" pages as you scroll. */
-function usePager(kind: { type: "type"; value: ContentType } | { type: "genre"; value: string }): Pager {
+function usePager(kind: { type: "type"; value: ContentType; genre?: string | null } | { type: "genre"; value: string }): Pager {
   const providers = useProviders((s) => s.providers);
   const ready = useAddonsReady();
-  const kindKey = `${kind.type}:${kind.value}`;
+  const genreOfType = kind.type === "type" ? kind.genre ?? undefined : undefined; // the Movies / TV Shows drop-down
+  const kindKey = `${kind.type}:${kind.value}:${genreOfType ?? ""}`;
   const cacheKey = `${kindKey}|${providers.map((p) => p.id).join(",")}`;
   const cachedAtStart = pagerCache.get(cacheKey);
   const [items, setItems] = useState<Content[]>(() => cachedAtStart?.items ?? []);
@@ -82,7 +85,7 @@ function usePager(kind: { type: "type"; value: ContentType } | { type: "genre"; 
       const results = await Promise.all(
         providers.map(async (provider) => {
           try {
-            if (kind.type === "type") return { ok: true as const, items: (await provider.getSectionsByType(kind.value)).flatMap((sec) => sec.items) };
+            if (kind.type === "type") return { ok: true as const, items: (await provider.getSectionsByType(kind.value, genreOfType)).flatMap((sec) => sec.items) };
             return { ok: true as const, items: (await provider.getGenreSection(kind.value))?.items ?? [] };
           } catch {
             return { ok: false as const, items: [] as Content[] };
@@ -109,7 +112,7 @@ function usePager(kind: { type: "type"; value: ContentType } | { type: "genre"; 
     const gen = s.gen;
     const page = s.page;
     void (async () => {
-      const results = await Promise.all(providers.map((p) => (kind.type === "type" ? p.getMoreItemsByType(kind.value, page) : p.getMoreGenreItems(kind.value, page)).catch(() => [] as Content[])));
+      const results = await Promise.all(providers.map((p) => (kind.type === "type" ? p.getMoreItemsByType(kind.value, page, genreOfType) : p.getMoreGenreItems(kind.value, page)).catch(() => [] as Content[])));
       if (gen !== s.gen) return;
       const fresh = distinctBy(kind.type === "type" ? shuffled(results.flat()) : interleave(results), (c) => c.id).filter((c) => !s.seen.has(c.id));
       if (fresh.length === 0) s.hasMore = false;
@@ -161,31 +164,34 @@ export function ContentGrid({ items, onLoadMore }: { items: Content[]; onLoadMor
   );
 }
 
-function Page({ title, children, filters, back }: { title: string; children: ReactNode; filters?: ReactNode; back?: string }) {
+function Page({ title, children, filters, back, headExtra }: { title: string; children: ReactNode; filters?: ReactNode; back?: string; headExtra?: ReactNode }) {
   useEffect(() => {
     document.title = `${title} · Mango TV`;
   }, [title]);
   return (
     <div className="page">
       {back ? <div className="page__back"><BackButton fallback={back} /></div> : null}
-      <h1 className="t-display-md page__title">{title}</h1>
+      <div className="page__head">
+        <h1 className="t-display-md page__title">{title}</h1>
+        {headExtra}
+      </div>
       {filters ? <div className="page__filters">{filters}</div> : null}
       {children}
     </div>
   );
 }
 
-function CatalogPage({ title, pager, emptyMessage, back }: { title: string; pager: Pager; emptyMessage: string; back?: string }) {
+function CatalogPage({ title, pager, emptyMessage, back, headExtra }: { title: string; pager: Pager; emptyMessage: string; back?: string; headExtra?: ReactNode }) {
   const watched = useWatchedIds();
   const [sort, setSort] = useState<SortMode>("FEATURED");
   const navigate = useNavigate();
   const items = useMemo(() => sortContent(pager.items, sort).map((c) => withWatched(c, watched)), [pager.items, sort, watched]);
 
-  if (pager.status === "loading") return <GridSkeleton title={title} back={back} />;
+  if (pager.status === "loading") return <GridSkeleton title={title} back={back} headExtra={headExtra} />;
   if (pager.status === "error") return <div className="page"><FullScreenError message="Couldn't reach your installed addons. Check your connection and try again." onRetry={pager.retry} /></div>;
   if (activeProviders().length === 0)
     return (
-      <Page title={title} back={back}>
+      <Page title={title} back={back} headExtra={headExtra}>
         <EmptyState icon={<MdExtension size={48} />} title="No addons installed" message="Install an addon to bring movies and TV shows into Mango TV." actionLabel="Browse Addons" actionIcon={<MdExtension />} onAction={() => navigate(routes.settings("addons"))} />
       </Page>
     );
@@ -193,6 +199,7 @@ function CatalogPage({ title, pager, emptyMessage, back }: { title: string; page
     <Page
       title={title}
       back={back}
+      headExtra={headExtra}
       filters={items.length > 0 ? SORTS.map((s) => <Pill key={s.id} label={s.label} selected={sort === s.id} large onClick={() => setSort(s.id)} dataAttrs={{ autofocus: s.id === "FEATURED" }} />) : undefined}
     >
       {items.length === 0 ? <p className="page__empty">{emptyMessage}</p> : <ContentGrid items={items} onLoadMore={pager.loadMore} />}
@@ -200,8 +207,20 @@ function CatalogPage({ title, pager, emptyMessage, back }: { title: string; page
   );
 }
 
-export const MoviesScreen = () => <CatalogPage title="Movies" pager={usePager({ type: "type", value: "MOVIE" })} emptyMessage="Nothing to show here right now." />;
-export const TvShowsScreen = () => <CatalogPage title="TV Shows" pager={usePager({ type: "type", value: "TV_SHOW" })} emptyMessage="Nothing to show here right now." />;
+/**
+ * Movies / TV Shows with the genre drop-down. The chosen genre lives in the address (?genre=Action), so going Back from a title returns to the
+ * same filtered list, and a filtered list can be shared; choosing replaces the address rather than adding a history step.
+ */
+function TypeScreen({ title, type }: { title: string; type: ContentType }) {
+  const [params, setParams] = useSearchParams();
+  const requested = params.get("genre");
+  const genre = requested && GENRE_OPTIONS[type].includes(requested) ? requested : null;
+  const pager = usePager({ type: "type", value: type, genre });
+  const picker = <GenrePicker genres={GENRE_OPTIONS[type]} value={genre} onChange={(g) => setParams(g ? { genre: g } : {}, { replace: true })} />;
+  return <CatalogPage title={title} pager={pager} headExtra={picker} emptyMessage={genre ? `No ${genre} ${title.toLowerCase()} found right now.` : "Nothing to show here right now."} />;
+}
+export const MoviesScreen = () => <TypeScreen title="Movies" type="MOVIE" />;
+export const TvShowsScreen = () => <TypeScreen title="TV Shows" type="TV_SHOW" />;
 export const GenreResultsScreen = ({ genre }: { genre: string }) => <CatalogPage title={genre} pager={usePager({ type: "genre", value: genre })} emptyMessage={`Nothing found for ${genre} right now.`} back={routes.genres} />;
 
 /** MyListScreen.kt — newest-added first, All / Watched filter. */

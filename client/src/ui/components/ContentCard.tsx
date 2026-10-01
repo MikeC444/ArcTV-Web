@@ -1,4 +1,4 @@
-import { MdCheck } from "react-icons/md";
+import { MdCheck, MdMoreVert } from "react-icons/md";
 import { routes } from "../../lib/routes";
 import { useCardMenu } from "../../state/cardMenu";
 import { stashDetailPreview } from "../../state/pendingDetail";
@@ -52,6 +52,10 @@ export function ContentCard({ content, style = "STANDARD", autoFocus, to }: Cont
           </>
         ) : null}
       </Surface>
+      {/* Touch screens can't right-click or hold: a button on the poster's corner opens the same quick-actions menu (hidden where a mouse is available). */}
+      <button type="button" className="card__more" aria-label={`More options for ${content.title}`} aria-haspopup="dialog" onClick={() => openMenu(content)}>
+        <MdMoreVert aria-hidden="true" />
+      </button>
       <div className="card__title" title={content.title}>
         {content.title}
       </div>

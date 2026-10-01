@@ -318,4 +318,105 @@ test.describe("browsing", () => {
     // the long label stays on one line
     expect(await dialog.getByRole("button", { name: "Remove from Continue Watching" }).evaluate((el) => el.getBoundingClientRect().height)).toBeLessThan(80);
   });
+
+  test("Movies and TV Shows have a genre drop-down with Cinemeta's genres (no years); choosing one filters the grid and survives Back", async ({ page }) => {
+    const account = await newAccount("genrepick");
+    await openSignedIn(page, account, "/movies");
+    const grid = page.locator(".grid .card__surface");
+    await expect(grid.first()).toBeVisible({ timeout: 20_000 });
+    const all = await grid.count();
+    const trigger = page.getByRole("button", { name: /All genres/ });
+    await expect(trigger).toBeVisible();
+    await trigger.click();
+    const list = page.getByRole("listbox", { name: "Genre" });
+    await expect(list).toBeVisible();
+    const names = await list.getByRole("option").allTextContents();
+    expect(names[0]).toBe("All genres");
+    expect(names.slice(1)).toEqual(["Action", "Adventure", "Animation", "Biography", "Comedy", "Crime", "Documentary", "Drama", "Family", "Fantasy", "History", "Horror", "Mystery", "Romance", "Sci-Fi", "Sport", "Thriller", "War", "Western"]);
+    await expect(list.getByRole("option", { name: "All genres" })).toHaveAttribute("aria-selected", "true");
+    await shot(page, "genre-dropdown");
+
+    await list.getByRole("option", { name: "Action" }).click();
+    await expect(list).toBeHidden();
+    await expect(page).toHaveURL(/\/movies\?genre=Action$/);
+    await expect(page.getByRole("button", { name: "Action" })).toBeVisible();
+    await expect.poll(() => grid.count(), { timeout: 20_000 }).toBeLessThan(all);
+    expect(await grid.count()).toBeGreaterThan(0);
+
+    // into a title and Back: still filtered
+    await grid.first().click();
+    await expect(page).toHaveURL(/\/detail\//);
+    await page.getByRole("button", { name: "Back" }).click();
+    await expect(page).toHaveURL(/\/movies\?genre=Action$/);
+    await expect(page.getByRole("button", { name: "Action" })).toBeVisible();
+
+    // a genre this catalogue has nothing for, then back to everything
+    await page.getByRole("button", { name: "Action" }).click();
+    await page.getByRole("listbox", { name: "Genre" }).getByRole("option", { name: "Sport" }).click();
+    await expect(page.getByText("No Sport movies found right now.")).toBeVisible({ timeout: 20_000 });
+    await page.getByRole("button", { name: "Sport" }).click();
+    await page.getByRole("listbox", { name: "Genre" }).getByRole("option", { name: "All genres" }).click();
+    await expect(page).toHaveURL(/\/movies$/);
+    await expect.poll(() => grid.count(), { timeout: 20_000 }).toBe(all);
+
+    // Escape closes it without changing anything
+    await page.getByRole("button", { name: /All genres/ }).click();
+    await expect(page.getByRole("listbox", { name: "Genre" })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("listbox", { name: "Genre" })).toBeHidden();
+    await expect(page).toHaveURL(/\/movies$/);
+
+    // TV Shows has the three extra genres
+    await page.goto("/tv");
+    await page.getByRole("button", { name: /All genres/ }).click();
+    await expect(page.getByRole("listbox", { name: "Genre" }).getByRole("option", { name: "Reality-TV" })).toBeVisible();
+    expect(await page.getByRole("listbox", { name: "Genre" }).getByRole("option").count()).toBe(23);
+  });
+
+  test("the Trailer button is on the Detail page from the first paint — dimmed while it looks the trailer up, live once found", async ({ page, context }) => {
+    const account = await newAccount("trailer");
+    let release: () => void = () => undefined;
+    const lookup = new Promise<void>((resolve) => (release = resolve));
+    await page.route("**/api/user/trailer**", async (route) => {
+      await lookup; // hold the answer back to look at the page in between
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ youtubeVideoId: "abc123" }) });
+    });
+    await openSignedIn(page, account, "/detail/test.mangotv.fixture/MOVIE/fxm1");
+    const trailer = page.getByRole("button", { name: "Trailer" });
+    await expect(page.getByRole("button", { name: /Play/ }).first()).toBeVisible({ timeout: 20_000 });
+    await expect(trailer).toBeVisible(); // there with the Play button, not a second later
+    await expect(trailer).toBeDisabled(); // nothing to open yet
+    release();
+    await expect(trailer).toBeEnabled({ timeout: 10_000 });
+    await context.route("https://www.youtube.com/**", (route) => route.fulfill({ status: 200, contentType: "text/html", body: "<title>trailer</title>" })); // the sandbox has no internet
+    const [popup] = await Promise.all([context.waitForEvent("page"), trailer.click()]);
+    expect(popup.url()).toContain("youtube.com/watch?v=abc123");
+    await popup.close();
+  });
+
+  test("with no trailer on file the button stays, dimmed, and says so; visitors without an account are taken to sign in", async ({ page }) => {
+    const account = await newAccount("notrailer");
+    await page.route("**/api/user/trailer**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ youtubeVideoId: null }) }));
+    await openSignedIn(page, account, "/detail/test.mangotv.fixture/MOVIE/fxm1");
+    const trailer = page.getByRole("button", { name: "Trailer" });
+    await expect(trailer).toBeVisible({ timeout: 20_000 });
+    await expect(trailer).toBeDisabled();
+    await expect(trailer).toHaveAttribute("title", "No trailer found for this title");
+
+    const guest = await page.context().browser()!.newContext({ baseURL: process.env.WEB_URL ?? "http://127.0.0.1:8090" });
+    const visitor = await guest.newPage();
+    await visitor.route("https://v3-cinemeta.strem.io/**", async (route) => {
+      try {
+        const answer = await route.fetch({ url: `${process.env.ADDON_URL ?? "http://127.0.0.1:7000"}${new URL(route.request().url()).pathname}` });
+        await route.fulfill({ status: answer.status(), contentType: "application/json", body: await answer.body(), headers: { "access-control-allow-origin": "*" } });
+      } catch {
+        /* the page moved on while this was in flight */
+      }
+    });
+    await visitor.goto("/detail/com.linvo.cinemeta/MOVIE/fxm1"); // visitors browse with Cinemeta (answered here by the fixture addon)
+    await expect(visitor.getByRole("button", { name: "Trailer" })).toBeEnabled({ timeout: 20_000 });
+    await visitor.getByRole("button", { name: "Trailer" }).click();
+    await expect(visitor).toHaveURL(/\/auth$/);
+    await guest.close();
+  });
 });
