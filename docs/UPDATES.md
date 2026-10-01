@@ -17,7 +17,7 @@ One sentence per update, newest first. When updating the Firestick app, tick the
 - [ ] 8512e53 — Posters are 8 across at 1920 wide (smaller than the TV size).
 
 ## Navigation behaviour
-- [ ] (faster tabs) — Home builds only the first 3 rows up front and the rest as you scroll to them, and each row shows at most 30 posters, so switching tabs no longer freezes the page for seconds on a phone.
+- [ ] (faster tabs) — Home builds only the first 3 rows up front and the rest as you scroll to them, and each row builds 30 posters at first and more as you scroll toward its end, so switching tabs no longer freezes the page for seconds on a phone.
 - [ ] (this change) — Moving the mouse to the top of the screen brings the hidden top bar back.
 - [ ] (earlier fix) — Clicking the top bar with the mouse no longer keeps it on screen while you scroll (only keyboard / remote focus does).
 - [ ] 1da9033 — The top bar comes back as soon as you scroll up.
