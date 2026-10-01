@@ -23,6 +23,7 @@ One sentence per update, newest first. When updating the Firestick app, tick the
 - [ ] 29a638f — Back buttons return to the exact page, scroll position and row; Continue Watching has no repeats.
 
 ## Home and lists
+- [ ] (blocked genres) — New Settings → Blocked Genres tab hides chosen genres from Home, Movies, TV Shows, Search, Genres and "You may also like" (stored per browser, not synced; the Firestick would need its own storage).
 - [ ] 800068e — My List has a "Sort by" row: Recently Added, A–Z, Highest Rated, Newest.
 - [ ] b7566d5 — Each title shows in only one Home row.
 - [ ] c0c9f2f — The hero's ten titles come from the enabled Home rows.

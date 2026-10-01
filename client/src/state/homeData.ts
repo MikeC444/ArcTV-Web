@@ -5,6 +5,8 @@ import type { CatalogProvider } from "../domain/provider";
 import { pickHeroTitles } from "../domain/heroPool";
 import type { Content, HomeSection } from "../domain/types";
 import { distinctBy } from "../lib/format";
+import { withoutBlocked } from "../domain/blockedGenres";
+import { useBlockedSet } from "./blockedGenres";
 import { useAuth } from "./auth";
 import { useContinueWatching, type ContinueWatchingEntry } from "./continueWatching";
 import { sectionWithWatched, useAddonsReady, useWatchedIds } from "./hooks";
@@ -77,6 +79,7 @@ export function useHome(): { state: HomeState; reload(): void; ready: boolean } 
   const prefs = useSettings((s) => s.homeRows);
   const cw = useContinueWatching((s) => s.items);
   const watchedIds = useWatchedIds();
+  const blocked = useBlockedSet();
 
   const [raw, setRaw] = useState<HomeSection[]>([]);
   const [fetched, setFetched] = useState(false);
@@ -146,7 +149,8 @@ export function useHome(): { state: HomeState; reload(): void; ready: boolean } 
 
   const state = useMemo<HomeState>(() => {
     if (!fetched || !addonsReady) return { kind: "loading" };
-    const visible = dedupeRows(applyRowOrder(raw, prefs).filter((s) => !prefs.hiddenRowIds.includes(s.id))).map((s) => sectionWithWatched(s, watchedIds));
+    const rawSections = blocked.size ? raw.map((s) => ({ ...s, items: withoutBlocked(s.items, blocked) })).filter((s) => s.items.length > 0) : raw;
+    const visible = dedupeRows(applyRowOrder(rawSections, prefs).filter((s) => !prefs.hiddenRowIds.includes(s.id))).map((s) => sectionWithWatched(s, watchedIds));
     const cwEntries = withoutShownTitles(cw, visible); // a title that already sits in another row is not repeated under Continue Watching
     const cwSection: HomeSection | null = cwEntries.length ? { id: CONTINUE_WATCHING_ROW_ID, title: "Continue Watching", style: "CONTINUE_WATCHING", items: cwEntries.map(entryToContent).map((c) => (watchedIds.has(c.id) ? { ...c, watched: true } : c)) } : null;
     const sections = [...(cwSection ? [cwSection] : []), ...visible];
@@ -154,10 +158,10 @@ export function useHome(): { state: HomeState; reload(): void; ready: boolean } 
     const pool = distinctBy(visible.flatMap((s) => s.items), (c) => c.id);
     // The hero: 10 random titles from the rows the person has enabled. Wait until those rows hold at least 10 (or everything has
     // loaded); if they never do, the rest is made up at random from the other rows.
-    const lockKey = `${prefs.hiddenRowIds.join("|")}#${cacheOnly}`;
+    const lockKey = `${prefs.hiddenRowIds.join("|")}#${cacheOnly}#${[...blocked].join("|")}`;
     if (heroLock && heroLock.key !== lockKey) heroLock = null;
     if (!heroLock && (pool.length >= HERO_POOL_SIZE || complete || cacheOnly)) {
-      const backup = distinctBy(raw.flatMap((s) => s.items), (c) => c.id);
+      const backup = distinctBy(rawSections.flatMap((s) => s.items), (c) => c.id);
       const titles = pickHeroTitles(pool, backup, HERO_POOL_SIZE);
       if (titles.length > 0) heroLock = { key: lockKey, titles };
     }
@@ -165,7 +169,7 @@ export function useHome(): { state: HomeState; reload(): void; ready: boolean } 
     if (hero.length > 0 || sections.length > 0) return { kind: "success", hero, sections };
     if (failed) return { kind: "error", message: "Couldn't reach your installed addons. Check your connection and try again." };
     return { kind: "empty" };
-  }, [fetched, addonsReady, raw, prefs, cw, watchedIds, cacheOnly, failed, complete]);
+  }, [fetched, addonsReady, raw, prefs, blocked, cw, watchedIds, cacheOnly, failed, complete]);
 
   return { state, reload: () => setReloadTick((t) => t + 1), ready: fetched && !cacheOnly };
 }

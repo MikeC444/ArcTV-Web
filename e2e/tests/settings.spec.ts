@@ -2,11 +2,11 @@ import { expect, test } from "@playwright/test";
 import { ADDON, ADDON_MANIFEST, newAccount, openSignedIn, shot } from "./helpers";
 
 test.describe("settings", () => {
-  test("two-pane layout with the same five categories as the TV", async ({ page }) => {
+  test("two-pane layout with the TV categories plus Blocked Genres", async ({ page }) => {
     const account = await newAccount("settings");
     await openSignedIn(page, account, "/settings");
     await expect(page.getByRole("heading", { name: "Settings", level: 1 })).toBeVisible();
-    for (const name of ["Account", "Addons", "Home Rows", "Sounds", "Subtitles"]) await expect(page.locator(".settings__cat", { hasText: name })).toBeVisible();
+    for (const name of ["Account", "Addons", "Home Rows", "Blocked Genres", "Sounds", "Subtitles"]) await expect(page.locator(".settings__cat", { hasText: name })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Account", level: 2 })).toBeVisible();
     await expect(page.getByText("Manage your ArcTV account")).toBeVisible();
     await shot(page, "settings");

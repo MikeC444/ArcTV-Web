@@ -5,6 +5,7 @@ import { useProviders } from "../../domain/registry";
 import { routes } from "../../lib/routes";
 import { Surface } from "../components/Surface";
 import { Spinner } from "../components/States";
+import { useBlockedSet } from "../../state/blockedGenres";
 import { useAddonsReady } from "../../state/hooks";
 
 const GENRE_LIST_MIN_YEAR = 2016;
@@ -39,7 +40,9 @@ export function buildGenreList(all: Iterable<string>): string[] {
 export function GenresScreen() {
   const providers = useProviders((s) => s.providers);
   const ready = useAddonsReady();
-  const [genres, setGenres] = useState<string[] | null>(null);
+  const [allGenres, setGenres] = useState<string[] | null>(null);
+  const blocked = useBlockedSet();
+  const genres = allGenres === null ? null : allGenres.filter((g) => !blocked.has(g.toLowerCase()));
   useEffect(() => {
     document.title = "Genres · Arc TV";
     if (!ready || providers.length === 0) return setGenres(null);

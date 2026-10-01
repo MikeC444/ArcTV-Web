@@ -4,6 +4,8 @@ import { useSearchParams } from "react-router-dom";
 import { activeProviders } from "../../domain/registry";
 import type { Content } from "../../domain/types";
 import { distinctBy, interleave } from "../../lib/format";
+import { withoutBlocked } from "../../domain/blockedGenres";
+import { useBlockedSet } from "../../state/blockedGenres";
 import { sectionWithWatched, useWatchedIds } from "../../state/hooks";
 import { MangoButton } from "../components/Buttons";
 import { ContentRow } from "../components/ContentRow";
@@ -35,6 +37,7 @@ export function SearchScreen() {
   const [query, setQuery] = useState(urlQuery);
   const [state, setState] = useState<SearchState>({ kind: "idle" });
   const watched = useWatchedIds();
+  const blocked = useBlockedSet();
   const generation = useRef(0);
 
   const submit = useCallback(async (value: string) => {
@@ -77,8 +80,8 @@ export function SearchScreen() {
         ) : null}
         {state.kind === "results" ? (
           <>
-            {state.movies.length ? <ContentRow section={sectionWithWatched({ id: "search_movies", title: "Movies", items: state.movies, style: "STANDARD" }, watched)} /> : null}
-            {state.tvShows.length ? <ContentRow section={sectionWithWatched({ id: "search_tv_shows", title: "TV Shows", items: state.tvShows, style: "STANDARD" }, watched)} /> : null}
+            {withoutBlocked(state.movies, blocked).length ? <ContentRow section={sectionWithWatched({ id: "search_movies", title: "Movies", items: withoutBlocked(state.movies, blocked), style: "STANDARD" }, watched)} /> : null}
+            {withoutBlocked(state.tvShows, blocked).length ? <ContentRow section={sectionWithWatched({ id: "search_tv_shows", title: "TV Shows", items: withoutBlocked(state.tvShows, blocked), style: "STANDARD" }, watched)} /> : null}
           </>
         ) : null}
         {state.kind === "none" ? <EmptyState icon={<MdSearchOff size={48} />} title="No results" message={`Nothing found for "${state.query}". Try a different search.`} /> : null}

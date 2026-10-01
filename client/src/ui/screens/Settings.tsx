@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { MdAccountCircle, MdAdd, MdArrowDownward, MdArrowUpward, MdCheck, MdCloudUpload, MdDelete, MdExtension, MdGridView, MdInfo, MdLogout, MdMusicNote, MdSubtitles, MdVolumeUp } from "react-icons/md";
+import { MdAccountCircle, MdAdd, MdBlock, MdArrowDownward, MdArrowUpward, MdCheck, MdCloudUpload, MdDelete, MdExtension, MdGridView, MdInfo, MdLogout, MdMusicNote, MdSubtitles, MdVolumeUp } from "react-icons/md";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { applyRowOrder, moveRow } from "../../domain/homeRows";
 import { useProviders } from "../../domain/registry";
@@ -10,17 +10,20 @@ import { routes } from "../../lib/routes";
 import { useAddons, CINEMETA_MANIFEST_URL } from "../../state/addons";
 import { useAuth } from "../../state/auth";
 import { useAddonsReady } from "../../state/hooks";
+import { buildGenreList } from "./Genres";
+import { useBlockedGenres } from "../../state/blockedGenres";
 import { useSettings } from "../../state/settings";
 import { signOutAndWipe } from "../../state/sync";
-import { MangoButton, Switch } from "../components/Buttons";
+import { MangoButton, Pill, Switch } from "../components/Buttons";
 import { Spinner } from "../components/States";
 import { Surface } from "../components/Surface";
 
-type Tab = "account" | "addons" | "home-rows" | "sounds" | "subtitles";
+type Tab = "account" | "addons" | "home-rows" | "blocked-genres" | "sounds" | "subtitles";
 const CATEGORIES: Array<{ id: Tab; icon: ReactNode; title: string; subtitle: string }> = [
   { id: "account", icon: <MdAccountCircle />, title: "Account", subtitle: "Manage your ArcTV account" },
   { id: "addons", icon: <MdExtension />, title: "Addons", subtitle: "Manage installed content providers" },
   { id: "home-rows", icon: <MdGridView />, title: "Home Rows", subtitle: "Choose which rows show up on Home" },
+  { id: "blocked-genres", icon: <MdBlock />, title: "Blocked Genres", subtitle: "Hide genres you don't want to see" },
   { id: "sounds", icon: <MdMusicNote />, title: "Sounds", subtitle: "Choose your app boot sound" },
   { id: "subtitles", icon: <MdSubtitles />, title: "Subtitles", subtitle: "Default on/off and preferred language" },
 ];
@@ -55,10 +58,55 @@ export function SettingsScreen() {
           {selected === "account" ? <AccountPane /> : null}
           {selected === "addons" ? <AddonsPane /> : null}
           {selected === "home-rows" ? <HomeRowsPane /> : null}
+          {selected === "blocked-genres" ? <BlockedGenresPane /> : null}
           {selected === "sounds" ? <SoundsPane /> : null}
           {selected === "subtitles" ? <SubtitlesPane /> : null}
         </section>
       </div>
+    </div>
+  );
+}
+
+/** Genres the person never wants to see: hidden from Home, Movies, TV Shows, Search, Genres and "You may also like". */
+function BlockedGenresPane() {
+  const providers = useProviders((s) => s.providers);
+  const ready = useAddonsReady();
+  const blocked = useBlockedGenres((s) => s.genres);
+  const toggle = useBlockedGenres((s) => s.toggle);
+  const clear = useBlockedGenres((s) => s.clear);
+  const [available, setAvailable] = useState<string[] | null>(null);
+  useEffect(() => {
+    if (!ready) return undefined;
+    let cancelled = false;
+    void Promise.all(providers.map((p) => p.getAvailableGenres().catch(() => [] as string[]))).then((lists) => !cancelled && setAvailable(buildGenreList(lists.flat()).filter((g) => !/^\d{4}$/.test(g))));
+    return () => {
+      cancelled = true;
+    };
+  }, [providers, ready]);
+  // blocked genres always show (so they can be unblocked even if no addon lists them now), then the rest
+  const all = useMemo(() => {
+    const lower = new Set(blocked.map((g) => g.toLowerCase()));
+    return [...blocked, ...(available ?? []).filter((g) => !lower.has(g.toLowerCase()))];
+  }, [blocked, available]);
+  const isOn = (genre: string) => blocked.some((g) => g.toLowerCase() === genre.toLowerCase());
+  return (
+    <div>
+      <p className="t-body-sm c-text-2" style={{ margin: 0 }}>Titles in these genres are hidden from Home, Movies, TV Shows, Search and Genres. Titles an addon doesn't give genres for can't be filtered. This choice stays in this browser.</p>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "14px 0" }}>
+        <span className="t-title-md">{blocked.length === 0 ? "Nothing blocked" : `${blocked.length} blocked`}</span>
+        {blocked.length > 0 ? <MangoButton text="Clear all" icon={<MdDelete />} compact onClick={clear} /> : null}
+      </div>
+      {!ready || (available === null && blocked.length === 0) ? (
+        <Spinner />
+      ) : all.length === 0 ? (
+        <p className="t-body-sm c-text-2">Install an addon first — its genres will show up here.</p>
+      ) : (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }} role="group" aria-label="Genres">
+          {all.map((genre) => (
+            <Pill key={genre} label={genre} selected={isOn(genre)} large icon={isOn(genre) ? <MdBlock aria-hidden="true" /> : undefined} onClick={() => toggle(genre)} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
