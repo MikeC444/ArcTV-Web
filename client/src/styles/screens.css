@@ -285,6 +285,10 @@
   .authstart__hero { object-position: center top; opacity: 0.6; }
   .authstart__col { width: 100%; }
 }
+.authpane { display: flex; flex-direction: column; gap: calc(14 * var(--dp)); }
+.authpane .authcenter__col { max-width: none; min-width: 0; }
+.authpane .state { min-height: 0; padding: 0; align-items: flex-start; text-align: left; }
+.authpane .qr { align-self: flex-start; }
 .authcenter { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px var(--pad-x); }
 .authcenter__col { width: 100%; max-width: calc(420 * var(--dp) + 20px); min-width: min(100%, 320px); display: flex; flex-direction: column; gap: calc(14 * var(--dp)); }
 .authcenter__buttons { margin-top: calc(18 * var(--dp)); display: flex; flex-direction: column; gap: calc(16 * var(--dp)); }
@@ -355,3 +359,4 @@
   .genrepick__panel { left: var(--pad-x); right: var(--pad-x); width: auto; }
   .genrepick__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 12px; }
 }
+.authpane .authform > h1 { text-align: left; }

@@ -7,7 +7,7 @@ import { detachSession, startGuestSession, startSession } from "./state/sync";
 import { AppShell } from "./ui/layout/AppShell";
 import { Spinner } from "./ui/components/States";
 import { AddAddonScreen, SettingsScreen } from "./ui/screens/Settings";
-import { AllowGuests, AuthMethodScreen, AuthStartScreen, PasswordSignInScreen, QrSignInScreen, RedirectIfAuthed, RequireAuth } from "./ui/screens/Auth";
+import { AllowGuests, AuthLayout, AuthMethodScreen, AuthStartScreen, PasswordSignInScreen, QrSignInScreen, RequireAuth } from "./ui/screens/Auth";
 import { GenreResultsScreen, MoviesScreen, MyListScreen, TvShowsScreen } from "./ui/screens/Browse";
 import { DetailScreen } from "./ui/screens/Detail";
 import { GenresScreen } from "./ui/screens/Genres";
@@ -64,10 +64,12 @@ export function App() {
     <BrowserRouter>
       <SessionLifecycle />
       <Routes>
-        <Route path="/auth" element={<RedirectIfAuthed><AuthStartScreen /></RedirectIfAuthed>} />
-        <Route path="/auth/method/:intent" element={<RedirectIfAuthed><AuthMethodScreen /></RedirectIfAuthed>} />
-        <Route path="/auth/password/:intent" element={<RedirectIfAuthed><PasswordSignInScreen /></RedirectIfAuthed>} />
-        <Route path="/auth/qr/:intent" element={<RedirectIfAuthed><QrSignInScreen /></RedirectIfAuthed>} />
+        <Route element={<AuthLayout />}>
+          <Route path="/auth" element={<AuthStartScreen />} />
+          <Route path="/auth/method/:intent" element={<AuthMethodScreen />} />
+          <Route path="/auth/password/:intent" element={<PasswordSignInScreen />} />
+          <Route path="/auth/qr/:intent" element={<QrSignInScreen />} />
+        </Route>
         <Route
           element={
             <AllowGuests>
