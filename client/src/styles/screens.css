@@ -375,3 +375,10 @@
   .detail__rating, .detail[data-compact] .detail__rating { position: absolute; top: calc(var(--nav-h) + 8px); right: var(--pad-x); bottom: auto; margin: 0; align-self: auto; }
   .detail__back { position: fixed; top: calc(var(--nav-h) + 8px + env(safe-area-inset-top)); z-index: 44; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6)); }
 }
+/* TV show Detail on a desktop-width window: no tall empty hero. The title, Play row and seasons sit together near the top, and the IMDb rating is level with the Play row (same right edge). */
+@media (min-width: 721px) {
+  .detail:not([data-compact="true"]) .detail__hero { min-height: 0; align-items: flex-end; }
+  .detail:not([data-compact="true"]) .detail__col { align-self: flex-end; padding-top: calc(var(--nav-h) + 76 * var(--dp)); padding-bottom: calc(20 * var(--dp)); }
+  /* the rating's centre on the buttons' centre: half a button (52 dp × --hb) above the row's bottom edge */
+  .detail:not([data-compact="true"]) .detail__rating { bottom: calc(20 * var(--dp) + 26 * var(--dp) * var(--hb, 1)); transform: translateY(50%); }
+}
