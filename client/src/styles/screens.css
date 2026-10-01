@@ -361,3 +361,13 @@
   .genrepick__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 12px; }
 }
 .authpane .authform > h1 { text-align: left; }
+
+/* ── Phones: Detail fits the screen — no tall empty hero, the details and cast sit right under the buttons, and the back arrow stays put while scrolling ── */
+@media (max-width: 720px) {
+  .detail__hero, .detail[data-compact] .detail__hero { min-height: 0; }
+  .detail__col, .detail[data-compact] .detail__col { align-self: stretch; padding-top: calc(var(--nav-h) + 68px); padding-bottom: 16px; }
+  .detail__spacer { display: none; }
+  .detail__actions, .detail[data-compact] .detail__actions { margin-top: 14px; }
+  .detail__rating, .detail[data-compact] .detail__rating { position: absolute; top: calc(var(--nav-h) + 8px); right: var(--pad-x); bottom: auto; margin: 0; align-self: auto; }
+  .detail__back { position: fixed; top: calc(var(--nav-h) + 8px + env(safe-area-inset-top)); z-index: 44; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6)); }
+}
