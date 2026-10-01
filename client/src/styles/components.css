@@ -171,8 +171,8 @@
 /* On a desktop-width window the logo stays at the left and the nav items sit in the middle of the screen. */
 @media (min-width: 1101px) {
   /* The logo keeps its original size and place (12 dp from the top); the links sit higher, on their own line, so they don't follow the logo's centre. */
-  .topnav { display: grid; grid-template-columns: 1fr auto 1fr; padding-top: 0; padding-bottom: calc(26 * var(--dp)); }
-  .topnav__logo { justify-self: start; align-self: start; margin-top: calc(12 * var(--dp)); font-size: calc(32 * var(--dp)); }
+  .topnav { display: grid; grid-template-columns: 1fr auto 1fr; padding-top: 0; padding-bottom: calc(8 * var(--dp)); }
+  .topnav__logo { justify-self: start; align-self: start; margin-top: calc(4 * var(--dp)); font-size: calc(22 * var(--dp)); }
   .topnav__items { justify-self: center; align-self: start; margin: -2px 0 -6px; gap: calc(8 * var(--dp)); }
 }
 .topnav__items::-webkit-scrollbar { display: none; }
