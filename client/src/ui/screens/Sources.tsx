@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { MdArrowBack, MdBolt, MdExpandMore, MdHourglassTop, MdRefresh, MdExtension, MdInfo, MdPerson, MdSearchOff, MdSecurity, MdStar, MdSurroundSound, MdCheckCircle, MdOutlineCheckCircle, MdWifi, MdPlayArrow, MdWarningAmber } from "react-icons/md";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { DEBRID_NAMES, describeCaps, deviceVerdict, getDeviceCaps, isWebFormat, startRank, type DeviceCaps } from "../../domain/deviceSupport";
+import { DEBRID_NAMES, describeCaps, deviceVerdict, getDeviceCaps, hasSoundHere, isWebFormat, startRank, type DeviceCaps } from "../../domain/deviceSupport";
 import { resolutionOrdinal, SOURCE_HEALTH_LABEL, type Content, type ContentType, type ResolutionTier, type Stream } from "../../domain/types";
 import { formatRuntime } from "../../lib/format";
 import { useGoBack } from "../../lib/navigation";
@@ -97,7 +97,7 @@ function SourcesShell({ onBack }: { loading?: boolean; onBack: () => void }) {
       <div className="sources__main">
         <h1 className="t-headline-sm" style={{ margin: 0 }}>Select a Source</h1>
         <p className="t-label-lg c-text-2" style={{ margin: "calc(4 * var(--dp)) 0 calc(16 * var(--dp))" }}>Choose the best quality and server for your stream.</p>
-        <p className="t-label-md c-text-3" style={{ margin: "calc(-8 * var(--dp)) 0 calc(16 * var(--dp))" }}>Not all sources will work in a web browser — MP4 sources work best.</p>
+        <p className="t-label-md c-text-3" style={{ margin: "calc(-8 * var(--dp)) 0 calc(16 * var(--dp))" }}>Not all sources will work in a web browser — MP4 sources with AAC audio work best.</p>
         <Shimmer width="calc(260 * var(--dp))" height="calc(36 * var(--dp))" />
         <div style={{ display: "flex", flexDirection: "column", gap: "calc(10 * var(--dp))", marginTop: "calc(14 * var(--dp))" }}>
           {[0, 1, 2, 3, 4].map((i) => (
@@ -118,7 +118,7 @@ function SourcesLoaded({ state, onBack, onSelect, onManage, onRetry }: { state: 
   const caps = useMemo(() => getDeviceCaps(), []);
   const filtered = useMemo(() => {
     const byQuality = filter === "ALL" ? state.streams : state.streams.filter((s) => s.resolutionTier === filter);
-    const byFormat = mp4Only ? byQuality.filter(isWebFormat) : byQuality;
+    const byFormat = mp4Only ? byQuality.filter((s) => isWebFormat(s) && hasSoundHere(s, caps)) : byQuality;
     return playableOnly ? byFormat.filter((s) => ["yes", "unknown"].includes(deviceVerdict(s, caps).level)) : byFormat;
   }, [state.streams, filter, playableOnly, mp4Only, caps]);
   const { list: sorted, rest } = useMemo(() => orderSources(state.streams, filtered, state.recommendedId, sort, caps), [state.streams, filtered, state.recommendedId, sort, caps]);
@@ -150,7 +150,7 @@ function SourcesLoaded({ state, onBack, onSelect, onManage, onRetry }: { state: 
           {sorted.length === 0 && state.searchingMore ? (
             <div className="sources__empty"><Spinner /><h2 className="t-title-lg">Searching for sources…</h2><p className="c-text-2 t-body-md">Checking your installed addons for this title.</p></div>
           ) : sorted.length === 0 && state.streams.length > 0 ? (
-            <div className="sources__empty"><MdSearchOff size={40} className="c-text-3" aria-hidden="true" /><h2 className="t-title-lg">{playableOnly ? "Nothing here plays on this device" : mp4Only ? "No MP4 sources here" : "No sources in this quality"}</h2><p className="c-text-2 t-body-md">{playableOnly ? `None of the ${state.streams.length} sources found looks playable in ${caps.browser} on this device. Turn the filter off to see them all and why.` : mp4Only ? "None of these sources looks like an MP4 or another web format. Turn the filter off to see every source — some may not play in a browser." : "Choose “All Sources” to see everything your addons found."}</p><MangoButton text="Show All Sources" icon={<MdCheckCircle />} onClick={() => { setFilter("ALL"); setPlayableOnly(false); setMp4Only(false); }} /></div>
+            <div className="sources__empty"><MdSearchOff size={40} className="c-text-3" aria-hidden="true" /><h2 className="t-title-lg">{playableOnly ? "Nothing here plays on this device" : mp4Only ? "No MP4 sources here" : "No sources in this quality"}</h2><p className="c-text-2 t-body-md">{playableOnly ? `None of the ${state.streams.length} sources found looks playable in ${caps.browser} on this device. Turn the filter off to see them all and why.` : mp4Only ? "None of these sources looks like an MP4 or another web format with sound this browser can play. Turn the filter off to see every source — some may not play in a browser." : "Choose “All Sources” to see everything your addons found."}</p><MangoButton text="Show All Sources" icon={<MdCheckCircle />} onClick={() => { setFilter("ALL"); setPlayableOnly(false); setMp4Only(false); }} /></div>
           ) : sorted.length === 0 ? (
             <div className="sources__empty">
               <MdSearchOff size={40} className="c-text-3" aria-hidden="true" />

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { detectDeviceCaps, deviceVerdict, isWebFormat, parseStreamFacts, type CapsEnvironment } from "./deviceSupport";
+import { detectDeviceCaps, deviceVerdict, hasSoundHere, isWebFormat, parseStreamFacts, type CapsEnvironment } from "./deviceSupport";
 import type { Stream } from "./types";
 import { recommendedStreamId } from "../state/sourcesData";
 import { sortStreams } from "../ui/screens/Sources";
@@ -192,5 +192,17 @@ describe("the MP4 & web formats filter", () => {
     expect(isWebFormat(mk("Movie.2024.2160p.x265"))).toBe(false); // .mkv link
     expect(isWebFormat(mk("Movie", "https://cdn.example/a.avi"))).toBe(false);
     expect(isWebFormat(mk("Movie.1080p.x264.mkv", null))).toBe(false); // MKV named only in the release text
+  });
+
+  it("drops sources whose only audio this browser can't decode, and asks the browser itself", () => {
+    const dolby = mk("Movie.1080p.WEB-DL.DDP5.1.H264", "https://cdn.example/a.mp4");
+    const aac = mk("Movie.1080p.WEB-DL.AAC2.0.H264", "https://cdn.example/a.mp4");
+    const both = mk("Movie.1080p.WEB-DL.DDP5.1.AAC.H264", "https://cdn.example/a.mp4");
+    const unnamed = mk("Movie.1080p.H264", "https://cdn.example/a.mp4");
+    expect(hasSoundHere(dolby, chrome)).toBe(false);
+    expect(hasSoundHere(aac, chrome)).toBe(true);
+    expect(hasSoundHere(both, chrome)).toBe(true);
+    expect(hasSoundHere(unnamed, chrome)).toBe(true);
+    expect(hasSoundHere(dolby, safari)).toBe(true); // Safari decodes Dolby Digital Plus
   });
 });

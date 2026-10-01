@@ -167,6 +167,15 @@ export function isWebFormat(stream: Pick<Stream, "url" | "descriptor" | "release
   return container === null || container === "mp4" || container === "webm" || container === "hls" || container === "dash";
 }
 
+/**
+ * Also out: a source whose only audio this browser can't decode (Dolby Digital, DTS, TrueHD…) — it would play with no sound. This is
+ * asked of the browser itself, so Safari, which decodes Dolby, keeps them. A source that doesn't name its audio stays.
+ */
+export function hasSoundHere(stream: Pick<Stream, "url" | "descriptor" | "releaseTitle" | "codec" | "audioTag">, caps: DeviceCaps = getDeviceCaps()): boolean {
+  const { audio } = parseStreamFacts(stream);
+  return audio.length === 0 || audio.some((codec) => caps.audio[codec]);
+}
+
 export type DeviceLevel = "yes" | "unknown" | "audio" | "no";
 
 export interface DeviceVerdict {
