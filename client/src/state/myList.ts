@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { api, ApiClientError } from "../lib/api";
 import { monotonicIso } from "../lib/iso";
 import type { Content, ContentType } from "../domain/types";
-import { Outbox, readJson, userKey, writeJson } from "./persist";
+import { globalKey, Outbox, readJson, userKey, writeJson } from "./persist";
 
 /** SavedListItem.kt — one My List entry. Server order (added_at ASC) is preserved; the UI shows newest first. */
 export interface SavedListItem {
@@ -83,6 +83,13 @@ interface MyListState {
 
 let outbox: Outbox<WatchlistDto> | null = null;
 
+/**
+ * Titles the person removed from My List or took off "Watched". Kept under a key that is NOT wiped on sign-out (it names the user inside the key),
+ * so the one-time "watched" catch-up from history never puts them back.
+ */
+const dismissedKey = (userId: string) => globalKey(`dismissed:${userId}`);
+const backfillFlagKey = (userId: string) => globalKey(`watchedBackfillDone:${userId}`);
+
 function persist(userId: string | null, items: SavedListItem[]) {
   if (userId) writeJson(userKey(userId, "myList"), items);
 }
@@ -147,6 +154,14 @@ export const useMyList = create<MyListState>((set, get) => {
     persist(get().userId, next);
   }
 
+  function dismiss(item: { providerId: string; id: string; type: ContentType }) {
+    const userId = get().userId;
+    if (!userId) return;
+    const key = naturalKey(item.providerId, item.id, item.type);
+    const list = readJson<string[]>(dismissedKey(userId), []);
+    if (!list.includes(key)) writeJson(dismissedKey(userId), [...list, key].slice(-2000));
+  }
+
   function upsertLocal(content: Content, watched: (existing: SavedListItem | undefined) => boolean | null) {
     const providerId = content.providerId;
     if (!providerId) return;
@@ -180,6 +195,7 @@ export const useMyList = create<MyListState>((set, get) => {
       const current = get().items;
       const existing = current.find((i) => i.id === content.id && i.providerId === providerId && i.type === content.type);
       if (existing) {
+        dismiss(existing);
         commit(current.filter((i) => i !== existing));
         void pushRemoved(existing, monotonicIso(`wl|${keyOfItem(existing)}`));
       } else {
@@ -194,6 +210,9 @@ export const useMyList = create<MyListState>((set, get) => {
     },
 
     toggleWatched(content) {
+      const providerId = content.providerId;
+      const existing = providerId ? get().items.find((i) => i.id === content.id && i.providerId === providerId && i.type === content.type) : undefined;
+      if (existing?.watched) dismiss(existing);
       upsertLocal(content, (existing) => (existing ? !existing.watched : true));
     },
 
@@ -235,7 +254,8 @@ export const useMyList = create<MyListState>((set, get) => {
     async backfillWatchedFromHistory() {
       const userId = get().userId;
       if (!userId) return;
-      const flag = userKey(userId, "watchedBackfillDone");
+      const flag = backfillFlagKey(userId);
+      const dismissed = new Set(readJson<string[]>(dismissedKey(userId), []));
       if (readJson<boolean>(flag, false)) return;
       try {
         let before: string | undefined;
@@ -245,7 +265,7 @@ export const useMyList = create<MyListState>((set, get) => {
           const page = await api<{ items: Array<{ providerId: string; contentId: string; contentType: ContentType; title: string; posterUrl: string | null; completed: boolean; watchedAt: string }> }>(`/user/history?${query}`);
           if (page.items.length === 0) break;
           for (const entry of page.items) {
-            if (entry.contentType === "MOVIE" && entry.completed) {
+            if (entry.contentType === "MOVIE" && entry.completed && !dismissed.has(naturalKey(entry.providerId, entry.contentId, entry.contentType))) {
               get().markWatched({ id: entry.contentId, type: "MOVIE", title: entry.title, description: "", posterUrl: entry.posterUrl, backdropUrl: null, providerId: entry.providerId, genres: [], cast: [], seasons: [], watched: false });
             }
           }

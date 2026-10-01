@@ -40,6 +40,40 @@ beforeEach(() => {
   resetAllStores();
 });
 
+describe("watched catch-up from history", () => {
+  const history = { items: [
+    { providerId: "prov", contentId: "tt1", contentType: "MOVIE", title: "One", posterUrl: null, completed: true, watchedAt: "2026-01-01T00:00:00.000Z" },
+    { providerId: "prov", contentId: "tt2", contentType: "MOVIE", title: "Two", posterUrl: null, completed: true, watchedAt: "2026-01-02T00:00:00.000Z" },
+  ] };
+  const answer = (path: string, method: string, body?: unknown) => (path.startsWith("/user/history") ? history : method === "POST" ? body : undefined);
+
+  it("does not put back a title the person removed, and does not run again after sign-out and sign-in", async () => {
+    respond = answer;
+    hydrateAll("u1");
+    await useMyList.getState().backfillWatchedFromHistory();
+    expect(useMyList.getState().items.map((i) => i.id).sort()).toEqual(["tt1", "tt2"]);
+
+    useMyList.getState().toggle(movie("tt1")); // removed from My List
+    wipeUser("u1"); // what sign-out does
+    resetAllStores();
+    hydrateAll("u1");
+    useMyList.setState({ items: [] });
+    await useMyList.getState().backfillWatchedFromHistory(); // second launch after signing back in
+    expect(useMyList.getState().items).toHaveLength(0);
+  });
+
+  it("skips a dismissed title even on a browser that has not run the catch-up yet", async () => {
+    respond = answer;
+    hydrateAll("u1");
+    useMyList.getState().toggle(movie("tt1"));
+    await flush();
+    useMyList.getState().toggle(movie("tt1")); // add then remove -> dismissed
+    await flush();
+    await useMyList.getState().backfillWatchedFromHistory();
+    expect(useMyList.getState().items.map((i) => i.id)).toEqual(["tt2"]);
+  });
+});
+
 describe("My List sync", () => {
   it("adds locally at once and pushes the item with a client timestamp (last-write-wins key)", async () => {
     hydrateAll("u1");
