@@ -158,6 +158,15 @@ export function parseStreamFacts(stream: Pick<Stream, "url" | "descriptor" | "re
 
 // ── the verdict ─────────────────────────────────────────────────────────────
 
+/**
+ * The MP4 filter on Select a Source. Sources that say they are MKV, AVI, TS, WMV or FLV are out — browsers don't officially play
+ * them. MP4, WebM, HLS and DASH are in, and so is a source that doesn't say what it is: many plain MP4s have no extension.
+ */
+export function isWebFormat(stream: Pick<Stream, "url" | "descriptor" | "releaseTitle">): boolean {
+  const container = containerOf(stream);
+  return container === null || container === "mp4" || container === "webm" || container === "hls" || container === "dash";
+}
+
 export type DeviceLevel = "yes" | "unknown" | "audio" | "no";
 
 export interface DeviceVerdict {

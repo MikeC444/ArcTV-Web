@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { detectDeviceCaps, deviceVerdict, parseStreamFacts, type CapsEnvironment } from "./deviceSupport";
+import { detectDeviceCaps, deviceVerdict, isWebFormat, parseStreamFacts, type CapsEnvironment } from "./deviceSupport";
 import type { Stream } from "./types";
 import { recommendedStreamId } from "../state/sourcesData";
 import { sortStreams } from "../ui/screens/Sources";
@@ -179,5 +179,18 @@ describe("debrid cache ranking", () => {
   it("only demotes within the same device level — a source the device can't play never outranks one it can", () => {
     const cachedButHevc = mk("Movie.2160p.x265", "https://cdn.example/d.mp4", { id: "cachedButHevc", debrid: { service: "RD", cached: true }, resolutionTier: "UHD_4K" });
     expect(recommendedStreamId([cachedButHevc, uncached4k], chrome)).toBe("uncached4k");
+  });
+});
+
+describe("the MP4 & web formats filter", () => {
+  it("drops sources that say they are MKV, AVI and the like, and keeps MP4, WebM, HLS, DASH and unlabelled ones", () => {
+    expect(isWebFormat(mk("Movie.1080p.WEB-DL.x264", "https://cdn.example/a.mp4"))).toBe(true);
+    expect(isWebFormat(mk("Movie", "https://cdn.example/a.webm"))).toBe(true);
+    expect(isWebFormat(mk("Movie", "https://cdn.example/master.m3u8"))).toBe(true);
+    expect(isWebFormat(mk("Movie", "https://cdn.example/a.mpd"))).toBe(true);
+    expect(isWebFormat(mk("Movie.720p.HDTV.x264", null))).toBe(true); // doesn't say what it is: keep it, it may well play
+    expect(isWebFormat(mk("Movie.2024.2160p.x265"))).toBe(false); // .mkv link
+    expect(isWebFormat(mk("Movie", "https://cdn.example/a.avi"))).toBe(false);
+    expect(isWebFormat(mk("Movie.1080p.x264.mkv", null))).toBe(false); // MKV named only in the release text
   });
 });
