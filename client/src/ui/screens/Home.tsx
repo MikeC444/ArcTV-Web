@@ -3,6 +3,8 @@ import { MdAdd, MdCheck, MdInfo, MdPause, MdPlayArrow } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import type { Content } from "../../domain/types";
 import { formatRuntime } from "../../lib/format";
+import { sharpBackdrop } from "../../lib/imageSize";
+import { preloadHero } from "../../lib/preload";
 import { routes } from "../../lib/routes";
 import { useHome } from "../../state/homeData";
 import { useAccountAction, useSavedIds } from "../../state/hooks";
@@ -33,6 +35,9 @@ function Hero({ items }: { items: Content[] }) {
   const [paused, setPaused] = useState(() => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true);
   const [engaged, setEngaged] = useState(false);
   const swipe = useRef<{ x: number; y: number } | null>(null);
+
+  // fetch every hero picture ahead of its turn (the first at once, the rest one after another), so a slide never waits on a download
+  useEffect(() => preloadHero(items), [items]);
 
   const goTo = (target: number, direction: "next" | "prev") => {
     if (items.length < 2 || target === index) return;
@@ -66,7 +71,7 @@ function Hero({ items }: { items: Content[] }) {
     return (
       <div key={isCurrent ? item.id : `${item.id}-leaving`} className="hero__slide" data-anim={anim} {...passive}>
         <div className="hero__layer">
-          {item.backdropUrl ? <img src={item.backdropUrl} alt="" referrerPolicy="no-referrer" data-loaded={loaded[item.id] ? "true" : "false"} onLoad={() => setLoaded((l) => ({ ...l, [item.id]: true }))} /> : null}
+          {item.backdropUrl ? <img src={sharpBackdrop(item.backdropUrl) ?? item.backdropUrl} alt="" referrerPolicy="no-referrer" onError={(e) => { if (e.currentTarget.src !== item.backdropUrl) e.currentTarget.src = item.backdropUrl!; }} data-loaded={loaded[item.id] ? "true" : "false"} onLoad={() => setLoaded((l) => ({ ...l, [item.id]: true }))} /> : null}
         </div>
         <div className="hero__scrim-x" />
         <div className="hero__scrim-y" />
