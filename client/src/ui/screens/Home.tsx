@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import type { Content } from "../../domain/types";
 import { formatRuntime } from "../../lib/format";
 import { sharpBackdrop } from "../../lib/imageSize";
+import { preloadHero } from "../../lib/preload";
 import { routes } from "../../lib/routes";
 import { useHome } from "../../state/homeData";
 import { useAccountAction, useSavedIds } from "../../state/hooks";
@@ -34,6 +35,9 @@ function Hero({ items }: { items: Content[] }) {
   const [paused, setPaused] = useState(() => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true);
   const [engaged, setEngaged] = useState(false);
   const swipe = useRef<{ x: number; y: number } | null>(null);
+
+  // fetch every hero picture ahead of its turn (the first at once, the rest one after another), so a slide never waits on a download
+  useEffect(() => preloadHero(items), [items]);
 
   const goTo = (target: number, direction: "next" | "prev") => {
     if (items.length < 2 || target === index) return;
