@@ -34,3 +34,5 @@ export const PLUS_PERKS: PlusPerk[] = [
 ];
 
 export const PLUS_FREE_NOTE = "Everything you use today stays free: browsing, playing, My List, Continue Watching, addons and Blocked Genres.";
+
+export const PLUS_PROCEEDS_NOTE = "Every subscription goes straight back into building and running ArcTV: new features, faster servers and keeping the free app free.";

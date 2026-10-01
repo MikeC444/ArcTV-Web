@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { MdAccountCircle, MdAdd, MdBlock, MdWorkspacePremium, MdArrowDownward, MdArrowUpward, MdCheck, MdCloudUpload, MdDelete, MdExtension, MdGridView, MdInfo, MdLogout, MdMusicNote, MdSubtitles, MdVolumeUp } from "react-icons/md";
+import { MdAccountCircle, MdAdd, MdBlock, MdFavorite, MdWorkspacePremium, MdArrowDownward, MdArrowUpward, MdCheck, MdCloudUpload, MdDelete, MdExtension, MdGridView, MdInfo, MdLogout, MdMusicNote, MdSubtitles, MdVolumeUp } from "react-icons/md";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
-import { PLUS_CHECKOUT_URL, PLUS_FREE_NOTE, PLUS_PERKS, PLUS_PLANS } from "../../domain/plus";
+import { PLUS_CHECKOUT_URL, PLUS_FREE_NOTE, PLUS_PERKS, PLUS_PLANS, PLUS_PROCEEDS_NOTE } from "../../domain/plus";
 import { applyRowOrder, moveRow } from "../../domain/homeRows";
 import { useProviders } from "../../domain/registry";
 import type { HomeSection } from "../../domain/types";
@@ -124,6 +124,10 @@ function PlusPane() {
         <span className="t-body-sm c-text-2">You're on the free plan.</span>
       </div>
       <p className="t-body-md plus__free">{PLUS_FREE_NOTE}</p>
+
+      <p className="plus__proceeds">
+        <MdFavorite aria-hidden="true" /> <span>{PLUS_PROCEEDS_NOTE}</span>
+      </p>
 
       <h3 className="t-title-md plus__h">What Plus adds</h3>
       <ul className="plus__perks">

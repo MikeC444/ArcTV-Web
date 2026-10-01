@@ -423,3 +423,5 @@
 .plus__plan[data-featured="true"] { border-color: var(--accent); }
 .plus__note { position: absolute; top: -10px; right: 12px; padding: 2px 10px; border-radius: 999px; background: var(--accent); color: #07101a; font-size: 12px; font-weight: 700; }
 .plus__price { margin-top: 6px; font-size: 22px; font-weight: 800; line-height: 1.2; }
+.plus__proceeds { display: flex; gap: 10px; align-items: flex-start; margin: 14px 0 0; padding: 12px 16px; border-radius: var(--card-radius); background: rgba(25, 230, 255, 0.08); border: 1px solid rgba(25, 230, 255, 0.25); color: var(--text); font-size: 15px; line-height: 22px; }
+.plus__proceeds svg { color: var(--accent); width: 22px; height: 22px; flex: none; margin-top: 1px; }
