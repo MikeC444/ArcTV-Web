@@ -18,7 +18,7 @@ import { Surface } from "../components/Surface";
 
 type Tab = "account" | "addons" | "home-rows" | "sounds" | "subtitles";
 const CATEGORIES: Array<{ id: Tab; icon: ReactNode; title: string; subtitle: string }> = [
-  { id: "account", icon: <MdAccountCircle />, title: "Account", subtitle: "Manage your MangoTV account" },
+  { id: "account", icon: <MdAccountCircle />, title: "Account", subtitle: "Manage your ArcTV account" },
   { id: "addons", icon: <MdExtension />, title: "Addons", subtitle: "Manage installed content providers" },
   { id: "home-rows", icon: <MdGridView />, title: "Home Rows", subtitle: "Choose which rows show up on Home" },
   { id: "sounds", icon: <MdMusicNote />, title: "Sounds", subtitle: "Choose your app boot sound" },
@@ -33,7 +33,7 @@ export function SettingsScreen() {
   const selected: Tab = isTab(tab) ? tab : "account";
   const category = CATEGORIES.find((c) => c.id === selected)!;
   useEffect(() => {
-    document.title = `Settings · ${category.title} · Mango TV`;
+    document.title = `Settings · ${category.title} · ArcTV`;
   }, [category]);
   if (tab && !isTab(tab) && tab !== "addons") return <Navigate to="/settings" replace />;
 
@@ -87,7 +87,7 @@ function AccountPane() {
         />
       </div>
       <p className="t-label-sm c-text-3" style={{ marginTop: 18, maxWidth: 520 }}>
-        Signing out flushes any unsynced changes, then removes this account's data from this browser. Your library stays safe in your MangoTV account.
+        Signing out flushes any unsynced changes, then removes this account's data from this browser. Your library stays safe in your ArcTV account.
       </p>
     </div>
   );
@@ -110,7 +110,7 @@ function AddonsPane() {
         <div style={{ marginTop: 14 }}>
           <MdExtension className="c-text-3" size={32} aria-hidden="true" />
           <div className="t-title-md" style={{ marginTop: 12 }}>No addons installed yet</div>
-          <p className="t-body-sm c-text-2" style={{ margin: "6px 0 0" }}>Add a Stremio-compatible addon to bring its catalog into Mango TV.</p>
+          <p className="t-body-sm c-text-2" style={{ margin: "6px 0 0" }}>Add a Stremio-compatible addon to bring its catalog into ArcTV.</p>
         </div>
       ) : (
         <ul className="addons__list">
@@ -165,7 +165,7 @@ export function AddAddonScreen() {
   const [url, setUrl] = useState("");
   const [state, setState] = useState<{ kind: "idle" } | { kind: "installing" } | { kind: "success"; name: string } | { kind: "error"; message: string }>({ kind: "idle" });
   useEffect(() => {
-    document.title = "Add Addon · Mango TV";
+    document.title = "Add Addon · ArcTV";
   }, []);
   useEffect(() => {
     if (state.kind !== "success") return;

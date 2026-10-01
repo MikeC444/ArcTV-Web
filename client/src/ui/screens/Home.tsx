@@ -153,7 +153,7 @@ function Hero({ items }: { items: Content[] }) {
 export function Home() {
   const { state, reload } = useHome();
   useEffect(() => {
-    document.title = "Mango TV";
+    document.title = "ArcTV";
   }, []);
 
   if (state.kind === "loading") return <HomeSkeleton />;

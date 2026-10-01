@@ -14,11 +14,11 @@ export type Playability =
 export function assessStream(stream: Pick<Stream, "url" | "infoHash" | "ytId" | "notWebReady" | "proxyHeaders">, pageProtocol: string = typeof location === "undefined" ? "https:" : location.protocol): Playability {
   const url = stream.url ?? "";
   if (!url) {
-    if (stream.infoHash) return { level: "no", kind: "torrent", reason: "This is a torrent source. Browsers can't stream torrents — use the MangoTV app, or install an addon that provides direct (debrid) links." };
-    if (stream.ytId) return { level: "no", kind: "youtube", reason: "This source is a YouTube video. It can be opened on YouTube but can't be played inside MangoTV." };
+    if (stream.infoHash) return { level: "no", kind: "torrent", reason: "This is a torrent source. Browsers can't stream torrents — use the ArcTV app, or install an addon that provides direct (debrid) links." };
+    if (stream.ytId) return { level: "no", kind: "youtube", reason: "This source is a YouTube video. It can be opened on YouTube but can't be played inside ArcTV." };
     return { level: "no", kind: "unknown", reason: "This source doesn't include a playable link." };
   }
-  if (/^magnet:/i.test(url)) return { level: "no", kind: "torrent", reason: "This is a magnet link. Browsers can't stream torrents — use the MangoTV app, or an addon that provides direct links." };
+  if (/^magnet:/i.test(url)) return { level: "no", kind: "torrent", reason: "This is a magnet link. Browsers can't stream torrents — use the ArcTV app, or an addon that provides direct links." };
   if (!/^https?:\/\//i.test(url)) return { level: "no", kind: "unknown", reason: "This source uses a link type browsers can't play." };
   // Plain http behind our https page, or request headers a page may not set: Stremio sends these through its streaming server's
   // /proxy/; here the web server relays them (see relay.ts / server streamRelay.ts).

@@ -5,7 +5,7 @@ const config = loadConfig();
 const app = createApp(config);
 
 const server = app.listen(config.port, () => {
-  console.log(`MangoTV Web listening on :${config.port} → API ${config.apiUrl} (${config.nodeEnv})`);
+  console.log(`ArcTV Web listening on :${config.port} → API ${config.apiUrl} (${config.nodeEnv})`);
 });
 
 // Graceful shutdown for PaaS redeploys (SIGTERM on restart).

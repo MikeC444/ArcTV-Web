@@ -186,7 +186,7 @@ export function deviceVerdict(stream: Stream, caps: DeviceCaps = getDeviceCaps()
   }
   if (facts.video && !caps.video[facts.video]) {
     const name = VIDEO_NAMES[facts.video];
-    return { level: "no", label: "Can't play here", detail: `${name} video not supported`, reason: `This source uses ${name} video, which ${who} on this device can't decode. Try an H.264 source, or the MangoTV app.` };
+    return { level: "no", label: "Can't play here", detail: `${name} video not supported`, reason: `This source uses ${name} video, which ${who} on this device can't decode. Try an H.264 source, or the ArcTV app.` };
   }
   if (facts.video === "h264" && facts.tenBit) {
     return { level: "no", label: "Can't play here", detail: "10-bit H.264 not supported", reason: "This source uses 10-bit H.264 video, which browsers can't decode. Try another source." };

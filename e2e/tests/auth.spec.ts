@@ -8,7 +8,7 @@ test.describe("sign-in flows", () => {
     await page.goto("/auth");
     await expect(page).toHaveURL(/\/auth$/);
     await expect(page.getByRole("heading", { name: /Your Entertainment,\s*Your Way/ })).toBeVisible();
-    await expect(page.getByRole("img", { name: "Mango TV" }).first()).toBeVisible();
+    await expect(page.getByRole("img", { name: "ArcTV" }).first()).toBeVisible();
     await expect(page.getByRole("button", { name: "Log In" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Sign Up" })).toBeVisible();
     await expect(page.getByText("Scan a QR code to create an account from your phone")).toBeVisible();

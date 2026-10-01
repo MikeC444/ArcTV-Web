@@ -45,7 +45,7 @@ export function createMockBackend(options: { accessTtlMs?: number } = {}) {
 
   const fetch: BackendFetch = async (request) => {
     calls.push(request);
-    if (state.down) throw new ApiError(502, "backend_unavailable", "Can't reach the MangoTV service right now.");
+    if (state.down) throw new ApiError(502, "backend_unavailable", "Can't reach the ArcTV service right now.");
     const body = (request.body ?? {}) as Record<string, string>;
 
     if (request.path === "/health") return json(200, { status: "ok" });

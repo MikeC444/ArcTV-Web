@@ -68,7 +68,7 @@ export function describeDiagnostics(input: { stream: Stream; snapshot: VideoSnap
   const { host, ext } = safeSourceLabel(stream.url);
   const facts = parseStreamFacts(stream);
   const lines = [
-    "MangoTV player diagnostics",
+    "ArcTV player diagnostics",
     `Browser: ${browser} (${/(Chrome|Edg|Firefox|Version)\/[\d.]+/.exec(userAgent)?.[0] ?? "unknown version"})`,
     `Source: server ${host}, file type .${ext}, engine ${engine}${route ? `, route ${route}` : ""}`,
     ...(stream.debrid ? [`Debrid: ${DEBRID_NAMES[stream.debrid.service] ?? stream.debrid.service}, ${stream.debrid.cached ? "marked cached" : "marked NOT cached (the service has to fetch it first)"}`] : []),

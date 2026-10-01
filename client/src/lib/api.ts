@@ -49,7 +49,7 @@ export async function api<T = unknown>(path: string, options: ApiOptions = {}): 
     response = await fetch(`/api${path}`, { method, headers, body, credentials: "same-origin", signal: options.signal, keepalive: options.keepalive });
   } catch (cause) {
     if ((cause as { name?: string }).name === "AbortError") throw cause;
-    throw new ApiClientError(0, "network", "Can't reach MangoTV right now. Check your connection.");
+    throw new ApiClientError(0, "network", "Can't reach ArcTV right now. Check your connection.");
   }
   if (response.status === 204) return undefined as T;
   const text = await response.text();

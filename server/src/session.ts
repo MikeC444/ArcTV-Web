@@ -165,7 +165,7 @@ export class SessionManager {
     }
     // unavailable: keep the old session if its access token can still be used
     if (session.ate > Date.now()) return session;
-    throw new ApiError(502, "backend_unavailable", "Can't reach the MangoTV service right now.");
+    throw new ApiError(502, "backend_unavailable", "Can't reach the ArcTV service right now.");
   }
 
   private rotate(refreshToken: string, user: SessionUser, clientIp: string | undefined): Promise<RefreshOutcome> {
