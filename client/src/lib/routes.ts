@@ -45,7 +45,7 @@ export const routes = {
   genre: (genre: string) => `/genres/${enc(genre)}`,
   search: "/search",
   myList: "/my-list",
-  settings: (tab?: "account" | "addons" | "home-rows" | "blocked-genres" | "sounds" | "subtitles") => (tab ? `/settings/${tab}` : "/settings"),
+  settings: (tab?: "account" | "addons" | "home-rows" | "blocked-genres" | "plus" | "sounds" | "subtitles") => (tab ? `/settings/${tab}` : "/settings"),
   addAddon: "/settings/addons/add",
   /** A title page. Cinemeta titles get a readable address (/movies/inception-tt1375666, /tv-shows/prison-break-tt0455275); everything else keeps the long one. */
   detail: (providerId: string, type: ContentType, id: string, title?: string | null) =>

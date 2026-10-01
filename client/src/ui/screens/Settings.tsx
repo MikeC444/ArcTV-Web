@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { MdAccountCircle, MdAdd, MdBlock, MdArrowDownward, MdArrowUpward, MdCheck, MdCloudUpload, MdDelete, MdExtension, MdGridView, MdInfo, MdLogout, MdMusicNote, MdSubtitles, MdVolumeUp } from "react-icons/md";
+import { MdAccountCircle, MdAdd, MdBlock, MdWorkspacePremium, MdArrowDownward, MdArrowUpward, MdCheck, MdCloudUpload, MdDelete, MdExtension, MdGridView, MdInfo, MdLogout, MdMusicNote, MdSubtitles, MdVolumeUp } from "react-icons/md";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { PLUS_CHECKOUT_URL, PLUS_FREE_NOTE, PLUS_PERKS, PLUS_PLANS } from "../../domain/plus";
 import { applyRowOrder, moveRow } from "../../domain/homeRows";
 import { useProviders } from "../../domain/registry";
 import type { HomeSection } from "../../domain/types";
@@ -18,12 +19,13 @@ import { MangoButton, Pill, Switch } from "../components/Buttons";
 import { Spinner } from "../components/States";
 import { Surface } from "../components/Surface";
 
-type Tab = "account" | "addons" | "home-rows" | "blocked-genres" | "sounds" | "subtitles";
+type Tab = "account" | "addons" | "home-rows" | "blocked-genres" | "plus" | "sounds" | "subtitles";
 const CATEGORIES: Array<{ id: Tab; icon: ReactNode; title: string; subtitle: string }> = [
   { id: "account", icon: <MdAccountCircle />, title: "Account", subtitle: "Manage your ArcTV account" },
   { id: "addons", icon: <MdExtension />, title: "Addons", subtitle: "Manage installed content providers" },
   { id: "home-rows", icon: <MdGridView />, title: "Home Rows", subtitle: "Choose which rows show up on Home" },
   { id: "blocked-genres", icon: <MdBlock />, title: "Blocked Genres", subtitle: "Hide genres you don't want to see" },
+  { id: "plus", icon: <MdWorkspacePremium />, title: "ArcTV Plus", subtitle: "Extra features for supporters" },
   { id: "sounds", icon: <MdMusicNote />, title: "Sounds", subtitle: "Choose your app boot sound" },
   { id: "subtitles", icon: <MdSubtitles />, title: "Subtitles", subtitle: "Default on/off and preferred language" },
 ];
@@ -59,6 +61,7 @@ export function SettingsScreen() {
           {selected === "addons" ? <AddonsPane /> : null}
           {selected === "home-rows" ? <HomeRowsPane /> : null}
           {selected === "blocked-genres" ? <BlockedGenresPane /> : null}
+          {selected === "plus" ? <PlusPane /> : null}
           {selected === "sounds" ? <SoundsPane /> : null}
           {selected === "subtitles" ? <SubtitlesPane /> : null}
         </section>
@@ -107,6 +110,62 @@ function BlockedGenresPane() {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+/** ArcTV Plus: what it adds and how to subscribe. Nothing here changes what the free app does. */
+function PlusPane() {
+  const hasCheckout = PLUS_CHECKOUT_URL !== "";
+  return (
+    <div className="plus">
+      <div className="plus__status">
+        <span className="plus__badge">Free plan</span>
+        <span className="t-body-sm c-text-2">You're on the free plan.</span>
+      </div>
+      <p className="t-body-md plus__free">{PLUS_FREE_NOTE}</p>
+
+      <h3 className="t-title-md plus__h">What Plus adds</h3>
+      <ul className="plus__perks">
+        {PLUS_PERKS.map((perk) => (
+          <li key={perk.title} className="plus__perk">
+            <div className="plus__perkhead">
+              <span className="t-title-md">{perk.title}</span>
+              {perk.status === "soon" ? <span className="plus__soon">Coming soon</span> : null}
+            </div>
+            <p className="t-body-sm c-text-2" style={{ margin: "4px 0 0" }}>{perk.detail}</p>
+          </li>
+        ))}
+      </ul>
+
+      <h3 className="t-title-md plus__h">How to subscribe</h3>
+      <ol className="plus__steps t-body-md">
+        <li>Sign in to your ArcTV account (you're already signed in here).</li>
+        <li>Pick a plan below.</li>
+        <li>Complete the secure checkout. Plus is added to your account.</li>
+      </ol>
+
+      <div className="plus__plans" role="group" aria-label="Plans">
+        {PLUS_PLANS.map((plan) => (
+          <div key={plan.id} className="plus__plan" data-featured={plan.note ? "true" : undefined}>
+            {plan.note ? <span className="plus__note">{plan.note}</span> : null}
+            <div className="t-title-md">{plan.label}</div>
+            <div className="plus__price">{plan.price ?? "Price announced soon"}</div>
+            {plan.price ? <div className="t-label-sm c-text-3">{plan.per}</div> : null}
+          </div>
+        ))}
+      </div>
+
+      <div style={{ marginTop: 18 }}>
+        {hasCheckout ? (
+          <MangoButton text="Subscribe to ArcTV Plus" icon={<MdWorkspacePremium />} variant="filled" onClick={() => window.open(PLUS_CHECKOUT_URL, "_blank", "noopener,noreferrer")} />
+        ) : (
+          <MangoButton text="Subscriptions open soon" icon={<MdWorkspacePremium />} disabled />
+        )}
+        <p className="t-body-sm c-text-3" style={{ margin: "10px 0 0" }}>
+          {hasCheckout ? "You can cancel any time from the checkout receipt." : "Plus isn't on sale yet. When it is, you'll subscribe right here — no need to do anything now."}
+        </p>
+      </div>
     </div>
   );
 }

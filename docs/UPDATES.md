@@ -25,6 +25,7 @@ One sentence per update, newest first. When updating the Firestick app, tick the
 - [ ] 29a638f — Back buttons return to the exact page, scroll position and row; Continue Watching has no repeats.
 
 ## Home and lists
+- [ ] (ArcTV Plus tab) — New Settings → ArcTV Plus tab: free-plan status, what Plus adds ("coming soon" perks), how to subscribe, plan cards and a subscribe button (off until a checkout link and prices are set in `client/src/domain/plus.ts`). No payments exist yet.
 - [ ] (hero trailer) — The Home hero has a Trailer button right beside Play, styled like the title page's (looked up once per slide, dimmed when a title has no trailer; visitors are asked to sign in).
 - [ ] (removed titles stay removed) — Fix: titles removed from My List / Watched no longer reappear after signing back in (the one-time "watched" catch-up from history was re-running on every sign-in; it now runs once per browser and skips removed titles) — the Firestick app may have the same catch-up.
 - [ ] (blocked genres) — New Settings → Blocked Genres tab hides chosen genres from Home, Movies, TV Shows, Search, Genres and "You may also like" (stored per browser, not synced; the Firestick would need its own storage).
