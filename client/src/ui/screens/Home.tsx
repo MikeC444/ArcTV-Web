@@ -96,12 +96,6 @@ function Hero({ items }: { items: Content[] }) {
           {item.description ? <p className="hero__desc hero-shadow clamp-3">{item.description}</p> : null}
           <div className="hero__actions">
             <MangoButton text="Play" icon={<MdPlayArrow />} variant="light" dataAttrs={isCurrent ? { autofocus: true } : undefined} onClick={() => providerId && navigate(routes.sources(providerId, item.type, item.id))} />
-            <span className="hero__act" data-act="list">
-              <IconButton icon={isSaved ? <MdCheck /> : <MdAdd />} label={isSaved ? "Remove from My List" : "Add to My List"} onClick={() => toggle(item)} />
-              <span className="hero__actlabel" aria-hidden="true">
-                My List
-              </span>
-            </span>
             <MangoButton
               text="Trailer"
               icon={<MdTheaters />}
@@ -110,6 +104,12 @@ function Hero({ items }: { items: Content[] }) {
               title={isCurrent && signedIn && trailer.kind === "notFound" ? "No trailer found for this title" : undefined}
               onClick={() => openTrailer(trailer.kind === "found" ? trailer.value : null)}
             />
+            <span className="hero__act" data-act="list">
+              <IconButton icon={isSaved ? <MdCheck /> : <MdAdd />} label={isSaved ? "Remove from My List" : "Add to My List"} onClick={() => toggle(item)} />
+              <span className="hero__actlabel" aria-hidden="true">
+                My List
+              </span>
+            </span>
             <span className="hero__act" data-act="info">
               <IconButton
                 icon={<MdInfo />}
