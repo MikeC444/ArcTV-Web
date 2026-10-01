@@ -85,11 +85,11 @@ export function createAuthRouter(ctx: AppContext): Router {
   async function credentials(path: "/auth/login" | "/auth/register", req: Request, res: Parameters<typeof ctx.sessions.deviceId>[1], body: object) {
     const response = await ctx.backend({ method: "POST", path, body: { ...body, ...identity(req, res) }, clientIp: req.ip });
     if (response.status !== 200 && response.status !== 201) {
-      if (response.status === 429) note("backend-limit", `The MangoTV service refused a ${path === "/auth/login" ? "sign-in" : "sign-up"} with HTTP 429 (Retry-After: ${response.retryAfter ?? "none"}). Its limit on /auth/* is per address, and to it this whole site may be one address.`);
+      if (response.status === 429) note("backend-limit", `The ArcTV service refused a ${path === "/auth/login" ? "sign-in" : "sign-up"} with HTTP 429 (Retry-After: ${response.retryAfter ?? "none"}). Its limit on /auth/* is per address, and to it this whole site may be one address.`);
       throw fromBackendStatus(response.status, backendMessage(response.json), response.retryAfter);
     }
     const session = sessionFromTokenResponse(response.json);
-    if (!session) throw new ApiError(502, "upstream_error", "The MangoTV service returned an unexpected response.");
+    if (!session) throw new ApiError(502, "upstream_error", "The ArcTV service returned an unexpected response.");
     ctx.sessions.write(res, session);
     return session;
   }
@@ -149,7 +149,7 @@ export function createAuthRouter(ctx: AppContext): Router {
     const body = response.json as { status?: string };
     if (body.status === "completed") {
       const session = sessionFromTokenResponse(response.json);
-      if (!session) throw new ApiError(502, "upstream_error", "The MangoTV service returned an unexpected response.");
+      if (!session) throw new ApiError(502, "upstream_error", "The ArcTV service returned an unexpected response.");
       ctx.sessions.write(res, session);
       res.json({ status: "completed", user: session.user });
       return;

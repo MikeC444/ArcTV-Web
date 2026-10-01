@@ -95,7 +95,7 @@ describe("sign-in 429s say in the log where they came from", () => {
       }
       expect(warn).toHaveBeenCalledTimes(1);
       const line = String(warn.mock.calls[0]![0]);
-      expect(line).toContain("MangoTV service refused a sign-in with HTTP 429");
+      expect(line).toContain("ArcTV service refused a sign-in with HTTP 429");
       expect(line).toContain("Retry-After: 25");
       expect(line).not.toContain("secret.person");
 

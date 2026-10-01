@@ -50,6 +50,6 @@ export function fromBackendStatus(status: number, message: string | undefined, r
     case 429:
       return new ApiError(429, "rate_limited", "Too many requests right now. Please wait a moment and try again.", retry ?? 30);
     default:
-      return new ApiError(status >= 500 ? 502 : status, "upstream_error", "The MangoTV service had a problem. Please try again.");
+      return new ApiError(status >= 500 ? 502 : status, "upstream_error", "The ArcTV service had a problem. Please try again.");
   }
 }
