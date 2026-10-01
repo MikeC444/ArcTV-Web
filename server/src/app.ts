@@ -61,7 +61,24 @@ export function createApp(config: AppConfig, options: CreateAppOptions = {}): Ex
 
   const app = express();
   app.disable("x-powered-by");
-  app.set("trust proxy", config.trustProxy ? 1 : false);
+  app.set("trust proxy", config.trustProxy > 0 ? config.trustProxy : false);
+  // Once, on the first request that passed through a proxy: say whether TRUST_PROXY matches the proxies actually in front. A platform that puts a
+  // CDN in front of its own proxy (Render does) sends TWO addresses; with TRUST_PROXY=1 the right-most — the CDN's, shared by many visitors — would
+  // be taken for the visitor, and every rate limit (including "too many sign-in attempts") would be shared between strangers.
+  let proxyChecked = false;
+  app.use((req, _res, next) => {
+    const forwarded = req.headers["x-forwarded-for"];
+    if (!proxyChecked && typeof forwarded === "string" && forwarded.trim() !== "") {
+      proxyChecked = true;
+      const seen = forwarded.split(",").length;
+      if (seen > config.trustProxy) {
+        console.warn(`[proxy] A request arrived with ${seen} X-Forwarded-For address${seen === 1 ? "" : "es"} but TRUST_PROXY=${config.trustProxy}, so the address used for rate limits is probably not the visitor's (it may be a proxy's, shared by many visitors). If people are told "too many attempts" without doing anything, set TRUST_PROXY=${Math.min(seen, 3)}.`);
+      } else {
+        console.log(`[proxy] X-Forwarded-For has ${seen} address${seen === 1 ? "" : "es"} and TRUST_PROXY=${config.trustProxy}: visitor addresses are read correctly.`);
+      }
+    }
+    next();
+  });
 
   app.use(
     helmet({

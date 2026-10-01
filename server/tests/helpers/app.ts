@@ -11,7 +11,7 @@ export function testConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     port: 0,
     apiUrl: "http://backend.invalid",
     sessionSecret: "test-secret-test-secret-test-secret",
-    trustProxy: false,
+    trustProxy: 0,
     extraConnectSrc: [],
     staticDir: undefined,
     allowPrivateAddonHosts: false,

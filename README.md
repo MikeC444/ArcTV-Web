@@ -160,7 +160,7 @@ Set on the **server only**. Nothing here is exposed to the browser and nothing h
 | `SESSION_SECRET` | production | ≥ 16 chars, seals the session cookie: `openssl rand -base64 48`. Rotating it signs everyone out (no data is lost). |
 | `NODE_ENV` | no | `production` enables `Secure` cookies and HSTS. |
 | `PORT` | no | Default `8080`. |
-| `TRUST_PROXY` | no | `1` when exactly one reverse proxy is in front (most PaaS), so client IPs and HTTPS are read correctly. |
+| `TRUST_PROXY` | no | How many reverse proxies are in front (`0`–`3`, default `0`). `1` for a single proxy; **Render sends two addresses (a CDN in front of its proxy), so it usually needs `2`** — the start-up log line `[proxy]` says whether the value fits. Needed so visitors' addresses (rate limits) and HTTPS are read correctly. |
 | `CSP_EXTRA_CONNECT_SRC` | no | Extra origins for the Content-Security-Policy `connect-src`, comma separated. |
 | `TMDB_API_KEY` | no | A free [TMDB](https://www.themoviedb.org/settings/api) key (v3 key or v4 read-access token). Turns on the **built-in catalog** (see below). Without it the built-in catalog is simply off and nothing else changes. Also `TMDB_API_BASE` / `TMDB_IMAGE_BASE` (defaults: TMDB's own) for testing. |
 | `STREAM_RELAY` | no | Default `1`. The [stream relay](docs/PLAYBACK.md) that plays sources a browser can't fetch itself. `0` turns it off. Relayed video uses this server's bandwidth. |

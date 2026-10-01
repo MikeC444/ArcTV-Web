@@ -50,13 +50,25 @@ export function deviceNameFromUserAgent(userAgent: string | undefined): string {
   return `${browser}${os ? ` on ${os}` : ""} (Web)`;
 }
 
+/** At most one line per 30 s per kind, so a flood can't flood the log. No address or account is ever written. */
+const lastNoted = new Map<string, number>();
+function note(kind: string, message: string): void {
+  const now = Date.now();
+  if (now - (lastNoted.get(kind) ?? 0) < 30_000) return;
+  lastNoted.set(kind, now);
+  console.warn(`[auth] ${message}`);
+}
+
 const limiter = (limit: number) =>
   rateLimit({
     windowMs: 60_000,
     limit,
     standardHeaders: true,
     legacyHeaders: false,
-    handler: (_req, res) => sendError(res, new ApiError(429, "rate_limited", "Too many attempts. Please wait a minute and try again.", 60)),
+    handler: (_req, res) => {
+      note("own-limit", `This server's own limit was reached: one visitor address made more than ${limit} attempts in a minute.`);
+      sendError(res, new ApiError(429, "rate_limited", "Too many attempts. Please wait a minute and try again.", 60));
+    },
   });
 
 export function createAuthRouter(ctx: AppContext): Router {
@@ -73,6 +85,7 @@ export function createAuthRouter(ctx: AppContext): Router {
   async function credentials(path: "/auth/login" | "/auth/register", req: Request, res: Parameters<typeof ctx.sessions.deviceId>[1], body: object) {
     const response = await ctx.backend({ method: "POST", path, body: { ...body, ...identity(req, res) }, clientIp: req.ip });
     if (response.status !== 200 && response.status !== 201) {
+      if (response.status === 429) note("backend-limit", `The MangoTV service refused a ${path === "/auth/login" ? "sign-in" : "sign-up"} with HTTP 429 (Retry-After: ${response.retryAfter ?? "none"}). Its limit on /auth/* is per address, and to it this whole site may be one address.`);
       throw fromBackendStatus(response.status, backendMessage(response.json), response.retryAfter);
     }
     const session = sessionFromTokenResponse(response.json);

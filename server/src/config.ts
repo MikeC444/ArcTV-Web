@@ -15,7 +15,9 @@ const schema = z.object({
     .url("MANGOTV_API_URL must be an absolute URL")
     .transform((value) => value.replace(/\/+$/, "")),
   SESSION_SECRET: z.string().min(16, "SESSION_SECRET must be at least 16 characters").optional(),
-  TRUST_PROXY: z.enum(["0", "1"]).default("0"),
+  // How many reverse proxies sit in front of this server (0 = none). Visitors' addresses (rate limits, the backend's own limiter) come from X-Forwarded-For,
+  // counted from the right past this many proxies — too low and everyone shares the proxy's address, too high and a visitor can fake theirs.
+  TRUST_PROXY: z.enum(["0", "1", "2", "3"]).default("0"),
   CSP_EXTRA_CONNECT_SRC: z.string().default(""),
   STATIC_DIR: z.string().optional(),
   // Test-only escape hatch: allow the addon proxy to reach loopback/private hosts.
@@ -34,7 +36,8 @@ export interface AppConfig {
   port: number;
   apiUrl: string;
   sessionSecret: string;
-  trustProxy: boolean;
+  /** Number of reverse proxies in front of this server (0 = none). */
+  trustProxy: number;
   extraConnectSrc: string[];
   staticDir: string | undefined;
   allowPrivateAddonHosts: boolean;
@@ -66,7 +69,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     apiUrl: value.MANGOTV_API_URL,
     // In development/test a random per-process secret is fine (sessions just don't survive a restart).
     sessionSecret: value.SESSION_SECRET ?? cryptoRandom(),
-    trustProxy: value.TRUST_PROXY === "1",
+    trustProxy: Number(value.TRUST_PROXY),
     extraConnectSrc: value.CSP_EXTRA_CONNECT_SRC.split(",").map((s) => s.trim()).filter(Boolean),
     staticDir: value.STATIC_DIR,
     allowPrivateAddonHosts: value.ALLOW_PRIVATE_ADDON_HOSTS === "1",

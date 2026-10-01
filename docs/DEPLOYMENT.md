@@ -29,7 +29,7 @@ You do **not** need the database URL, and the web service must never be given it
 | `NODE_ENV` | `production` |
 | `MANGOTV_API_URL` | `https://<your MangoTV API>` (no trailing slash; `https://` is enforced in production) |
 | `SESSION_SECRET` | a long random string: `openssl rand -base64 48`. Store it as a secret, not in the repo. |
-| `TRUST_PROXY` | `1` on nearly every PaaS (exactly one proxy in front). Use `0` if the Node process is exposed directly. |
+| `TRUST_PROXY` | How many reverse proxies are in front: `0` (none — Node is exposed directly), `1` (a single proxy — many hosts), `2`/`3`. **Render and other platforms that put a CDN in front of their own proxy send two addresses**, so `1` would take the CDN's address for the visitor; the start-up log says which value fits (see below). |
 | `PORT` | whatever the platform injects (default `8080`) |
 | `CSP_EXTRA_CONNECT_SRC` | leave empty unless you need extra origins |
 | `STREAM_RELAY` | `1` (default) or `0`. See "Stream relay" below. |
@@ -83,6 +83,16 @@ For real scale the backend needs a small change (in the Firestick repository, wh
 modify): key the `/user/*` limiter on the authenticated user id (or the bearer token) instead of the IP, and make the
 `/auth/*` limiter read the client IP the web service forwards (for example via an explicit trusted-proxy setting).
 Until then, watch for `429` in the logs and keep the number of simultaneous new sign-ins per minute low.
+
+**Is `TRUST_PROXY` right?** After a deploy, open the site once and read the service's log. You'll see one `[proxy]` line:
+`X-Forwarded-For has N addresses and TRUST_PROXY=N … read correctly` means it matches. A warning saying it arrived with 2
+addresses but `TRUST_PROXY=1` means the address used for every rate limit is a proxy's, shared by many visitors, so strangers
+use up each other's sign-in allowance — set `TRUST_PROXY` to the number it names. Don't set it higher than the proxies actually
+in front: a visitor could then fake their address and dodge the limits.
+
+**Where a "too many attempts" came from.** The log has one `[auth]` line (at most one per 30 s, never an address or account) saying
+whether *this server's* limit was reached (10 attempts a minute from one visitor address) or *the MangoTV service* answered 429
+(its `/auth/*` limit, shared by everyone using this site — see below). That tells you which of the two to chase.
 
 **"Too many requests right now" when signing in.** That wording is the *backend's* limiter answering (the web service's own
 limiter says "Too many attempts. Please wait a minute…"). The backend allows **10 requests a minute to `/auth/*` per IP
