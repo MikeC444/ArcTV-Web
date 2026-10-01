@@ -8,7 +8,7 @@ import { Spinner } from "../components/States";
 import { useAddonsReady } from "../../state/hooks";
 
 const GENRE_LIST_MIN_YEAR = 2016;
-const ACCENTS = ["var(--amber)", "var(--tangerine)", "var(--coral)", "var(--azure)", "var(--teal)"];
+const ACCENTS = ["var(--cyan)", "var(--blue)", "var(--violet)", "var(--azure)", "var(--teal)"];
 const isYear = (value: string) => /^\d+$/.test(value) && Number(value) >= 1900 && Number(value) <= 2100;
 
 /** iconForGenre() in GenresScreen.kt */

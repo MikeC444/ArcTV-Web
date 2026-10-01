@@ -62,7 +62,7 @@ p {
   margin: 0;
 }
 ::selection {
-  background: rgba(255, 176, 32, 0.35);
+  background: rgba(47, 128, 255, 0.45);
 }
 /* Rows scroll horizontally like the Fire TV LazyRows; the scrollbar itself is hidden. */
 .hide-scroll {

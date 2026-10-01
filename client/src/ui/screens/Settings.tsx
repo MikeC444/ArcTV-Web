@@ -200,7 +200,7 @@ export function AddAddonScreen() {
         </div>
         <div style={{ marginTop: 24 }} aria-live="polite">
           {state.kind === "installing" ? <div style={{ display: "flex", gap: 10, alignItems: "center" }}><Spinner small /><span className="c-text-2 t-body-md">Installing…</span></div> : null}
-          {state.kind === "success" ? <p className="c-amber t-body-lg" style={{ margin: 0 }}>{state.name} installed ✓</p> : null}
+          {state.kind === "success" ? <p className="c-accent t-body-lg" style={{ margin: 0 }}>{state.name} installed ✓</p> : null}
           {state.kind === "error" ? <p className="c-coral t-body-md" role="alert" style={{ margin: 0 }}>Couldn't install that addon: {state.message}</p> : null}
         </div>
         <div className="addaddon__suggest">
@@ -313,7 +313,7 @@ function SubtitlesPane() {
           return (
             <Surface key={option.code ?? "system"} className="settingrow settingrow--lang" scale={1.02} borderColor="var(--text)" role="radio" ariaChecked={selected} onClick={() => setPlayer({ defaultSubtitleLanguage: option.code })}>
               <span className="t-body-lg" style={{ flex: 1 }}>{option.label}</span>
-              {selected ? <MdCheck className="c-amber" aria-hidden="true" /> : null}
+              {selected ? <MdCheck className="c-accent" aria-hidden="true" /> : null}
             </Surface>
           );
         })}

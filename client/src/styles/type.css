@@ -20,7 +20,7 @@
 .c-text-2 { color: var(--text-2); }
 .c-text-3 { color: var(--text-3); }
 .c-coral { color: var(--coral-text); }
-.c-amber { color: var(--amber); }
+.c-accent { color: var(--accent); }
 .ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .clamp-2, .clamp-3, .clamp-4 { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
 .clamp-2 { -webkit-line-clamp: 2; }

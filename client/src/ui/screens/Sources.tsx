@@ -250,7 +250,7 @@ export function GlowPlay({ size = 36, glow, icon = 18 }: { size?: number; glow?:
   );
 }
 
-const TIER_COLOR: Record<ResolutionTier, string> = { UHD_4K: "var(--amber)", FHD_1080P: "var(--azure)", HD_720P: "var(--teal)", OTHER: "var(--text-3)" };
+const TIER_COLOR: Record<ResolutionTier, string> = { UHD_4K: "var(--accent)", FHD_1080P: "var(--azure)", HD_720P: "var(--teal)", OTHER: "var(--text-3)" };
 const HEALTH_COLOR = { VERY_HIGH: "var(--teal)", HIGH: "var(--teal)", GOOD: "var(--azure)", LOW: "var(--text-3)" } as const;
 
 function noSourcesHint(rows: AddonLookupRow[]): string {
@@ -322,7 +322,7 @@ function SourceRow({ stream, recommended, onClick, autoFocus }: { stream: Stream
   const color = TIER_COLOR[stream.resolutionTier];
   return (
     <div className="source" role="listitem" data-unplayable={play.level === "no" || undefined} data-device={play.level}>
-      <Surface className="source__surface" background="var(--surface-high)" alwaysBorder={recommended} borderColor={recommended ? "var(--amber)" : undefined} onClick={onClick} dataAttrs={{ autofocus: autoFocus }} ariaLabel={`${stream.qualityBadge} ${stream.releaseTitle}, ${stream.providerLabel}${recommended ? ", recommended" : ""}. ${play.label}${play.detail ? `: ${play.detail}` : ""}${stream.debrid ? (stream.debrid.cached ? ". Cached" : ". Not cached, may take minutes to start") : ""}`}>
+      <Surface className="source__surface" background="var(--surface-high)" alwaysBorder={recommended} borderColor={recommended ? "var(--accent)" : undefined} onClick={onClick} dataAttrs={{ autofocus: autoFocus }} ariaLabel={`${stream.qualityBadge} ${stream.releaseTitle}, ${stream.providerLabel}${recommended ? ", recommended" : ""}. ${play.label}${play.detail ? `: ${play.detail}` : ""}${stream.debrid ? (stream.debrid.cached ? ". Cached" : ". Not cached, may take minutes to start") : ""}`}>
         <span className="source__badge" style={{ borderColor: color, color }}>
           <span className="t-label-lg">{stream.qualityBadge}</span>
           {stream.sourceTag ? <span className="t-label-sm">{stream.sourceTag}</span> : null}

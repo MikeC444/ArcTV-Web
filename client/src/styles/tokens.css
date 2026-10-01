@@ -16,16 +16,19 @@
   --surface: #1c1c20;
   --surface-high: #26262b;
 
-  /* Brand gradient — amber gold → tangerine → coral */
-  --amber: #ffb020;
-  --tangerine: #ff7a3d;
-  --coral: #ff3d68;
+  /* Brand gradient — the Arc TV logo's cyan → blue → violet (all three are >= 5:1 against the near-black surfaces, so dark text sits on them) */
+  --cyan: #19e6ff;
+  --blue: #2f80ff;
+  --violet: #9b5cff;
+  --accent: var(--cyan); /* brand accent: selected states, switches, focus glow, links */
+  --warn: #ffb020; /* warning text/icons only (not part of the brand) */
+  --coral: #ff3d68; /* errors and destructive actions only (not part of the brand) */
   --coral-text: #ff6b8a; /* the coral for TEXT on raised surfaces: 5.6:1 (the brand coral is 4.4:1 there) */
   --azure: #3d8bff;
   --teal: #2dd9a8;
   /* Compose's linearGradient runs corner-to-corner; these angles reproduce that for a wide / near-square box. */
-  --brand-gradient: linear-gradient(139deg, var(--amber), var(--tangerine), var(--coral));
-  --brand-gradient-wide: linear-gradient(103deg, var(--amber), var(--tangerine), var(--coral));
+  --brand-gradient: linear-gradient(139deg, var(--cyan), var(--blue), var(--violet));
+  --brand-gradient-wide: linear-gradient(103deg, var(--cyan), var(--blue), var(--violet));
 
   /* Text */
   --text: #f6f6f8;
@@ -34,10 +37,10 @@
 
   /* Structural / focus / progress */
   --divider: rgba(255, 255, 255, 0.122);
-  --focus-glow: var(--amber);
-  --focus-border: #ffc873;
+  --focus-glow: var(--accent);
+  --focus-border: #8cf3ff;
   --progress-track: rgba(255, 255, 255, 0.2);
-  --progress-fill: var(--coral);
+  --progress-fill: var(--accent);
   --watched: #2ecc71;
 
   /* Dimens.kt */

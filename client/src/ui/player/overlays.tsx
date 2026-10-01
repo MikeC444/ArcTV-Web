@@ -97,7 +97,7 @@ function SettingsCard({ icon, title, subtitle, onClose, children }: { icon: Reac
 
 function SettingsRow({ icon, title, subtitle, onClick, trailing }: { icon: ReactNode; title: string; subtitle: string; onClick: () => void; trailing?: ReactNode }) {
   return (
-    <Surface className="prow" radius="16px" background="var(--surface)" borderColor="var(--amber)" onClick={onClick}>
+    <Surface className="prow" radius="16px" background="var(--surface)" borderColor="var(--accent)" onClick={onClick}>
       <span className="pcard__icon pcard__icon--sm">{icon}</span>
       <span style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", textAlign: "left" }}>
         <span className="t-label-lg ellipsis">{title}</span>

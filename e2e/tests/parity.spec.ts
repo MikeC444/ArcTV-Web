@@ -22,13 +22,13 @@ test.describe("Fire TV layout parity @ 1920×1080 (1dp = 2px)", () => {
       return {
         dp: parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--dp")) || 0,
         bg: getComputedStyle(document.documentElement).backgroundColor,
-        tokens: Object.fromEntries(["--bg", "--bg-elevated", "--surface", "--surface-high", "--amber", "--tangerine", "--coral", "--azure", "--teal", "--text", "--text-2", "--text-3", "--focus-border", "--watched"].map((k) => [k, css.getPropertyValue(k).trim().toLowerCase()])),
+        tokens: Object.fromEntries(["--bg", "--bg-elevated", "--surface", "--surface-high", "--cyan", "--blue", "--violet", "--warn", "--coral", "--azure", "--teal", "--text", "--text-2", "--text-3", "--focus-border", "--watched"].map((k) => [k, css.getPropertyValue(k).trim().toLowerCase()])),
       };
     });
     expect(t.bg).toBe("rgb(8, 8, 10)"); // MangoBackground 0xFF08080A
     expect(t.tokens).toEqual({
-      "--bg": "#08080a", "--bg-elevated": "#141417", "--surface": "#1c1c20", "--surface-high": "#26262b", "--amber": "#ffb020", "--tangerine": "#ff7a3d", "--coral": "#ff3d68",
-      "--azure": "#3d8bff", "--teal": "#2dd9a8", "--text": "#f6f6f8", "--text-2": "#afafb8", "--text-3": "#92929c" /* the TV's #75757e is 4.4:1 — lightened to pass WCAG AA */, "--focus-border": "#ffc873", "--watched": "#2ecc71",
+      "--bg": "#08080a", "--bg-elevated": "#141417", "--surface": "#1c1c20", "--surface-high": "#26262b", "--cyan": "#19e6ff", "--blue": "#2f80ff", "--violet": "#9b5cff", "--warn": "#ffb020", "--coral": "#ff3d68",
+      "--azure": "#3d8bff", "--teal": "#2dd9a8", "--text": "#f6f6f8", "--text-2": "#afafb8", "--text-3": "#92929c" /* the TV's #75757e is 4.4:1 — lightened to pass WCAG AA */, "--focus-border": "#8cf3ff", "--watched": "#2ecc71",
     });
     const dpPx = await page.evaluate(() => { const d = document.createElement("div"); d.style.width = "var(--dp)"; document.body.appendChild(d); const w = d.getBoundingClientRect().width; d.remove(); return w; });
     near(dpPx, DP, 0.01);

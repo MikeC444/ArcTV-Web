@@ -50,7 +50,7 @@
 .pcard__icon svg { width: 50%; height: 50%; }
 .pcard__rows { display: flex; flex-direction: column; gap: 2px; }
 .prow { display: flex; align-items: center; gap: calc(14 * var(--dp)); width: 100%; padding: calc(10 * var(--dp)) calc(12 * var(--dp)); margin: 2px 0; min-height: 52px; }
-.prow:focus-visible, .prow:hover { background-image: radial-gradient(circle at 50% 50%, rgba(255, 176, 32, 0.28), transparent 75%); }
+.prow:focus-visible, .prow:hover { background-image: radial-gradient(circle at 50% 50%, rgba(25, 230, 255, 0.28), transparent 75%); }
 .perror { position: absolute; inset: 0; z-index: 20; background: rgba(0, 0, 0, 0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; }
 .perror__actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
 .pupnext { position: absolute; right: calc(40 * var(--dp)); bottom: calc(110 * var(--dp)); z-index: 15; background: rgba(20, 20, 23, 0.94); border: 1px solid var(--divider); border-radius: 14px; padding: 16px 18px; max-width: min(360px, calc(100vw - 32px)); animation: heroIn 220ms ease both; }
