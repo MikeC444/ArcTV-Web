@@ -39,6 +39,22 @@ describe("/api/user allow-list proxy", () => {
     expect((await client.get("/api/auth/sessions")).status).toBe(404);
   });
 
+  it("forwards the feedback endpoints, and each account only sees its own", async () => {
+    const backend = createMockBackend();
+    backend.addUser("alice@example.com", "password-1234");
+    backend.addUser("bob@example.com", "password-1234");
+    const app = appWith(backend.fetch);
+    const alice = agentFor(app);
+    const bob = agentFor(app);
+    await alice.post("/api/auth/login").send({ email: "alice@example.com", password: "password-1234" });
+    await bob.post("/api/auth/login").send({ email: "bob@example.com", password: "password-1234" });
+    const item = { profileId: "main", providerId: "p", contentId: "tt1", contentType: "MOVIE", title: "Alice's pick", feedback: "like", updatedAt: new Date().toISOString() };
+    expect((await alice.post("/api/user/feedback").send(item)).status).toBe(200);
+    expect((await alice.get("/api/user/feedback")).body.items).toHaveLength(1);
+    expect((await bob.get("/api/user/feedback")).body.items).toEqual([]);
+    expect((await request(app).get("/api/user/feedback")).status).toBe(401);
+  });
+
   it("only accepts JSON object bodies on mutations", async () => {
     const { client } = await signedIn();
     const res = await client.agent.post("/api/user/watchlist").set("X-MangoTV-Client", "web").set("Content-Type", "application/json").send("[1,2]");

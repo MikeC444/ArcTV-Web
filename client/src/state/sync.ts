@@ -32,17 +32,21 @@ export async function retryPendingAll(): Promise<void> {
     useSettings.getState().retryPending(),
     useMyList.getState().retryPending(),
     useContinueWatching.getState().retryPending(),
+    useFeedback.getState().retryPending(),
     useAddons.getState().retryPending(),
   ]);
 }
 
 export async function syncAll(): Promise<void> {
+  // Taste feedback syncs alongside the rest. A backend that predates /user/feedback just answers 404: it stays on this device and is retried next launch.
+  const feedbackPull = useFeedback.getState().pull();
   const [settings, watchlist, continueWatching, addons] = await Promise.all([
     useSettings.getState().pull(),
     useMyList.getState().pull(),
     useContinueWatching.getState().pull(),
     useAddons.getState().pull(),
   ]);
+  await feedbackPull;
   await retryPendingAll();
 
   // A brand-new account — every cloud domain confirmed empty — starts with the same default addon a fresh TV gets.

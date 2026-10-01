@@ -90,6 +90,16 @@ export function createMockBackend(options: { accessTtlMs?: number } = {}) {
       data.set(user.id, bucket);
       return json(200, request.body);
     }
+    if (request.path === "/user/feedback" && request.method === "GET") {
+      const bucket = data.get(user.id) ?? new Map();
+      return json(200, { items: (bucket.get("feedback") as unknown[] | undefined) ?? [] });
+    }
+    if (request.path === "/user/feedback" && request.method === "POST") {
+      const bucket = data.get(user.id) ?? new Map<string, unknown>();
+      bucket.set("feedback", ((bucket.get("feedback") as unknown[] | undefined) ?? []).concat(request.body));
+      data.set(user.id, bucket);
+      return json(200, request.body);
+    }
     if (request.path === "/user/trailer") return json(200, { youtubeVideoId: "abc123" });
     return json(404, { error: "Not found" });
   };

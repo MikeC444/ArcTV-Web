@@ -52,7 +52,7 @@ necessary and none was run**: no schema change, no `DROP`, no `TRUNCATE`, no dat
 
 Isolation between accounts is enforced where it always was — in the existing backend, which derives the user from
 the verified session and never from a client-supplied id. The web server adds a second layer: it forwards only the
-session's own bearer token (any client-sent `Authorization` header is discarded) and only an allow-list of 14
+session's own bearer token (any client-sent `Authorization` header is discarded) and only an allow-list of 17
 method + path pairs. `server/tests/integration/isolation.test.ts` proves, against the real backend, that two accounts
 cannot read or change each other's data, including natural-key and far-future-timestamp attacks.
 
