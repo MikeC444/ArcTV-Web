@@ -6,6 +6,7 @@ import { blockedSet, withoutBlocked } from "../domain/blockedGenres";
 import { useBlockedGenres } from "./blockedGenres";
 import { distinctBy } from "../lib/format";
 import { useAddonsReady, withWatched } from "./hooks";
+import { fetchTrailerId } from "./trailer";
 import { consumeDetailPreview } from "./pendingDetail";
 
 /** DetailViewModel.kt */
@@ -52,11 +53,7 @@ export function useDetail(providerId: string, type: ContentType, id: string, wat
 
       // Trailer + release date come from the existing API (it holds the TMDB key); both degrade quietly.
       setTrailer({ kind: "loading" });
-      const trailerQuery = new URLSearchParams({ title: detail.title, type: detail.type });
-      if (detail.year) trailerQuery.set("year", String(detail.year));
-      void api<{ youtubeVideoId: string | null }>(`/user/trailer?${trailerQuery}`)
-        .then((r) => !cancelled && setTrailer(r.youtubeVideoId ? { kind: "found", value: r.youtubeVideoId } : { kind: "notFound" }))
-        .catch(() => !cancelled && setTrailer({ kind: "notFound" }));
+      void fetchTrailerId(detail).then((id) => !cancelled && setTrailer(id ? { kind: "found", value: id } : { kind: "notFound" }));
       if (detail.type === "MOVIE") {
         setReleaseDate({ kind: "loading" });
         const q = new URLSearchParams({ title: detail.title });

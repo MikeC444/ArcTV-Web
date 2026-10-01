@@ -310,9 +310,10 @@
   .hero__desc { display: none; }
   .hero .hero__actions { margin-top: 18px; width: 100%; justify-content: space-between; align-items: center; flex-wrap: nowrap; gap: 8px; padding: 0 4px; }
   .hero__actions > .mbtn { order: 2; --tvs-bg: transparent; --tvs-bg-image: var(--brand-gradient-wide); color: #07101a; min-width: 132px; justify-content: center; box-shadow: 0 6px 22px rgba(255, 120, 32, 0.35); }
-  .hero__act { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 64px; }
+  .hero__act { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 56px; }
   .hero__act[data-act="list"] { order: 1; }
-  .hero__act[data-act="info"] { order: 3; }
+  .hero__act[data-act="trailer"] { order: 3; }
+  .hero__act[data-act="info"] { order: 4; }
   .hero__act .ibtn { --tvs-bg: transparent; background: none; width: 44px; height: 44px; }
   .hero__actlabel { display: block; font-size: 12px; line-height: 14px; color: var(--text-2); }
   .hero__dots { left: 50%; right: auto; transform: translateX(-50%); bottom: 4px; }

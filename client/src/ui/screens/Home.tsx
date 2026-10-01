@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { MdAdd, MdCheck, MdInfo, MdPause, MdPlayArrow } from "react-icons/md";
+import { MdAdd, MdCheck, MdInfo, MdPause, MdPlayArrow, MdTheaters } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import type { Content } from "../../domain/types";
 import { formatRuntime } from "../../lib/format";
@@ -7,6 +7,8 @@ import { sharpBackdrop } from "../../lib/imageSize";
 import { preloadHero } from "../../lib/preload";
 import { routes } from "../../lib/routes";
 import { useHome } from "../../state/homeData";
+import { useAuth } from "../../state/auth";
+import { useTrailer } from "../../state/trailer";
 import { useAccountAction, useSavedIds } from "../../state/hooks";
 import { useMyList } from "../../state/myList";
 import { stashDetailPreview } from "../../state/pendingDetail";
@@ -26,6 +28,10 @@ function Hero({ items }: { items: Content[] }) {
   const navigate = useNavigate();
   const saved = useSavedIds();
   const toggle = useAccountAction(useMyList((s) => s.toggle));
+  const signedIn = useAuth((s) => s.status === "signedIn");
+  const openTrailer = useAccountAction((videoId: string | null) => {
+    if (videoId) window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`, "_blank", "noopener,noreferrer");
+  });
   const [index, setIndex] = useState(0);
   const [leaving, setLeaving] = useState<Leaving | null>(null);
   const [dir, setDir] = useState<"next" | "prev">("next");
@@ -60,6 +66,8 @@ function Hero({ items }: { items: Content[] }) {
   }, [leaving]);
 
   const current = items[index % items.length];
+  // one trailer lookup per slide, made when it comes into view (visitors without an account are asked to sign in when they press the button)
+  const trailer = useTrailer(current, signedIn);
   if (!current) return null;
 
   const slide = (item: Content, anim: string | undefined, isCurrent: boolean) => {
@@ -92,6 +100,18 @@ function Hero({ items }: { items: Content[] }) {
               <IconButton icon={isSaved ? <MdCheck /> : <MdAdd />} label={isSaved ? "Remove from My List" : "Add to My List"} onClick={() => toggle(item)} />
               <span className="hero__actlabel" aria-hidden="true">
                 My List
+              </span>
+            </span>
+            <span className="hero__act" data-act="trailer">
+              <IconButton
+                icon={<MdTheaters />}
+                label="Trailer"
+                disabled={isCurrent && signedIn && trailer.kind !== "found"}
+                title={isCurrent && signedIn && trailer.kind === "notFound" ? "No trailer found for this title" : "Trailer"}
+                onClick={() => openTrailer(trailer.kind === "found" ? trailer.value : null)}
+              />
+              <span className="hero__actlabel" aria-hidden="true">
+                Trailer
               </span>
             </span>
             <span className="hero__act" data-act="info">
