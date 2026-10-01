@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { MdAccountCircle, MdAdd, MdBlock, MdFavorite, MdWorkspacePremium, MdArrowDownward, MdArrowUpward, MdCheck, MdCloudUpload, MdDelete, MdExtension, MdGridView, MdInfo, MdLogout, MdMusicNote, MdSubtitles, MdVolumeUp } from "react-icons/md";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
-import { PLUS_CHECKOUT_URL, PLUS_FREE_NOTE, PLUS_PERKS, PLUS_PLANS, PLUS_PROCEEDS_NOTE } from "../../domain/plus";
+import { PLUS_FREE_NOTE, PLUS_PERKS, PLUS_PLANS, PLUS_PROCEEDS_NOTE } from "../../domain/plus";
 import { applyRowOrder, moveRow } from "../../domain/homeRows";
 import { useProviders } from "../../domain/registry";
 import type { HomeSection } from "../../domain/types";
@@ -116,7 +116,6 @@ function BlockedGenresPane() {
 
 /** ArcTV Plus: what it adds and how to subscribe. Nothing here changes what the free app does. */
 function PlusPane() {
-  const hasCheckout = PLUS_CHECKOUT_URL !== "";
   return (
     <div className="plus">
       <div className="plus__status">
@@ -124,7 +123,6 @@ function PlusPane() {
         <span className="t-body-sm c-text-2">You're on the free plan.</span>
       </div>
       <p className="t-body-md plus__free">{PLUS_FREE_NOTE}</p>
-
       <p className="plus__proceeds">
         <MdFavorite aria-hidden="true" /> <span>{PLUS_PROCEEDS_NOTE}</span>
       </p>
@@ -145,7 +143,7 @@ function PlusPane() {
       <h3 className="t-title-md plus__h">How to subscribe</h3>
       <ol className="plus__steps t-body-md">
         <li>Sign in to your ArcTV account (you're already signed in here).</li>
-        <li>Pick a plan below.</li>
+        <li>Pick a plan below: monthly, yearly, or a one-time Lifetime payment.</li>
         <li>Complete the secure checkout. Plus is added to your account.</li>
       </ol>
 
@@ -156,20 +154,18 @@ function PlusPane() {
             <div className="t-title-md">{plan.label}</div>
             <div className="plus__price">{plan.price ?? "Price announced soon"}</div>
             {plan.price ? <div className="t-label-sm c-text-3">{plan.per}</div> : null}
+            <p className="t-body-sm c-text-2" style={{ margin: "8px 0 14px" }}>{plan.blurb}</p>
+            {plan.checkoutUrl ? (
+              <MangoButton text={plan.id === "lifetime" ? "Get Lifetime" : `Choose ${plan.label}`} icon={<MdWorkspacePremium />} variant="filled" compact onClick={() => window.open(plan.checkoutUrl, "_blank", "noopener,noreferrer")} />
+            ) : (
+              <MangoButton text="Opens soon" icon={<MdWorkspacePremium />} compact disabled />
+            )}
           </div>
         ))}
       </div>
-
-      <div style={{ marginTop: 18 }}>
-        {hasCheckout ? (
-          <MangoButton text="Subscribe to ArcTV Plus" icon={<MdWorkspacePremium />} variant="filled" onClick={() => window.open(PLUS_CHECKOUT_URL, "_blank", "noopener,noreferrer")} />
-        ) : (
-          <MangoButton text="Subscriptions open soon" icon={<MdWorkspacePremium />} disabled />
-        )}
-        <p className="t-body-sm c-text-3" style={{ margin: "10px 0 0" }}>
-          {hasCheckout ? "You can cancel any time from the checkout receipt." : "Plus isn't on sale yet. When it is, you'll subscribe right here — no need to do anything now."}
-        </p>
-      </div>
+      <p className="t-body-sm c-text-3" style={{ margin: "12px 0 0" }}>
+        {PLUS_PLANS.some((p) => p.checkoutUrl) ? "Payments are handled by a secure checkout page." : "Plus isn't on sale yet. When it is, you'll subscribe right here — no need to do anything now."}
+      </p>
     </div>
   );
 }
