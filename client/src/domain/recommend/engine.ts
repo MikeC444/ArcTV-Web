@@ -130,13 +130,30 @@ export async function recommend(input: EngineInput): Promise<EngineResult> {
     CANDIDATE_DETAIL_FETCH_LIMIT,
   );
 
+  // A candidate that is itself one of the profile's movies (saved or liked but not finished) is judged against the profile WITHOUT that movie, so it
+  // can neither boost its own score nor be named as its own reason.
+  const ownIds = new Set(signalled.map((i) => i.id));
+  const withoutSelf = new Map<string, ReturnType<typeof buildPreferences>>();
+  const prefsFor = (id: string) => {
+    if (!ownIds.has(id)) return prefs;
+    let p = withoutSelf.get(id);
+    if (!p) {
+      p = buildPreferences(
+        signalled.filter((i) => i.id !== id),
+        ownFeatures,
+      );
+      withoutSelf.set(id, p);
+    }
+    return p;
+  };
   const scored: Array<{ id: string; candidate: Candidate; score: number; sources: Source[] }> = [];
   for (const candidate of shortlist) {
     const fetched = details.get(candidate.id);
     const features: Features = { genres: fetched?.genres.length ? fetched.genres : normaliseGenres(candidate.genres), directors: fetched?.directors ?? [], cast: fetched?.cast ?? [] };
-    const result = scoreCandidate(features, prefs);
+    const candidatePrefs = prefsFor(candidate.id);
+    const result = scoreCandidate(features, candidatePrefs);
     if (!result) continue;
-    scored.push({ id: candidate.id, candidate, score: result.score, sources: result.score > 0 ? rankSources(features, prefs) : [] });
+    scored.push({ id: candidate.id, candidate, score: result.score, sources: result.score > 0 ? rankSources(features, candidatePrefs) : [] });
   }
   if (scored.length === 0) return popularFallback(pool, input.excludeIds);
 

@@ -205,6 +205,38 @@ describe("explanations reflect the whole profile", () => {
   });
 });
 
+describe("a movie never picks itself", () => {
+  const H: Record<string, Features> = {
+    saved: f(["horror", "mystery"], ["dq"], ["q1", "q2"]), // saved, not finished: also a candidate
+    liked: f(["horror", "thriller"], ["dl"], ["l1"]), // liked, not finished
+    a: f(["horror", "thriller", "mystery"], ["da"], ["a1"]),
+    b: f(["horror", "thriller", "drama"], ["db"], ["b1"]),
+    c: f(["horror", "mystery", "drama"], ["dc"], ["c1"]),
+    other: f(["horror", "mystery"], ["dz"], ["z1"]),
+  };
+  const loaderH: FeatureLoader = async (refs) => new Map(refs.map((r) => [r.id, H[r.id] ?? null]));
+  const base = [input("a", { completed: true }), input("b", { completed: true }), input("c", { completed: true })];
+  const cand = (id: string): Candidate => ({ id, title: id, genres: H[id]!.genres, rating: 7 });
+  const go = (extra: InteractionInput[], pool: Candidate[]) => recommend({ interactions: collectInteractions([...base, ...extra]), excludeIds: new Set(), pool, interactionRefs: new Map(), loadFeatures: loaderH });
+
+  it("does not cite the movie itself as the reason for its own pick", async () => {
+    const r = await go([input("saved", { inWatchlist: true })], [cand("saved"), cand("other")]);
+    const mine = r.items.find((i) => i.id === "saved");
+    expect(mine?.reason ?? "").not.toMatch(/saved$/);
+    expect(mine?.reason ?? "").not.toBe("Because you saved saved");
+    for (const item of r.items) expect(item.reason ?? "").not.toContain(`you liked ${item.id}`);
+  });
+  it("is scored as if its own signal were not there (no boosting itself)", async () => {
+    const withSelf = await go([input("saved", { inWatchlist: true }), input("liked", { feedback: "like" })], [cand("saved"), cand("liked"), cand("other")]);
+    const without = await go([input("liked", { feedback: "like" })], [cand("saved")]);
+    const a = withSelf.items.find((i) => i.id === "saved")!;
+    const b = without.items.find((i) => i.id === "saved")!;
+    expect(a.score).toBeCloseTo(b.score!); // the saved movie's own +1 does not raise its own score
+    const likedPick = withSelf.items.find((i) => i.id === "liked");
+    expect(likedPick?.reason ?? "").not.toContain("liked liked");
+  });
+});
+
 describe("diversity step", () => {
   // A profile with two tastes: horror (4 finished) and war/action (3 finished). The catalogue has many more, better-rated horror titles than action ones.
   const mk = (id: string, genres: string[], director: string, cast: string[]): [string, Features] => [id, f(genres, [director], cast)];
