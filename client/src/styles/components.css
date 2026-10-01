@@ -207,6 +207,8 @@
 
 /* ── Content rows and cards (ContentRow.kt / ContentCard.kt) ─────────────── */
 .row { position: relative; margin-bottom: var(--row-spacing); }
+/* a row that has not been built yet keeps roughly its height so the page does not jump while scrolling */
+.row--pending { min-height: calc(260 * var(--dp)); }
 .row__title { padding: calc(12 * var(--dp)) var(--pad-x); font-weight: 700; font-size: calc(20 * var(--dp)); line-height: calc(26 * var(--dp)); color: var(--text); }
 .row[data-compact="true"] .row__title { font-size: calc(18 * var(--dp)); padding-top: calc(6 * var(--dp)); padding-bottom: calc(6 * var(--dp)); }
 .row__scroller {

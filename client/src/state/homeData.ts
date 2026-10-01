@@ -17,6 +17,8 @@ import { useSettings } from "./settings";
 const HERO_POOL_SIZE = 10;
 const CACHE_MAX_AGE_MS = 7 * 24 * 3600_000;
 const CACHE_ITEMS_PER_ROW = 30;
+/** A Home row shows this many posters (the Movies / TV Shows pages have the full, scrolling lists). Rendering every title of ~30 rows froze phones for seconds on every visit. */
+const HOME_ROW_ITEM_LIMIT = 30;
 export const CONTINUE_WATCHING_ROW_ID = "continue_watching";
 
 export type HomeState =
@@ -153,7 +155,8 @@ export function useHome(): { state: HomeState; reload(): void; ready: boolean } 
     const visible = dedupeRows(applyRowOrder(rawSections, prefs).filter((s) => !prefs.hiddenRowIds.includes(s.id))).map((s) => sectionWithWatched(s, watchedIds));
     const cwEntries = withoutShownTitles(cw, visible); // a title that already sits in another row is not repeated under Continue Watching
     const cwSection: HomeSection | null = cwEntries.length ? { id: CONTINUE_WATCHING_ROW_ID, title: "Continue Watching", style: "CONTINUE_WATCHING", items: cwEntries.map(entryToContent).map((c) => (watchedIds.has(c.id) ? { ...c, watched: true } : c)) } : null;
-    const sections = [...(cwSection ? [cwSection] : []), ...visible];
+    const shown = visible.map((s) => (s.items.length > HOME_ROW_ITEM_LIMIT ? { ...s, items: s.items.slice(0, HOME_ROW_ITEM_LIMIT) } : s));
+    const sections = [...(cwSection ? [cwSection] : []), ...shown];
 
     const pool = distinctBy(visible.flatMap((s) => s.items), (c) => c.id);
     // The hero: 10 random titles from the rows the person has enabled. Wait until those rows hold at least 10 (or everything has

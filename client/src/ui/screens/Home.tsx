@@ -9,7 +9,7 @@ import { useAccountAction, useSavedIds } from "../../state/hooks";
 import { useMyList } from "../../state/myList";
 import { stashDetailPreview } from "../../state/pendingDetail";
 import { MangoButton, IconButton } from "../components/Buttons";
-import { ContentRow } from "../components/ContentRow";
+import { LazyRow } from "../components/LazyRow";
 import { HomeSkeleton } from "../components/Skeletons";
 import { FullScreenError, HomeEmptyState } from "../components/States";
 
@@ -163,8 +163,8 @@ export function Home() {
     <div className="home">
       <Hero items={state.hero} />
       <div className="home__rows">
-        {state.sections.map((section) => (
-          <ContentRow key={section.id} section={section} />
+        {state.sections.map((section, index) => (
+          <LazyRow key={section.id} section={section} eager={index < 3} />
         ))}
       </div>
     </div>
