@@ -90,8 +90,8 @@ export function AuthMethodScreen() {
       <div className="authcenter__col">
         <h1 className="t-headline-sm" style={{ margin: 0 }}>{intent === "register" ? "How would you like to create your account?" : "How would you like to sign in?"}</h1>
         <div className="authcenter__buttons">
-          <MangoButton text="Scan a QR Code" icon={<MdQrCode2 />} variant="filled" fullWidth dataAttrs={{ autofocus: true }} onClick={() => navigate(routes.authQr(intent), { state: location.state })} />
-          <MangoButton text="Use Email & Password" icon={<MdEdit />} fullWidth onClick={() => navigate(routes.authPassword(intent), { state: location.state })} />
+          <MangoButton text="Use Email & Password" icon={<MdEdit />} variant="filled" fullWidth dataAttrs={{ autofocus: true }} onClick={() => navigate(routes.authPassword(intent), { state: location.state })} />
+          <MangoButton text="Scan a QR Code" icon={<MdQrCode2 />} fullWidth onClick={() => navigate(routes.authQr(intent), { state: location.state })} />
         </div>
         <div><BackButton /></div>
       </div>
