@@ -106,7 +106,7 @@ function svg(kind, key) {
 }
 
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*", "Access-Control-Expose-Headers": "Content-Length, Content-Range, Accept-Ranges" };
-const MIME = { ".webm": "video/webm", ".m3u8": "application/vnd.apple.mpegurl", ".m4s": "video/iso.segment", ".mp4": "video/mp4", ".vtt": "text/vtt" };
+const MIME = { ".webm": "video/webm", ".mkv": "video/x-matroska", ".m3u8": "application/vnd.apple.mpegurl", ".m4s": "video/iso.segment", ".mp4": "video/mp4", ".vtt": "text/vtt" };
 
 /** Every request the addon receives, so tests can prove the web app really asked (GET /__requests, DELETE /__requests). */
 const requestLog = [];
@@ -155,6 +155,8 @@ function handleExtraAddon(p, res, cors) {
     { name: "[RD+] Fixture Debrid", title: "Debrid.cached.1080p.WEB-DL.VP9\n👤 50 💾 2 GB", url: `${BASE}/media/sample.webm?via=debrid-cached` },
     { name: "[RD download] Fixture Debrid", title: "Debrid.uncached.2160p.WEB-DL.VP9\n👤 900 💾 9 GB", url: `${BASE}/media/stall.webm?via=debrid-uncached` },
   ] }, cors), true;
+  if (p === "/ac3/manifest.json") return json(res, extraManifest("test.mangotv.ac3", "Fixture Dolby", ["stream"]), cors), true;
+  if (/^\/ac3\/stream\//.test(p)) return json(res, { streams: [{ name: "Stream dolby 1080p", title: "Dolby.Movie.1080p.WEB-DL.DD5.1.VP9\n👤 80 💾 1 GB", url: `${BASE}/media/ac3.mkv` }] }, cors), true; // VP9 + Dolby Digital 5.1: the picture plays, the sound can't
   if (p === "/stall/manifest.json") return json(res, extraManifest("test.mangotv.stall", "Fixture Stall", ["stream"]), cors), true;
   if (/^\/stall\/stream\//.test(p)) return json(res, { streams: [{ name: "Stream stall 1080p", title: "Extra.stall.1080p.WEB-DL.VP9\n👤 99 💾 1 GB", url: `${BASE}/media/stall.webm?apikey=SECRET-KEY-123` }] }, cors), true;
   if (p === "/slowdebrid/manifest.json") return json(res, extraManifest("test.mangotv.slowdebrid", "Fixture Slow Debrid", ["stream"]), cors), true;

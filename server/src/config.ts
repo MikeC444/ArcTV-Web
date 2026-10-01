@@ -22,6 +22,10 @@ const schema = z.object({
   ALLOW_PRIVATE_ADDON_HOSTS: z.enum(["0", "1"]).default("0"),
   // Stream relay (see streamRelay.ts): "0" turns it off entirely. On by default; the player only uses it when a stream can't be played directly.
   STREAM_RELAY: z.enum(["0", "1"]).default("1"),
+  // Audio compatibility mode (see transcode.ts): converts Dolby / DTS audio to stereo AAC / Opus for devices that can't play it. "0" turns it off.
+  AUDIO_CONVERSION: z.enum(["0", "1"]).default("1"),
+  FFMPEG_PATH: z.string().trim().min(1).optional(),
+  AUDIO_CONVERSION_MAX: z.coerce.number().int().min(1).max(32).default(3),
   // Built-in catalog addon (see catalog/): needs a free TMDB key. Without one the addon is simply off and the app uses its other addons.
   TMDB_API_KEY: z.string().trim().min(1).optional(),
   TMDB_API_BASE: z.string().url().default("https://api.themoviedb.org/3"),
@@ -39,6 +43,9 @@ export interface AppConfig {
   staticDir: string | undefined;
   allowPrivateAddonHosts: boolean;
   streamRelay: boolean;
+  audioConversion: boolean;
+  ffmpegPath: string | undefined;
+  audioConversionMax: number;
   /** Undefined = the built-in catalog addon is off. */
   tmdbApiKey: string | undefined;
   tmdbApiBase: string;
@@ -71,6 +78,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     staticDir: value.STATIC_DIR,
     allowPrivateAddonHosts: value.ALLOW_PRIVATE_ADDON_HOSTS === "1",
     streamRelay: value.STREAM_RELAY === "1",
+    audioConversion: value.AUDIO_CONVERSION === "1",
+    ffmpegPath: value.FFMPEG_PATH,
+    audioConversionMax: value.AUDIO_CONVERSION_MAX,
     tmdbApiKey: value.TMDB_API_KEY,
     tmdbApiBase: value.TMDB_API_BASE.replace(/\/+$/, ""),
     tmdbImageBase: value.TMDB_IMAGE_BASE.replace(/\/+$/, ""),

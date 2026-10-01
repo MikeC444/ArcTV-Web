@@ -93,10 +93,33 @@ direct attempt did.
 the address that asked for them), fix a slow host, or fix a file the browser can't decode. **Costs:** relayed video flows
 through the web server's bandwidth (small on Render's free plan) and the stream host sees the server's address.
 
+## Audio compatibility mode
+
+Browsers (Chrome, Edge on most machines, Firefox) can't decode Dolby Digital, Dolby Digital Plus, DTS or TrueHD, so a release with
+that sound plays its picture silent. The Sources screen already says "No sound here" for such releases; this mode fixes it.
+
+* **When:** automatically when a source's audio (read from its release name) is something this device can't decode and the picture
+  itself is playable; or by hand from the player's Settings ("No sound? Convert audio"), which also covers a silent source whose
+  name didn't say. If the server turns out to have no ffmpeg, or the conversion fails, the player says so and plays the source as it is.
+* **How:** `GET /api/transcode?src=<relay address>&start=<seconds>` runs ffmpeg on the server. The **video is copied untouched**;
+  the audio is decoded and re-encoded as **stereo AAC in MP4** (or **stereo Opus in WebM** when the video is VP8 / VP9 / AV1) and
+  streamed as one progressive, fragmented file. ffmpeg reads the source through this server's own relay (over loopback, as the
+  same signed-in person), so every relay protection applies unchanged. `GET /api/transcode/info` reports the length and the audio
+  tracks (the converted stream states no length of its own).
+* **Seeking:** the browser can't seek inside such a stream. The player seeks in place within what has arrived; anywhere else it asks
+  for a new stream with `start=` (ffmpeg seeks near the nearest earlier keyframe — so a seek can land a few seconds early) and adds
+  that offset to every time it shows or reports. Pausing needs no work: when the browser stops reading, ffmpeg blocks on its output.
+* **Limits and costs:** at most `AUDIO_CONVERSION_MAX` conversions at once (default 3) and 2 per person; the older one is stopped when a
+  seek replaces it; ffmpeg is stopped when the player goes away or the source stalls for 45 s. Converted video flows through the
+  server's bandwidth like the relay's. Audio-only conversion is light on CPU; the video is never re-encoded, so a source whose
+  *video* the device can't decode (HEVC in Chrome, say) is not helped. Embedded subtitles are not carried over.
+* **Turning it off / bringing your own ffmpeg:** `AUDIO_CONVERSION=0`, or `FFMPEG_PATH=/usr/bin/ffmpeg`.
+
 ## Verification
 
 * Unit and server tests cover the relay (auth, headers, redirects, SSRF guards, media-only, limits, refusal reporting), the
   address builder, the content-type probe and the diagnostics.
+* Server tests run a real ffmpeg on generated Dolby-audio files (VP8 + AC3 in Matroska, H.264 + E-AC3 in MP4): the output keeps the video, has stereo AAC / Opus, honours `start`, refuses non-relay addresses, and ffmpeg stops when the client leaves. `e2e/tests/audio.spec.ts` plays a VP9 + Dolby Digital file in Chromium (which can't decode Dolby) and checks that sound is decoded, the length shown, and that toggling and seeking work.
 * End-to-end (Chromium against fixture hosts, `e2e/tests/relay.spec.ts`, `addons.spec.ts`): a host that refuses browser
   requests is played through the relay with a real picture; `proxyHeaders` sources play through it while the browser never
   contacts the host; a host that refuses both says so; a link with no file extension that redirects to HLS plays with

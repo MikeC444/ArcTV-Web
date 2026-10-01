@@ -243,3 +243,12 @@ export const DEBRID_NAMES: Record<string, string> = { RD: "Real-Debrid", AD: "Al
 
 /** 0 = starts at once (cached, or not a debrid link at all); 1 = the debrid service still has to fetch it, which can take minutes. */
 export const cacheRank = (stream: Pick<Stream, "debrid">): number => (stream.debrid && !stream.debrid.cached ? 1 : 0);
+
+/**
+ * Can this device decode an audio codec as ffmpeg names it ("ac3", "eac3", "dts", "truehd", "aac", "opus", "flac", "mp3", "vorbis" …)?
+ * `null` = not a codec we have a test for (so nothing says it's a problem).
+ */
+export function canDecodeAudioCodec(codec: string, caps: DeviceCaps): boolean | null {
+  const known = (codec in caps.audio ? caps.audio[codec as AudioCodec] : undefined) as boolean | undefined;
+  return known === undefined ? null : known;
+}

@@ -163,6 +163,7 @@ Set on the **server only**. Nothing here is exposed to the browser and nothing h
 | `TRUST_PROXY` | no | `1` when exactly one reverse proxy is in front (most PaaS), so client IPs and HTTPS are read correctly. |
 | `CSP_EXTRA_CONNECT_SRC` | no | Extra origins for the Content-Security-Policy `connect-src`, comma separated. |
 | `TMDB_API_KEY` | no | A free [TMDB](https://www.themoviedb.org/settings/api) key (v3 key or v4 read-access token). Turns on the **built-in catalog** (see below). Without it the built-in catalog is simply off and nothing else changes. Also `TMDB_API_BASE` / `TMDB_IMAGE_BASE` (defaults: TMDB's own) for testing. |
+| `AUDIO_CONVERSION` | no | Default `1`. [Audio compatibility mode](docs/PLAYBACK.md#audio-compatibility-mode): the server converts Dolby / DTS sound to stereo AAC / Opus for devices that can't play it. `0` turns it off. Needs ffmpeg (bundled via `@ffmpeg-installer/ffmpeg`, or set `FFMPEG_PATH`); without one the feature is simply unavailable. `AUDIO_CONVERSION_MAX` (default 3) caps conversions running at once. |
 | `STREAM_RELAY` | no | Default `1`. The [stream relay](docs/PLAYBACK.md) that plays sources a browser can't fetch itself. `0` turns it off. Relayed video uses this server's bandwidth. |
 
 `.env.example` contains placeholders only; `.env*` files are git-ignored. The client bundle contains no configuration

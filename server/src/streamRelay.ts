@@ -28,7 +28,7 @@ import { guardedLookup, isPrivateAddress } from "./netGuard.js";
  *  · a few concurrent streams per account, and the whole feature can be switched off with STREAM_RELAY=0
  */
 
-const RELAY_PREFIX = "/api/relay/";
+export const RELAY_PREFIX = "/api/relay/";
 const MAX_REDIRECTS = 6;
 const MAX_TARGET_LENGTH = 4096;
 const MAX_CUSTOM_HEADERS = 16;

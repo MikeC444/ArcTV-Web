@@ -13,7 +13,8 @@ export type ErrorCode =
   | "rate_limited"
   | "backend_unavailable"
   | "upstream_error"
-  | "relay_disabled";
+  | "relay_disabled"
+  | "transcode_disabled";
 
 export class ApiError extends Error {
   constructor(
