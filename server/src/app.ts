@@ -5,9 +5,6 @@ import express, { type ErrorRequestHandler, type Express, type NextFunction, typ
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import { addonProxyHandler, createAddonFetcher } from "./addonProxy.js";
-import { CatalogService } from "./catalog/addon.js";
-import { createCatalogRouter } from "./catalog/router.js";
-import { TmdbClient } from "./catalog/tmdb.js";
 import { createBackendClient, type BackendFetch } from "./backend.js";
 import type { AppConfig } from "./config.js";
 import type { AppContext } from "./context.js";
@@ -51,8 +48,6 @@ function findStaticDir(config: AppConfig): string | undefined {
 
 export interface CreateAppOptions {
   backend?: BackendFetch;
-  /** Replaces the network for the built-in catalog's TMDB calls (tests). */
-  tmdbFetch?: typeof fetch;
 }
 
 export function createApp(config: AppConfig, options: CreateAppOptions = {}): Express {
@@ -174,17 +169,6 @@ export function createApp(config: AppConfig, options: CreateAppOptions = {}): Ex
 
   api.use((_req, _res, next) => next(new ApiError(404, "not_found", "Not found")));
   app.use("/api", api);
-
-  // ── Built-in catalog addon (a Stremio addon of our own, built on TMDB) ────────
-  if (config.tmdbApiKey) {
-    const tmdb = new TmdbClient({ apiKey: config.tmdbApiKey, baseUrl: config.tmdbApiBase, imageBaseUrl: config.tmdbImageBase, fetchImpl: options.tmdbFetch });
-    app.use("/addon", createCatalogRouter(new CatalogService(tmdb), perClient(600)));
-  } else {
-    app.use("/addon", (_req, res) => {
-      res.setHeader("Access-Control-Allow-Origin", "*");
-      res.status(404).json({ err: "The built-in catalog is not set up on this server." });
-    });
-  }
 
   // ── Static SPA (production) ─────────────────────────────────────────────────
   const staticDir = findStaticDir(config);

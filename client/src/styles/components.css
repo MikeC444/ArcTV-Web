@@ -150,6 +150,16 @@
 }
 .topnav[data-transparent="true"]::before { opacity: 0.72; }
 .topnav__logo { font-size: calc(24 * var(--dp)); min-width: 0; flex: none; padding: 4px; border-radius: 6px; }
+/* The logo is a plain link: hovering it shows no white outline and no zoom (a keyboard user still gets the focus ring). */
+@media (hover: hover) {
+  .topnav__logo.tvs:not(:focus-visible):hover { transform: translateZ(0) scale(1); box-shadow: none; }
+  .topnav__logo.tvs:not(:focus-visible):hover::after { opacity: 0; }
+}
+/* Over the Home / Detail picture the bar is a slim, soft shade rather than a thick dark band. */
+@media (min-width: 721px) {
+  .topnav[data-transparent="true"] { padding-bottom: calc(6 * var(--dp)); }
+  .topnav[data-transparent="true"]::before { background: linear-gradient(to bottom, rgba(8, 8, 10, 0.88) 0%, rgba(8, 8, 10, 0.55) 60%, rgba(8, 8, 10, 0) 100%); opacity: 1; }
+}
 /* overflow-x: auto also clips vertically, so the hover / focus ring (the item scales up 8%) needs room INSIDE this box: padding, cancelled by a negative margin so the bar keeps its size. */
 .topnav__items { display: flex; align-items: center; gap: calc(4 * var(--dp)); padding: 6px calc(8 * var(--dp)); margin: -6px 0; overflow-x: auto; min-width: 0; flex: 0 1 auto; scrollbar-width: none; }
 /* On a desktop-width window the logo stays at the left and the nav items sit in the middle of the screen. */
@@ -286,7 +296,7 @@
 
 /* ── Overlays / dialogs ──────────────────────────────────────────────────── */
 .scrim { position: fixed; inset: 0; z-index: 90; background: rgba(0, 0, 0, 0.7); display: flex; align-items: center; justify-content: center; padding: 16px; }
-.dialog { max-width: min(620px, 100%); background: var(--bg-elevated); border-radius: calc(20 * var(--dp)); padding: calc(20 * var(--dp)); display: flex; gap: calc(20 * var(--dp)); align-items: flex-start; box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6); max-height: 92vh; overflow: auto; }
+.dialog { max-width: min(calc(480 * var(--dp)), 100%); background: var(--bg-elevated); border-radius: calc(20 * var(--dp)); padding: calc(20 * var(--dp)); display: flex; gap: calc(20 * var(--dp)); align-items: flex-start; box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6); max-height: 92vh; overflow-x: hidden; overflow-y: auto; }
 .dialog__poster { width: calc(120 * var(--dp)); min-width: 80px; height: calc(180 * var(--dp)); min-height: 120px; object-fit: cover; border-radius: calc(10 * var(--dp)); flex: none; background: var(--surface-high); }
 .dialog__body { min-width: calc(260 * var(--dp)); flex: 1; display: flex; flex-direction: column; gap: calc(3 * var(--dp)); }
 .dialog__title { font-weight: 700; font-size: calc(18 * var(--dp)); line-height: calc(24 * var(--dp)); margin-bottom: calc(11 * var(--dp)); }

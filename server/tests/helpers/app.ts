@@ -16,9 +16,6 @@ export function testConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     staticDir: undefined,
     allowPrivateAddonHosts: false,
     streamRelay: true,
-    tmdbApiKey: undefined,
-    tmdbApiBase: "http://tmdb.invalid/3",
-    tmdbImageBase: "http://images.invalid/t/p",
     ...overrides,
   };
 }

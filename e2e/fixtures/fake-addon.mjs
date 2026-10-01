@@ -8,7 +8,6 @@ import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { handleFakeTmdb } from "./fake-tmdb.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const mediaDir = path.join(here, "media");
@@ -211,9 +210,6 @@ export function createAddonServer() {
       res.writeHead(204, { ...CORS, "Access-Control-Allow-Methods": "GET, HEAD, DELETE, OPTIONS" });
       return res.end();
     }
-    // the fake TMDB (and its images) used by the built-in catalog addon tests — kept out of the request log below
-    if ((p.startsWith("/tmdb/") || p.startsWith("/tmdb-img/")) && handleFakeTmdb(res, p, url, svg)) return;
-
     // /nocors/... = the same addon, but without any CORS headers (browsers can't read it directly)
     const cors = !p.startsWith("/nocors/");
     if (!cors) p = p.slice("/nocors".length);

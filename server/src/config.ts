@@ -24,10 +24,6 @@ const schema = z.object({
   ALLOW_PRIVATE_ADDON_HOSTS: z.enum(["0", "1"]).default("0"),
   // Stream relay (see streamRelay.ts): "0" turns it off entirely. On by default; the player only uses it when a stream can't be played directly.
   STREAM_RELAY: z.enum(["0", "1"]).default("1"),
-  // Built-in catalog addon (see catalog/): needs a free TMDB key. Without one the addon is simply off and the app uses its other addons.
-  TMDB_API_KEY: z.string().trim().min(1).optional(),
-  TMDB_API_BASE: z.string().url().default("https://api.themoviedb.org/3"),
-  TMDB_IMAGE_BASE: z.string().url().default("https://image.tmdb.org/t/p"),
 });
 
 export interface AppConfig {
@@ -42,10 +38,6 @@ export interface AppConfig {
   staticDir: string | undefined;
   allowPrivateAddonHosts: boolean;
   streamRelay: boolean;
-  /** Undefined = the built-in catalog addon is off. */
-  tmdbApiKey: string | undefined;
-  tmdbApiBase: string;
-  tmdbImageBase: string;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -74,9 +66,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     staticDir: value.STATIC_DIR,
     allowPrivateAddonHosts: value.ALLOW_PRIVATE_ADDON_HOSTS === "1",
     streamRelay: value.STREAM_RELAY === "1",
-    tmdbApiKey: value.TMDB_API_KEY,
-    tmdbApiBase: value.TMDB_API_BASE.replace(/\/+$/, ""),
-    tmdbImageBase: value.TMDB_IMAGE_BASE.replace(/\/+$/, ""),
   };
 }
 

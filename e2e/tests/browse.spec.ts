@@ -284,4 +284,38 @@ test.describe("browsing", () => {
     expect(flat.length).toBeGreaterThan(10);
     expect(new Set(flat).size).toBe(flat.length);
   });
+
+  test("Home's top bar is a slim shade, and hovering the logo shows no white outline", async ({ page }) => {
+    const account = await newAccount("topbar");
+    await openSignedIn(page, account);
+    await expect(page.locator(".hero__content h1").first()).toBeVisible();
+    expect(await page.locator(".topnav").evaluate((el) => el.getBoundingClientRect().height)).toBeLessThan(80); // at 1920 wide; it was about 100 with the thick band
+    await page.locator(".topnav__logo").hover();
+    await page.waitForTimeout(350);
+    const hovered = await page.locator(".topnav__logo").evaluate((el) => ({ ring: getComputedStyle(el, "::after").opacity, transform: getComputedStyle(el).transform, shadow: getComputedStyle(el).boxShadow }));
+    expect(hovered).toEqual({ ring: "0", transform: "matrix(1, 0, 0, 1, 0, 0)", shadow: "none" });
+    // a nav item still shows its ring on hover (only the logo lost it)
+    await page.locator(".navitem", { hasText: "Movies" }).hover();
+    await page.waitForTimeout(350);
+    expect(await page.locator(".navitem", { hasText: "Movies" }).evaluate((el) => getComputedStyle(el, "::after").opacity)).toBe("1");
+  });
+
+  test("the right-click menu fits its box on a big screen (no sideways scrollbar), however its rows are hovered", async ({ page }) => {
+    await page.setViewportSize({ width: 2560, height: 1300 });
+    const account = await newAccount("menufit");
+    await account.tv.seedContinueWatching({ contentId: "fxm901", title: "Menu Fit" });
+    await openSignedIn(page, account);
+    await page.locator('.card[data-cw="true"] .card__surface').first().click({ button: "right" });
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+    for (const name of [/Resume from/, "Mark as watched", "View Details", "Remove from Continue Watching", "Choose Source"]) {
+      await dialog.getByRole("button", { name }).hover();
+      await page.waitForTimeout(250);
+      const fit = await dialog.evaluate((el) => ({ wide: el.scrollWidth - el.clientWidth, high: el.scrollHeight - el.clientHeight }));
+      expect(fit.wide, `${name}`).toBeLessThanOrEqual(0);
+      expect(fit.high, `${name}`).toBeLessThanOrEqual(0);
+    }
+    // the long label stays on one line
+    expect(await dialog.getByRole("button", { name: "Remove from Continue Watching" }).evaluate((el) => el.getBoundingClientRect().height)).toBeLessThan(80);
+  });
 });
