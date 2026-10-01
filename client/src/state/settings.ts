@@ -21,7 +21,7 @@ interface SettingsState {
   player: PlayerPreferences;
   /** Local mutation time of the last change (or the server's, after a pull). */
   updatedAt: string | null;
-  /** UI sounds are device-local — they are not part of the synced account settings. */
+  /** UI sounds are device-local — they are not part of the synced account settings. Off by default on the web (volume 0); turn them up in Settings → Sounds. */
   navigationVolume: number;
   hydrate(userId: string): void;
   reset(): void;
@@ -92,7 +92,7 @@ export const useSettings = create<SettingsState>((set, get) => {
     homeRows: DEFAULT_HOME_ROW_PREFERENCES,
     player: DEFAULT_PLAYER_PREFERENCES,
     updatedAt: null,
-    navigationVolume: readJson<{ navigationVolume: number }>(SOUND_KEY, { navigationVolume: 0.5 }).navigationVolume,
+    navigationVolume: readJson<{ navigationVolume: number }>(SOUND_KEY, { navigationVolume: 0 }).navigationVolume,
 
     hydrate(userId) {
       outbox = new Outbox<SettingsDto>(userId, "settings");
