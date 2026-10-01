@@ -48,6 +48,7 @@ export function createMockBackend(options: { accessTtlMs?: number } = {}) {
     if (state.down) throw new ApiError(502, "backend_unavailable", "Can't reach the MangoTV service right now.");
     const body = (request.body ?? {}) as Record<string, string>;
 
+    if (request.path === "/health") return json(200, { status: "ok" });
     if (request.path === "/auth/register" && request.method === "POST") {
       if ([...users.values()].some((u) => u.email === body.email)) return json(409, { error: "An account with that email already exists" });
       const user: MockUser = { id: randomUUID(), email: body.email!, password: body.password!, displayName: body.displayName ?? null };

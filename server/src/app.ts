@@ -96,8 +96,26 @@ export function createApp(config: AppConfig, options: CreateAppOptions = {}): Ex
   // ── API ──────────────────────────────────────────────────────────────────────
   const api = express.Router();
   api.use(noStore);
-  api.get("/health", (_req, res) => {
-    res.json({ status: "ok" });
+  // `GET /api/health` answers for this server alone. `GET /api/health?deep=1` also asks the MangoTV service (which in turn wakes its database),
+  // so ONE uptime monitor pinging it keeps a free-tier backend awake as well. It always answers 200 (this server is up); the body says how the
+  // backend is. The backend is asked at most once a minute however often this is called, so it can't be used to hammer it.
+  let backendCheck: { at: number; state: "up" | "down" } | null = null;
+  api.get("/health", async (req, res) => {
+    if (req.query.deep === undefined) {
+      res.json({ status: "ok" });
+      return;
+    }
+    if (!backendCheck || Date.now() - backendCheck.at > 60_000) {
+      let state: "up" | "down" = "down";
+      try {
+        const answer = await backend({ method: "GET", path: "/health", timeoutMs: 25_000 }); // a sleeping free-tier backend can take most of a minute to wake
+        state = answer.status === 200 ? "up" : "down";
+      } catch {
+        /* unreachable → down */
+      }
+      backendCheck = { at: Date.now(), state };
+    }
+    res.json({ status: "ok", backend: backendCheck.state });
   });
   api.use(csrfGuard);
   api.use(express.json({ limit: "100kb" }));

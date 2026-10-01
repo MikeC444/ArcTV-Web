@@ -123,6 +123,26 @@ viewer's. Set `STREAM_RELAY=0` to switch the relay off; the player then only eve
 `git pull && npm ci && npm run build && npm start` (or let your platform redeploy). Hashed assets are cached for a year;
 `index.html` is served with `no-cache`, so a new build reaches users on their next visit.
 
+### Keeping a free Render service awake
+
+A free Render web service goes to sleep after about 15 minutes without a request, and the first visit afterwards waits for it to
+wake (up to a minute). If the MangoTV backend is also on a free plan it sleeps separately, and its database (Neon) suspends after
+a few idle minutes too. One free uptime monitor can keep all of that warm:
+
+1. Create a monitor (UptimeRobot's free plan works; any "HTTP(s)" monitor does) for
+   `https://<your-web-service>/api/health?deep=1` with an interval of **5–10 minutes** (anything under 15).
+2. `?deep=1` makes this server ask the MangoTV backend's `/health` as well (which touches its database), so this single address
+   keeps the web service, the backend and the database awake. The backend is asked at most once a minute however often the
+   address is called. The answer is always HTTP 200 when this server is up, with `{"status":"ok","backend":"up"}` — or
+   `"backend":"down"` when the backend isn't answering; use a **keyword** monitor for `"backend":"up"` if you want to be told about that.
+3. Without `?deep=1`, `/api/health` only answers for this server.
+
+**Mind the free hours.** Render's free plan gives a limited number of free instance hours per month across your free services
+(750 at the time of writing — check your dashboard). One service awake all month uses about 744 of them; **two free services both
+kept awake all month use roughly double that**, and Render suspends free services for the rest of the month once the allowance is
+spent. If both are free, keep only the one that matters most awake, or accept the sleep, or move one to a paid plan. Neon's free
+compute allowance is also limited, and a pinged database never suspends.
+
 ### Monitoring
 
 The service logs one line at start-up and nothing per request (no bodies, no tokens, no passwords). Add your platform's
