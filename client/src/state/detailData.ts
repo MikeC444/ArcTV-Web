@@ -7,6 +7,7 @@ import { useBlockedGenres } from "./blockedGenres";
 import { distinctBy } from "../lib/format";
 import { useAddonsReady, withWatched } from "./hooks";
 import { fetchTrailerId } from "./trailer";
+import { mergeCast, type TmdbCastEntry } from "../domain/castMerge";
 import { consumeDetailPreview } from "./pendingDetail";
 
 /** DetailViewModel.kt */
@@ -50,6 +51,13 @@ export function useDetail(providerId: string, type: ContentType, id: string, wat
       }
       setContent(detail);
       setLoading(false);
+
+      // Cinemeta sends cast names but no photos: ask this site's server (which holds the TMDB key) for them and fill them in. Quiet when off.
+      if (/^tt\d+$/.test(detail.id) && (detail.cast.length === 0 || detail.cast.some((m) => !m.photoUrl))) {
+        void api<{ cast: TmdbCastEntry[] }>(`/cast?imdbId=${encodeURIComponent(detail.id)}&type=${detail.type}`)
+          .then((r) => !cancelled && r.cast.length > 0 && setContent((c) => (c && c.id === detail.id ? { ...c, cast: mergeCast(c.cast, r.cast) } : c)))
+          .catch(() => undefined);
+      }
 
       // Trailer + release date come from the existing API (it holds the TMDB key); both degrade quietly.
       setTrailer({ kind: "loading" });

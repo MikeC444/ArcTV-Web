@@ -24,6 +24,8 @@ const schema = z.object({
   ALLOW_PRIVATE_ADDON_HOSTS: z.enum(["0", "1"]).default("0"),
   // Stream relay (see streamRelay.ts): "0" turns it off entirely. On by default; the player only uses it when a stream can't be played directly.
   STREAM_RELAY: z.enum(["0", "1"]).default("1"),
+  // Optional TMDB key (a v3 "API Key" or a v4 "API Read Access Token"). With it, Detail shows cast photos and characters Cinemeta doesn't send.
+  TMDB_API_KEY: z.string().trim().min(8).optional(),
 });
 
 export interface AppConfig {
@@ -38,6 +40,8 @@ export interface AppConfig {
   staticDir: string | undefined;
   allowPrivateAddonHosts: boolean;
   streamRelay: boolean;
+  /** TMDB key for the cast lookup; the lookup is switched off without it. Never sent to the browser. */
+  tmdbKey?: string | undefined;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -66,6 +70,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     staticDir: value.STATIC_DIR,
     allowPrivateAddonHosts: value.ALLOW_PRIVATE_ADDON_HOSTS === "1",
     streamRelay: value.STREAM_RELAY === "1",
+    tmdbKey: value.TMDB_API_KEY,
   };
 }
 

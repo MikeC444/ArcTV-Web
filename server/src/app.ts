@@ -12,6 +12,7 @@ import { ApiError, sendError } from "./errors.js";
 import { createAuthRouter } from "./routes/auth.js";
 import { createStreamRelay } from "./streamRelay.js";
 import { createUserRouter } from "./routes/user.js";
+import { createTmdbCast, IMDB_ID } from "./tmdbCast.js";
 import { SessionManager } from "./session.js";
 
 /**
@@ -149,6 +150,24 @@ export function createApp(config: AppConfig, options: CreateAppOptions = {}): Ex
 
   api.use("/auth", createAuthRouter(ctx));
   api.use("/user", perClient(240), createUserRouter(ctx));
+
+  // Cast photos / characters from TMDB for titles whose addon sends names only. Open to visitors (browsing is); off without TMDB_API_KEY.
+  const tmdbCast = createTmdbCast(config.tmdbKey);
+  api.get("/cast", perClient(120), async (req, res) => {
+    const imdbId = String(req.query.imdbId ?? "");
+    const type = req.query.type === "TV_SHOW" ? "TV_SHOW" : "MOVIE";
+    if (!tmdbCast.enabled || !IMDB_ID.test(imdbId)) {
+      res.json({ cast: [] });
+      return;
+    }
+    try {
+      res.setHeader("Cache-Control", "public, max-age=3600");
+      res.json({ cast: await tmdbCast.cast(imdbId, type) });
+    } catch {
+      res.removeHeader("Cache-Control");
+      res.json({ cast: [] }); // a failed lookup just means no photos this time
+    }
+  });
 
   const fetchAddonJson = createAddonFetcher(config);
   api.get("/addon-proxy", perClient(120), async (req, res, next) => {
