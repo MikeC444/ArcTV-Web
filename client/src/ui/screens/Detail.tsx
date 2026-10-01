@@ -118,7 +118,12 @@ function DetailContent({ content, similar, providerId, trailer, releaseDate }: {
       </section>
 
       {content.type === "TV_SHOW" && content.seasons.length > 0 ? (
-        <SeasonsSection seasons={content.seasons} initialSeason={resumeEpisode?.seasonNumber} onPlay={(e) => goPlay(e.seasonNumber, e.episodeNumber)} />
+        <>
+          <SeasonsSection seasons={content.seasons} initialSeason={resumeEpisode?.seasonNumber} onPlay={(e) => goPlay(e.seasonNumber, e.episodeNumber)} />
+          <div className="detail__below">
+            <CastRow cast={content.cast} compact={compact} />
+          </div>
+        </>
       ) : (
         <div className="detail__below">
           <CastRow cast={content.cast} compact={compact} />
