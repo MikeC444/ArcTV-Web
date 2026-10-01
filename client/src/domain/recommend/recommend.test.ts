@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { CATEGORY_WEIGHTS, MIN_INTERACTIONS_FOR_PERSONALISATION, SIGNAL_WEIGHTS } from "./config";
+import { CATEGORY_WEIGHTS, MAX_PICKS_PER_SOURCE, MIN_INTERACTIONS_FOR_PERSONALISATION, SIGNAL_WEIGHTS } from "./config";
 import { recommend, type Candidate, type FeatureLoader } from "./engine";
 import { explainCandidate } from "./explain";
 import { featuresFromMeta, type Features } from "./features";
@@ -202,6 +202,50 @@ describe("explanations reflect the whole profile", () => {
     const hl2: FeatureLoader = async (refs) => new Map(refs.map((x) => [x.id, x.id === "ends" ? H.deep! : (H[x.id] ?? null)]));
     const r = await recommend({ interactions: collectInteractions(tied), excludeIds: new Set(), pool: [cands[0]!], interactionRefs: new Map(), loadFeatures: hl2 });
     expect(r.items[0]!.reason).toMatch(/^Because you liked ends$/);
+  });
+});
+
+describe("diversity step", () => {
+  // A profile with two tastes: horror (4 finished) and war/action (3 finished). The catalogue has many more, better-rated horror titles than action ones.
+  const mk = (id: string, genres: string[], director: string, cast: string[]): [string, Features] => [id, f(genres, [director], cast)];
+  const OWN: Array<[string, Features]> = [
+    mk("h1", ["horror", "thriller", "mystery"], "dh1", ["ah1"]),
+    mk("h2", ["horror", "thriller", "drama"], "dh2", ["ah2"]),
+    mk("h3", ["horror", "mystery", "drama"], "dh3", ["ah3"]),
+    mk("h4", ["horror", "thriller"], "dh4", ["ah4"]),
+    mk("w1", ["war", "action", "drama"], "dw1", ["aw1"]),
+    mk("w2", ["action", "adventure", "war"], "dw2", ["aw2"]),
+    mk("w3", ["action", "thriller", "crime"], "dw3", ["aw3"]),
+  ];
+  const horror = Array.from({ length: 30 }, (_, i): [string, Features, number] => [`H${i}`, f(i % 2 ? ["horror", "thriller", "mystery"] : ["horror", "thriller", "drama"], [`dx${i % 5}`], [`cx${i}`]), 9]);
+  const action = Array.from({ length: 10 }, (_, i): [string, Features, number] => [`A${i}`, f(i % 2 ? ["war", "action", "drama"] : ["action", "adventure", "war"], [`dy${i % 3}`], [`cy${i}`]), 6]);
+  const all = new Map<string, Features>([...OWN, ...horror.map(([id, ft]): [string, Features] => [id, ft]), ...action.map(([id, ft]): [string, Features] => [id, ft])]);
+  const cands: Candidate[] = [...horror, ...action].map(([id, ft, rating]) => ({ id, title: id, genres: ft.genres, rating }));
+  const loadAll: FeatureLoader = async (refs) => new Map(refs.map((r) => [r.id, all.get(r.id) ?? null]));
+  const go = () => recommend({ interactions: collectInteractions(OWN.map(([id]) => input(id, { completed: true }))), excludeIds: new Set(), pool: cands, interactionRefs: new Map(), loadFeatures: loadAll });
+
+  it("covers every taste in the list, not just the biggest one", async () => {
+    const r = await go();
+    const picked = ids(r);
+    expect(picked.some((id) => id.startsWith("A"))).toBe(true);
+    expect(picked.filter((id) => id.startsWith("H")).length).toBeLessThan(picked.length);
+  });
+  it("lets no single movie explain more than MAX_PICKS_PER_SOURCE picks, and reasons stay truthful", async () => {
+    const r = await go();
+    const counts = new Map<string, number>();
+    for (const item of r.items) {
+      const m = /^Because you watched (\w+)$/.exec(item.reason ?? "");
+      if (m) counts.set(m[1]!, (counts.get(m[1]!) ?? 0) + 1);
+    }
+    expect(Math.max(...counts.values())).toBeLessThanOrEqual(MAX_PICKS_PER_SOURCE);
+    expect(counts.size).toBeGreaterThanOrEqual(5);
+  });
+  it("still returns the best-scoring picks first and fills up to 20", async () => {
+    const r = await go();
+    expect(r.items.length).toBe(20);
+    expect(r.mode).toBe("personal");
+    const scores = r.items.map((i) => i.score!);
+    expect(scores[0]).toBeGreaterThan(0);
   });
 });
 

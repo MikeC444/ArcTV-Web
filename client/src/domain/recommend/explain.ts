@@ -6,20 +6,29 @@ import type { SignalKind } from "./signals";
 const VERB: Record<SignalKind, string> = { like: "liked", completed: "watched", watchlist: "saved", dislike: "" };
 const STRENGTH: Record<SignalKind, number> = { like: 3, completed: 2, watchlist: 1, dislike: 0 };
 
+/** One of the profile's movies and how much of a candidate's score it accounts for. */
+export interface Source {
+  id: string;
+  title: string;
+  kind: SignalKind;
+  /** Weighted sum over the candidate's genres / directors / cast of what this movie added to each feature. */
+  total: number;
+  /** The part of `total` that came through directors. */
+  director: number;
+}
+
 /**
- * A reason taken from what actually raised this candidate's score. Every movie the profile has a positive signal for is credited with the part of
- * the candidate's score it contributed (the weighted sum, over the candidate's genres / directors / cast, of what that movie added to each feature).
- * The movie with the biggest total is cited, so each pick names the title it most resembles; ties go to the stronger signal (like, then finished, then saved), then id.
- * When that movie mostly matches through a shared director the reason says so instead. Returns null when nothing positive matched, so no reason is ever invented.
+ * Every movie the profile has a positive signal for, credited with the part of this candidate's score it contributed (weighted over the candidate's
+ * genres, directors and cast), biggest first; ties go to the stronger signal (like, finished, saved), then id. Disliked movies are never sources.
  */
-export function explainCandidate(features: Features | null | undefined, prefs: Preferences, weights: Readonly<Record<Category, number>> = CATEGORY_WEIGHTS): string | null {
-  if (!features) return null;
-  const credit = new Map<string, { title: string; kind: SignalKind; total: number; director: number }>();
+export function rankSources(features: Features | null | undefined, prefs: Preferences, weights: Readonly<Record<Category, number>> = CATEGORY_WEIGHTS): Source[] {
+  if (!features) return [];
+  const credit = new Map<string, Source>();
   for (const category of CATEGORIES) {
     for (const feature of featureList(features, category)) {
       for (const c of prefs.contributions.get(contributionKey(category, feature)) ?? []) {
         if (c.amount <= 0 || c.kind === "dislike") continue;
-        const entry = credit.get(c.id) ?? { title: c.title, kind: c.kind, total: 0, director: 0 };
+        const entry = credit.get(c.id) ?? { id: c.id, title: c.title, kind: c.kind, total: 0, director: 0 };
         const part = weights[category] * c.amount;
         entry.total += part;
         if (category === "director") entry.director += part;
@@ -27,9 +36,14 @@ export function explainCandidate(features: Features | null | undefined, prefs: P
       }
     }
   }
-  const ranked = [...credit.entries()].sort(([ia, a], [ib, b]) => b.total - a.total || STRENGTH[b.kind] - STRENGTH[a.kind] || ia.localeCompare(ib));
-  const top = ranked[0]?.[1];
-  if (!top) return null;
-  if (top.director > top.total / 2) return "More from directors you enjoy";
-  return `Because you ${VERB[top.kind]} ${top.title}`;
+  return [...credit.values()].sort((a, b) => b.total - a.total || STRENGTH[b.kind] - STRENGTH[a.kind] || a.id.localeCompare(b.id));
+}
+
+/** The reason line for a source: "Because you liked X", or "More from directors you enjoy" when it mostly matches through a shared director. */
+export const reasonFor = (source: Source): string => (source.director > source.total / 2 ? "More from directors you enjoy" : `Because you ${VERB[source.kind]} ${source.title}`);
+
+/** The reason for the single best source, or null when nothing positive matched (no reason is ever invented). */
+export function explainCandidate(features: Features | null | undefined, prefs: Preferences, weights: Readonly<Record<Category, number>> = CATEGORY_WEIGHTS): string | null {
+  const top = rankSources(features, prefs, weights)[0];
+  return top ? reasonFor(top) : null;
 }

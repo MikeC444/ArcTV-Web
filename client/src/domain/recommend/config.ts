@@ -22,6 +22,13 @@ export const CATEGORY_WEIGHTS = {
 
 export const MAX_RESULTS = 20;
 
+/** Diversity step (applied after scoring, separate from it): one movie of the profile's can be the stated reason for at most this many picks, and the shortlist is drawn from across the whole list. */
+export const MAX_PICKS_PER_SOURCE = 3;
+/** Shortlist: this many by overall genre match, the rest taken round-robin from the best matches of each of the profile's own movies. */
+export const SHORTLIST_BY_SCORE = 20;
+/** How many of the profile's own movies take a turn in the round-robin (strongest signals first). */
+export const SHORTLIST_SOURCE_MOVIES = 12;
+
 /** Fewer than this many interactions (with at least one positive) and the row is the labelled popular-movies fallback instead. */
 export const MIN_INTERACTIONS_FOR_PERSONALISATION = 3;
 
