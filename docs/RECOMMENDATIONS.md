@@ -27,7 +27,7 @@ All numbers: `client/src/domain/recommend/config.ts` (signal weights, category w
 Logic: `signals.ts` → `preferences.ts` → `score.ts` → `engine.ts` (ranking) and `explain.ts` (reasons). Diversity re-ranking is intentionally not implemented; if added it should be a separate step after `engine.ts`.
 
 ## Explanations
-Under each title: "Because you liked / watched / saved X" or "More from directors you enjoy", taken from the matching feature with the largest positive pull and the movie that contributed most to it. If nothing positive matched there is no reason.
+Under each title: "Because you liked / watched / saved X" or "More from directors you enjoy". Each of the profile's movies is credited with the share of *this pick's* score it contributed (weighted over the pick's genres, directors and cast); the movie with the biggest total is cited, ties going to the stronger signal (like, then finished, then saved). So different picks cite different titles, and a lightly-tagged saved movie can't be named for everything. If nothing positive matched there is no reason.
 
 ## Cold start
 Fewer than 3 interactions (or none positive, or nothing scorable) shows "Popular movies — not personalised yet" (best-rated eligible titles), never presented as personalised.

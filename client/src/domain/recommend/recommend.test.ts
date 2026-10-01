@@ -163,6 +163,48 @@ describe("recommend()", () => {
   });
 });
 
+describe("explanations reflect the whole profile", () => {
+  // Like the reported list: one saved movie with a single genre, several finished movies with three genres each, plus a couple of non-horror finishes.
+  const H: Record<string, Features> = {
+    mommy: f(["horror"], ["d0"], ["x0"]),
+    deep: f(["horror", "thriller", "mystery"], ["d1"], ["x1", "x2"]),
+    ends: f(["horror", "thriller", "mystery"], ["d2"], ["x3", "x4"]),
+    empty: f(["horror", "mystery", "drama"], ["d3"], ["x5", "x6"]),
+    oak: f(["horror", "thriller", "drama"], ["d4"], ["x7", "x8"]),
+    warfare: f(["war", "action", "drama"], ["d5"], ["x9"]),
+    carry: f(["action", "thriller", "crime"], ["d6"], ["x10"]),
+    candA: f(["horror", "mystery", "thriller"], ["d9"], ["z1"]),
+    candB: f(["horror", "thriller", "drama"], ["d9"], ["z2"]),
+    candC: f(["action", "thriller", "crime"], ["d8"], ["z3"]),
+    candD: f(["war", "action", "drama"], ["d7"], ["z4"]),
+  };
+  const mine = [input("mommy", { inWatchlist: true }), ...["deep", "ends", "empty", "oak", "warfare", "carry"].map((id) => input(id, { completed: true }))];
+  const cands: Candidate[] = ["candA", "candB", "candC", "candD"].map((id) => ({ id, title: id, genres: H[id]!.genres, rating: 7 }));
+  const hl: FeatureLoader = async (refs) => new Map(refs.map((r) => [r.id, H[r.id] ?? null]));
+  const go = () => recommend({ interactions: collectInteractions(mine), excludeIds: new Set(), pool: cands, interactionRefs: new Map(), loadFeatures: hl });
+
+  it("builds preferences from every interacted movie, not from one", () => {
+    const prefs = buildPreferences(collectInteractions(mine), new Map(Object.entries(H)));
+    const sources = new Set([...prefs.contributions.values()].flat().map((c) => c.id));
+    expect(sources).toEqual(new Set(["mommy", "deep", "ends", "empty", "oak", "warfare", "carry"]));
+    expect(prefs.genre.get("horror")!).toBeGreaterThan(3); // 1 + 2/3 + 2/3 + 2/3 + 2/3
+  });
+  it("cites the movie that most resembles each pick, not whichever has the fewest genres, and different picks can cite different movies", async () => {
+    const r = await go();
+    const reasons = new Map(r.items.map((i) => [i.id, i.reason]));
+    expect(reasons.get("candA")).not.toBe("Because you saved mommy");
+    expect(reasons.get("candA")).toMatch(/^Because you watched (deep|ends|empty|oak)$/);
+    expect(reasons.get("candC")).toMatch(/^Because you watched (carry|warfare|deep|ends|oak)$/);
+    expect(new Set([...reasons.values()]).size).toBeGreaterThan(1);
+  });
+  it("prefers a stronger signal over a weaker one when resemblance is equal", async () => {
+    const tied = [input("deep", { inWatchlist: true }), input("ends", { feedback: "like" }), input("empty", { inWatchlist: true }), input("oak", { completed: true })];
+    const hl2: FeatureLoader = async (refs) => new Map(refs.map((x) => [x.id, x.id === "ends" ? H.deep! : (H[x.id] ?? null)]));
+    const r = await recommend({ interactions: collectInteractions(tied), excludeIds: new Set(), pool: [cands[0]!], interactionRefs: new Map(), loadFeatures: hl2 });
+    expect(r.items[0]!.reason).toMatch(/^Because you liked ends$/);
+  });
+});
+
 describe("cache signature (invalidation)", () => {
   it("changes exactly when feedback, completion or watchlist change", () => {
     const base = [input("a", { feedback: "like" }), input("b", { inWatchlist: true })];
