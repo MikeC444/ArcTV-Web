@@ -28,11 +28,12 @@ export interface CatalogProvider {
   getStreams(type: ContentType, id: string, season?: number | null, episode?: number | null): Promise<Stream[]>;
   /** Like getStreams, but says what happened (streams / none / not a stream addon / failed and why). Never throws. */
   getStreamReport(type: ContentType, id: string, season?: number | null, episode?: number | null): Promise<StreamReport>;
-  getSectionsByType(type: ContentType): Promise<HomeSection[]>;
+  /** The titles of one type, optionally only one genre (for the Movies / TV Shows genre drop-down). */
+  getSectionsByType(type: ContentType, genre?: string): Promise<HomeSection[]>;
   getAvailableGenres(): Promise<string[]>;
   getGenreSection(genre: string): Promise<HomeSection | null>;
   search(query: string): Promise<Content[]>;
-  getMoreItemsByType(type: ContentType, page: number): Promise<Content[]>;
+  getMoreItemsByType(type: ContentType, page: number, genre?: string): Promise<Content[]>;
   getMoreGenreItems(genre: string, page: number): Promise<Content[]>;
 }
 
@@ -95,8 +96,14 @@ export class StremioAddonProvider implements CatalogProvider {
     }
   }
 
-  async getSectionsByType(type: ContentType): Promise<HomeSection[]> {
+  async getSectionsByType(type: ContentType, genre?: string): Promise<HomeSection[]> {
     const stremioType = stremioTypeOf(type);
+    if (genre) {
+      const catalogs = this.catalogsMatchingGenre(genre).filter((c) => c.type === stremioType);
+      if (catalogs.length === 0) return [];
+      const section = await this.fetchMergedSection(catalogs, genre, { genre }, `${stremioType}_genre_${genre}`);
+      return section ? [section] : [];
+    }
     const baseCatalogs = this.supported.filter((c) => c.type === stremioType).filter(isBaseCatalog);
     if (baseCatalogs.length === 0) return [];
     const title = baseCatalogs.map((c) => c.name).find((n): n is string => !!n) ?? this.manifest.name;
@@ -112,8 +119,12 @@ export class StremioAddonProvider implements CatalogProvider {
     return this.fetchMergedSection(this.catalogsMatchingGenre(genre), genre, { genre }, `genre_${genre}`);
   }
 
-  async getMoreItemsByType(type: ContentType, page: number): Promise<Content[]> {
+  async getMoreItemsByType(type: ContentType, page: number, genre?: string): Promise<Content[]> {
     const stremioType = stremioTypeOf(type);
+    if (genre) {
+      const catalogs = this.catalogsMatchingGenre(genre).filter((c) => c.type === stremioType);
+      return catalogs.length === 0 ? [] : this.fetchPage(catalogs, { genre }, page);
+    }
     const baseCatalogs = this.supported.filter((c) => c.type === stremioType).filter(isBaseCatalog);
     return baseCatalogs.length === 0 ? [] : this.fetchPage(baseCatalogs, {}, page);
   }

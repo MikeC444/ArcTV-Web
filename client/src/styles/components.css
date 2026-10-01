@@ -253,6 +253,12 @@
   container-type: inline-size;
   width: var(--slot);
 }
+.card { position: relative; }
+/* The poster's menu button: only on touch screens and phones (everyone else has right-click / hold). A 44px tap target around a small dark disc. */
+.card__more { display: none; position: absolute; top: 0; right: 0; z-index: 4; width: 44px; height: 44px; padding: 0; border: 0; background: none; color: #fff; cursor: pointer; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; }
+.card__more::before { content: ""; position: absolute; width: 30px; height: 30px; border-radius: 50%; background: rgba(8, 8, 10, 0.72); box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18); }
+.card__more svg { position: relative; width: 22px; height: 22px; }
+@media (hover: none), (max-width: 720px) { .card__more { display: inline-flex; } }
 .card[data-cw="true"] { width: calc(1.65 * var(--slot) + 0.65 * var(--poster-gap)); } /* kept close to its earlier size so the whole card still shows above the fold under the hero */
 .card__surface {
   width: 100%;

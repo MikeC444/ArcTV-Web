@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { MdAdd, MdCheck, MdCheckCircle, MdMoreVert, MdOutlineCheckCircle, MdPerson, MdPlayArrow, MdStar, MdTheaters } from "react-icons/md";
 import { useNavigate, useParams } from "react-router-dom";
 import type { Content, ContentType, Episode, Season } from "../../domain/types";
+import type { LookupState } from "../../state/detailData";
 import { formatReleaseDate, formatRuntime } from "../../lib/format";
 import { routes } from "../../lib/routes";
 import { useAuth } from "../../state/auth";
@@ -32,15 +33,19 @@ export function DetailScreen() {
 
   if (state.kind === "loading") return <HomeSkeleton />;
   if (state.kind === "error") return <FullScreenError message={state.message} onRetry={reload} />;
-  return <DetailContent key={state.content.id} content={state.content} similar={state.similar} providerId={providerId} trailerId={trailer.kind === "found" ? trailer.value : null} releaseDate={releaseDate.kind === "found" ? releaseDate.value : releaseDate.kind === "notFound" ? "none" : null} />;
+  return <DetailContent key={state.content.id} content={state.content} similar={state.similar} providerId={providerId} trailer={trailer} releaseDate={releaseDate.kind === "found" ? releaseDate.value : releaseDate.kind === "notFound" ? "none" : null} />;
 }
 
-function DetailContent({ content, similar, providerId, trailerId, releaseDate }: { content: Content; similar: Content[]; providerId: string; trailerId: string | null; releaseDate: string | "none" | null }) {
+function DetailContent({ content, similar, providerId, trailer, releaseDate }: { content: Content; similar: Content[]; providerId: string; trailer: LookupState<string>; releaseDate: string | "none" | null }) {
   const navigate = useNavigate();
   const userId = useAuth((s) => s.user?.id);
   const items = useMyList((s) => s.items);
   const toggle = useAccountAction(useMyList((s) => s.toggle));
   const toggleWatched = useAccountAction(useMyList((s) => s.toggleWatched));
+  const signedIn = useAuth((s) => s.status === "signedIn");
+  const openTrailer = useAccountAction((videoId: string | null) => {
+    if (videoId) window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`, "_blank", "noopener,noreferrer");
+  });
   const resume = useContinueWatching((s) => s.items.find((e) => e.providerId === providerId && e.contentId === content.id && e.contentType === content.type));
   const inList = items.some((i) => i.id === content.id);
   const [expanded, setExpanded] = useState(false);
@@ -92,7 +97,15 @@ function DetailContent({ content, similar, providerId, trailerId, releaseDate }:
           {content.description ? <p className={`detail__desc hero-shadow ${compact ? "clamp-2" : "clamp-4"}`}>{content.description}</p> : null}
           <div className="detail__actions">
             <MangoButton text={playLabel} icon={<MdPlayArrow />} variant="light" compact={compact} dataAttrs={{ autofocus: true }} onClick={() => goPlay(firstEpisode?.seasonNumber ?? null, firstEpisode?.episodeNumber ?? null)} />
-            {trailerId ? <MangoButton text="Trailer" icon={<MdTheaters />} compact={compact} onClick={() => window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(trailerId)}`, "_blank", "noopener,noreferrer")} /> : null}
+            {/* Always there from the first paint (it used to appear once the lookup finished): dimmed while the lookup runs or when there is none. Trailers come from the account's service, so visitors are taken to sign in. */}
+            <MangoButton
+              text="Trailer"
+              icon={<MdTheaters />}
+              compact={compact}
+              disabled={signedIn && trailer.kind !== "found"}
+              title={signedIn && trailer.kind === "notFound" ? "No trailer found for this title" : undefined}
+              onClick={() => openTrailer(trailer.kind === "found" ? trailer.value : null)}
+            />
             {expanded ? (
               <div className="detail__extra">
                 <IconButton compact={compact} icon={isWatched ? <MdCheckCircle /> : <MdOutlineCheckCircle />} label={isWatched ? "Remove from Watched" : "Mark as watched"} onClick={() => toggleWatched(withProvider)} />

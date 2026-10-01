@@ -46,13 +46,16 @@ export function RowsSkeleton({ rows = 4 }: { rows?: number }) {
   );
 }
 
-export function GridSkeleton({ title, back }: { title: string; back?: string }) {
+export function GridSkeleton({ title, back, headExtra }: { title: string; back?: string; headExtra?: React.ReactNode }) {
   return (
     <div style={{ paddingTop: `calc(var(--nav-h) + ${dp(24)})` }} aria-busy="true" aria-label="Loading">
       {back ? <div className="page__back"><BackButton fallback={back} /></div> : null}
-      <h1 className="t-display-md" style={{ padding: `${dp(4)} var(--pad-x)`, margin: 0 }}>
-        {title}
-      </h1>
+      <div className="page__head">
+        <h1 className="t-display-md" style={{ padding: `${dp(4)} var(--pad-x)`, margin: 0 }}>
+          {title}
+        </h1>
+        {headExtra}
+      </div>
       <div style={{ display: "flex", gap: dp(8), padding: `${dp(8)} var(--pad-x)` }}>
         {[78, 118, 76].map((w) => (
           <Shimmer key={w} width={dp(w)} height={dp(30)} radius="999px" />

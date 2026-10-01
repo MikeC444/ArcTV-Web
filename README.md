@@ -93,7 +93,7 @@ Everything in the Fire TV app that can run in a browser:
   sign-in** (uses the existing pairing endpoints; a phone finishes it on the backend's own activation page).
 * **Back buttons** (Detail, a genre's page, Select a Source) return to the exact place you came from — same page, same scroll position, same row swipe, and the same Movies / TV / genre grid — because history and positions are remembered per page.
 * **Home** (a hero that flicks through 10 random titles from your enabled rows every 5 seconds — topped up at random from the other rows only if those hold fewer than 10 — Continue Watching, one row per addon catalogue, your Home-row order and hidden rows; a title shows in only one row — the first that holds it, and Continue Watching leaves out titles that a row already shows),
-  **Movies**, **TV Shows** (grids of 8 posters across at 1920 and 7 on a laptop — 6 / 5 / 4 / 3 on narrower windows — with sort pills and infinite scroll), **Genres**, **Search**, **My List** (All / Watched).
+  **Movies**, **TV Shows** (with an "All genres" drop-down of Cinemeta's genres, kept in the address as `?genre=`; grids of 8 posters across at 1920 and 7 on a laptop — 6 / 5 / 4 / 3 on narrower windows — with sort pills and infinite scroll), **Genres**, **Search**, **My List** (All / Watched).
 * **Detail** pages (Resume / Play, trailer, watched, watchlist, seasons and episodes, cast, similar titles) and the
   card quick-actions menu (right-click, long-press or `M`).
 * **Select a Source** with quality badges, health, sizes, "Recommended" (always the first row, whatever the filters and sort), filters and sort, remembering your last source.
