@@ -27,10 +27,17 @@ const TABS = [
 export function TopNav({ transparent = false }: { transparent?: boolean }) {
   const { pathname } = useLocation();
   const selected = selectedNavIndex(pathname);
-  // The bar slides away once the page is scrolled and comes back at the top (or when it takes keyboard / remote focus).
+  // The bar slides away while scrolling down and comes back on scroll up (or at the top) (or when it takes keyboard / remote focus).
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
+    let last = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (y <= 40) setScrolled(false);
+      else if (y > last + 4) setScrolled(true); // scrolling down hides the bar
+      else if (y < last - 4) setScrolled(false); // scrolling up brings it back
+      last = y;
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
