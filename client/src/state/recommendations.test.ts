@@ -4,7 +4,7 @@ vi.mock("../lib/api", async (importOriginal) => ({ ...(await importOriginal<type
 
 const { useFeedback } = await import("./feedback");
 const { useMyList } = await import("./myList");
-const { cachedResult, storeResult, clearRecommendationCache, interactionInputs } = await import("./recommendations");
+const { cachedResult, storeResult, clearRecommendationCache, interactionInputs, excludedFromPicks } = await import("./recommendations");
 const { collectInteractions, signatureOf } = await import("../domain/recommend/signals");
 const { resetAllStores } = await import("./sync");
 
@@ -61,6 +61,19 @@ describe("stored data → interactions", () => {
     useMyList.getState().markWatched({ id: "w", type: "MOVIE", title: "w", description: "", posterUrl: null, backdropUrl: null, providerId: "p", genres: [], cast: [], seasons: [], watched: true });
     const again = signatureOf(collectInteractions(interactionInputs(useMyList.getState().items, useFeedback.getState().entries)));
     expect(again).toBe(once);
+  });
+});
+
+describe("titles kept out of Picked for you", () => {
+  it("excludes finished, liked, disliked and Continue Watching titles, but not ones only saved to My List", () => {
+    const list = [
+      { id: "saved", type: "MOVIE", title: "Saved", watched: false },
+      { id: "done", type: "MOVIE", title: "Done", watched: true },
+    ] as Parameters<typeof excludedFromPicks>[0];
+    const feedback = { liked: { value: "like" as const, title: "Liked" }, nope: { value: "dislike" as const, title: "Nope" } };
+    const ids = excludedFromPicks(list, feedback, ["resume"]);
+    expect([...ids].sort()).toEqual(["done", "liked", "nope", "resume"]);
+    expect(ids.has("saved")).toBe(false);
   });
 });
 
