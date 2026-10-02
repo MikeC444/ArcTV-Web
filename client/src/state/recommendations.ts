@@ -26,6 +26,23 @@ export function interactionInputs(list: SavedListItem[], feedback: Record<string
   return [...inputs.values()];
 }
 
+/**
+ * Titles that never appear in "Picked for you": ones already finished, already rated either way (a title you liked is one
+ * you know, so it is a reason to pick others, not something to be picked itself), and ones in Continue Watching. A title
+ * that is only saved to My List is still offered.
+ */
+export function excludedFromPicks(
+  list: SavedListItem[],
+  feedback: Record<string, { value: "like" | "dislike"; title: string }>,
+  continueWatchingIds: string[],
+): Set<string> {
+  const ids = new Set<string>();
+  for (const i of list) if (i.watched) ids.add(i.id);
+  for (const id of Object.keys(feedback)) ids.add(id);
+  for (const id of continueWatchingIds) ids.add(id);
+  return ids;
+}
+
 // ── per-profile result cache ────────────────────────────────────────────────
 interface CacheEntry {
   signature: string;
@@ -77,13 +94,7 @@ export function usePickedForYou(pool: Content[] | undefined): PickedForYou {
   const interactions = useMemo(() => collectInteractions(interactionInputs(list, feedback)), [list, feedback]);
   const signature = useMemo(() => signatureOf(interactions), [interactions]);
   const poolKey = useMemo(() => movies.map((m) => m.id).sort().join(","), [movies]);
-  const excludeIds = useMemo(() => {
-    const ids = new Set<string>();
-    for (const i of list) if (i.watched) ids.add(i.id);
-    for (const [id, entry] of Object.entries(feedback)) if (entry.value === "dislike") ids.add(id);
-    for (const e of continueWatching) ids.add(e.contentId);
-    return ids;
-  }, [list, feedback, continueWatching]);
+  const excludeIds = useMemo(() => excludedFromPicks(list, feedback, continueWatching.map((e) => e.contentId)), [list, feedback, continueWatching]);
 
   useEffect(() => {
     if (!hasPlus || !userId || movies.length === 0) {
@@ -119,7 +130,7 @@ export function usePickedForYou(pool: Content[] | undefined): PickedForYou {
     const items: Content[] = [];
     for (const pick of result.items) {
       const movie = byId.get(pick.id);
-      if (!movie || feedback[movie.id]?.value === "dislike") continue; // "Not for me" disappears at once, before any recompute
+      if (!movie || feedback[movie.id]) continue; // a title you rate (Like or Not for me) disappears at once, before any recompute
       items.push({ ...movie, recommendReason: result.mode === "personal" ? pick.reason : null });
     }
     if (items.length === 0) return { section: null, mode: null };
