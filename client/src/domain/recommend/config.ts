@@ -22,6 +22,12 @@ export const CATEGORY_WEIGHTS = {
 
 export const MAX_RESULTS = 20;
 
+/**
+ * Variety step (see variety.ts): candidates whose scores are within this many points of each other count as tied, and their order on a given
+ * page load comes from a seed instead of the fixed tie order. Scores run roughly -1..1; a clearly better pick is never overtaken.
+ */
+export const VARIETY_BAND = 0.03;
+
 /** Diversity step (applied after scoring, separate from it): one movie of the profile's can be the stated reason for at most this many picks, and the shortlist is drawn from across the whole list. */
 export const MAX_PICKS_PER_SOURCE = 3;
 /** Shortlist: this many by overall genre match, the rest taken round-robin from the best matches of each of the profile's own movies. */

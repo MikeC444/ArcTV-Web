@@ -1,6 +1,7 @@
 import { CANDIDATE_DETAIL_FETCH_LIMIT, CATEGORY_WEIGHTS, INTERACTION_DETAIL_FETCH_LIMIT, MAX_RESULTS, MIN_INTERACTIONS_FOR_PERSONALISATION, SHORTLIST_BY_SCORE, SHORTLIST_SOURCE_MOVIES } from "./config";
 import { diversify } from "./diversity";
 import { rankSources, reasonFor, type Source } from "./explain";
+import { freshen } from "./variety";
 import { type Features } from "./features";
 import { buildPreferences } from "./preferences";
 import { scoreCandidate } from "./score";
@@ -31,6 +32,8 @@ export interface EngineInput {
   /** providerId for each of the profile's own movies, so their metadata can be looked up. */
   interactionRefs: ReadonlyMap<string, MovieRef>;
   loadFeatures: FeatureLoader;
+  /** When set, near-tied picks are ordered by this seed (see variety.ts) so a refresh can show a different selection. Absent = fully deterministic. */
+  seed?: number;
 }
 
 export interface Picked {
@@ -71,7 +74,7 @@ export function popularFallback(pool: Candidate[], excludeIds: ReadonlySet<strin
  *  2. shortlist the eligible candidates from their catalogue genres alone: some by overall genre match, the rest round-robin over each of the
  *     profile's own movies (so every taste in the list is represented), within a bounded size;
  *  3. fetch the shortlist's directors and cast (cached, bounded concurrency) and score each with the full weighted cosine;
- *  4. sort by score (ties: rating, then id), then the separate diversity step (`diversity.ts`) keeps the top 20 while stopping any one of the
+ *  4. sort by score (ties: rating, then id; when a seed is given, near-tied picks are ordered by it), then the separate diversity step (`diversity.ts`) keeps the top 20 while stopping any one of the
  *     profile's movies from explaining more than MAX_PICKS_PER_SOURCE of them.
  */
 export async function recommend(input: EngineInput): Promise<EngineResult> {
@@ -158,7 +161,8 @@ export async function recommend(input: EngineInput): Promise<EngineResult> {
   if (scored.length === 0) return popularFallback(pool, input.excludeIds);
 
   scored.sort((a, b) => b.score - a.score || byRatingThenId(a.candidate, b.candidate));
-  const items = diversify(scored, MAX_RESULTS).map(({ pick, source }) => ({ id: pick.id, score: pick.score, reason: source ? reasonFor(source) : null }));
+  const ordered = input.seed === undefined ? scored : freshen(scored, input.seed);
+  const items = diversify(ordered, MAX_RESULTS).map(({ pick, source }) => ({ id: pick.id, score: pick.score, reason: source ? reasonFor(source) : null }));
   return { mode: "personal", items };
 }
 

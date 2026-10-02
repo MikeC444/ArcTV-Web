@@ -9,6 +9,7 @@ matters). When the Firestick gets it, **delete the line**: this list only ever h
 | Date | Web change | Notes |
 |---|---|---|
 | 2 Oct 2026 | "Picked for you" no longer offers titles you have liked (a Like now excludes the title, same as Not for me, finished and Continue Watching). Web PR #4. | The Firestick's `excludedFromPicks` (`data/recommend/PickedForYou.kt`) still only excludes finished, Not for me and Continue Watching titles, so two liked movies can recommend each other there. Needs the same one-line change plus its test; ships in the next Firestick release. |
+| 2 Oct 2026 | "Picked for you" varies on refresh: near-tied picks (scores within 0.03) are ordered by a per-page-load seed, never changing scores, reasons or letting a lower score overtake a higher one. Web `domain/recommend/variety.ts`. | The Firestick's engine (`data/recommend`) has no variety step, so its row is identical every launch. Port `freshen` + `seededRandom` and pass a per-launch seed from `HomeViewModel`; ships in the next Firestick release. |
 
 ## Firestick-only (not on web, on purpose)
 

@@ -43,6 +43,9 @@ export function excludedFromPicks(
   return ids;
 }
 
+/** Fixed for one page load and different on the next, so a refresh can reorder near-tied picks (domain/recommend/variety.ts) while browsing stays stable. */
+const PAGE_SEED = Math.floor(Math.random() * 0xffffffff);
+
 // ── per-profile result cache ────────────────────────────────────────────────
 interface CacheEntry {
   signature: string;
@@ -113,6 +116,7 @@ export function usePickedForYou(pool: Content[] | undefined): PickedForYou {
       interactions,
       excludeIds,
       pool: movies.map(toCandidate),
+      seed: PAGE_SEED,
       interactionRefs: refs,
       loadFeatures: (r, limit) => loadFeaturesCached(r, limit, fetchFeatures),
     })
