@@ -1,6 +1,7 @@
 import { useAddons } from "./addons";
 import { useAuth } from "./auth";
 import { useFeedback } from "./feedback";
+import { usePickedDismissed } from "./pickedDismissed";
 import { usePlus } from "./plus";
 import { useContinueWatching } from "./continueWatching";
 import { useMyList } from "./myList";
@@ -26,6 +27,7 @@ export function hydrateAll(userId: string): void {
   useContinueWatching.getState().hydrate(userId);
   useAddons.getState().hydrate(userId);
   useFeedback.getState().hydrate(userId);
+  usePickedDismissed.getState().hydrate(userId);
   usePlus.getState().hydrate(userId);
 }
 
@@ -94,6 +96,7 @@ export function resetAllStores(): void {
   useContinueWatching.getState().reset();
   useAddons.getState().reset();
   useFeedback.getState().reset();
+  usePickedDismissed.getState().reset();
   usePlus.getState().reset();
   clearRecommendationCache();
 }

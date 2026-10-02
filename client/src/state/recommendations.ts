@@ -9,6 +9,7 @@ import { useAuth } from "./auth";
 import { useContinueWatching } from "./continueWatching";
 import { useFeedback } from "./feedback";
 import { useMyList, type SavedListItem } from "./myList";
+import { usePickedDismissed } from "./pickedDismissed";
 import { useHasPlus } from "./plusAccess";
 import { readJson, userKey, writeJson } from "./persist";
 import { activeProfileId } from "./profile";
@@ -30,17 +31,19 @@ export function interactionInputs(list: SavedListItem[], feedback: Record<string
 /**
  * Titles that never appear in "Picked for you": ones already finished, already rated either way (a title you liked is one
  * you know, so it is a reason to pick others, not something to be picked itself), and ones in Continue Watching. A title
- * that is only saved to My List is still offered.
+ * that is only saved to My List is still offered. Titles the user removed from the row by hand are kept out too, without counting as feedback.
  */
 export function excludedFromPicks(
   list: SavedListItem[],
   feedback: Record<string, { value: "like" | "dislike"; title: string }>,
   continueWatchingIds: string[],
+  dismissedIds: string[] = [],
 ): Set<string> {
   const ids = new Set<string>();
   for (const i of list) if (i.watched) ids.add(i.id);
   for (const id of Object.keys(feedback)) ids.add(id);
   for (const id of continueWatchingIds) ids.add(id);
+  for (const id of dismissedIds) ids.add(id); // removed from the row by hand: kept out of it, but not a taste signal (see pickedDismissed.ts)
   return ids;
 }
 
@@ -111,6 +114,7 @@ export function usePickedForYou(pool: Content[] | undefined): PickedForYou {
   const list = useMyList((s) => s.items);
   const feedback = useFeedback((s) => s.entries);
   const continueWatching = useContinueWatching((s) => s.items);
+  const dismissed = usePickedDismissed((s) => s.ids);
   const [result, setResult] = useState<EngineResult | null>(null);
   const generation = useRef(0);
 
@@ -118,7 +122,7 @@ export function usePickedForYou(pool: Content[] | undefined): PickedForYou {
   const interactions = useMemo(() => collectInteractions(interactionInputs(list, feedback)), [list, feedback]);
   const signature = useMemo(() => signatureOf(interactions), [interactions]);
   const poolKey = useMemo(() => movies.map((m) => m.id).sort().join(","), [movies]);
-  const excludeIds = useMemo(() => excludedFromPicks(list, feedback, continueWatching.map((e) => e.contentId)), [list, feedback, continueWatching]);
+  const excludeIds = useMemo(() => excludedFromPicks(list, feedback, continueWatching.map((e) => e.contentId), dismissed), [list, feedback, continueWatching, dismissed]);
 
   useEffect(() => {
     if (!hasPlus || !userId || movies.length === 0) {
@@ -157,10 +161,10 @@ export function usePickedForYou(pool: Content[] | undefined): PickedForYou {
     const items: Content[] = [];
     for (const pick of result.items) {
       const movie = byId.get(pick.id);
-      if (!movie || feedback[movie.id]) continue; // a title you rate (Like or Not for me) disappears at once, before any recompute
-      items.push({ ...movie, recommendReason: result.mode === "personal" ? pick.reason : null });
+      if (!movie || feedback[movie.id] || dismissed.includes(movie.id)) continue; // a title you rate or remove disappears at once, before any recompute
+      items.push({ ...movie, recommendReason: result.mode === "personal" ? pick.reason : null, pickedForYou: true });
     }
     if (items.length === 0) return { section: null, mode: null };
     return { section: { id: PICKED_ROW_ID, title: result.mode === "personal" ? PICKED_ROW_TITLE : POPULAR_ROW_TITLE, style: "STANDARD", items: items.slice(0, MAX_RESULTS) }, mode: result.mode };
-  }, [result, movies, feedback]);
+  }, [result, movies, feedback, dismissed]);
 }

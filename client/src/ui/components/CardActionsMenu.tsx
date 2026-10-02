@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
-import { MdAdd, MdCheck, MdCheckCircle, MdDelete, MdInfo, MdList, MdOutlineCheckCircle, MdPlayArrow, MdThumbDown, MdThumbUp, MdOutlineThumbDown, MdOutlineThumbUp } from "react-icons/md";
+import { MdAdd, MdCheck, MdCheckCircle, MdDelete, MdInfo, MdList, MdOutlineCheckCircle, MdPlayArrow, MdThumbDown, MdThumbUp, MdOutlineThumbDown, MdOutlineThumbUp, MdVisibilityOff } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import { formatElapsed } from "../../lib/format";
 import { routes } from "../../lib/routes";
@@ -10,6 +10,7 @@ import { useAccountAction } from "../../state/hooks";
 import { findLastStreamId } from "../../state/lastSource";
 import { useFeedback } from "../../state/feedback";
 import { useMyList } from "../../state/myList";
+import { usePickedDismissed } from "../../state/pickedDismissed";
 import { useHasPlus } from "../../state/plusAccess";
 import { Surface } from "./Surface";
 
@@ -26,6 +27,7 @@ export function CardActionsMenu() {
   const hasPlus = useHasPlus();
   const feedback = useFeedback((s) => (content ? s.entries[content.id]?.value : undefined));
   const toggleFeedback = useAccountAction(useFeedback((s) => s.toggle));
+  const dismissPick = usePickedDismissed((s) => s.dismiss);
   const first = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -119,6 +121,18 @@ export function CardActionsMenu() {
                 {feedback === "dislike" ? "Remove “Not for me”" : "Not for me"}
               </Surface>
             </>
+          ) : null}
+          {hasPlus && content.pickedForYou ? (
+            <Surface
+              className="actionrow"
+              onClick={() => {
+                dismissPick(content.id); // out of the row only: not a Like or Not for me, so it does not touch your taste profile
+                close();
+              }}
+            >
+              <MdVisibilityOff />
+              Remove from Picked for you
+            </Surface>
           ) : null}
           {providerId ? (
             <Surface className="actionrow" onClick={() => go(routes.detail(providerId, content.type, content.id, content.title))}>
