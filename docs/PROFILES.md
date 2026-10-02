@@ -51,6 +51,8 @@ Tested end to end: `server/tests/integration/profiles.test.ts` runs this web ser
 
 Security note: the PIN is a household gate. It stops someone using the app from opening, changing or removing a locked profile; it does not protect against the account owner's own password.
 
-## What the Firestick needs (later)
+## What the Firestick does
+
+**Built** in `MikeC444/MangoTV-Live-TV` (merged to `main`, Post-Milestone-52, first shipped in release 0.1.5; top-bar picture and name in Post-Milestone-53 and 55; a sync fix in Post-Milestone-54). It differs from the web in how it works: the Firestick talks to the backend directly, so it keeps its own active profile id and sends `X-ArcTV-Profile` through one OkHttp interceptor (nothing for `main` or the account-level calls); a profile switch wipes the local caches and re-pulls that profile's library instead of reloading a page; the PIN is checked with `verify-pin` in the app, so it is a household gate rather than something the backend enforces on every request. Original checklist, for reference:
 
 Tracked in `docs/FIRESTICK_PARITY.md`. In short: a "Who's watching?" screen on launch (D-pad friendly tiles, PIN pad), Manage profiles, the same limits (5, Plus only, 4-digit PIN), the avatar ids mapped to artwork, `X-ArcTV-Profile` on every `/user/*` request, per-profile local caches and outboxes, kids profile behaviour (the same blocked genres, no Settings), a switch-profile entry in the top bar or Settings, and the same fallback when the backend answers 404 for `/user/profiles`.
