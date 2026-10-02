@@ -4,6 +4,7 @@ vi.mock("../lib/api", async (importOriginal) => ({ ...(await importOriginal<type
 
 const { useFeedback } = await import("./feedback");
 const { useMyList } = await import("./myList");
+const { usePickedDismissed } = await import("./pickedDismissed");
 const { cachedResult, storeResult, clearRecommendationCache, interactionInputs, excludedFromPicks, previousShown, rememberShown } = await import("./recommendations");
 const { collectInteractions, signatureOf } = await import("../domain/recommend/signals");
 const { resetAllStores } = await import("./sync");
@@ -74,6 +75,38 @@ describe("titles kept out of Picked for you", () => {
     const ids = excludedFromPicks(list, feedback, ["resume"]);
     expect([...ids].sort()).toEqual(["done", "liked", "nope", "resume"]);
     expect(ids.has("saved")).toBe(false);
+  });
+});
+
+describe("removing a title from Picked for you by hand", () => {
+  it("keeps it out of the row without becoming feedback or changing the taste signature", () => {
+    usePickedDismissed.getState().hydrate("u1", "main");
+    const list = [{ id: "saved", type: "MOVIE", title: "Saved", watched: false }] as Parameters<typeof excludedFromPicks>[0];
+    const before = signatureOf(collectInteractions(interactionInputs(list, {})));
+    usePickedDismissed.getState().dismiss("tt9");
+    expect(excludedFromPicks(list, {}, [], usePickedDismissed.getState().ids).has("tt9")).toBe(true);
+    // the interactions the recommendation is scored from do not know about it at all
+    expect(signatureOf(collectInteractions(interactionInputs(list, {})))).toBe(before);
+    expect(useFeedback.getState().entries).toEqual({});
+  });
+  it("is remembered per account and profile, ignores repeats, and can be cleared", () => {
+    usePickedDismissed.getState().hydrate("u1", "main");
+    usePickedDismissed.getState().dismiss("a");
+    usePickedDismissed.getState().dismiss("a");
+    expect(usePickedDismissed.getState().ids).toEqual(["a"]);
+    usePickedDismissed.getState().hydrate("u1", "main"); // a reload
+    expect(usePickedDismissed.getState().ids).toEqual(["a"]);
+    usePickedDismissed.getState().hydrate("u2", "main");
+    expect(usePickedDismissed.getState().ids).toEqual([]);
+    usePickedDismissed.getState().hydrate("u1", "main");
+    usePickedDismissed.getState().clear();
+    usePickedDismissed.getState().hydrate("u1", "main");
+    expect(usePickedDismissed.getState().ids).toEqual([]);
+  });
+  it("does nothing without a signed-in account", () => {
+    usePickedDismissed.getState().reset();
+    usePickedDismissed.getState().dismiss("a");
+    expect(usePickedDismissed.getState().ids).toEqual([]);
   });
 });
 

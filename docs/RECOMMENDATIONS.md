@@ -40,6 +40,10 @@ So a refresh shows mostly different movies, `rotation.ts` runs after scoring and
 ## Diversity step (separate from scoring)
 `domain/recommend/diversity.ts`, applied after scoring. Going down the score order, each pick is explained by the strongest of its contributing movies that is not yet used up: one of the profile's movies can be the stated reason for at most `MAX_PICKS_PER_SOURCE` (3) picks. Picks whose contributors are all used up only fill spare places at the end. The row stays in score order, but one cluster of taste can't crowd out the rest and every reason still names a movie that really contributed. Tune `MAX_PICKS_PER_SOURCE`, `SHORTLIST_BY_SCORE` and `SHORTLIST_SOURCE_MOVIES` in `config.ts`.
 
+## Removing a pick by hand (does not touch the score)
+
+The long-press menu on a card in the row has **Remove from Picked for you**. It is separate from Like and Not for me: it is not feedback, is never an interaction, and so cannot change the profile's preferences, the signature, or any score. The title is just added to the excluded set (`state/pickedDismissed.ts`, per account and profile, kept in this browser) so it stays out of the row and the next best candidate takes its place; it also disappears at once, before the recompute. Test: `state/recommendations.test.ts`.
+
 ## Explanations
 Under each title: "Because you liked / watched / saved X" or "More from directors you enjoy". Each of the profile's movies is credited with the share of *this pick's* score it contributed (weighted over the pick's genres, directors and cast); the movie with the biggest total is cited, ties going to the stronger signal (like, then finished, then saved). So different picks cite different titles, and a lightly-tagged saved movie can't be named for everything. If nothing positive matched there is no reason.
 

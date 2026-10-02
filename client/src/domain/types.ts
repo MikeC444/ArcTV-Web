@@ -48,6 +48,8 @@ export interface Content {
   director?: string | null;
   /** Why "Picked for you" chose this title, taken from what actually raised its score. Only set on that row. */
   recommendReason?: string | null;
+  /** True on the titles of the "Picked for you" row (also when it is the popular fallback), so a card there can offer to remove itself from it. */
+  pickedForYou?: boolean;
   providerId?: string | null;
   watchProgress?: WatchProgress | null;
   seasons: Season[];
