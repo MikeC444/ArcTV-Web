@@ -1,7 +1,9 @@
 import { useMemo } from "react";
 import { create } from "zustand";
 import { blockedSet } from "../domain/blockedGenres";
+import { KIDS_BLOCKED_GENRES } from "../domain/profiles";
 import { globalKey, readJson, writeJson } from "./persist";
+import { activeProfileOf, useProfiles } from "./profiles";
 import { useSettings } from "./settings";
 
 const KEY = globalKey("blockedGenres");
@@ -46,8 +48,14 @@ export const useBlockedGenres = create<BlockedGenresState>((set, get) => {
   };
 });
 
-/** The blocked genres as a lower-cased set, stable until the list changes. */
+export const isKidsProfile = (): boolean => activeProfileOf(useProfiles.getState())?.kind === "kids";
+
+/** What the screens hide right now: the profile's own Blocked Genres, plus the fixed kids list on a kids profile. */
+export const effectiveBlockedSet = (): Set<string> => blockedSet(isKidsProfile() ? [...useBlockedGenres.getState().genres, ...KIDS_BLOCKED_GENRES] : useBlockedGenres.getState().genres);
+
+/** The blocked genres as a lower-cased set, stable until the list (or the profile's kind) changes. */
 export function useBlockedSet(): Set<string> {
   const genres = useBlockedGenres((s) => s.genres);
-  return useMemo(() => blockedSet(genres), [genres]);
+  const kids = useProfiles((s) => activeProfileOf(s)?.kind === "kids");
+  return useMemo(() => blockedSet(kids ? [...genres, ...KIDS_BLOCKED_GENRES] : genres), [genres, kids]);
 }

@@ -21,6 +21,8 @@ export interface SessionData {
   rt: string;
   rte: number;
   user: SessionUser;
+  /** The profile this browser is using (set by POST /api/profiles/select after any PIN check). Absent = the account's default profile. */
+  pf?: string;
 }
 
 /** Shape of the existing API's token responses (login / register / refresh / QR status). */
@@ -156,8 +158,10 @@ export class SessionManager {
 
     const outcome = await this.rotate(session.rt, session.user, req.ip);
     if (outcome.kind === "ok") {
-      this.write(res, outcome.session);
-      return outcome.session;
+      // A rotation answers with new tokens only; the chosen profile belongs to this browser's cookie, so it carries over.
+      const next: SessionData = session.pf ? { ...outcome.session, pf: session.pf } : outcome.session;
+      this.write(res, next);
+      return next;
     }
     if (outcome.kind === "rejected") {
       this.clear(res);

@@ -106,8 +106,8 @@ Everything in the Fire TV app that can run in a browser:
 * Mouse, keyboard, touch **and** TV-remote-style arrow-key navigation (spatial focus, `Enter`, `Esc`/`Backspace`); the
   arrow keys are an additional mode, not a requirement. Skip link, focus rings, ARIA roles/labels, reduced-motion support.
 
-Not in the Fire TV app, and therefore **not invented here**: Live TV / IPTV / country selection, payments, and multiple
-profiles (see [Open product questions](#open-product-questions)). Android-only features that make no sense on a website
+Not in the Fire TV app, and therefore **not invented here**: Live TV / IPTV / country selection and payments. Multiple
+profiles are a web-first ArcTV Plus feature (see [Open product questions](#open-product-questions)). Android-only features that make no sense on a website
 (APK self-update, LAN-QR addon pairing) are replaced by their web equivalent or omitted; see the mapping table in
 [`docs/AUDIT.md`](docs/AUDIT.md#5-screen--feature-mapping).
 
@@ -297,7 +297,7 @@ These appear in the request but **do not exist in the Firestick app or its backe
   can host it (the player already handles HLS), but no source, licensing or UI spec exists.
 * **Payments / subscriptions** — no billing tables or endpoints. If they are added, the web server must call a
   server-side verification endpoint; a client-side "paid" flag must never grant access.
-* **Multiple profiles** — one account is one library today.
+* **Multiple profiles** — built for ArcTV Plus on the web (up to 5 per account, adult / kids, PINs, a separate library each); see [`docs/PROFILES.md`](docs/PROFILES.md). It needs the backend's profile endpoints, which don't exist yet, so until then the app keeps one library per account. Not on the Firestick yet (`docs/FIRESTICK_PARITY.md`).
 * Copy ported verbatim from the TV (for example the sign-in "Safe & secure" line) is the owner's wording; review it
   for the web context.
 

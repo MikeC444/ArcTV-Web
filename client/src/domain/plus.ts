@@ -24,12 +24,14 @@ export interface PlusPerk {
   detail: string;
   /** "soon" perks are announced but not switched on yet; "included" ones are on for everyone while Plus is in early access. */
   status: "soon" | "included";
+  /** Shown as "Coming soon" until the backend has it (the answer of GET /profiles says whether it does). */
+  needs?: "profiles";
 }
 
 export const PLUS_PERKS: PlusPerk[] = [
   { title: "Picked for you", detail: "A Home row chosen from the movies you like, finish and save, with the reason under each poster, plus Like and Not for me on movies.", status: "included" },
-  { title: "Profiles", detail: "Separate profiles on one account, each with its own My List, Continue Watching and blocked genres.", status: "soon" },
-  { title: "Parental controls", detail: "A PIN, plus locks on genres and titles, built on Blocked Genres.", status: "soon" },
+  { title: "Profiles", detail: "Up to 5 profiles on one account, each with its own My List, Continue Watching, settings and recommendations. Add kids profiles, and lock any profile with a PIN.", status: "included", needs: "profiles" },
+  { title: "Parental controls", detail: "Locks on individual genres and titles, built on kids profiles and Blocked Genres.", status: "soon" },
   { title: "Bigger stream relay allowance", detail: "More room for sources a browser can't play directly.", status: "soon" },
   { title: "Smart source picking", detail: "Automatically choose the best playable source for your device.", status: "soon" },
 ];

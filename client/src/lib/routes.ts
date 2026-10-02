@@ -56,6 +56,7 @@ export const routes = {
     `/sources/${enc(providerId)}/${type}/${enc(id)}/${season ?? -1}/${episode ?? -1}${skipAutoSelect ? "?skip=1" : ""}`,
   player: (providerId: string, type: ContentType, id: string, season: number | null | undefined, episode: number | null | undefined, streamId: string) =>
     `/player/${enc(providerId)}/${type}/${enc(id)}/${season ?? -1}/${episode ?? -1}/${enc(streamId)}`,
+  profiles: "/profiles",
   auth: "/auth",
   authMethod: (intent: "login" | "register") => `/auth/method/${intent}`,
   authPassword: (intent: "login" | "register") => `/auth/password/${intent}`,

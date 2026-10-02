@@ -10,6 +10,7 @@ import type { AppConfig } from "./config.js";
 import type { AppContext } from "./context.js";
 import { ApiError, sendError } from "./errors.js";
 import { createAuthRouter } from "./routes/auth.js";
+import { createProfilesRouter } from "./routes/profiles.js";
 import { createStreamRelay } from "./streamRelay.js";
 import { createUserRouter } from "./routes/user.js";
 import { createTmdbCast, IMDB_ID } from "./tmdbCast.js";
@@ -149,6 +150,7 @@ export function createApp(config: AppConfig, options: CreateAppOptions = {}): Ex
     });
 
   api.use("/auth", createAuthRouter(ctx));
+  api.use("/profiles", perClient(60), createProfilesRouter(ctx));
   api.use("/user", perClient(240), createUserRouter(ctx));
 
   // Cast photos / characters from TMDB for titles whose addon sends names only. Open to visitors (browsing is); off without TMDB_API_KEY.

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { MdAccountCircle, MdAdd, MdBlock, MdFavorite, MdWorkspacePremium, MdArrowDownward, MdArrowUpward, MdCheck, MdCloudUpload, MdDelete, MdExtension, MdGridView, MdInfo, MdLogout, MdMusicNote, MdSubtitles, MdVolumeUp } from "react-icons/md";
+import { MdAccountCircle, MdAdd, MdBlock, MdFavorite, MdWorkspacePremium, MdArrowDownward, MdArrowUpward, MdCheck, MdCloudUpload, MdDelete, MdExtension, MdGridView, MdInfo, MdLogout, MdMusicNote, MdSubtitles, MdSwitchAccount, MdVolumeUp } from "react-icons/md";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { PLUS_FREE_NOTE, PLUS_PERKS, PLUS_PLANS, PLUS_PROCEEDS_NOTE } from "../../domain/plus";
 import { applyRowOrder, moveRow } from "../../domain/homeRows";
@@ -14,6 +14,8 @@ import { useAddonsReady } from "../../state/hooks";
 import { buildGenreList } from "./Genres";
 import { ApiClientError } from "../../lib/api";
 import { usePlus, watchForPurchase, type PlusPlanId } from "../../state/plus";
+import { activeProfileOf, useProfiles } from "../../state/profiles";
+import { ProfileAvatar } from "../components/ProfileAvatar";
 import { useBlockedGenres } from "../../state/blockedGenres";
 import { useSettings } from "../../state/settings";
 import { signOutAndWipe } from "../../state/sync";
@@ -120,6 +122,7 @@ function BlockedGenresPane() {
 /** ArcTV Plus: what it adds, whether you have it, and how to subscribe. Nothing here changes what the free app does. */
 function PlusPane() {
   const plus = usePlus();
+  const profilesSupported = useProfiles((s) => s.supported);
   const [busy, setBusy] = useState<PlusPlanId | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [waiting, setWaiting] = useState(false);
@@ -188,7 +191,7 @@ function PlusPane() {
           <li key={perk.title} className="plus__perk">
             <div className="plus__perkhead">
               <span className="t-title-md">{perk.title}</span>
-              <span className="plus__soon">{perk.status === "soon" ? "Coming soon" : plus.paywall ? "Plus" : "Included in early access"}</span>
+              <span className="plus__soon">{(perk.needs === "profiles" && !profilesSupported ? "soon" : perk.status) === "soon" ? "Coming soon" : plus.paywall ? "Plus" : "Included in early access"}</span>
             </div>
             <p className="t-body-sm c-text-2" style={{ margin: "4px 0 0" }}>{perk.detail}</p>
           </li>
@@ -227,9 +230,23 @@ function PlusPane() {
 
 function AccountPane() {
   const user = useAuth((s) => s.user);
+  const profile = useProfiles((s) => (s.supported && s.plus ? activeProfileOf(s) : undefined));
+  const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   return (
     <div>
+      {profile ? (
+        <div className="accountprofile">
+          <div className="accountprofile__avatar">
+            <ProfileAvatar avatar={profile.avatar} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="t-label-sm c-text-3">Watching as</div>
+            <div className="t-title-md">{profile.name}</div>
+          </div>
+          <MangoButton text="Switch or manage profiles" icon={<MdSwitchAccount />} compact onClick={() => navigate(routes.profiles, { state: { from: routes.settings() } })} />
+        </div>
+      ) : null}
       {user ? (
         <>
           <div className="t-title-md">{user.displayName ?? user.email}</div>

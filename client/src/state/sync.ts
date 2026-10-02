@@ -8,6 +8,7 @@ import { useMyList } from "./myList";
 import { clearRecommendationCache } from "./recommendations";
 import { wipeUser } from "./persist";
 import { useSettings } from "./settings";
+import { useProfiles } from "./profiles";
 
 /**
  * SyncManager + AccountSwitchCoordinator. Pull on sign-in / launch, push immediately on local change (each store
@@ -79,6 +80,8 @@ export function stopBackgroundSync(): void {
 
 /** Called once a session exists (login, QR, or a still-valid cookie at launch). */
 export async function startSession(userId: string): Promise<void> {
+  // Which profile this browser is on comes first: every library below is loaded (and cached) under it.
+  await useProfiles.getState().load(userId);
   hydrateAll(userId);
   startBackgroundSync();
   await syncAll();
@@ -98,6 +101,7 @@ export function resetAllStores(): void {
   useFeedback.getState().reset();
   usePickedDismissed.getState().reset();
   usePlus.getState().reset();
+  useProfiles.getState().reset();
   clearRecommendationCache();
 }
 

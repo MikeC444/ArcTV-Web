@@ -2,7 +2,8 @@ import { create } from "zustand";
 import { DEFAULT_HOME_ROW_PREFERENCES, DEFAULT_PLAYER_PREFERENCES, type HomeRowPreferences, type PlayerPreferences } from "../domain/types";
 import { api, ApiClientError } from "../lib/api";
 import { isoMs, monotonicIso } from "../lib/iso";
-import { globalKey, Outbox, readJson, userKey, writeJson } from "./persist";
+import { globalKey, Outbox, readJson, writeJson } from "./persist";
+import { libraryKey, libraryName } from "./profile";
 
 /** Wire shape of GET/PUT /user/settings (one row per account). */
 interface SettingsDto {
@@ -61,7 +62,7 @@ function toDto(state: Pick<SettingsState, "homeRows" | "player" | "blockedGenres
 export const useSettings = create<SettingsState>((set, get) => {
   const persistLocal = () => {
     const { userId, homeRows, player, blockedGenres, updatedAt } = get();
-    if (userId) writeJson(userKey(userId, "settings"), { homeRows, player, blockedGenres, updatedAt });
+    if (userId) writeJson(libraryKey(userId, "settings"), { homeRows, player, blockedGenres, updatedAt });
   };
 
   function apply(dto: SettingsDto) {
@@ -107,8 +108,8 @@ export const useSettings = create<SettingsState>((set, get) => {
     navigationVolume: readJson<{ navigationVolume: number }>(SOUND_KEY, { navigationVolume: 0 }).navigationVolume,
 
     hydrate(userId) {
-      outbox = new Outbox<SettingsDto>(userId, "settings");
-      const stored = readJson<{ homeRows: HomeRowPreferences; player: PlayerPreferences; blockedGenres?: string[]; updatedAt: string | null } | null>(userKey(userId, "settings"), null);
+      outbox = new Outbox<SettingsDto>(userId, libraryName("settings"));
+      const stored = readJson<{ homeRows: HomeRowPreferences; player: PlayerPreferences; blockedGenres?: string[]; updatedAt: string | null } | null>(libraryKey(userId, "settings"), null);
       set({ userId, homeRows: stored?.homeRows ?? DEFAULT_HOME_ROW_PREFERENCES, player: { ...DEFAULT_PLAYER_PREFERENCES, ...(stored?.player ?? {}) }, blockedGenres: stored?.blockedGenres ?? [], updatedAt: stored?.updatedAt ?? null });
     },
     reset() {
