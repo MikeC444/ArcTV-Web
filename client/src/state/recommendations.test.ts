@@ -4,7 +4,7 @@ vi.mock("../lib/api", async (importOriginal) => ({ ...(await importOriginal<type
 
 const { useFeedback } = await import("./feedback");
 const { useMyList } = await import("./myList");
-const { cachedResult, storeResult, clearRecommendationCache, interactionInputs, excludedFromPicks } = await import("./recommendations");
+const { cachedResult, storeResult, clearRecommendationCache, interactionInputs, excludedFromPicks, previousShown, rememberShown } = await import("./recommendations");
 const { collectInteractions, signatureOf } = await import("../domain/recommend/signals");
 const { resetAllStores } = await import("./sync");
 
@@ -74,6 +74,18 @@ describe("titles kept out of Picked for you", () => {
     const ids = excludedFromPicks(list, feedback, ["resume"]);
     expect([...ids].sort()).toEqual(["done", "liked", "nope", "resume"]);
     expect(ids.has("saved")).toBe(false);
+  });
+});
+
+describe("what the previous page load showed", () => {
+  it("is read once per page load, kept per account and profile, and wiped with the account", () => {
+    rememberShown("u1", "main", ["a", "b"]);
+    expect([...previousShown("u1", "main")].sort()).toEqual(["a", "b"]);
+    rememberShown("u1", "main", ["c"]); // this load's row: the next load will see it, this one keeps the original
+    expect([...previousShown("u1", "main")].sort()).toEqual(["a", "b"]);
+    expect(previousShown("u2", "main").size).toBe(0);
+    clearRecommendationCache();
+    expect([...previousShown("u1", "main")]).toEqual(["c"]);
   });
 });
 

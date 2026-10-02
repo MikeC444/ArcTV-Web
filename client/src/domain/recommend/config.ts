@@ -23,10 +23,13 @@ export const CATEGORY_WEIGHTS = {
 export const MAX_RESULTS = 20;
 
 /**
- * Variety step (see variety.ts): candidates whose scores are within this many points of each other count as tied, and their order on a given
- * page load comes from a seed instead of the fixed tie order. Scores run roughly -1..1; a clearly better pick is never overtaken.
+ * Rotation step (rotation.ts): a refresh swaps most of the row. The best ROTATION_ANCHORS picks always stay; the other places are drawn from the
+ * other genuinely scored candidates that score at least ROTATION_FLOOR of the best score. A candidate shown in the previous row counts
+ * ROTATION_REPEAT_WEIGHT times as much in the draw, so most of the row is different next time.
  */
-export const VARIETY_BAND = 0.03;
+export const ROTATION_ANCHORS = 5;
+export const ROTATION_FLOOR = 0.6;
+export const ROTATION_REPEAT_WEIGHT = 0.15;
 
 /** Diversity step (applied after scoring, separate from it): one movie of the profile's can be the stated reason for at most this many picks, and the shortlist is drawn from across the whole list. */
 export const MAX_PICKS_PER_SOURCE = 3;
@@ -42,7 +45,7 @@ export const MIN_INTERACTIONS_FOR_PERSONALISATION = 3;
 export const CAST_FEATURE_LIMIT = 12;
 
 /** Network budget: how many candidates get a detail lookup per refresh, how many of the profile's own movies are looked up, and how many run at once. */
-export const CANDIDATE_DETAIL_FETCH_LIMIT = 40;
+export const CANDIDATE_DETAIL_FETCH_LIMIT = 60;
 export const INTERACTION_DETAIL_FETCH_LIMIT = 60;
 export const DETAIL_FETCH_CONCURRENCY = 4;
 

@@ -1,7 +1,7 @@
 import { CANDIDATE_DETAIL_FETCH_LIMIT, CATEGORY_WEIGHTS, INTERACTION_DETAIL_FETCH_LIMIT, MAX_RESULTS, MIN_INTERACTIONS_FOR_PERSONALISATION, SHORTLIST_BY_SCORE, SHORTLIST_SOURCE_MOVIES } from "./config";
 import { diversify } from "./diversity";
 import { rankSources, reasonFor, type Source } from "./explain";
-import { freshen } from "./variety";
+import { rotate } from "./rotation";
 import { type Features } from "./features";
 import { buildPreferences } from "./preferences";
 import { scoreCandidate } from "./score";
@@ -32,8 +32,10 @@ export interface EngineInput {
   /** providerId for each of the profile's own movies, so their metadata can be looked up. */
   interactionRefs: ReadonlyMap<string, MovieRef>;
   loadFeatures: FeatureLoader;
-  /** When set, near-tied picks are ordered by this seed (see variety.ts) so a refresh can show a different selection. Absent = fully deterministic. */
+  /** When set, a refresh rotates most of the row (see rotation.ts): the strongest picks stay, the rest are drawn with this seed. Absent = fully deterministic. */
   seed?: number;
+  /** Ids shown by the previous page load; they are less likely to be drawn again. */
+  previousShown?: ReadonlySet<string>;
 }
 
 export interface Picked {
@@ -74,7 +76,7 @@ export function popularFallback(pool: Candidate[], excludeIds: ReadonlySet<strin
  *  2. shortlist the eligible candidates from their catalogue genres alone: some by overall genre match, the rest round-robin over each of the
  *     profile's own movies (so every taste in the list is represented), within a bounded size;
  *  3. fetch the shortlist's directors and cast (cached, bounded concurrency) and score each with the full weighted cosine;
- *  4. sort by score (ties: rating, then id; when a seed is given, near-tied picks are ordered by it), then the separate diversity step (`diversity.ts`) keeps the top 20 while stopping any one of the
+ *  4. sort by score (ties: rating, then id), then, when a seed is given, the rotation step (`rotation.ts`: the strongest picks stay, the rest of the row is drawn from the other well-scored candidates), then the separate diversity step (`diversity.ts`) keeps the top 20 while stopping any one of the
  *     profile's movies from explaining more than MAX_PICKS_PER_SOURCE of them.
  */
 export async function recommend(input: EngineInput): Promise<EngineResult> {
@@ -161,7 +163,10 @@ export async function recommend(input: EngineInput): Promise<EngineResult> {
   if (scored.length === 0) return popularFallback(pool, input.excludeIds);
 
   scored.sort((a, b) => b.score - a.score || byRatingThenId(a.candidate, b.candidate));
-  const ordered = input.seed === undefined ? scored : freshen(scored, input.seed);
+  // The pool handed to the diversity step: with a seed, the rotated row first (anchors + the draw) and then the rest in score order, so the
+  // source cap can still pull in a next-best pick when it has to skip one.
+  const rotated = input.seed === undefined ? scored : rotate(scored, MAX_RESULTS, input.seed, { previous: input.previousShown });
+  const ordered = input.seed === undefined ? scored : [...rotated, ...scored.filter((p) => !rotated.includes(p))];
   const items = diversify(ordered, MAX_RESULTS).map(({ pick, source }) => ({ id: pick.id, score: pick.score, reason: source ? reasonFor(source) : null }));
   return { mode: "personal", items };
 }
