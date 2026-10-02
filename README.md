@@ -6,7 +6,7 @@ Sign in with the email and password you already use on your Firestick and you se
 Watching, installed addons, Home-row layout and playback preferences — because the web app talks to the **same
 MangoTV backend (and therefore the same Neon database)** as the TV app. Nothing is copied, migrated or duplicated.
 
-* Source of truth for design and behaviour: [`MikeC444/MangoTV-Live-TV`](https://github.com/MikeC444/MangoTV-Live-TV) (read-only — nothing in this repository writes to it).
+* Source of truth for design and behaviour: [`MikeC444/ArcTV-AndroidTV`](https://github.com/MikeC444/ArcTV-AndroidTV) (read-only — nothing in this repository writes to it).
 * What was inspected, and every decision that followed from it: [`docs/AUDIT.md`](docs/AUDIT.md).
 * How to put it online: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
@@ -163,7 +163,7 @@ and no secrets.
 | `npm run test:integration` | The **real, unmodified backend** from the Firestick repo, all 14 migrations, on a throwaway local Postgres: an account created the way the TV creates it signs in on the web with the same user id and sees its synced data; TV ↔ web sync with last-write-wins; **two accounts cannot read or modify each other's data**; token refresh / expiry / revocation; QR flows; logout revocation |
 | `npm run test:e2e` | Playwright + Chromium against that backend, the built SPA and a local Stremio-protocol fixture addon: sign-in (existing account, wrong password, QR, sign-up, sign-out, remote revocation), browse, search, My List, Detail, Sources, real playback (WebM and HLS) with progress reported to the account, playback of sources a browser can't fetch itself via the stream relay, resume, autoplay-next, settings sync, keyboard navigation, layout proportions of the Compose tokens at 1920 × 1080, and no-overflow layouts at 1920, 1366, 820 and 390 px |
 
-`npm run test:integration` and `npm run test:e2e` run the backend from `MikeC444/MangoTV-Live-TV` (cloned at a pinned
+`npm run test:integration` and `npm run test:e2e` run the backend from `MikeC444/ArcTV-AndroidTV` (cloned at a pinned
 commit, or point `MANGOTV_BACKEND_DIR` at a local checkout) against a Postgres database you provide via
 `TEST_DATABASE_URL`. That database **must be disposable**: the scripts refuse any name that does not contain `test` or
 end in `_it`, apply the backend's own migrations to it, and never touch production or the source repository. (When run
