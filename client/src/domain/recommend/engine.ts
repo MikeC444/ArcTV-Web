@@ -1,7 +1,8 @@
-import { CANDIDATE_DETAIL_FETCH_LIMIT, CATEGORY_WEIGHTS, INTERACTION_DETAIL_FETCH_LIMIT, MAX_RESULTS, MIN_INTERACTIONS_FOR_PERSONALISATION, SHORTLIST_BY_SCORE, SHORTLIST_SOURCE_MOVIES } from "./config";
+import { CANDIDATE_DETAIL_FETCH_LIMIT, CATEGORY_WEIGHTS, INTERACTION_DETAIL_FETCH_LIMIT, MAX_RESULTS, MIN_INTERACTIONS_FOR_PERSONALISATION, SHORTLIST_BY_SCORE, SHORTLIST_GENRE_BUDGET, SHORTLIST_GENRE_MIN, SHORTLIST_SOURCE_MOVIES } from "./config";
 import { diversify } from "./diversity";
 import { rankSources, reasonFor, type Source } from "./explain";
-import { rotate } from "./rotation";
+import { compose } from "./rotation";
+import { primaryGenre, tasteShares } from "./taste";
 import { type Features } from "./features";
 import { buildPreferences } from "./preferences";
 import { scoreCandidate } from "./score";
@@ -32,7 +33,7 @@ export interface EngineInput {
   /** providerId for each of the profile's own movies, so their metadata can be looked up. */
   interactionRefs: ReadonlyMap<string, MovieRef>;
   loadFeatures: FeatureLoader;
-  /** When set, a refresh rotates most of the row (see rotation.ts): the strongest picks stay, the rest are drawn with this seed. Absent = fully deterministic. */
+  /** When set, a refresh swaps most of the row (see rotation.ts): the strongest picks stay, the rest are drawn with this seed. Absent = fully deterministic. */
   seed?: number;
   /** Ids shown by the previous page load; they are less likely to be drawn again. */
   previousShown?: ReadonlySet<string>;
@@ -76,7 +77,7 @@ export function popularFallback(pool: Candidate[], excludeIds: ReadonlySet<strin
  *  2. shortlist the eligible candidates from their catalogue genres alone: some by overall genre match, the rest round-robin over each of the
  *     profile's own movies (so every taste in the list is represented), within a bounded size;
  *  3. fetch the shortlist's directors and cast (cached, bounded concurrency) and score each with the full weighted cosine;
- *  4. sort by score (ties: rating, then id), then, when a seed is given, the rotation step (`rotation.ts`: the strongest picks stay, the rest of the row is drawn from the other well-scored candidates), then the separate diversity step (`diversity.ts`) keeps the top 20 while stopping any one of the
+ *  4. sort by score (ties: rating, then id), then the composition step (`rotation.ts`: the strongest picks stay, the other places follow the profile's genre split and, with a seed, are drawn so a refresh changes most of them), then the separate diversity step (`diversity.ts`) keeps the top 20 while stopping any one of the
  *     profile's movies from explaining more than MAX_PICKS_PER_SOURCE of them.
  */
 export async function recommend(input: EngineInput): Promise<EngineResult> {
@@ -101,6 +102,16 @@ export async function recommend(input: EngineInput): Promise<EngineResult> {
     shortlist.push(candidate);
   };
   preScored.slice(0, SHORTLIST_BY_SCORE).forEach((p) => take(p.candidate));
+  // Every genre the profile likes gets candidates to score, in proportion to its share of the profile's taste, so a minority taste (say 25% of the
+  // profile) isn't left with nothing to be picked from just because the biggest taste scores higher on genre alone.
+  const shares = tasteShares(signalled, ownFeatures, prefs);
+  for (const [genre, share] of [...shares.entries()].sort((a, b) => b[1] - a[1])) {
+    const quota = Math.max(SHORTLIST_GENRE_MIN, Math.ceil(share * SHORTLIST_GENRE_BUDGET));
+    preScored
+      .filter((p) => primaryGenre(normaliseGenres(p.candidate.genres), prefs) === genre)
+      .slice(0, quota)
+      .forEach((p) => take(p.candidate));
+  }
   const owners = signalled.filter((i) => i.weight > 0).slice(0, SHORTLIST_SOURCE_MOVIES);
   const perOwner = owners.map((owner) => {
     const own = new Set(ownFeatures.get(owner.id)?.genres ?? []);
@@ -151,22 +162,23 @@ export async function recommend(input: EngineInput): Promise<EngineResult> {
     }
     return p;
   };
-  const scored: Array<{ id: string; candidate: Candidate; score: number; sources: Source[] }> = [];
+  const scored: Array<{ id: string; candidate: Candidate; score: number; sources: Source[]; genre: string | null }> = [];
   for (const candidate of shortlist) {
     const fetched = details.get(candidate.id);
     const features: Features = { genres: fetched?.genres.length ? fetched.genres : normaliseGenres(candidate.genres), directors: fetched?.directors ?? [], cast: fetched?.cast ?? [] };
     const candidatePrefs = prefsFor(candidate.id);
     const result = scoreCandidate(features, candidatePrefs);
     if (!result) continue;
-    scored.push({ id: candidate.id, candidate, score: result.score, sources: result.score > 0 ? rankSources(features, candidatePrefs) : [] });
+    scored.push({ id: candidate.id, candidate, score: result.score, sources: result.score > 0 ? rankSources(features, candidatePrefs) : [], genre: primaryGenre(features.genres, prefs) });
   }
   if (scored.length === 0) return popularFallback(pool, input.excludeIds);
 
   scored.sort((a, b) => b.score - a.score || byRatingThenId(a.candidate, b.candidate));
-  // The pool handed to the diversity step: with a seed, the rotated row first (anchors + the draw) and then the rest in score order, so the
-  // source cap can still pull in a next-best pick when it has to skip one.
-  const rotated = input.seed === undefined ? scored : rotate(scored, MAX_RESULTS, input.seed, { previous: input.previousShown });
-  const ordered = input.seed === undefined ? scored : [...rotated, ...scored.filter((p) => !rotated.includes(p))];
+  // The row is composed from the scored candidates: the strongest stay, the other places follow the profile's genre split, and (with a seed) are
+  // drawn so a refresh changes most of them. What is not in the row follows in score order, so the source cap can still pull in a next-best pick
+  // when it has to skip one. Without a seed the order is fully deterministic.
+  const composed = compose(scored, MAX_RESULTS, { shares, seed: input.seed, previous: input.previousShown });
+  const ordered = [...composed, ...scored.filter((p) => !composed.includes(p))];
   const items = diversify(ordered, MAX_RESULTS).map(({ pick, source }) => ({ id: pick.id, score: pick.score, reason: source ? reasonFor(source) : null }));
   return { mode: "personal", items };
 }
