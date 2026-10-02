@@ -99,7 +99,7 @@ function BlockedGenresPane() {
   const isOn = (genre: string) => blocked.some((g) => g.toLowerCase() === genre.toLowerCase());
   return (
     <div>
-      <p className="t-body-sm c-text-2" style={{ margin: 0 }}>Titles in these genres are hidden from Home, Movies, TV Shows, Search and Genres. Titles an addon doesn't give genres for can't be filtered. This choice stays in this browser.</p>
+      <p className="t-body-sm c-text-2" style={{ margin: 0 }}>Titles in these genres are hidden from Home, Movies, TV Shows, Search and Genres. Titles an addon doesn't give genres for can't be filtered. When you're signed in it is saved to your account, so it applies on every device.</p>
       <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "14px 0" }}>
         <span className="t-title-md">{blocked.length === 0 ? "Nothing blocked" : `${blocked.length} blocked`}</span>
         {blocked.length > 0 ? <MangoButton text="Clear all" icon={<MdDelete />} compact onClick={clear} /> : null}
