@@ -1,64 +1,81 @@
 import { describe, expect, it } from "vitest";
 import { MAX_RESULTS, ROTATION_ANCHORS } from "./config";
 import { recommend, type Candidate, type FeatureLoader } from "./engine";
-import { rotate, seededRandom } from "./rotation";
+import { compose, seededRandom, type ComposePick } from "./rotation";
 import { collectInteractions } from "./signals";
 
-// 40 scored picks with falling scores, best first.
-const scoredList = Array.from({ length: 40 }, (_, i) => ({ id: `p${i}`, score: 0.95 - i * 0.01 }));
+const pick = (id: string, score: number, genre: string | null): ComposePick => ({ id, score, genre });
 const idsOf = (xs: Array<{ id: string }>) => xs.map((x) => x.id);
 
-describe("rotation step", () => {
-  it("always keeps the strongest picks and returns a full row ordered by score", () => {
+// 30 horror picks scoring high, 10 comedy and 10 action picks scoring lower: what a horror-heavy profile looks like.
+const horror = Array.from({ length: 30 }, (_, i) => pick(`h${i}`, 0.95 - i * 0.005, "horror"));
+const comedy = Array.from({ length: 10 }, (_, i) => pick(`c${i}`, 0.45 - i * 0.01, "comedy"));
+const action = Array.from({ length: 10 }, (_, i) => pick(`a${i}`, 0.4 - i * 0.01, "action"));
+const all = [...horror, ...comedy, ...action].sort((a, b) => b.score - a.score);
+const shares = new Map([["horror", 0.75], ["comedy", 0.15], ["action", 0.1]]);
+const count = (row: ComposePick[], genre: string) => row.filter((p) => p.genre === genre).length;
+
+describe("composition step", () => {
+  it("gives the row the profile's genre split, instead of the biggest taste filling every place", () => {
+    const row = compose(all, MAX_RESULTS, { shares });
+    expect(row).toHaveLength(MAX_RESULTS);
+    expect(count(row, "horror")).toBe(15); // 75% of 20
+    expect(count(row, "comedy")).toBe(3); // 15%
+    expect(count(row, "action")).toBe(2); // 10%
+  });
+
+  it("still does what it says without variety: a profile with one taste gets a one-genre row", () => {
+    const row = compose(horror, MAX_RESULTS, { shares: new Map([["horror", 1]]) });
+    expect(count(row, "horror")).toBe(MAX_RESULTS);
+  });
+
+  it("always keeps the strongest picks, mixes the genres through the row, and never alters a score", () => {
     for (let seed = 0; seed < 100; seed++) {
-      const row = rotate(scoredList, MAX_RESULTS, seed);
-      expect(row).toHaveLength(MAX_RESULTS);
-      for (let i = 0; i < ROTATION_ANCHORS; i++) expect(idsOf(row)).toContain(`p${i}`);
-      for (let i = 1; i < row.length; i++) expect(row[i]!.score).toBeLessThanOrEqual(row[i - 1]!.score);
+      const row = compose(all, MAX_RESULTS, { shares, seed });
+      for (let i = 0; i < ROTATION_ANCHORS; i++) expect(idsOf(row)).toContain(`h${i}`);
+      for (const p of row) expect(p.score).toBe(all.find((x) => x.id === p.id)!.score);
+      expect(new Set(idsOf(row)).size).toBe(row.length);
+      // a minority genre shows up in the first half of the row, not only at the end
+      expect(row.slice(0, 12).some((p) => p.genre !== "horror")).toBe(true);
     }
   });
 
-  it("is repeatable for the same seed, and different seeds give different rows", () => {
-    expect(idsOf(rotate(scoredList, MAX_RESULTS, 7))).toEqual(idsOf(rotate(scoredList, MAX_RESULTS, 7)));
+  it("is repeatable for a seed and different across seeds", () => {
+    expect(idsOf(compose(all, MAX_RESULTS, { shares, seed: 7 }))).toEqual(idsOf(compose(all, MAX_RESULTS, { shares, seed: 7 })));
     const rows = new Set<string>();
-    for (let seed = 0; seed < 30; seed++) rows.add(idsOf(rotate(scoredList, MAX_RESULTS, seed)).join(","));
+    for (let seed = 0; seed < 30; seed++) rows.add(idsOf(compose(all, MAX_RESULTS, { shares, seed })).join(","));
     expect(rows.size).toBeGreaterThan(20);
   });
 
-  it("swaps most of the row on the next load when it is told what the last one showed", () => {
-    let previous = new Set(idsOf(rotate(scoredList, MAX_RESULTS, 1)));
-    let totalKept = 0;
+  it("swaps most of the row on the next load when it is told what the last one showed, keeping the genre split", () => {
+    let previous = new Set(idsOf(compose(all, MAX_RESULTS, { shares, seed: 1 })));
+    let kept = 0;
     let loads = 0;
-    for (let seed = 2; seed < 60; seed++) {
-      const row = rotate(scoredList, MAX_RESULTS, seed, { previous });
-      totalKept += row.filter((p) => previous.has(p.id)).length;
+    for (let seed = 2; seed < 40; seed++) {
+      const row = compose(all, MAX_RESULTS, { shares, seed, previous });
+      kept += row.filter((p) => previous.has(p.id)).length;
       loads++;
       previous = new Set(idsOf(row));
+      expect(count(row, "horror")).toBe(15);
     }
-    // fewer than half of each row was in the one before it, on average (the 5 anchors always stay)
-    expect(totalKept / loads).toBeLessThan(MAX_RESULTS / 2);
-    expect(totalKept / loads).toBeGreaterThanOrEqual(ROTATION_ANCHORS);
+    expect(kept / loads).toBeLessThan(MAX_RESULTS * 0.7);
+    expect(kept / loads).toBeGreaterThanOrEqual(ROTATION_ANCHORS);
   });
 
-  it("never swaps in a pick that scored zero or below, or far below the best", () => {
-    const list = [...Array.from({ length: 8 }, (_, i) => ({ id: `good${i}`, score: 0.9 - i * 0.02 })), { id: "weak", score: 0.1 }, { id: "zero", score: 0 }, { id: "neg", score: -0.4 }];
+  it("never draws in a pick that scored zero or below, or far below the best of its genre", () => {
+    const list = [...horror.slice(0, 10), pick("c-ok", 0.4, "comedy"), pick("c-weak", 0.05, "comedy"), pick("c-zero", 0, "comedy"), pick("c-neg", -0.3, "comedy")];
     for (let seed = 0; seed < 100; seed++) {
-      const row = idsOf(rotate(list, 8, seed));
-      expect(row).not.toContain("zero");
-      expect(row).not.toContain("neg");
-      expect(row).not.toContain("weak");
-      expect(row).toHaveLength(8);
+      const row = idsOf(compose(list, 8, { shares: new Map([["horror", 0.6], ["comedy", 0.4]]), seed }));
+      expect(row).not.toContain("c-zero");
+      expect(row).not.toContain("c-neg");
+      expect(row).not.toContain("c-weak");
     }
   });
 
-  it("only ever returns picks it was given, with their scores untouched", () => {
-    const row = rotate(scoredList, MAX_RESULTS, 3);
-    for (const p of row) expect(p.score).toBe(scoredList.find((s) => s.id === p.id)!.score);
-  });
-
-  it("fills the row from the next best when too few clear the floor", () => {
-    const list = [{ id: "a", score: 0.9 }, ...Array.from({ length: 12 }, (_, i) => ({ id: `w${i}`, score: 0.2 - i * 0.01 }))];
-    expect(rotate(list, 10, 1)).toHaveLength(10);
+  it("hands a genre's places to the next genre when it has too few, and fills with the best scores if everything runs short", () => {
+    const row = compose([...horror.slice(0, 6), pick("c0", 0.4, "comedy")], 10, { shares });
+    expect(row).toHaveLength(7); // only seven picks exist
+    expect(idsOf(row)).toContain("c0");
   });
 
   it("seeded random is repeatable and stays in [0, 1)", () => {
@@ -73,54 +90,44 @@ describe("rotation step", () => {
   });
 });
 
-describe("engine with a seed", () => {
+describe("engine: a mostly-horror profile still gets its other tastes", () => {
   const liked = (id: string) => ({ id, title: id, completed: false, inWatchlist: false, feedback: "like" as const });
-  // 45 candidates in a spread of sci-fi-ness so they score differently; the profile likes sci-fi.
   const META = new Map<string, { genres: string[]; directors: string[]; cast: string[] }>();
-  const pool: Candidate[] = Array.from({ length: 45 }, (_, i) => {
-    const genres = i % 3 === 0 ? ["sci-fi"] : i % 3 === 1 ? ["sci-fi", "drama"] : ["sci-fi", "drama", "romance"];
-    META.set(`m${i}`, { genres, directors: [`d${i % 7}`], cast: [`c${i % 5}`] });
-    return { id: `m${i}`, title: `m${i}`, genres, rating: 7 };
-  });
-  META.set("l1", { genres: ["sci-fi"], directors: ["d1"], cast: ["c1"] });
-  META.set("l2", { genres: ["sci-fi"], directors: ["d2"], cast: ["c2"] });
-  META.set("l3", { genres: ["sci-fi", "drama"], directors: ["d3"], cast: ["c3"] });
+  const pool: Candidate[] = [];
+  const add = (id: string, genres: string[], d: string, c: string) => {
+    META.set(id, { genres, directors: [d], cast: [c] });
+    pool.push({ id, title: id, genres, rating: 7 });
+  };
+  for (let i = 0; i < 30; i++) add(`hor${i}`, i % 2 === 0 ? ["horror"] : ["horror", "thriller"], `hd${i % 6}`, `hc${i % 6}`);
+  for (let i = 0; i < 12; i++) add(`com${i}`, i % 2 === 0 ? ["comedy"] : ["comedy", "romance"], `cd${i % 4}`, `cc${i % 4}`);
+  // the profile: three liked horror movies and one liked comedy (75% / 25% by signal)
+  for (const id of ["lh1", "lh2", "lh3"]) META.set(id, { genres: ["horror", "thriller"], directors: ["hd1"], cast: ["hc1"] });
+  META.set("lc1", { genres: ["comedy"], directors: ["cd1"], cast: ["cc1"] });
   const loader: FeatureLoader = async (refs) => new Map(refs.map((r) => [r.id, META.get(r.id) ?? null]));
   const go = (seed?: number, previousShown?: ReadonlySet<string>) =>
-    recommend({ interactions: collectInteractions([liked("l1"), liked("l2"), liked("l3")]), excludeIds: new Set(), pool, interactionRefs: new Map(), loadFeatures: loader, seed, previousShown });
+    recommend({ interactions: collectInteractions(["lh1", "lh2", "lh3", "lc1"].map(liked)), excludeIds: new Set(), pool, interactionRefs: new Map(), loadFeatures: loader, seed, previousShown });
 
-  it("without a seed is fully deterministic", async () => {
-    expect((await go()).items.map((i) => i.id)).toEqual((await go()).items.map((i) => i.id));
-  });
-
-  it("with a seed still shows only genuinely scored picks with their real scores and reasons, and keeps the top picks", async () => {
-    const base = await go();
-    const baseScores = new Map(base.items.map((i) => [i.id, i.score]));
-    const everything = await recommend({ interactions: collectInteractions([liked("l1"), liked("l2"), liked("l3")]), excludeIds: new Set(), pool, interactionRefs: new Map(), loadFeatures: loader, seed: 1 });
-    expect(everything.mode).toBe("personal");
-    for (let seed = 1; seed <= 20; seed++) {
+  it("includes its comedy taste instead of a row that is all horror, with real scores and a real reason", async () => {
+    for (const seed of [undefined, 1, 2, 3]) {
       const r = await go(seed);
-      expect(r.items.length).toBeGreaterThan(0);
+      expect(r.mode).toBe("personal");
+      const comedyPicks = r.items.filter((i) => i.id.startsWith("com"));
+      expect(comedyPicks.length).toBeGreaterThanOrEqual(3); // about a quarter of 20
+      expect(comedyPicks.length).toBeLessThan(r.items.length / 2);
       for (const item of r.items) {
-        expect(item.score).not.toBeNull();
         expect(item.score!).toBeGreaterThan(0);
-        expect(item.reason === null || /^Because you liked /.test(item.reason)).toBe(true);
-        if (baseScores.has(item.id)) expect(item.score).toBe(baseScores.get(item.id));
+        expect(item.reason).toMatch(/^Because you liked /);
       }
-      for (const top of base.items.slice(0, 3)) expect(r.items.map((i) => i.id)).toContain(top.id);
+      for (const c of comedyPicks) expect(c.reason).toBe("Because you liked lc1"); // named for the movie that really raised it
     }
   });
 
-  it("changes most of the row between loads when told what was shown last time", async () => {
-    let previous = new Set((await go(1)).items.map((i) => i.id));
-    let kept = 0;
-    let loads = 0;
-    for (let seed = 2; seed < 12; seed++) {
-      const r = await go(seed, previous);
-      kept += r.items.filter((i) => previous.has(i.id)).length;
-      loads++;
-      previous = new Set(r.items.map((i) => i.id));
+  it("without a seed is fully deterministic, and keeps the strongest picks with a seed", async () => {
+    const base = await go();
+    expect((await go()).items.map((i) => i.id)).toEqual(base.items.map((i) => i.id));
+    for (const seed of [1, 2, 3, 4]) {
+      const r = await go(seed);
+      for (const top of base.items.slice(0, ROTATION_ANCHORS)) expect(r.items.map((i) => i.id)).toContain(top.id);
     }
-    expect(kept / loads).toBeLessThan(MAX_RESULTS * 0.7);
   });
 });

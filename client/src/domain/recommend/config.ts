@@ -23,13 +23,18 @@ export const CATEGORY_WEIGHTS = {
 export const MAX_RESULTS = 20;
 
 /**
- * Rotation step (rotation.ts): a refresh swaps most of the row. The best ROTATION_ANCHORS picks always stay; the other places are drawn from the
- * other genuinely scored candidates that score at least ROTATION_FLOOR of the best score. A candidate shown in the previous row counts
+ * Composition step (rotation.ts): the row follows the profile's own taste split across genres and a refresh swaps most of it. The best
+ * ROTATION_ANCHORS picks always stay; the other places go to genres in proportion to the profile's taste, each drawn from that genre's other
+ * genuinely scored candidates that score at least ROTATION_FLOOR of that genre's best. A candidate shown in the previous row counts
  * ROTATION_REPEAT_WEIGHT times as much in the draw, so most of the row is different next time.
  */
 export const ROTATION_ANCHORS = 5;
 export const ROTATION_FLOOR = 0.6;
 export const ROTATION_REPEAT_WEIGHT = 0.15;
+
+/** Shortlist: so every genre the profile likes has candidates to score, each gets this many (at least) out of a budget shared by taste share. */
+export const SHORTLIST_GENRE_BUDGET = 36;
+export const SHORTLIST_GENRE_MIN = 4;
 
 /** Diversity step (applied after scoring, separate from it): one movie of the profile's can be the stated reason for at most this many picks, and the shortlist is drawn from across the whole list. */
 export const MAX_PICKS_PER_SOURCE = 3;
