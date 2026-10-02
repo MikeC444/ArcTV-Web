@@ -10,7 +10,8 @@ import { useBlockedSet } from "./blockedGenres";
 import { useAuth } from "./auth";
 import { useContinueWatching, type ContinueWatchingEntry } from "./continueWatching";
 import { sectionWithWatched, useAddonsReady, useWatchedIds } from "./hooks";
-import { readJson, userKey, writeJson } from "./persist";
+import { readJson, writeJson } from "./persist";
+import { libraryKey } from "./profile";
 import { useSettings } from "./settings";
 
 /** HomeViewModel.kt */
@@ -92,7 +93,7 @@ export function useHome(): { state: HomeState; reload(): void; ready: boolean } 
   // instant paint from the last session's rows
   useEffect(() => {
     if (!userId) return;
-    const cache = readJson<HomeCache | null>(userKey(userId, "homeCache"), null);
+    const cache = readJson<HomeCache | null>(libraryKey(userId, "homeCache"), null);
     if (cache && Date.now() - cache.at < CACHE_MAX_AGE_MS && cache.sections.length) {
       setRaw(cache.sections);
       setFetched(true);
@@ -141,7 +142,7 @@ export function useHome(): { state: HomeState; reload(): void; ready: boolean } 
         setCacheOnly(false);
         if (!cacheOnly) setRaw([]);
       }
-      if (sections.length > 0 && userId) writeJson(userKey(userId, "homeCache"), { at: Date.now(), sections: trimForCache(sections) } satisfies HomeCache);
+      if (sections.length > 0 && userId) writeJson(libraryKey(userId, "homeCache"), { at: Date.now(), sections: trimForCache(sections) } satisfies HomeCache);
     });
     // `cacheOnly` intentionally omitted: it only gates the first paint and must not re-trigger the fetch.
     // eslint-disable-next-line react-hooks/exhaustive-deps

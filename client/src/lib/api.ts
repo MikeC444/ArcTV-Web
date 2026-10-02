@@ -33,11 +33,13 @@ export interface ApiOptions {
   keepalive?: boolean;
   /** Don't treat a 401 as "session expired" (used by the sign-in form itself). */
   authFlow?: boolean;
+  /** Extra request headers (a profile's PIN when changing or removing a locked profile). */
+  headers?: Record<string, string>;
 }
 
 export async function api<T = unknown>(path: string, options: ApiOptions = {}): Promise<T> {
   const method = options.method ?? "GET";
-  const headers: Record<string, string> = { Accept: "application/json" };
+  const headers: Record<string, string> = { Accept: "application/json", ...options.headers };
   let body: string | undefined;
   if (method !== "GET") headers["X-MangoTV-Client"] = "web";
   if (options.body !== undefined) {

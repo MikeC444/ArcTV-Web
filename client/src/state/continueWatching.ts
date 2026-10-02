@@ -2,7 +2,8 @@ import { create } from "zustand";
 import { api, ApiClientError } from "../lib/api";
 import { isoMs, monotonicIso } from "../lib/iso";
 import type { ContentType } from "../domain/types";
-import { Outbox, readJson, userKey, writeJson } from "./persist";
+import { Outbox, readJson, writeJson } from "./persist";
+import { libraryKey, libraryName } from "./profile";
 
 /** ContinueWatchingEntry.kt */
 export interface ContinueWatchingEntry {
@@ -88,7 +89,7 @@ export const useContinueWatching = create<ContinueWatchingState>((set, get) => {
   const commit = (items: ContinueWatchingEntry[]) => {
     set({ items });
     const uid = get().userId;
-    if (uid) writeJson(userKey(uid, "continueWatching"), items);
+    if (uid) writeJson(libraryKey(uid, "continueWatching"), items);
   };
   const remove = (providerId: string, contentId: string, type: ContentType) =>
     commit(get().items.filter((e) => keyOf(e.providerId, e.contentId, e.contentType) !== keyOf(providerId, contentId, type)));
@@ -106,8 +107,8 @@ export const useContinueWatching = create<ContinueWatchingState>((set, get) => {
     items: [],
 
     hydrate(userId) {
-      outbox = new Outbox<WatchProgressRequest>(userId, "continueWatching");
-      set({ userId, items: readJson<ContinueWatchingEntry[]>(userKey(userId, "continueWatching"), []) });
+      outbox = new Outbox<WatchProgressRequest>(userId, libraryName("continueWatching"));
+      set({ userId, items: readJson<ContinueWatchingEntry[]>(libraryKey(userId, "continueWatching"), []) });
     },
     reset() {
       outbox = null;

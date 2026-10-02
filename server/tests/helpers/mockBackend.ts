@@ -23,7 +23,17 @@ export function createMockBackend(options: { accessTtlMs?: number } = {}) {
   const data = new Map<string, Map<string, unknown>>(); // userId → key → value
   const calls: BackendRequest[] = [];
   /** `refreshRateLimit`: answer /auth/refresh with 429 and this Retry-After (seconds), like the backend's per-IP limiter. */
-  const state = { down: false, refreshCalls: 0, refreshRateLimit: null as number | null, rejectAllTokens: false, tokenSeq: 0 };
+  const state = { down: false, refreshCalls: 0, refreshRateLimit: null as number | null, rejectAllTokens: false, tokenSeq: 0, plus: true, profilesSupported: true };
+  /** userId → profiles (the account's own "main" profile is created on first use) and their PINs. */
+  const profiles = new Map<string, Array<{ id: string; name: string; avatar: string; kind: "adult" | "kids"; isDefault: boolean; pin: string | null }>>();
+  const profilesOf = (user: MockUser) => {
+    if (!profiles.has(user.id)) profiles.set(user.id, [{ id: "main", name: user.displayName ?? "Me", avatar: "sunrise", kind: "adult", isDefault: true, pin: null }]);
+    return profiles.get(user.id)!;
+  };
+  const publicProfile = (p: { pin: string | null }) => {
+    const { pin, ...rest } = p as { pin: string | null } & Record<string, unknown>;
+    return { ...rest, hasPin: pin !== null };
+  };
   const accessTtl = options.accessTtlMs ?? 3_600_000;
 
   function issue(userId: string) {
@@ -79,16 +89,46 @@ export function createMockBackend(options: { accessTtlMs?: number } = {}) {
       return json(204);
     }
     if (request.path === "/user/me") return json(200, { id: user.id, email: user.email, displayName: user.displayName });
+    // Profiles: a library belongs to the profile named in X-ArcTV-Profile (absent = the account's own).
+    const library = `watchlist:${request.profileId ?? "main"}`;
     if (request.path === "/user/watchlist" && request.method === "GET") {
       const bucket = data.get(user.id) ?? new Map();
-      return json(200, { items: (bucket.get("watchlist") as unknown[] | undefined) ?? [] });
+      return json(200, { items: (bucket.get(library) as unknown[] | undefined) ?? [] });
     }
     if (request.path === "/user/watchlist" && request.method === "POST") {
       const bucket = data.get(user.id) ?? new Map<string, unknown>();
-      const items = ((bucket.get("watchlist") as unknown[] | undefined) ?? []).concat(request.body);
-      bucket.set("watchlist", items);
+      const items = ((bucket.get(library) as unknown[] | undefined) ?? []).concat(request.body);
+      bucket.set(library, items);
       data.set(user.id, bucket);
       return json(200, request.body);
+    }
+    if (request.path.startsWith("/user/profiles")) {
+      if (!state.profilesSupported) return json(404, { error: "Not found" });
+      const list = profilesOf(user);
+      const rest = request.path.slice("/user/profiles".length);
+      if (rest === "" && request.method === "GET") return json(200, { profiles: list.map(publicProfile) });
+      if (rest === "" && request.method === "POST") {
+        const b = request.body as { name: string; avatar: string; kind: "adult" | "kids"; pin?: string };
+        const created = { id: `p_${randomUUID().slice(0, 8)}`, name: b.name, avatar: b.avatar, kind: b.kind, isDefault: false, pin: b.pin ?? null };
+        list.push(created);
+        return json(201, publicProfile(created));
+      }
+      const match = /^\/([^/]+)(\/verify-pin)?$/.exec(rest);
+      const target = match ? list.find((p) => p.id === match[1]) : undefined;
+      if (!target) return json(404, { error: "Not found" });
+      if (match![2] && request.method === "POST") return (request.body as { pin?: string }).pin === target.pin ? json(204) : json(403, { error: "Wrong PIN" });
+      if (request.method === "PUT") {
+        const b = request.body as { name?: string; avatar?: string; kind?: "adult" | "kids"; pin?: string | null };
+        if (b.name !== undefined) target.name = b.name;
+        if (b.avatar !== undefined) target.avatar = b.avatar;
+        if (b.kind !== undefined) target.kind = b.kind;
+        if (b.pin !== undefined) target.pin = b.pin;
+        return json(200, publicProfile(target));
+      }
+      if (request.method === "DELETE") {
+        list.splice(list.indexOf(target), 1);
+        return json(204);
+      }
     }
     if (request.path === "/user/feedback" && request.method === "GET") {
       const bucket = data.get(user.id) ?? new Map();
@@ -100,7 +140,7 @@ export function createMockBackend(options: { accessTtlMs?: number } = {}) {
       data.set(user.id, bucket);
       return json(200, request.body);
     }
-    if (request.path === "/user/plus" && request.method === "GET") return json(200, { active: true, plan: "early_access", validUntil: null, paywall: false });
+    if (request.path === "/user/plus" && request.method === "GET") return json(200, state.plus ? { active: true, plan: "early_access", validUntil: null, paywall: false } : { active: false, plan: null, validUntil: null, paywall: true });
     if (request.path === "/user/plus/checkout" && request.method === "POST") return json(200, { url: `https://checkout.example/${(request.body as { plan?: string })?.plan ?? "none"}` });
     if (request.path === "/user/trailer") return json(200, { youtubeVideoId: "abc123" });
     return json(404, { error: "Not found" });

@@ -2,7 +2,8 @@ import { create } from "zustand";
 import { api, ApiClientError } from "../lib/api";
 import { monotonicIso } from "../lib/iso";
 import type { Content, ContentType } from "../domain/types";
-import { globalKey, Outbox, readJson, userKey, writeJson } from "./persist";
+import { globalKey, Outbox, readJson, writeJson } from "./persist";
+import { libraryKey, libraryName } from "./profile";
 
 /** SavedListItem.kt — one My List entry. Server order (added_at ASC) is preserved; the UI shows newest first. */
 export interface SavedListItem {
@@ -91,7 +92,7 @@ const dismissedKey = (userId: string) => globalKey(`dismissed:${userId}`);
 const backfillFlagKey = (userId: string) => globalKey(`watchedBackfillDone:${userId}`);
 
 function persist(userId: string | null, items: SavedListItem[]) {
-  if (userId) writeJson(userKey(userId, "myList"), items);
+  if (userId) writeJson(libraryKey(userId, "myList"), items);
 }
 
 function snapshotFromContent(content: Content, providerId: string, watched: boolean): SavedListItem {
@@ -181,8 +182,8 @@ export const useMyList = create<MyListState>((set, get) => {
     items: [],
 
     hydrate(userId) {
-      outbox = new Outbox<WatchlistDto>(userId, "watchlist");
-      set({ userId, items: readJson<SavedListItem[]>(userKey(userId, "myList"), []) });
+      outbox = new Outbox<WatchlistDto>(userId, libraryName("watchlist"));
+      set({ userId, items: readJson<SavedListItem[]>(libraryKey(userId, "myList"), []) });
     },
     reset() {
       outbox = null;

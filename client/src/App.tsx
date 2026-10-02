@@ -1,8 +1,10 @@
 import { lazy, Suspense, useEffect } from "react";
-import { BrowserRouter, Route, Routes, useParams } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import { installModalityTracking } from "./lib/modality";
 import { installSpatialNavigation } from "./lib/spatialNav";
+import { routes } from "./lib/routes";
 import { useAuth } from "./state/auth";
+import { activeProfileOf, needsProfilePicker, useProfiles } from "./state/profiles";
 import { detachSession, startGuestSession, startSession } from "./state/sync";
 import { AppShell } from "./ui/layout/AppShell";
 import { Spinner } from "./ui/components/States";
@@ -12,6 +14,7 @@ import { GenreResultsScreen, MoviesScreen, MyListScreen, TvShowsScreen } from ".
 import { DetailScreen } from "./ui/screens/Detail";
 import { GenresScreen } from "./ui/screens/Genres";
 import { Home } from "./ui/screens/Home";
+import { ProfilesScreen } from "./ui/screens/Profiles";
 import { SearchScreen } from "./ui/screens/Search";
 import { SourcesScreen } from "./ui/screens/Sources";
 
@@ -39,6 +42,21 @@ function SessionLifecycle() {
   return null;
 }
 
+/** Plus accounts with more than one profile start each visit at "Who's watching?", then land where they were heading. */
+function ProfileGate() {
+  const status = useAuth((s) => s.status);
+  const needsPicker = useProfiles(needsProfilePicker);
+  const { pathname, search } = useLocation();
+  if (status === "signedIn" && needsPicker && pathname !== routes.profiles) return <Navigate to={routes.profiles} replace state={{ from: pathname + search }} />;
+  return null;
+}
+
+/** A kids profile has no Settings: addons, signing out and the Plus page are for the adults. */
+function RequireAdult({ children }: { children: React.ReactNode }) {
+  const kids = useProfiles((s) => s.plus && activeProfileOf(s)?.kind === "kids");
+  return kids ? <Navigate to="/" replace /> : <>{children}</>;
+}
+
 function NotFound() {
   return (
     <div className="state" style={{ paddingTop: "var(--nav-h)" }}>
@@ -63,7 +81,9 @@ export function App() {
   return (
     <BrowserRouter>
       <SessionLifecycle />
+      <ProfileGate />
       <Routes>
+        <Route path="profiles" element={<RequireAuth><ProfilesScreen /></RequireAuth>} />
         <Route element={<AuthLayout />}>
           <Route path="/auth" element={<AuthStartScreen />} />
           <Route path="/auth/method/:intent" element={<AuthMethodScreen />} />
@@ -84,9 +104,9 @@ export function App() {
           <Route path="genres/:genre" element={<GenreRoute />} />
           <Route path="search" element={<SearchScreen />} />
           <Route path="my-list" element={<RequireAuth><MyListScreen /></RequireAuth>} />
-          <Route path="settings" element={<RequireAuth><SettingsScreen /></RequireAuth>} />
-          <Route path="settings/addons/add" element={<RequireAuth><AddAddonScreen /></RequireAuth>} />
-          <Route path="settings/:tab" element={<RequireAuth><SettingsScreen /></RequireAuth>} />
+          <Route path="settings" element={<RequireAuth><RequireAdult><SettingsScreen /></RequireAdult></RequireAuth>} />
+          <Route path="settings/addons/add" element={<RequireAuth><RequireAdult><AddAddonScreen /></RequireAdult></RequireAuth>} />
+          <Route path="settings/:tab" element={<RequireAuth><RequireAdult><SettingsScreen /></RequireAdult></RequireAuth>} />
           <Route path="detail/:providerId/:type/:id" element={<DetailScreen />} />
           <Route path="movies/:slug" element={<DetailScreen kind="MOVIE" />} />
           <Route path="tv-shows/:slug" element={<DetailScreen kind="TV_SHOW" />} />

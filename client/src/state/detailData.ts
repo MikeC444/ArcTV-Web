@@ -2,8 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useProviders } from "../domain/registry";
 import type { Content, ContentType } from "../domain/types";
 import { api } from "../lib/api";
-import { blockedSet, withoutBlocked } from "../domain/blockedGenres";
-import { useBlockedGenres } from "./blockedGenres";
+import { isBlocked, withoutBlocked } from "../domain/blockedGenres";
+import { effectiveBlockedSet, isKidsProfile } from "./blockedGenres";
 import { distinctBy } from "../lib/format";
 import { useAddonsReady, withWatched } from "./hooks";
 import { fetchTrailerId } from "./trailer";
@@ -49,9 +49,15 @@ export function useDetail(providerId: string, type: ContentType, id: string, wat
         setLoading(false);
         return;
       }
+      // A kids profile can't open a title in a hidden genre by its address either (others' own Blocked Genres only hide it from the lists).
+      if (isKidsProfile() && isBlocked(detail, effectiveBlockedSet())) {
+        setContent(null);
+        setError("This title isn't available on a kids profile.");
+        setLoading(false);
+        return;
+      }
       setContent(detail);
       setLoading(false);
-
       // Cinemeta sends cast names but no photos: ask this site's server (which holds the TMDB key) for them and fill them in. Quiet when off.
       if (/^tt\d+$/.test(detail.id) && (detail.cast.length === 0 || detail.cast.some((m) => !m.photoUrl))) {
         void api<{ cast: TmdbCastEntry[] }>(`/cast?imdbId=${encodeURIComponent(detail.id)}&type=${detail.type}`)
@@ -76,7 +82,7 @@ export function useDetail(providerId: string, type: ContentType, id: string, wat
         const all: Content[] = [];
         for await (const batch of provider.getHomeSections()) all.push(...batch.flatMap((s) => s.items));
         if (cancelled) return;
-        const pool = withoutBlocked(distinctBy(all, (c) => c.id).filter((c) => c.id !== detail.id), blockedSet(useBlockedGenres.getState().genres));
+        const pool = withoutBlocked(distinctBy(all, (c) => c.id).filter((c) => c.id !== detail.id), effectiveBlockedSet());
         const genreIds = new Set(detail.genres.map((g) => g.id));
         const matches = genreIds.size ? pool.filter((c) => c.genres.some((g) => genreIds.has(g.id))) : [];
         setSimilar((matches.length ? matches : pool).slice(0, 15));

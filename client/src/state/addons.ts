@@ -7,7 +7,8 @@ import { normalizeManifestUrl } from "../domain/stremio/url";
 import type { InstalledAddon } from "../domain/types";
 import { api, ApiClientError } from "../lib/api";
 import { monotonicIso } from "../lib/iso";
-import { Outbox, readJson, userKey, writeJson } from "./persist";
+import { Outbox, readJson, writeJson } from "./persist";
+import { libraryKey, libraryName } from "./profile";
 
 export const CINEMETA_MANIFEST_URL = "https://v3-cinemeta.strem.io/manifest.json";
 
@@ -64,7 +65,7 @@ export const useAddons = create<AddonsState>((set, get) => {
   function commit(addons: StoredAddon[]) {
     set({ addons });
     const uid = get().userId;
-    if (uid) writeJson(userKey(uid, "addons"), addons);
+    if (uid) writeJson(libraryKey(uid, "addons"), addons);
     useProviders.getState().replaceAll(addons.filter((a) => a.enabled).map((a) => new StremioAddonProvider(a.manifestUrl, a.manifest)));
   }
 
@@ -104,8 +105,8 @@ export const useAddons = create<AddonsState>((set, get) => {
     ready: false,
 
     hydrate(userId) {
-      outbox = new Outbox<AddonDto>(userId, "addons");
-      const stored = readJson<StoredAddon[]>(userKey(userId, "addons"), []);
+      outbox = new Outbox<AddonDto>(userId, libraryName("addons"));
+      const stored = readJson<StoredAddon[]>(libraryKey(userId, "addons"), []);
       set({ userId, addons: stored, ready: stored.length > 0 });
       useProviders.getState().replaceAll(stored.filter((a) => a.enabled).map((a) => new StremioAddonProvider(a.manifestUrl, a.manifest)));
     },
@@ -182,7 +183,7 @@ export const useAddons = create<AddonsState>((set, get) => {
     bootstrapDefault() {
       const userId = get().userId;
       if (!userId || get().addons.length > 0) return;
-      const flag = userKey(userId, "defaultAddonBootstrapped");
+      const flag = libraryKey(userId, "defaultAddonBootstrapped");
       if (readJson<boolean>(flag, false)) return;
       writeJson(flag, true);
       const raw = cinemetaManifest as unknown as Record<string, unknown>;

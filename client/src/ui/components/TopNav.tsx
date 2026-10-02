@@ -3,6 +3,8 @@ import { Link, useLocation } from "react-router-dom";
 import { MdCategory, MdHome, MdMovie, MdOutlineBookmarkBorder, MdSearch, MdSettings, MdTv } from "react-icons/md";
 import { isDetailPath, NAV_ITEMS, routes } from "../../lib/routes";
 import { useAuth } from "../../state/auth";
+import { activeProfileOf, useProfiles } from "../../state/profiles";
+import { ProfileAvatar } from "./ProfileAvatar";
 import { MangoLogo } from "./Logo";
 import { Surface } from "./Surface";
 
@@ -52,7 +54,10 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
   }, [pathname]);
   const guest = useAuth((s) => s.status !== "signedIn");
   // Without an account the Settings link becomes "Sign In" (and Settings itself is unreachable).
-  const items = guest ? NAV_ITEMS.map((item) => (item.to === "/settings" ? { label: "Sign In", to: routes.auth } : item)) : NAV_ITEMS;
+  // A kids profile has no Settings (addons, sign-out and the Plus page stay with the adults): its nav ends at My List.
+  const profile = useProfiles((s) => (s.supported && s.plus ? activeProfileOf(s) : undefined));
+  const kids = profile?.kind === "kids";
+  const items = guest ? NAV_ITEMS.map((item) => (item.to === "/settings" ? { label: "Sign In", to: routes.auth } : item)) : kids ? NAV_ITEMS.filter((item) => item.to !== "/settings") : NAV_ITEMS;
   return (
     <header className="topnav" data-transparent={transparent} data-scrolled={scrolled} role="banner">
       <Link to="/" className="topnav__logo tvs" aria-label="Arc TV — Home" style={{ ["--tvs-radius" as string]: "6px", ["--tvs-border" as string]: "var(--text)" }}>
@@ -69,11 +74,16 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
         <Link to={routes.auth} state={{ from: pathname }} className="topnav__signin">
           Sign In
         </Link>
-      ) : (
+      ) : kids ? null : (
         <Link to="/settings" className="topnav__gear" aria-label="Settings" aria-current={selected === NAV_ITEMS.length - 1 ? "page" : undefined}>
           <MdSettings aria-hidden="true" />
         </Link>
       )}
+      {!guest && profile ? (
+        <Link to={routes.profiles} state={{ from: pathname }} className="topnav__profile" aria-label={`${profile.name} — switch profile`} title="Switch profile">
+          <ProfileAvatar avatar={profile.avatar} />
+        </Link>
+      ) : null}
       <nav className="tabbar" aria-label="Primary">
         {TABS.map((tab) => {
           const active = NAV_ITEMS[selected]?.to === tab.to;

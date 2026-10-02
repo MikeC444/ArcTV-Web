@@ -19,6 +19,8 @@ export interface BackendRequest {
   bearer?: string;
   body?: unknown;
   clientIp?: string;
+  /** The profile the request is for (X-ArcTV-Profile). Absent = the account's default profile. */
+  profileId?: string;
   timeoutMs?: number;
 }
 
@@ -33,6 +35,7 @@ export function createBackendClient(baseUrl: string, fetchImpl: typeof fetch = f
     };
     if (request.bearer) headers.Authorization = `Bearer ${request.bearer}`;
     if (request.clientIp) headers["X-Forwarded-For"] = request.clientIp;
+    if (request.profileId) headers["X-ArcTV-Profile"] = request.profileId;
     let body: string | undefined;
     if (request.body !== undefined) {
       headers["Content-Type"] = "application/json";
