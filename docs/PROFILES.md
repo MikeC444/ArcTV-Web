@@ -32,9 +32,9 @@ This file is the source of truth for the web app's behaviour **and** for what th
 
 Error codes (in the usual `{ error: { code, message } }`): `plus_required` (403), `pin_required` (403), `wrong_pin` (403).
 
-## What the backend (MangoTV-Live-TV) must provide — not built yet
+## What the backend (MangoTV-Live-TV) provides
 
-The web server only holds the list's *behaviour*; the profiles themselves and each profile's library live in the backend. Until it ships this, the web app runs in the "no profiles" mode above.
+**Built** on branch `claude/kind-franklin-1m27l9` of `MikeC444/MangoTV-Live-TV` (migration `0018_profiles`, 220 backend tests passing, `CHANGELOG.md` Post-Milestone-51), **not merged or deployed yet**. The web server only holds the *behaviour* around the list; the profiles themselves and each profile's library live in the backend. Until the backend is deployed, the web app runs in the "no profiles" mode above. What it implements, for the Firestick to rely on:
 
 1. **`profiles` table**: `id` (text, stable; the account's own profile is always `main`), `account_id`, `name` (≤24), `avatar` (one of the 12 ids), `kind` (`adult` | `kids`), `pin_hash` (null = no PIN; **hash it** with a slow hash, 4 digits, never return it), `is_default`, timestamps. Created lazily: every account has `main` (named after the account's display name, avatar `sunrise`). Max 5 per account (the web server checks too).
 2. **Endpoints** (all bearer-authenticated, all for the signed-in account only):
@@ -45,7 +45,9 @@ The web server only holds the list's *behaviour*; the profiles themselves and ea
    * `POST /user/profiles/:id/verify-pin` `{ pin }` → **204 right, 403 wrong** (never 401: the web server reads 401 as "session over"), **429** after repeated wrong tries (lock the profile for a while per profile, not per address).
 3. **Per-profile libraries.** Every other `/user/*` call takes the profile from the **`X-ArcTV-Profile`** request header (absent = `main`): `/user/watchlist`, `/user/watch-progress`, `/user/continue-watching`, `/user/history`, `/user/settings`, `/user/addons`, `/user/feedback`. Add `profile_id` (default `main`) to those tables and include it in their natural keys. **Existing rows belong to `main`.** The header must be checked to belong to the account (404 otherwise). `/user/feedback` already has `profileId`; keep it and treat the header as the authority. `/user/trailer`, `/user/release-date`, `/user/plus`, `/user/me` are account-level and ignore it.
 4. **Plus**: the web server already enforces Plus for create / edit / remove / open-another-profile. The backend should also refuse to create or select profiles other than `main` for an account without Plus.
-5. **Rate limit** `verify-pin` and lock out guessing (4 digits is only 10,000 tries).
+5. **Rate limit** `verify-pin` and lock out guessing (4 digits is only 10,000 tries): implemented as 5 wrong PINs in a row lock the profile for 5 minutes (429 + `Retry-After`), counted per profile whatever the address, plus 30 per minute per address.
+
+Tested end to end: `server/tests/integration/profiles.test.ts` runs this web server against the real backend and Postgres (`MANGOTV_BACKEND_DIR=<checkout of MangoTV-Live-TV> bash scripts/run-backend-integration.sh`). The pinned `MANGOTV_BACKEND_REF` in `scripts/lib/test-backend.sh` predates profiles, so there that suite skips itself.
 
 Security note: the PIN is a household gate. It stops someone using the app from opening, changing or removing a locked profile; it does not protect against the account owner's own password.
 
