@@ -124,8 +124,8 @@ function PlusPane() {
   return (
     <div className="plus">
       <div className="plus__status">
-        <span className="plus__badge">Free plan</span>
-        <span className="t-body-sm c-text-2">You're on the free plan.</span>
+        <span className="plus__badge">Early access</span>
+        <span className="t-body-sm c-text-2">ArcTV Plus is in early access: its features are free for now and will need a Plus subscription once it launches.</span>
       </div>
       <p className="t-body-md plus__free">{PLUS_FREE_NOTE}</p>
       <p className="plus__proceeds">
@@ -138,7 +138,7 @@ function PlusPane() {
           <li key={perk.title} className="plus__perk">
             <div className="plus__perkhead">
               <span className="t-title-md">{perk.title}</span>
-              {perk.status === "soon" ? <span className="plus__soon">Coming soon</span> : null}
+              <span className="plus__soon">{perk.status === "soon" ? "Coming soon" : "Included in early access"}</span>
             </div>
             <p className="t-body-sm c-text-2" style={{ margin: "4px 0 0" }}>{perk.detail}</p>
           </li>

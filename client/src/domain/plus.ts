@@ -24,11 +24,12 @@ export const PLUS_PLANS: PlusPlan[] = [
 export interface PlusPerk {
   title: string;
   detail: string;
-  /** "soon" perks are announced but not switched on yet. */
-  status: "soon";
+  /** "soon" perks are announced but not switched on yet; "included" ones are on for everyone while Plus is in early access. */
+  status: "soon" | "included";
 }
 
 export const PLUS_PERKS: PlusPerk[] = [
+  { title: "Picked for you", detail: "A Home row chosen from the movies you like, finish and save, with the reason under each poster, plus Like and Not for me on movies.", status: "included" },
   { title: "Profiles", detail: "Separate profiles on one account, each with its own My List, Continue Watching and blocked genres.", status: "soon" },
   { title: "Parental controls", detail: "A PIN, plus locks on genres and titles, built on Blocked Genres.", status: "soon" },
   { title: "Bigger stream relay allowance", detail: "More room for sources a browser can't play directly.", status: "soon" },

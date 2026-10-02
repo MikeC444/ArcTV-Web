@@ -1,7 +1,7 @@
 # "Picked for you" — ArcTV Plus recommendations (private preview)
 
 A personalised row on Home, built only from ArcTV's own data and Cinemeta. No Trakt, no external AI service, no other metadata provider.
-**Not public yet:** it only appears when the hidden Plus preview flag is on (open any page once with `?plusPreview=1`; `?plusPreview=0` switches it off).
+**An ArcTV Plus feature, in early access:** it is on for everyone and labelled as Plus ("Picked for you · ArcTV Plus"), free for now. The switch is `PLUS_EARLY_ACCESS` in `client/src/state/plusAccess.ts`; when subscriptions launch, make `hasPlus` read the account's status instead. The old `?plusPreview=1` flag is gone.
 With the flag off nothing about it is visible: no row, no Like / Not for me buttons, no Plus tab.
 
 ## What it uses
