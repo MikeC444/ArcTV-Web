@@ -1,8 +1,7 @@
 /**
  * ArcTV Plus — the optional paid tier. The whole app stays free; Plus adds extras.
- * Everything the Settings → ArcTV Plus tab shows comes from here, so launching is a matter of filling this in, per plan:
- *  - checkoutUrl: a hosted checkout page (for example a Stripe Payment Link). Empty = "opens soon".
- *  - price: shown as-is (e.g. "$3.99"); null = "Price announced soon".
+ * What the Settings → ArcTV Plus tab shows comes from here. The real prices live in Stripe and are shown on its checkout page;
+ * `price` is only a label for the plan card (e.g. "$3.99"; null = "Price at checkout").
  */
 export interface PlusPlan {
   id: "monthly" | "yearly" | "lifetime";
@@ -12,13 +11,12 @@ export interface PlusPlan {
   /** What the person is buying, shown under the price. */
   blurb: string;
   note?: string;
-  checkoutUrl: string;
 }
 
 export const PLUS_PLANS: PlusPlan[] = [
-  { id: "monthly", label: "Monthly", price: null, per: "per month", blurb: "Cancel any time.", checkoutUrl: "" },
-  { id: "yearly", label: "Yearly", price: null, per: "per year", blurb: "Cancel any time.", note: "Best value", checkoutUrl: "" },
-  { id: "lifetime", label: "Lifetime", price: null, per: "one-time payment", blurb: "Pay once, keep Plus forever. No renewals.", note: "Pay once", checkoutUrl: "" },
+  { id: "monthly", label: "Monthly", price: null, per: "per month", blurb: "Cancel any time." },
+  { id: "yearly", label: "Yearly", price: null, per: "per year", blurb: "Cancel any time.", note: "Best value" },
+  { id: "lifetime", label: "Lifetime", price: null, per: "one-time payment", blurb: "Pay once, keep Plus forever. No renewals.", note: "Pay once" },
 ];
 
 export interface PlusPerk {

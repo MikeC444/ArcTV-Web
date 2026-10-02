@@ -100,6 +100,8 @@ export function createMockBackend(options: { accessTtlMs?: number } = {}) {
       data.set(user.id, bucket);
       return json(200, request.body);
     }
+    if (request.path === "/user/plus" && request.method === "GET") return json(200, { active: true, plan: "early_access", validUntil: null, paywall: false });
+    if (request.path === "/user/plus/checkout" && request.method === "POST") return json(200, { url: `https://checkout.example/${(request.body as { plan?: string })?.plan ?? "none"}` });
     if (request.path === "/user/trailer") return json(200, { youtubeVideoId: "abc123" });
     return json(404, { error: "Not found" });
   };
