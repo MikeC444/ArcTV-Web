@@ -29,7 +29,7 @@ jobs:
       - run: npm run build
 
   # Runs the REAL MangoTV backend (from the Firestick repository, read-only) against a throwaway Postgres.
-  # It needs a fine-grained token with *read-only* "Contents" access to MikeC444/MangoTV-Live-TV, stored as the
+  # It needs a fine-grained token with *read-only* "Contents" access to MikeC444/ArcTV-AndroidTV, stored as the
   # repository secret BACKEND_REPO_TOKEN. Without it this job is skipped (the job above still gates merges).
   backend-tests:
     name: Integration + browser tests against the real backend
@@ -57,7 +57,7 @@ jobs:
         if: env.HAS_BACKEND_TOKEN == 'true'
         uses: actions/checkout@v4
         with:
-          repository: MikeC444/MangoTV-Live-TV
+          repository: MikeC444/ArcTV-AndroidTV
           ref: 924d366
           token: ${{ secrets.BACKEND_REPO_TOKEN }}
           path: backend-src

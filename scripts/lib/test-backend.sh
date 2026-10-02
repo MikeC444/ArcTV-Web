@@ -2,15 +2,15 @@
 # Shared helpers: provision a THROWAWAY Postgres database + run the real, unmodified MangoTV backend against it.
 # Sourced by run-backend-integration.sh and run-e2e.sh. Never touches a real database or the source repository.
 #
-#   MANGOTV_BACKEND_DIR   path to a checkout of MangoTV-Live-TV (default: clone it into .backend-under-test)
-#   MANGOTV_BACKEND_REPO  git URL to clone           (default: https://github.com/MikeC444/MangoTV-Live-TV)
+#   MANGOTV_BACKEND_DIR   path to a checkout of ArcTV-AndroidTV (default: clone it into .backend-under-test)
+#   MANGOTV_BACKEND_REPO  git URL to clone           (default: https://github.com/MikeC444/ArcTV-AndroidTV)
 #   MANGOTV_BACKEND_REF   git ref to test against    (default: 924d366 — the commit this port was built against)
 #   TEST_DATABASE_URL     a DISPOSABLE database; its name must contain "test" or end in "_it".
 #                         Default (Debian/Ubuntu boxes / this sandbox, when run as root): the local Postgres cluster is started and a
 #                         throwaway role + database (mangotv_web_it) is created with a random per-run password.
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 WORK="$ROOT/.backend-under-test"
-REPO="${MANGOTV_BACKEND_REPO:-https://github.com/MikeC444/MangoTV-Live-TV}"
+REPO="${MANGOTV_BACKEND_REPO:-https://github.com/MikeC444/ArcTV-AndroidTV}"
 REF="${MANGOTV_BACKEND_REF:-924d366}"
 BACKEND_PORT="${BACKEND_PORT:-3199}"
 BACKEND_PID=""

@@ -1,6 +1,6 @@
 # Phase 1 audit — Firestick app → MangoTV Web
 
-Source of truth: `MikeC444/MangoTV-Live-TV` (read-only, inspected at commit `924d366`).
+Source of truth: `MikeC444/ArcTV-AndroidTV` (read-only, inspected at commit `924d366`).
 Target: `MikeC444/MangotvWebb` (was empty — no commits, no config to preserve).
 
 Nothing in the source repository was modified, and nothing in this repository
