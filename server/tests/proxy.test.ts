@@ -55,6 +55,15 @@ describe("/api/user allow-list proxy", () => {
     expect((await request(app).get("/api/user/feedback")).status).toBe(401);
   });
 
+  it("forwards the ArcTV Plus status and checkout, signed-in only", async () => {
+    const { client } = await signedIn();
+    expect((await client.get("/api/user/plus")).body).toMatchObject({ active: true, paywall: false });
+    expect((await client.post("/api/user/plus/checkout").send({ plan: "yearly" })).body).toEqual({ url: "https://checkout.example/yearly" });
+    expect((await client.agent.post("/api/user/plus/checkout").set("X-MangoTV-Client", "web").set("Content-Type", "application/json").send("[1]")).status).toBe(400);
+    const backend = createMockBackend();
+    expect((await request(appWith(backend.fetch)).get("/api/user/plus")).status).toBe(401);
+  });
+
   it("only accepts JSON object bodies on mutations", async () => {
     const { client } = await signedIn();
     const res = await client.agent.post("/api/user/watchlist").set("X-MangoTV-Client", "web").set("Content-Type", "application/json").send("[1,2]");

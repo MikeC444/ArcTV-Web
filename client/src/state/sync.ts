@@ -1,6 +1,7 @@
 import { useAddons } from "./addons";
 import { useAuth } from "./auth";
 import { useFeedback } from "./feedback";
+import { usePlus } from "./plus";
 import { useContinueWatching } from "./continueWatching";
 import { useMyList } from "./myList";
 import { clearRecommendationCache } from "./recommendations";
@@ -25,6 +26,7 @@ export function hydrateAll(userId: string): void {
   useContinueWatching.getState().hydrate(userId);
   useAddons.getState().hydrate(userId);
   useFeedback.getState().hydrate(userId);
+  usePlus.getState().hydrate(userId);
 }
 
 export async function retryPendingAll(): Promise<void> {
@@ -40,6 +42,7 @@ export async function retryPendingAll(): Promise<void> {
 export async function syncAll(): Promise<void> {
   // Taste feedback syncs alongside the rest. A backend that predates /user/feedback just answers 404: it stays on this device and is retried next launch.
   const feedbackPull = useFeedback.getState().pull();
+  const plusPull = usePlus.getState().pull();
   const [settings, watchlist, continueWatching, addons] = await Promise.all([
     useSettings.getState().pull(),
     useMyList.getState().pull(),
@@ -47,6 +50,7 @@ export async function syncAll(): Promise<void> {
     useAddons.getState().pull(),
   ]);
   await feedbackPull;
+  await plusPull;
   await retryPendingAll();
 
   // A brand-new account — every cloud domain confirmed empty — starts with the same default addon a fresh TV gets.
@@ -90,6 +94,7 @@ export function resetAllStores(): void {
   useContinueWatching.getState().reset();
   useAddons.getState().reset();
   useFeedback.getState().reset();
+  usePlus.getState().reset();
   clearRecommendationCache();
 }
 

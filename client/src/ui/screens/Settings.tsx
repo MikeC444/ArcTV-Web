@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { MdAccountCircle, MdAdd, MdBlock, MdFavorite, MdWorkspacePremium, MdArrowDownward, MdArrowUpward, MdCheck, MdCloudUpload, MdDelete, MdExtension, MdGridView, MdInfo, MdLogout, MdMusicNote, MdSubtitles, MdVolumeUp } from "react-icons/md";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { PLUS_FREE_NOTE, PLUS_PERKS, PLUS_PLANS, PLUS_PROCEEDS_NOTE } from "../../domain/plus";
@@ -12,7 +12,8 @@ import { useAddons, CINEMETA_MANIFEST_URL } from "../../state/addons";
 import { useAuth } from "../../state/auth";
 import { useAddonsReady } from "../../state/hooks";
 import { buildGenreList } from "./Genres";
-import { useHasPlus } from "../../state/plusAccess";
+import { ApiClientError } from "../../lib/api";
+import { usePlus, watchForPurchase, type PlusPlanId } from "../../state/plus";
 import { useBlockedGenres } from "../../state/blockedGenres";
 import { useSettings } from "../../state/settings";
 import { signOutAndWipe } from "../../state/sync";
@@ -31,21 +32,18 @@ const CATEGORIES: Array<{ id: Tab; icon: ReactNode; title: string; subtitle: str
   { id: "subtitles", icon: <MdSubtitles />, title: "Subtitles", subtitle: "Default on/off and preferred language" },
 ];
 const isTab = (value: string | undefined): value is Tab => CATEGORIES.some((c) => c.id === value);
-/** ArcTV Plus is hidden from everyone but the private preview until it launches. */
-const visibleCategories = (hasPlus: boolean) => CATEGORIES.filter((c) => c.id !== "plus" || hasPlus);
 
 /** ui/settings/SettingsScreen.kt — two panes: categories on the left, the selected category's settings on the right. */
 export function SettingsScreen() {
   const { tab } = useParams<{ tab?: string }>();
   const navigate = useNavigate();
-  const hasPlus = useHasPlus();
-  const categories = visibleCategories(hasPlus);
-  const selected: Tab = isTab(tab) && categories.some((c) => c.id === tab) ? tab : "account";
+  const categories = CATEGORIES;
+  const selected: Tab = isTab(tab) ? tab : "account";
   const category = CATEGORIES.find((c) => c.id === selected)!;
   useEffect(() => {
     document.title = `Settings · ${category.title} · Arc TV`;
   }, [category]);
-  if (tab && (!isTab(tab) || (tab === "plus" && !hasPlus)) && tab !== "addons") return <Navigate to="/settings" replace />;
+  if (tab && !isTab(tab) && tab !== "addons") return <Navigate to="/settings" replace />;
 
   return (
     <div className="page">
@@ -119,13 +117,65 @@ function BlockedGenresPane() {
   );
 }
 
-/** ArcTV Plus: what it adds and how to subscribe. Nothing here changes what the free app does. */
+/** ArcTV Plus: what it adds, whether you have it, and how to subscribe. Nothing here changes what the free app does. */
 function PlusPane() {
+  const plus = usePlus();
+  const [busy, setBusy] = useState<PlusPlanId | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [waiting, setWaiting] = useState(false);
+  const stopWatching = useRef<(() => void) | null>(null);
+  useEffect(() => {
+    void usePlus.getState().pull();
+    return () => stopWatching.current?.();
+  }, []);
+  useEffect(() => {
+    if (plus.active) setWaiting(false);
+  }, [plus.active]);
+
+  async function choose(plan: PlusPlanId) {
+    setBusy(plan);
+    setError(null);
+    // Opened straight from the click (a window opened after an await is blocked as a pop-up), then pointed at the checkout page.
+    const tab = window.open("", "_blank");
+    try {
+      const url = await plus.checkout(plan);
+      if (tab) tab.location.href = url;
+      else window.location.assign(url);
+      setWaiting(true);
+      stopWatching.current?.();
+      stopWatching.current = watchForPurchase();
+    } catch (e) {
+      tab?.close();
+      setError(e instanceof ApiClientError && e.status === 409 ? "You already have Plus for life." : e instanceof ApiClientError && e.status === 503 ? "Plus checkout isn't available yet." : "Couldn't start checkout. Try again in a moment.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  const planLabel = PLUS_PLANS.find((p) => p.id === plus.plan)?.label;
+  const owned = plus.paywall && plus.active;
   return (
     <div className="plus">
       <div className="plus__status">
-        <span className="plus__badge">Early access</span>
-        <span className="t-body-sm c-text-2">ArcTV Plus is in early access: its features are free for now and will need a Plus subscription once it launches.</span>
+        {!plus.paywall ? (
+          <>
+            <span className="plus__badge">Early access</span>
+            <span className="t-body-sm c-text-2">ArcTV Plus is in early access: its features are free for now and will need a Plus subscription once it launches.</span>
+          </>
+        ) : owned ? (
+          <>
+            <span className="plus__badge">ArcTV Plus</span>
+            <span className="t-body-sm c-text-2">
+              You have ArcTV Plus{planLabel ? ` (${planLabel})` : ""}
+              {plus.validUntil ? `. Your current period runs to ${new Date(plus.validUntil).toLocaleDateString()}.` : ", for life."} Thank you for supporting ArcTV.
+            </span>
+          </>
+        ) : (
+          <>
+            <span className="plus__badge">Free plan</span>
+            <span className="t-body-sm c-text-2">You're on the free plan.</span>
+          </>
+        )}
       </div>
       <p className="t-body-md plus__free">{PLUS_FREE_NOTE}</p>
       <p className="plus__proceeds">
@@ -138,39 +188,39 @@ function PlusPane() {
           <li key={perk.title} className="plus__perk">
             <div className="plus__perkhead">
               <span className="t-title-md">{perk.title}</span>
-              <span className="plus__soon">{perk.status === "soon" ? "Coming soon" : "Included in early access"}</span>
+              <span className="plus__soon">{perk.status === "soon" ? "Coming soon" : plus.paywall ? "Plus" : "Included in early access"}</span>
             </div>
             <p className="t-body-sm c-text-2" style={{ margin: "4px 0 0" }}>{perk.detail}</p>
           </li>
         ))}
       </ul>
 
-      <h3 className="t-title-md plus__h">How to subscribe</h3>
-      <ol className="plus__steps t-body-md">
-        <li>Sign in to your ArcTV account (you're already signed in here).</li>
-        <li>Pick a plan below: monthly, yearly, or a one-time Lifetime payment.</li>
-        <li>Complete the secure checkout. Plus is added to your account.</li>
-      </ol>
+      {plus.paywall && !plus.active ? (
+        <>
+          <h3 className="t-title-md plus__h">How to subscribe</h3>
+          <ol className="plus__steps t-body-md">
+            <li>Pick a plan below: monthly, yearly, or a one-time Lifetime payment.</li>
+            <li>Complete the secure checkout in the page that opens. It is added to your account (you're already signed in here).</li>
+            <li>Come back to this tab: Plus switches on by itself within a minute.</li>
+          </ol>
 
-      <div className="plus__plans" role="group" aria-label="Plans">
-        {PLUS_PLANS.map((plan) => (
-          <div key={plan.id} className="plus__plan" data-featured={plan.note ? "true" : undefined}>
-            {plan.note ? <span className="plus__note">{plan.note}</span> : null}
-            <div className="t-title-md">{plan.label}</div>
-            <div className="plus__price">{plan.price ?? "Price announced soon"}</div>
-            {plan.price ? <div className="t-label-sm c-text-3">{plan.per}</div> : null}
-            <p className="t-body-sm c-text-2" style={{ margin: "8px 0 14px" }}>{plan.blurb}</p>
-            {plan.checkoutUrl ? (
-              <MangoButton text={plan.id === "lifetime" ? "Get Lifetime" : `Choose ${plan.label}`} icon={<MdWorkspacePremium />} variant="filled" compact onClick={() => window.open(plan.checkoutUrl, "_blank", "noopener,noreferrer")} />
-            ) : (
-              <MangoButton text="Opens soon" icon={<MdWorkspacePremium />} compact disabled />
-            )}
+          <div className="plus__plans" role="group" aria-label="Plans">
+            {PLUS_PLANS.map((plan) => (
+              <div key={plan.id} className="plus__plan" data-featured={plan.note ? "true" : undefined}>
+                {plan.note ? <span className="plus__note">{plan.note}</span> : null}
+                <div className="t-title-md">{plan.label}</div>
+                <div className="plus__price">{plan.price ?? "Price at checkout"}</div>
+                <div className="t-label-sm c-text-3">{plan.per}</div>
+                <p className="t-body-sm c-text-2" style={{ margin: "8px 0 14px" }}>{plan.blurb}</p>
+                <MangoButton text={busy === plan.id ? "Opening…" : plan.id === "lifetime" ? "Get Lifetime" : `Choose ${plan.label}`} icon={<MdWorkspacePremium />} variant="filled" compact disabled={busy !== null} onClick={() => void choose(plan.id)} />
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-      <p className="t-body-sm c-text-3" style={{ margin: "12px 0 0" }}>
-        {PLUS_PLANS.some((p) => p.checkoutUrl) ? "Payments are handled by a secure checkout page." : "Plus isn't on sale yet. When it is, you'll subscribe right here — no need to do anything now."}
-      </p>
+          {waiting ? <p className="t-body-sm c-text-2" style={{ margin: "12px 0 0" }}>Waiting for your payment… this switches on by itself when it goes through.</p> : null}
+          {error ? <p className="t-body-sm" role="alert" style={{ margin: "12px 0 0", color: "var(--error)" }}>{error}</p> : null}
+          <p className="t-body-sm c-text-3" style={{ margin: "12px 0 0" }}>Payments are handled by Stripe's secure checkout page; we never see your card.</p>
+        </>
+      ) : null}
     </div>
   );
 }

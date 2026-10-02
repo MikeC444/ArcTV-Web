@@ -26,6 +26,9 @@ const ALLOWED: ReadonlyArray<readonly [method: string, path: RegExp]> = [
   ["DELETE", /^\/addons$/],
   ["GET", /^\/trailer$/],
   ["GET", /^\/release-date$/],
+  // ArcTV Plus: whether this account has it, and starting a Stripe checkout for a plan.
+  ["GET", /^\/plus$/],
+  ["POST", /^\/plus\/checkout$/],
 ];
 
 /** Lookups against TMDB are not user-specific, so one answer can serve everyone and spare the shared rate limit. */

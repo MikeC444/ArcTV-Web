@@ -4,6 +4,7 @@ One sentence per update. **Keep this file current: every new change gets one lin
 The sorting is Claude's recommendation for a D-pad TV app (own player, QR sign-in), not a final decision. Move a line between sections to overrule it.
 
 ## ✅ Firestick needs these (recommended)
+- [ ] (this change) — ArcTV Plus paywall: the Settings → ArcTV Plus tab sells Monthly / Yearly / Lifetime through Stripe Checkout, and Plus features (Picked for you, Like / Not for me) need an account with Plus; the backend (`GET /user/plus`, Stripe webhook) decides, and is off by default (everyone has Plus as early access). The Firestick shows the checkout as a QR code.
 - [ ] (this change) — ArcTV Plus is in early access: the Plus tab, "Picked for you" (labelled "· ArcTV Plus") and Like / Not for me are on for everyone, free for now; the `?plusPreview=1` flag is removed. The Firestick shows the same labels.
 - [ ] (this change) — Blocked Genres is now saved to the account's settings (new `blockedGenres` field, shared with the Firestick app) instead of only this browser; a new account adopts the list blocked in the browser before signing in.
 - [ ] bc1a55c, 53757a8 — Mango TV renamed to Arc TV in all visible text and the wordmark (logo images, colours, storage keys and env vars unchanged; the Firestick app needs the same rename and new artwork).

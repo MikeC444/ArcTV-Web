@@ -6,7 +6,6 @@ const { useFeedback } = await import("./feedback");
 const { useMyList } = await import("./myList");
 const { cachedResult, storeResult, clearRecommendationCache, interactionInputs } = await import("./recommendations");
 const { collectInteractions, signatureOf } = await import("../domain/recommend/signals");
-const { PLUS_EARLY_ACCESS, hasPlusNow } = await import("./plusAccess");
 const { resetAllStores } = await import("./sync");
 
 const movie = { id: "tt1", title: "One" };
@@ -79,12 +78,5 @@ describe("per-profile result cache", () => {
     storeResult("u1", "a", "sig1", "pool1", result);
     resetAllStores();
     expect(cachedResult("u1", "a", "sig1", "pool1")).toBeNull();
-  });
-});
-
-describe("ArcTV Plus early access", () => {
-  it("is on for everyone while Plus is in early access, with no private query flag", () => {
-    expect(PLUS_EARLY_ACCESS).toBe(true);
-    expect(hasPlusNow()).toBe(true);
   });
 });
