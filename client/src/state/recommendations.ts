@@ -10,6 +10,7 @@ import { useContinueWatching } from "./continueWatching";
 import { useFeedback } from "./feedback";
 import { useMyList, type SavedListItem } from "./myList";
 import { useHasPlus } from "./plusAccess";
+import { readJson, userKey, writeJson } from "./persist";
 import { activeProfileId } from "./profile";
 
 /** What the profile's stored data says, as engine inputs. Rebuilt from the current stores every time, so edits and removals are always reflected. */
@@ -43,8 +44,25 @@ export function excludedFromPicks(
   return ids;
 }
 
-/** Fixed for one page load and different on the next, so a refresh can reorder near-tied picks (domain/recommend/variety.ts) while browsing stays stable. */
+/** Fixed for one page load and different on the next: a refresh rotates most of the row (domain/recommend/rotation.ts) while browsing stays stable. */
 const PAGE_SEED = Math.floor(Math.random() * 0xffffffff);
+
+const shownKey = (userId: string, profileId: string): string => userKey(userId, `picked:shown:${profileId}`);
+const previousShownMemo = new Map<string, ReadonlySet<string>>();
+
+/** The ids the previous page load showed (read once per page load, so they don't change as this load's row is rebuilt). Wiped with the account on sign-out. */
+export function previousShown(userId: string, profileId: string): ReadonlySet<string> {
+  const key = shownKey(userId, profileId);
+  let ids = previousShownMemo.get(key);
+  if (!ids) {
+    ids = new Set(readJson<string[]>(key, []));
+    previousShownMemo.set(key, ids);
+  }
+  return ids;
+}
+
+/** Remembers what this load showed, for the next load to move away from. */
+export const rememberShown = (userId: string, profileId: string, ids: string[]): void => writeJson(shownKey(userId, profileId), ids);
 
 // ── per-profile result cache ────────────────────────────────────────────────
 interface CacheEntry {
@@ -63,7 +81,10 @@ export function cachedResult(userId: string, profileId: string, signature: strin
 export const storeResult = (userId: string, profileId: string, signature: string, poolKey: string, result: EngineResult): void => {
   resultCache.set(cacheKey(userId, profileId), { signature, poolKey, result });
 };
-export const clearRecommendationCache = (): void => resultCache.clear();
+export const clearRecommendationCache = (): void => {
+  resultCache.clear();
+  previousShownMemo.clear();
+};
 
 const toCandidate = (c: Content): Candidate => ({ id: c.id, title: c.title, providerId: c.providerId, genres: c.genres.map((g) => g.name), rating: c.rating });
 
@@ -117,12 +138,14 @@ export function usePickedForYou(pool: Content[] | undefined): PickedForYou {
       excludeIds,
       pool: movies.map(toCandidate),
       seed: PAGE_SEED,
+      previousShown: previousShown(userId, profileId),
       interactionRefs: refs,
       loadFeatures: (r, limit) => loadFeaturesCached(r, limit, fetchFeatures),
     })
       .then((res) => {
         if (gen !== generation.current) return;
         storeResult(userId, profileId, signature + "#" + [...excludeIds].sort().join(","), poolKey, res);
+        if (res.mode === "personal") rememberShown(userId, profileId, res.items.map((i) => i.id));
         setResult(res);
       })
       .catch(() => gen === generation.current && setResult(null));

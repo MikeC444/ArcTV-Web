@@ -26,9 +26,16 @@ The movies already listed on the user's Home rows (Cinemeta's popular / featured
 All numbers: `client/src/domain/recommend/config.ts` (signal weights, category weights, result count, cold-start threshold, fetch budgets, cache sizes, row titles).
 Logic: `signals.ts` → `preferences.ts` → `score.ts` → `engine.ts` (ranking) and `explain.ts` (reasons). Diversity re-ranking is intentionally not implemented; if added it should be a separate step after `engine.ts`.
 
-## Variety on refresh (separate from scoring, never fakes it)
+## Rotation on refresh (separate from scoring, never fakes it)
 
-So the row isn't identical on every page load, `variety.ts` runs after scoring and before the diversity step. It only **reorders**: picks are cut into bands of `VARIETY_BAND` (0.03) score points counted down from the best, a pick in a higher band is always ahead of every pick in a lower band, and only picks whose scores are within a band of each other (effectively tied) are put in an order given by a seed. The seed is chosen once per page load (`PAGE_SEED` in `state/recommendations.ts`), so the row is stable while browsing and can differ after a refresh. Nothing is added or removed, scores are not changed, and every reason is still computed from real contributing movies. A candidate that scored clearly lower can never overtake a clearly higher one. With no seed (tests, the popular fallback) the order is the fixed one: popular-movies mode is deliberately not varied. Tests: `variety.test.ts`.
+So a refresh shows mostly different movies, `rotation.ts` runs after scoring and before the diversity step. It only **chooses and orders**; it never scores.
+
+- The **5 best-scoring picks** (`ROTATION_ANCHORS`) always stay: a strong recommendation is there on every refresh.
+- The other 15 places are drawn, with a seeded weighted draw, from the *other* genuinely scored candidates that have a score above 0 **and** at least 60% of the best score (`ROTATION_FLOOR`). A higher score is likelier (weight = (score ÷ best)²).
+- Each page load remembers the ids it showed (per account and profile, wiped on sign-out). On the next load, a candidate that was in the previous row counts 0.15× (`ROTATION_REPEAT_WEIGHT`) in the draw, so most of the row is different and a clearly better pick still has the edge.
+- The shortlist that gets scored is 60 candidates (`CANDIDATE_DETAIL_FETCH_LIMIT`) so there is enough well-scored choice to rotate through; detail lookups are cached for 30 days.
+- If too few candidates clear the floor, the next best by score fill the row. Nothing outside the scored candidates is ever shown, nothing with a score of 0 or below is swapped in, and scores and reasons are never changed. The row is shown best score first.
+- The seed is chosen once per page load (`PAGE_SEED` in `state/recommendations.ts`), so the row is stable while browsing and changes on refresh. With no seed (tests, the popular fallback) the order is the fixed one; popular-movies mode is deliberately not rotated. Tests: `rotation.test.ts`.
 
 ## Diversity step (separate from scoring)
 `domain/recommend/diversity.ts`, applied after scoring. Going down the score order, each pick is explained by the strongest of its contributing movies that is not yet used up: one of the profile's movies can be the stated reason for at most `MAX_PICKS_PER_SOURCE` (3) picks. Picks whose contributors are all used up only fill spare places at the end. The row stays in score order, but one cluster of taste can't crowd out the rest and every reason still names a movie that really contributed. Tune `MAX_PICKS_PER_SOURCE`, `SHORTLIST_BY_SCORE` and `SHORTLIST_SOURCE_MOVIES` in `config.ts`.
