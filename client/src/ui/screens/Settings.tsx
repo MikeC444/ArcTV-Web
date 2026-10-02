@@ -99,7 +99,7 @@ function BlockedGenresPane() {
   const isOn = (genre: string) => blocked.some((g) => g.toLowerCase() === genre.toLowerCase());
   return (
     <div>
-      <p className="t-body-sm c-text-2" style={{ margin: 0 }}>Titles in these genres are hidden from Home, Movies, TV Shows, Search and Genres. Titles an addon doesn't give genres for can't be filtered. This choice stays in this browser.</p>
+      <p className="t-body-sm c-text-2" style={{ margin: 0 }}>Titles in these genres are hidden from Home, Movies, TV Shows, Search and Genres. Titles an addon doesn't give genres for can't be filtered. When you're signed in it is saved to your account, so it applies on every device.</p>
       <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "14px 0" }}>
         <span className="t-title-md">{blocked.length === 0 ? "Nothing blocked" : `${blocked.length} blocked`}</span>
         {blocked.length > 0 ? <MangoButton text="Clear all" icon={<MdDelete />} compact onClick={clear} /> : null}
@@ -124,8 +124,8 @@ function PlusPane() {
   return (
     <div className="plus">
       <div className="plus__status">
-        <span className="plus__badge">Free plan</span>
-        <span className="t-body-sm c-text-2">You're on the free plan.</span>
+        <span className="plus__badge">Early access</span>
+        <span className="t-body-sm c-text-2">ArcTV Plus is in early access: its features are free for now and will need a Plus subscription once it launches.</span>
       </div>
       <p className="t-body-md plus__free">{PLUS_FREE_NOTE}</p>
       <p className="plus__proceeds">
@@ -138,7 +138,7 @@ function PlusPane() {
           <li key={perk.title} className="plus__perk">
             <div className="plus__perkhead">
               <span className="t-title-md">{perk.title}</span>
-              {perk.status === "soon" ? <span className="plus__soon">Coming soon</span> : null}
+              <span className="plus__soon">{perk.status === "soon" ? "Coming soon" : "Included in early access"}</span>
             </div>
             <p className="t-body-sm c-text-2" style={{ margin: "4px 0 0" }}>{perk.detail}</p>
           </li>

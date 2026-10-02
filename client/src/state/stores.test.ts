@@ -256,6 +256,41 @@ describe("Settings sync", () => {
     expect(useSettings.getState().player.autoplayNextEpisode).toBe(false);
   });
 
+  it("saves blocked genres to the account and pulls them back on another device", async () => {
+    hydrateAll("u1");
+    respond = (_path, method, body) => (method === "PUT" ? body : undefined);
+    useSettings.getState().setBlockedGenres(["Horror", "Romance"]);
+    await flush();
+    const put = calls.filter((c) => c.method === "PUT").at(-1)!;
+    expect(put.body).toMatchObject({ blockedGenres: ["Horror", "Romance"] });
+    // another device: nothing local, the account has the list
+    resetAllStores();
+    hydrateAll("u1");
+    respond = () => ({ homeRowOrder: [], hiddenRowIds: [], autoplayNextEpisode: true, skipIntroEnabled: true, subtitlesEnabled: true, defaultSubtitleLanguage: null, blockedGenres: ["Horror"], updatedAt: "2099-01-01T00:00:00.000Z" });
+    await useSettings.getState().pull();
+    expect(useSettings.getState().blockedGenres).toEqual(["Horror"]);
+  });
+
+  it("a backend that doesn't send blockedGenres leaves the local list alone", async () => {
+    hydrateAll("u1");
+    respond = (_path, method, body) => (method === "PUT" ? body : undefined);
+    useSettings.getState().setBlockedGenres(["Horror"]);
+    await flush();
+    respond = () => ({ homeRowOrder: [], hiddenRowIds: [], autoplayNextEpisode: true, skipIntroEnabled: true, subtitlesEnabled: true, defaultSubtitleLanguage: null, updatedAt: "2099-01-01T00:00:00.000Z" });
+    await useSettings.getState().pull();
+    expect(useSettings.getState().blockedGenres).toEqual(["Horror"]);
+  });
+
+  it("a new account adopts the genres blocked in this browser before signing in, once", async () => {
+    localStorage.setItem("mtv:v1:blockedGenres", JSON.stringify(["Horror"]));
+    hydrateAll("u2");
+    respond = (_path, method, body) => (method === "PUT" ? body : { homeRowOrder: [], hiddenRowIds: [], autoplayNextEpisode: true, skipIntroEnabled: true, subtitlesEnabled: true, defaultSubtitleLanguage: null, blockedGenres: [], updatedAt: null });
+    await useSettings.getState().pull();
+    await flush();
+    expect(useSettings.getState().blockedGenres).toEqual(["Horror"]);
+    expect(calls.some((c) => c.method === "PUT" && (c.body as { blockedGenres: string[] }).blockedGenres[0] === "Horror")).toBe(true);
+  });
+
   it("keeps the navigation volume on this device only (never sent to the account)", async () => {
     hydrateAll("u1");
     respond = () => undefined;

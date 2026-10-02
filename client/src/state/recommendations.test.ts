@@ -6,7 +6,7 @@ const { useFeedback } = await import("./feedback");
 const { useMyList } = await import("./myList");
 const { cachedResult, storeResult, clearRecommendationCache, interactionInputs } = await import("./recommendations");
 const { collectInteractions, signatureOf } = await import("../domain/recommend/signals");
-const { installPlusPreviewFlag, usePlusPreview, hasPlusNow } = await import("./plusAccess");
+const { PLUS_EARLY_ACCESS, hasPlusNow } = await import("./plusAccess");
 const { resetAllStores } = await import("./sync");
 
 const movie = { id: "tt1", title: "One" };
@@ -15,7 +15,6 @@ beforeEach(() => {
   localStorage.clear();
   clearRecommendationCache();
   resetAllStores();
-  usePlusPreview.setState({ enabled: false });
 });
 
 describe("feedback store (per profile)", () => {
@@ -83,14 +82,9 @@ describe("per-profile result cache", () => {
   });
 });
 
-describe("Plus preview flag (hidden)", () => {
-  it("is off by default and only the private query flag switches it", () => {
-    expect(hasPlusNow()).toBe(false);
-    installPlusPreviewFlag("?x=1");
-    expect(hasPlusNow()).toBe(false);
-    installPlusPreviewFlag("?plusPreview=1");
+describe("ArcTV Plus early access", () => {
+  it("is on for everyone while Plus is in early access, with no private query flag", () => {
+    expect(PLUS_EARLY_ACCESS).toBe(true);
     expect(hasPlusNow()).toBe(true);
-    installPlusPreviewFlag("?plusPreview=0");
-    expect(hasPlusNow()).toBe(false);
   });
 });

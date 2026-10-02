@@ -12,6 +12,8 @@ interface SettingsDto {
   skipIntroEnabled: boolean;
   subtitlesEnabled: boolean;
   defaultSubtitleLanguage: string | null;
+  /** Genres the person never wants to see, kept on the account so every device agrees. Absent from a backend that predates it. */
+  blockedGenres?: string[];
   updatedAt: string | null;
 }
 
@@ -19,6 +21,8 @@ interface SettingsState {
   userId: string | null;
   homeRows: HomeRowPreferences;
   player: PlayerPreferences;
+  /** Blocked genres of the signed-in account (see useBlockedGenres, which is what the UI reads). */
+  blockedGenres: string[];
   /** Local mutation time of the last change (or the server's, after a pull). */
   updatedAt: string | null;
   /** UI sounds are device-local — they are not part of the synced account settings. Off by default on the web (volume 0); turn them up in Settings → Sounds. */
@@ -28,6 +32,7 @@ interface SettingsState {
   setRowHidden(rowId: string, hidden: boolean): void;
   setRowOrder(order: string[]): void;
   setPlayer(patch: Partial<PlayerPreferences>): void;
+  setBlockedGenres(genres: string[]): void;
   setNavigationVolume(volume: number): void;
   pull(): Promise<{ ok: boolean; empty: boolean }>;
   retryPending(): Promise<void>;
@@ -37,7 +42,10 @@ const SOUND_KEY = globalKey("sound");
 let outbox: Outbox<SettingsDto> | null = null;
 const PENDING = "settings";
 
-function toDto(state: Pick<SettingsState, "homeRows" | "player">, updatedAt: string): SettingsDto {
+/** Where a person who was not signed in kept their blocked genres (see state/blockedGenres.ts). */
+const GUEST_BLOCKED_KEY = globalKey("blockedGenres");
+
+function toDto(state: Pick<SettingsState, "homeRows" | "player" | "blockedGenres">, updatedAt: string): SettingsDto {
   return {
     homeRowOrder: state.homeRows.order,
     hiddenRowIds: state.homeRows.hiddenRowIds,
@@ -45,14 +53,15 @@ function toDto(state: Pick<SettingsState, "homeRows" | "player">, updatedAt: str
     skipIntroEnabled: state.player.skipIntroEnabled,
     subtitlesEnabled: state.player.subtitlesEnabled,
     defaultSubtitleLanguage: state.player.defaultSubtitleLanguage,
+    blockedGenres: state.blockedGenres,
     updatedAt,
   };
 }
 
 export const useSettings = create<SettingsState>((set, get) => {
   const persistLocal = () => {
-    const { userId, homeRows, player, updatedAt } = get();
-    if (userId) writeJson(userKey(userId, "settings"), { homeRows, player, updatedAt });
+    const { userId, homeRows, player, blockedGenres, updatedAt } = get();
+    if (userId) writeJson(userKey(userId, "settings"), { homeRows, player, blockedGenres, updatedAt });
   };
 
   function apply(dto: SettingsDto) {
@@ -64,6 +73,8 @@ export const useSettings = create<SettingsState>((set, get) => {
         subtitlesEnabled: dto.subtitlesEnabled,
         defaultSubtitleLanguage: dto.defaultSubtitleLanguage,
       },
+      // a backend that doesn't know the field leaves what is here alone
+      blockedGenres: dto.blockedGenres ?? get().blockedGenres,
       updatedAt: dto.updatedAt,
     });
     persistLocal();
@@ -91,17 +102,18 @@ export const useSettings = create<SettingsState>((set, get) => {
     userId: null,
     homeRows: DEFAULT_HOME_ROW_PREFERENCES,
     player: DEFAULT_PLAYER_PREFERENCES,
+    blockedGenres: [],
     updatedAt: null,
     navigationVolume: readJson<{ navigationVolume: number }>(SOUND_KEY, { navigationVolume: 0 }).navigationVolume,
 
     hydrate(userId) {
       outbox = new Outbox<SettingsDto>(userId, "settings");
-      const stored = readJson<{ homeRows: HomeRowPreferences; player: PlayerPreferences; updatedAt: string | null } | null>(userKey(userId, "settings"), null);
-      set({ userId, homeRows: stored?.homeRows ?? DEFAULT_HOME_ROW_PREFERENCES, player: { ...DEFAULT_PLAYER_PREFERENCES, ...(stored?.player ?? {}) }, updatedAt: stored?.updatedAt ?? null });
+      const stored = readJson<{ homeRows: HomeRowPreferences; player: PlayerPreferences; blockedGenres?: string[]; updatedAt: string | null } | null>(userKey(userId, "settings"), null);
+      set({ userId, homeRows: stored?.homeRows ?? DEFAULT_HOME_ROW_PREFERENCES, player: { ...DEFAULT_PLAYER_PREFERENCES, ...(stored?.player ?? {}) }, blockedGenres: stored?.blockedGenres ?? [], updatedAt: stored?.updatedAt ?? null });
     },
     reset() {
       outbox = null;
-      set({ userId: null, homeRows: DEFAULT_HOME_ROW_PREFERENCES, player: DEFAULT_PLAYER_PREFERENCES, updatedAt: null });
+      set({ userId: null, homeRows: DEFAULT_HOME_ROW_PREFERENCES, player: DEFAULT_PLAYER_PREFERENCES, blockedGenres: [], updatedAt: null });
     },
 
     setRowHidden(rowId, hidden) {
@@ -118,6 +130,10 @@ export const useSettings = create<SettingsState>((set, get) => {
       set({ player: { ...get().player, ...patch } });
       changed();
     },
+    setBlockedGenres(genres) {
+      set({ blockedGenres: genres });
+      changed();
+    },
     setNavigationVolume(volume) {
       const navigationVolume = Math.min(1, Math.max(0, volume));
       set({ navigationVolume });
@@ -129,6 +145,11 @@ export const useSettings = create<SettingsState>((set, get) => {
         const dto = await api<SettingsDto>("/user/settings");
         // A local change that hasn't reached the server yet wins until retryPending() lands it.
         if (!outbox?.all()[PENDING] && isoMs(dto.updatedAt) >= isoMs(get().updatedAt)) apply(dto);
+        // An account that has never saved settings adopts the genres this browser had blocked before it signed in, once.
+        if (dto.updatedAt === null && get().blockedGenres.length === 0) {
+          const before = readJson<string[]>(GUEST_BLOCKED_KEY, []);
+          if (before.length > 0) get().setBlockedGenres(before);
+        }
         return { ok: true, empty: dto.updatedAt === null };
       } catch {
         return { ok: false, empty: false };
