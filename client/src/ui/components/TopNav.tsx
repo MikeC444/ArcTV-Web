@@ -81,7 +81,10 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
       )}
       {!guest && profile ? (
         <Link to={routes.profiles} state={{ from: pathname }} className="topnav__profile" aria-label={`${profile.name} — switch profile`} title="Switch profile">
-          <ProfileAvatar avatar={profile.avatar} />
+          <span className="topnav__profileavatar">
+            <ProfileAvatar avatar={profile.avatar} />
+          </span>
+          <span className="topnav__profilename">{profile.name}</span>
         </Link>
       ) : null}
       <nav className="tabbar" aria-label="Primary">
