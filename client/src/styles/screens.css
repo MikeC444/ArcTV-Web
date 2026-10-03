@@ -13,14 +13,6 @@
 .grid .card { width: 100%; }
 @media (max-width: 720px) { .grid { row-gap: 14px; } }
 
-.genre-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--card-spacing); }
-@media (max-width: 900px) { .genre-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-@media (max-width: 720px) { .genre-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; } }
-@media (max-width: 480px) { .genre-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.genre-card { aspect-ratio: 2.15 / 1; min-height: 56px; padding: calc(10 * var(--dp)); display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; color: var(--text); text-align: left; width: 100%; }
-.genre-card svg { width: calc(20 * var(--dp)); height: calc(20 * var(--dp)); min-width: 18px; min-height: 18px; }
-.genre-card span { max-width: 100%; }
-
 /* ── Home / Hero ─────────────────────────────────────────────────────────── */
 .home__rows { padding-top: calc(4 * var(--dp)); padding-bottom: calc(48 * var(--dp)); }
 .hero { position: relative; min-height: 74vh; overflow: hidden; }

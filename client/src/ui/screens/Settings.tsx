@@ -11,7 +11,7 @@ import { routes } from "../../lib/routes";
 import { useAddons, CINEMETA_MANIFEST_URL } from "../../state/addons";
 import { useAuth } from "../../state/auth";
 import { useAddonsReady } from "../../state/hooks";
-import { buildGenreList } from "./Genres";
+import { buildGenreList } from "../../domain/genreList";
 import { ApiClientError } from "../../lib/api";
 import { usePlus, watchForPurchase, type PlusPlanId } from "../../state/plus";
 import { activeProfileOf, useProfiles } from "../../state/profiles";

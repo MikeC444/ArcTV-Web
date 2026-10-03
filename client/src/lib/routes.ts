@@ -40,8 +40,6 @@ export const routes = {
   home: "/",
   movies: "/movies",
   tv: "/tv",
-  genres: "/genres",
-  genre: (genre: string) => `/genres/${enc(genre)}`,
   search: "/search",
   myList: "/my-list",
   settings: (tab?: "account" | "addons" | "home-rows" | "blocked-genres" | "plus" | "sounds" | "subtitles") => (tab ? `/settings/${tab}` : "/settings"),

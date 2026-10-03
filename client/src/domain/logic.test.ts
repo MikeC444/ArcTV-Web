@@ -5,7 +5,7 @@ import type { HomeSection } from "./types";
 import { formatElapsed, formatReleaseDate, formatRuntime, formatTimestamp, interleave, distinctBy } from "../lib/format";
 import { isoMs, monotonicIso, resetMonotonicClock } from "../lib/iso";
 import { decideProgress, nextEpisodeAfter, nextHoldSeekDelta } from "../state/progress";
-import { buildGenreList } from "../ui/screens/Genres";
+import { buildGenreList } from "./genreList";
 import { validateCredentials } from "../state/auth";
 import { sortContent } from "../ui/screens/Browse";
 import { orderSources, sortStreams } from "../ui/screens/Sources";
