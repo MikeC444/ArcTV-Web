@@ -173,18 +173,12 @@ test.describe("browsing", () => {
     await shot(page, "nav-hover");
   });
 
-  test("Genres: coloured icon cards lead to a genre's results", async ({ page }) => {
+  test("The old Genres address sends people to Movies", async ({ page }) => {
     const account = await newAccount("genres");
     await openSignedIn(page, account, "/genres");
-    await expect(page.locator(".genre-card").first()).toBeVisible();
-    const names = await page.locator(".genre-card").allTextContents();
-    expect(names).toEqual(expect.arrayContaining(["Action", "Comedy", "Drama", "Horror", "Romance", "Sci-Fi"]));
-    expect(names).toEqual(expect.arrayContaining(["2024", "2023", "2016"])); // years are extended back to 2016
-    await shot(page, "genres");
-    await page.locator(".genre-card", { hasText: "Horror" }).click();
-    await expect(page).toHaveURL(/\/genres\/Horror$/);
-    await expect(page.getByRole("heading", { name: "Horror", level: 1 })).toBeVisible();
-    await expect(cards(page).first()).toBeVisible();
+    await expect(page).toHaveURL(/\/movies$/);
+    await page.goto("/genres/Horror");
+    await expect(page).toHaveURL(/\/movies$/);
   });
 
   test("Search: results split into Movies and TV Shows; no-results state; query kept in the URL", async ({ page }) => {

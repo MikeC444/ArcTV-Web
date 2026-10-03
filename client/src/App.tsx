@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from "react";
-import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { installModalityTracking } from "./lib/modality";
 import { installSpatialNavigation } from "./lib/spatialNav";
 import { routes } from "./lib/routes";
@@ -10,9 +10,8 @@ import { AppShell } from "./ui/layout/AppShell";
 import { Spinner } from "./ui/components/States";
 import { AddAddonScreen, SettingsScreen } from "./ui/screens/Settings";
 import { AllowGuests, AuthLayout, AuthMethodScreen, AuthStartScreen, PasswordSignInScreen, QrSignInScreen, RequireAuth } from "./ui/screens/Auth";
-import { GenreResultsScreen, MoviesScreen, MyListScreen, TvShowsScreen } from "./ui/screens/Browse";
+import { MoviesScreen, MyListScreen, TvShowsScreen } from "./ui/screens/Browse";
 import { DetailScreen } from "./ui/screens/Detail";
-import { GenresScreen } from "./ui/screens/Genres";
 import { Home } from "./ui/screens/Home";
 import { ProfilesScreen } from "./ui/screens/Profiles";
 import { SearchScreen } from "./ui/screens/Search";
@@ -20,11 +19,6 @@ import { SourcesScreen } from "./ui/screens/Sources";
 
 // The player pulls in hls.js / dash.js — only load them when someone actually presses Play.
 const PlayerScreen = lazy(() => import("./ui/screens/Player").then((m) => ({ default: m.PlayerScreen })));
-
-function GenreRoute() {
-  const { genre } = useParams();
-  return <GenreResultsScreen key={genre} genre={genre ?? ""} />;
-}
 
 /** Owns the data lifecycle: start syncing when a session exists, detach the stores when it ends. */
 function SessionLifecycle() {
@@ -100,8 +94,7 @@ export function App() {
           <Route index element={<Home />} />
           <Route path="movies" element={<MoviesScreen />} />
           <Route path="tv" element={<TvShowsScreen />} />
-          <Route path="genres" element={<GenresScreen />} />
-          <Route path="genres/:genre" element={<GenreRoute />} />
+          <Route path="genres/*" element={<Navigate to="/movies" replace />} />
           <Route path="search" element={<SearchScreen />} />
           <Route path="my-list" element={<RequireAuth><MyListScreen /></RequireAuth>} />
           <Route path="settings" element={<RequireAuth><RequireAdult><SettingsScreen /></RequireAdult></RequireAuth>} />

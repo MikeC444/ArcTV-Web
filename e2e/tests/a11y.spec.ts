@@ -18,7 +18,6 @@ const SIGNED_IN = [
   ["home", "/"],
   ["movies", "/movies"],
   ["tv-shows", "/tv"],
-  ["genres", "/genres"],
   ["search", "/search"],
   ["my-list", "/my-list"],
   ["detail-movie", "/detail/test.mangotv.fixture/MOVIE/fxm1"],

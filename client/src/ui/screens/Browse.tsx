@@ -227,7 +227,6 @@ function TypeScreen({ title, type }: { title: string; type: ContentType }) {
 }
 export const MoviesScreen = () => <TypeScreen title="Movies" type="MOVIE" />;
 export const TvShowsScreen = () => <TypeScreen title="TV Shows" type="TV_SHOW" />;
-export const GenreResultsScreen = ({ genre }: { genre: string }) => <CatalogPage title={genre} pager={usePager({ type: "genre", value: genre })} emptyMessage={`Nothing found for ${genre} right now.`} back={routes.genres} />;
 
 type ListSort = "RECENT" | "TITLE" | "HIGHEST_RATED" | "NEWEST";
 const LIST_SORTS: Array<{ id: ListSort; label: string }> = [

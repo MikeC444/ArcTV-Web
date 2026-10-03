@@ -49,21 +49,6 @@ test.describe("back buttons", () => {
     expect((await page.locator(".grid .card__title").allTextContents()).slice(0, before.length)).toEqual(before);
   });
 
-  test("a genre's page has a Back button to the Genres tab; Back from a title there returns to the genre page", async ({ page }) => {
-    const account = await newAccount("backgenre");
-    await openSignedIn(page, account);
-    await page.goto("/genres");
-    await page.locator(".genre-card", { hasText: "Action" }).click();
-    await expect(page).toHaveURL(/\/genres\/Action$/);
-    await expect(page.locator(".grid .card").first()).toBeVisible({ timeout: 20_000 });
-    await page.locator(".grid .card__surface").first().click();
-    await expect(page).toHaveURL(/\/detail\//);
-    await page.getByRole("button", { name: "Back" }).click();
-    await expect(page).toHaveURL(/\/genres\/Action$/);
-    await page.getByRole("button", { name: "Back" }).click();
-    await expect(page).toHaveURL(/\/genres$/);
-  });
-
   test("the Sources page's Back goes to the title's details; a page opened directly has Back to Home", async ({ page }) => {
     const account = await newAccount("backsources");
     await openSignedIn(page, account);

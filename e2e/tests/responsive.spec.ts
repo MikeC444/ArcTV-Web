@@ -9,7 +9,6 @@ const SCREENS: Array<{ name: string; path: string; ready: (page: Page) => Return
   { name: "home", path: "/", ready: (p) => p.locator(".hero") },
   { name: "movies", path: "/movies", ready: (p) => p.locator(".grid .card").first() },
   { name: "tv-shows", path: "/tv", ready: (p) => p.locator(".grid .card").first() },
-  { name: "genres", path: "/genres", ready: (p) => p.locator(".genre-card").first() },
   { name: "search", path: "/search", ready: (p) => p.getByPlaceholder("Search movies and TV shows") },
   { name: "detail-movie", path: "/detail/test.mangotv.fixture/MOVIE/fxm1", ready: (p) => p.getByText("IMDb Rating") },
   { name: "detail-series", path: "/detail/test.mangotv.fixture/TV_SHOW/fxs1", ready: (p) => p.getByRole("heading", { name: "Seasons" }) },

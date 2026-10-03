@@ -86,7 +86,7 @@ test.describe("Fire TV layout parity @ 1920×1080 (1dp = 2px)", () => {
     near(box.x, 56 * DP, 2);
   });
 
-  test("Movies grid: 8 columns with 10dp gaps; Genres: 5 columns (RowsBrowseScreen.kt, GenresScreen.kt)", async ({ page }) => {
+  test("Movies grid: 8 columns with 10dp gaps (RowsBrowseScreen.kt)", async ({ page }) => {
     const account = await newAccount("parity-grid");
     await openSignedIn(page, account, "/movies");
     await expect(page.locator(".grid .card").first()).toBeVisible();
@@ -98,10 +98,6 @@ test.describe("Fire TV layout parity @ 1920×1080 (1dp = 2px)", () => {
     near(a.width, (1920 - 2 * 56 * DP - 7 * 10 * DP) / 8, 1.5);
     near(a.height / a.width, 1.5, 0.01); // 2 : 3 poster
     near(await page.locator(".page__title").evaluate((el) => parseFloat(getComputedStyle(el).fontSize)), 40 * DP); // displayMedium
-
-    await page.goto("/genres");
-    await expect(page.locator(".genre-card").first()).toBeVisible();
-    expect(await page.locator(".genre-grid").evaluate((el) => getComputedStyle(el).gridTemplateColumns.split(" ").length)).toBe(5); // GENRE_GRID_COLUMNS
   });
 
   test("Detail hero matches the Home hero: same layout (centred block), same type and button sizes", async ({ page }) => {
