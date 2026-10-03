@@ -9,6 +9,7 @@ MangoTV backend (and therefore the same Neon database)** as the TV app. Nothing 
 * Source of truth for design and behaviour: [`MikeC444/ArcTV-AndroidTV`](https://github.com/MikeC444/ArcTV-AndroidTV) (read-only — nothing in this repository writes to it).
 * What was inspected, and every decision that followed from it: [`docs/AUDIT.md`](docs/AUDIT.md).
 * How to put it online: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
+* **Domains:** `arctv.org` is the marketing site (`landing/`); the web app runs at `web.arctv.org` (like Stremio's www / web split).
 
 > **Status.** Built, linted, type-checked and tested (unit, integration against the real backend, and 60 browser tests
 > at four screen sizes). **It has not been run against your production backend** — that URL and database are not in
@@ -304,6 +305,7 @@ These appear in the request but **do not exist in the Firestick app or its backe
 ## Repository layout
 
 ```
+landing/   Static marketing site served at arctv.org (plain HTML/CSS; the app itself lives at web.arctv.org)
 client/    React SPA (src/styles = Compose tokens → CSS, src/ui = screens/components, src/state = stores + sync, src/domain = Stremio protocol)
 server/    Node web server (session cookie, allow-listed proxy, addon proxy, static hosting) and its tests
 e2e/       Playwright specs, fixture Stremio addon + synthetic media, screenshots

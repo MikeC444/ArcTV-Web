@@ -166,3 +166,27 @@ request logging or uptime probe on `/api/health` as needed.
   `VITE_*`/public variable. They are not needed here and the client bundle contains no configuration at all.
 * Payment verification (if payments are ever added to MangoTV) must run in the trusted backend; the web client must
   never decide that someone has paid.
+
+## 6. Two domains: arctv.org (marketing) and web.arctv.org (the app)
+
+Like Stremio (www vs web), the app lives at **web.arctv.org** and **arctv.org** shows a small static marketing page from
+[`landing/`](../landing) (plain HTML/CSS/JS, no build, no server).
+
+1. **Add the app's new address first.** On the existing Render *web service*, add the custom domain `web.arctv.org`, create
+   the `web` CNAME record Render shows you, and wait for the certificate. Check `https://web.arctv.org/api/health`.
+2. **Create the marketing site.** Render → New → *Static Site* from this repo: root directory `landing`, publish directory
+   `.`, no build command. Under *Redirects/Rewrites* add a rewrite `/*` → `/index.html` (so old links such as
+   `arctv.org/movies` reach `redirect.js`, which forwards them to web.arctv.org).
+3. **Move the apex.** Remove `arctv.org` from the web service, add `arctv.org` and `www.arctv.org` to the static site
+   (redirect www → apex) and update the DNS records Render lists (apex A/ALIAS, `www` CNAME).
+4. **Heads-up.** Sessions are host-only cookies, so everyone is signed out once on the new address. Accounts and data are
+   untouched (they live in the backend).
+5. **Backend repo.** Check `MikeC444/ArcTV-AndroidTV` for any Stripe success/cancel or activation-page URL that names
+   `arctv.org` and point it at `https://web.arctv.org`. This repo cannot change that.
+6. `STREAM_RELAY`, `TRUST_PROXY` and the other settings above are unchanged; HSTS (`includeSubDomains`) is only sent by the app.
+
+### Landing page images
+The pictures in `landing/img/` (poster fan, laptop, phone) are cropped from a design board, so they are fairly low
+resolution; replace them with the original full-size files when available (keep the same file names). The hero posters are
+real film artwork, so check licensing before relying on them on a public page. The TV picture (`tv-app.webp`) is a
+design render of the app on a TV rather than a native Fire TV screenshot, and also uses real film artwork.
