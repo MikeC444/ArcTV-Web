@@ -43,7 +43,7 @@ test.describe("Fire TV layout parity @ 1920×1080 (1dp = 2px)", () => {
     expect(await logo.evaluate((el) => getComputedStyle(el).fontWeight)).toBe("900"); // FontWeight.Black
     near(await page.locator(".topnav").evaluate((el) => parseFloat(getComputedStyle(el).paddingLeft)), 56 * DP); // ScreenPaddingHorizontal
     const items = await page.locator(".navitem").allTextContents();
-    expect(items).toEqual(["Home", "Movies", "TV Shows", "Genres", "Search", "My List", "Settings"]);
+    expect(items).toEqual(["Home", "Movies", "TV Shows", "Search", "My List", "Settings"]);
     near(await page.locator(".navitem").first().evaluate((el) => parseFloat(getComputedStyle(el).fontSize)), 17 * DP); // labelMedium 13.sp on the TV, larger on a desktop window
     near(await page.locator(".navitem").first().evaluate((el) => parseFloat(getComputedStyle(el).borderTopLeftRadius)), 8 * DP);
   });

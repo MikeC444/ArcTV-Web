@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { MdCategory, MdHome, MdMovie, MdOutlineBookmarkBorder, MdSearch, MdSettings, MdTv } from "react-icons/md";
+import { MdHome, MdMovie, MdOutlineBookmarkBorder, MdSearch, MdSettings, MdTv } from "react-icons/md";
 import { isDetailPath, NAV_ITEMS, routes } from "../../lib/routes";
 import { useAuth } from "../../state/auth";
 import { activeProfileOf, useProfiles } from "../../state/profiles";
@@ -20,7 +20,6 @@ const TABS = [
   { label: "Home", to: "/", icon: MdHome },
   { label: "Movies", to: "/movies", icon: MdMovie },
   { label: "TV Shows", to: "/tv", icon: MdTv },
-  { label: "Genres", to: "/genres", icon: MdCategory },
   { label: "Search", to: "/search", icon: MdSearch },
   { label: "My List", to: "/my-list", icon: MdOutlineBookmarkBorder },
 ] as const;

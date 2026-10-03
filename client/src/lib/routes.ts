@@ -31,7 +31,6 @@ export const NAV_ITEMS = [
   { label: "Home", to: "/" },
   { label: "Movies", to: "/movies" },
   { label: "TV Shows", to: "/tv" },
-  { label: "Genres", to: "/genres" },
   { label: "Search", to: "/search" },
   { label: "My List", to: "/my-list" },
   { label: "Settings", to: "/settings" },
