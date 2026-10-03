@@ -169,7 +169,10 @@
 /* Over the Home / Detail picture the bar is a slim, soft shade rather than a thick dark band. */
 @media (min-width: 721px) {
   .topnav[data-transparent="true"] { padding-bottom: calc(6 * var(--dp)); }
-  .topnav[data-transparent="true"]::before { background: linear-gradient(to bottom, rgba(8, 8, 10, 0.82) 0%, rgba(8, 8, 10, 0.5) 55%, rgba(8, 8, 10, 0) 100%); opacity: 1; }
+  /* Over the picture there is no dark band any more: only the link pill and the profile chip have their own frosted background, and the logo gets a faint shadow so it reads on a bright picture. */
+  .topnav[data-transparent="true"]::before { background: none; }
+  .topnav[data-transparent="true"] .topnav__logo .logo__img { filter: drop-shadow(0 1px 5px rgba(0, 0, 0, 0.55)); }
+  .topnav[data-transparent="true"] .topnav__logo.tvs:focus-visible .logo__img { filter: drop-shadow(0 0 7px rgba(25, 230, 255, 0.6)); }
 }
 /* The links sit in a frosted pill. Nothing inside scales on hover or focus any more (it used to grow 8% and got cut off by this box's overflow), so the hover wash and the focus ring always fit. */
 .topnav__items { display: flex; align-items: center; gap: calc(2 * var(--dp)); padding: 4px; margin: 0; overflow-x: auto; min-width: 0; flex: 0 1 auto; scrollbar-width: none; border-radius: 999px; background: rgba(20, 20, 23, 0.58); border: 1px solid rgba(255, 255, 255, 0.09); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35); -webkit-backdrop-filter: blur(14px) saturate(140%); backdrop-filter: blur(14px) saturate(140%); }
