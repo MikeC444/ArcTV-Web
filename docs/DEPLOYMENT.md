@@ -188,5 +188,5 @@ Like Stremio (www vs web), the app lives at **web.arctv.org** and **arctv.org** 
 ### Landing page images
 The pictures in `landing/img/` (poster fan, laptop, phone) are cropped from a design board, so they are fairly low
 resolution; replace them with the original full-size files when available (keep the same file names). The hero posters are
-real film artwork, so check licensing before relying on them on a public page. A native Fire TV screenshot is still
-needed: the "Try Arc TV On Your TV Now" section uses a drawn mock-up.
+real film artwork, so check licensing before relying on them on a public page. The TV picture (`tv-app.webp`) is a
+design render of the app on a TV rather than a native Fire TV screenshot, and also uses real film artwork.

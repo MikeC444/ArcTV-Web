@@ -98,11 +98,7 @@ h2.blue, .light h2 { color: var(--link); font-size: 32px; font-weight: 500; }
 .tv h2 { font-size: 32px; font-weight: 500; line-height: 1.25; }
 .tv p { margin-top: 24px; font-size: 16px; color: rgba(255, 255, 255, .88); }
 .tv .btn { margin-top: 28px; }
-.bigtv { background: #0b0919; border-radius: 6px; padding: 18px 18px 6px; box-shadow: 0 0 80px rgba(25, 230, 255, .3); }
-.bigtv__head { margin-bottom: 26px; }
-.bigtv__head b { font-size: 20px; font-weight: 500; display: block; }
-.bigtv__head small { color: rgba(255, 255, 255, .6); }
-.bigtv__row { display: block; font-weight: 500; font-size: 14px; margin-bottom: 8px; }
+.tvshot { width: 100%; height: auto; filter: drop-shadow(0 0 40px rgba(25, 230, 255, .25)); }
 
 /* FAQ */
 .faq { margin-top: calc(var(--cut) * -1); padding-top: calc(var(--cut) + 50px); }
