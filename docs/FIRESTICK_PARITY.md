@@ -12,5 +12,6 @@ Nothing is missing from the Firestick's code. The three "Picked for you" changes
 
 Listed so a difference isn't mistaken for a missed port.
 
+- The marketing site at arctv.org (`landing/`); the app itself is at web.arctv.org. A website has no TV equivalent.
 - Full-screen "Finish payment on your phone" page with a QR code (the web app goes straight to Stripe's own page).
 - The Home hero for the next launch is chosen and its pictures downloaded in the background, so the first slide is instant (release 0.1.4).
