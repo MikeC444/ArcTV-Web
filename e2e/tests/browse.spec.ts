@@ -107,10 +107,10 @@ test.describe("browsing", () => {
       expect(firstRowWidth, path).toBe(expected);
     }
 
-    // Search: the Movies / TV Shows rows
+    // Search: the Movies / TV Shows grids
     await page.goto("/search?q=a");
     await expect(page.locator(".card:not([data-cw])").first()).toBeVisible({ timeout: 20_000 });
-    expect(await fitsAcross(page.locator(".row").first().locator(".card:not([data-cw]) .card__surface"))).toBeGreaterThanOrEqual(expected);
+    expect(await fitsAcross(page.locator(".grid").first().locator(".card:not([data-cw]) .card__surface"))).toBeGreaterThanOrEqual(expected);
     await shot(page, "posters-small");
   });
 
@@ -195,13 +195,12 @@ test.describe("browsing", () => {
     await page.getByPlaceholder("Search movies and TV shows").press("Enter");
     await expect(page.getByRole("heading", { name: "Movies" })).toBeVisible();
     await expect(page).toHaveURL(/q=Crimson/);
-    const titles = await page.locator(".row .card__title").allTextContents();
+    const titles = await page.locator(".grid .card__title").allTextContents();
     expect(titles.length).toBeGreaterThan(0);
     expect(titles.every((t) => /crimson/i.test(t))).toBe(true);
     await shot(page, "search");
     await page.getByPlaceholder("Search movies and TV shows").fill("zzzzqqqq");
-    await page.getByRole("button", { name: "Search" }).click();
-    await expect(page.getByRole("heading", { name: "No results" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "No results" })).toBeVisible(); // search-as-you-type: no Enter needed
     await expect(page.getByText('Nothing found for "zzzzqqqq".')).toBeVisible();
   });
 
