@@ -184,3 +184,9 @@ Like Stremio (www vs web), the app lives at **web.arctv.org** and **arctv.org** 
 5. **Backend repo.** Check `MikeC444/ArcTV-AndroidTV` for any Stripe success/cancel or activation-page URL that names
    `arctv.org` and point it at `https://web.arctv.org`. This repo cannot change that.
 6. `STREAM_RELAY`, `TRUST_PROXY` and the other settings above are unchanged; HSTS (`includeSubDomains`) is only sent by the app.
+
+### Landing page images
+The pictures in `landing/img/` (poster fan, laptop, phone) are cropped from a design board, so they are fairly low
+resolution; replace them with the original full-size files when available (keep the same file names). The hero posters are
+real film artwork, so check licensing before relying on them on a public page. A native Fire TV screenshot is still
+needed: the "Try Arc TV On Your TV Now" section uses a drawn mock-up.
