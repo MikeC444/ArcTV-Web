@@ -33,7 +33,8 @@ export interface CatalogProvider {
   getSectionsByType(type: ContentType, genre?: string): Promise<HomeSection[]>;
   getAvailableGenres(): Promise<string[]>;
   getGenreSection(genre: string): Promise<HomeSection | null>;
-  search(query: string): Promise<Content[]>;
+  /** `onPartial` is handed the merged matches so far each time one of the addon's catalogs answers, so a slow catalog does not hold up a fast one. */
+  search(query: string, onPartial?: (items: Content[]) => void): Promise<Content[]>;
   getMoreItemsByType(type: ContentType, page: number, genre?: string): Promise<Content[]>;
   getMoreGenreItems(genre: string, page: number): Promise<Content[]>;
   /** Genres / directors / cast of one title (normalised), for the recommendation engine. Null when the addon has no metadata for it. Never throws. */
@@ -142,12 +143,16 @@ export class StremioAddonProvider implements CatalogProvider {
    * merged row), falling back to a client-side title match over the base catalogs when nothing supports search or
    * the search came back empty.
    */
-  async search(query: string): Promise<Content[]> {
+  async search(query: string, onPartial?: (items: Content[]) => void): Promise<Content[]> {
     if (query.trim() === "") return [];
     const searchable = this.supported.filter((catalog) => catalog.extra.some((extra) => extra.name === "search"));
     if (searchable.length > 0) {
-      const perCatalog = await Promise.all(
-        searchable.map((catalog) => this.safeCatalog(catalog, { search: query })),
+      const perCatalog: Content[][] = searchable.map(() => []);
+      await Promise.all(
+        searchable.map(async (catalog, index) => {
+          perCatalog[index] = await this.safeCatalog(catalog, { search: query });
+          if (perCatalog[index]!.length > 0) onPartial?.(distinctBy(interleave(perCatalog), (c) => c.id));
+        }),
       );
       const server = distinctBy(interleave(perCatalog), (c) => c.id);
       if (server.length > 0) return server;

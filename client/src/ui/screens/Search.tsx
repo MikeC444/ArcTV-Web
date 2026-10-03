@@ -2,8 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type
 import { MdClose, MdHistory, MdSearch, MdSearchOff } from "react-icons/md";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { activeProviders } from "../../domain/registry";
+import { searchProviders, type SearchResults } from "../../domain/search";
 import type { Content } from "../../domain/types";
-import { distinctBy, interleave, pluralize } from "../../lib/format";
+import { pluralize } from "../../lib/format";
 import { routes } from "../../lib/routes";
 import { withoutBlocked } from "../../domain/blockedGenres";
 import { useAuth } from "../../state/auth";
@@ -17,24 +18,19 @@ import { EmptyState, Spinner } from "../components/States";
 type SearchState =
   | { kind: "idle" }
   | { kind: "searching" }
-  | { kind: "results"; movies: Content[]; tvShows: Content[] }
+  /** `loading` while slower addons are still answering. */
+  | { kind: "results"; movies: Content[]; tvShows: Content[]; loading: boolean }
   | { kind: "none"; query: string }
   | { kind: "error"; message: string };
 
-/** SearchViewModel.kt — every provider searched; merged, deduped, split into Movies / TV Shows. */
-export async function runSearch(query: string): Promise<SearchState> {
-  const providers = activeProviders();
-  if (providers.length === 0) return { kind: "none", query };
-  const settled = await Promise.allSettled(providers.map((p) => p.search(query)));
-  const lists = settled.flatMap((r) => (r.status === "fulfilled" ? [r.value] : []));
-  const merged = distinctBy(interleave(lists), (c) => c.id);
-  const movies = merged.filter((c) => c.type === "MOVIE");
-  const tvShows = merged.filter((c) => c.type === "TV_SHOW");
-  if (movies.length || tvShows.length) return { kind: "results", movies, tvShows };
-  return settled.some((r) => r.status === "rejected") ? { kind: "error", message: "Couldn't reach your installed addons. Check your connection and try again." } : { kind: "none", query };
+/** Turns what the addons have said so far into what the screen shows. */
+function toState(query: string, r: SearchResults, total: number): SearchState {
+  if (r.movies.length || r.tvShows.length) return { kind: "results", movies: r.movies, tvShows: r.tvShows, loading: r.pending > 0 };
+  if (r.pending > 0) return { kind: "searching" };
+  return total > 0 && r.failed === total ? { kind: "error", message: "Couldn't reach your installed addons. Check your connection and try again." } : { kind: "none", query };
 }
 
-const SEARCH_DELAY_MS = 350;
+const SEARCH_DELAY_MS = 250;
 const SUGGESTION_COUNT = 5;
 
 export function SearchScreen() {
@@ -58,9 +54,12 @@ export function SearchScreen() {
   const submit = useCallback(async (value: string) => {
     if (value.trim() === "") return;
     const gen = ++generation.current;
-    setState({ kind: "searching" });
-    const result = await runSearch(value.trim());
-    if (gen === generation.current) setState(result);
+    const q = value.trim();
+    const providers = activeProviders();
+    if (providers.length === 0) return setState({ kind: "none", query: q });
+    setState((prev) => (prev.kind === "results" ? { ...prev, loading: true } : { kind: "searching" })); // keep the old results up until the new ones arrive
+    const update = (r: SearchResults) => gen === generation.current && setState(toState(q, r, providers.length));
+    update(await searchProviders(providers, q, update));
   }, []);
 
   useEffect(() => {
@@ -240,6 +239,11 @@ export function SearchScreen() {
           <div onClickCapture={() => useRecentSearches.getState().add(query)}>
             {shown.movies.length ? <ResultGrid title="Movies" items={shown.movies} watched={watched} /> : null}
             {shown.tvShows.length ? <ResultGrid title="TV Shows" items={shown.tvShows} watched={watched} /> : null}
+            {state.kind === "results" && state.loading ? (
+              <div className="search__status page__pad">
+                <Spinner small /> <span className="c-text-2 t-body-sm">Still checking other addons…</span>
+              </div>
+            ) : null}
           </div>
         ) : null}
         {state.kind === "none" || (state.kind === "results" && !hasResults) ? <EmptyState icon={<MdSearchOff size={48} />} title="No results" message={`Nothing found for "${state.kind === "none" ? state.query : query.trim()}". Try a different search.`} /> : null}
