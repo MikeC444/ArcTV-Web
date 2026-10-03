@@ -368,3 +368,25 @@
 @media (max-width: 720px) {
   .topnav__signin { display: inline-flex; grid-column: 3; grid-row: 1; justify-self: end; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 999px; color: #07101a; background: var(--brand-gradient-wide); font-weight: 700; font-size: 14px; text-decoration: none; }
 }
+
+/* ── ArcTV Plus popup (Home) ─────────────────────────────────────────────── */
+.promo { position: relative; width: min(calc(560 * var(--dp)), 100%); max-height: 94vh; overflow-y: auto; padding: calc(32 * var(--dp)) calc(36 * var(--dp)) calc(24 * var(--dp)); border-radius: calc(24 * var(--dp)); background: radial-gradient(120% 70% at 0% 0%, rgba(47, 128, 255, 0.28), transparent 60%), radial-gradient(90% 60% at 100% 0%, rgba(155, 92, 255, 0.22), transparent 60%), var(--bg-elevated); border: 1px solid var(--divider); box-shadow: 0 28px 80px rgba(0, 0, 0, 0.65); }
+.promo__x { position: absolute; top: calc(16 * var(--dp)); right: calc(16 * var(--dp)); }
+.promo__brand { display: flex; align-items: center; gap: calc(10 * var(--dp)); }
+.promo__plus { padding: 3px 10px; border-radius: 6px; background: var(--brand-gradient-wide); color: var(--bg); font-weight: 800; font-size: calc(13 * var(--dp)); letter-spacing: 0.08em; }
+.promo__title { margin: calc(18 * var(--dp)) 0 0; font-weight: 800; font-size: calc(30 * var(--dp)); line-height: 1.12; letter-spacing: -0.01em; }
+.promo__sub { margin: calc(8 * var(--dp)) 0 0; color: var(--text-2); font-weight: 500; font-size: calc(16 * var(--dp)); line-height: 1.4; }
+.promo__list { list-style: none; margin: calc(22 * var(--dp)) 0 0; padding: 0 0 calc(22 * var(--dp)); display: flex; flex-direction: column; gap: calc(14 * var(--dp)); border-bottom: 1px solid var(--divider); }
+.promo__item { display: flex; align-items: center; gap: calc(16 * var(--dp)); }
+.promo__icon { flex: none; width: calc(48 * var(--dp)); height: calc(48 * var(--dp)); min-width: 40px; min-height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); border: 1px solid var(--divider); color: var(--accent); }
+.promo__icon svg { width: 55%; height: 55%; }
+.promo__itemtitle { display: block; font-weight: 700; font-size: calc(17 * var(--dp)); }
+.promo__itemdetail { display: block; margin-top: 2px; color: var(--text-2); font-weight: 500; font-size: calc(14 * var(--dp)); line-height: 1.4; }
+.promo__actions { margin-top: calc(22 * var(--dp)); display: flex; gap: calc(12 * var(--dp)); }
+.promo__btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; height: calc(52 * var(--dp)); font-weight: 700; font-size: calc(16 * var(--dp)); --tvs-radius: calc(10 * var(--dp)); }
+.promo__btn--go { --tvs-bg-image: var(--brand-gradient-wide); color: var(--bg); }
+.promo__btn--close { --tvs-bg: rgba(255, 255, 255, 0.08); color: var(--text); }
+.promo__btn svg { width: 1.2em; height: 1.2em; }
+.promo__hint { margin: calc(14 * var(--dp)) 0 0; text-align: center; color: var(--text-3); font-size: calc(13 * var(--dp)); }
+.promo__never { display: block; margin: calc(6 * var(--dp)) auto 0; padding: 8px 12px; min-height: 44px; color: var(--text-2); font-weight: 500; font-size: calc(14 * var(--dp)); text-decoration: underline; --tvs-radius: 8px; }
+@media (max-width: 560px) { .promo { padding: 28px 20px 16px; } .promo__title { font-size: 24px; } .promo__actions { flex-direction: column; } }
