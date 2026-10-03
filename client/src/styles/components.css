@@ -161,25 +161,32 @@
   .topnav__logo.tvs:not(:focus-visible):hover { transform: translateZ(0) scale(1); box-shadow: none; }
   .topnav__logo.tvs:not(:focus-visible):hover::after { opacity: 0; }
 }
+/* The logo never draws a white outline, not even with keyboard / remote focus; focus shows as a soft glow behind the mark instead, so it is still findable without a box. */
+.topnav__logo.tvs { overflow: visible; }
+.topnav__logo.tvs:focus-visible { transform: translateZ(0) scale(1); box-shadow: none; }
+.topnav__logo.tvs:focus-visible::after { opacity: 0; }
+.topnav__logo.tvs:focus-visible .logo__img { filter: drop-shadow(0 0 7px rgba(25, 230, 255, 0.6)); }
 /* Over the Home / Detail picture the bar is a slim, soft shade rather than a thick dark band. */
 @media (min-width: 721px) {
   .topnav[data-transparent="true"] { padding-bottom: calc(6 * var(--dp)); }
-  .topnav[data-transparent="true"]::before { background: linear-gradient(to bottom, rgba(8, 8, 10, 0.88) 0%, rgba(8, 8, 10, 0.55) 60%, rgba(8, 8, 10, 0) 100%); opacity: 1; }
+  .topnav[data-transparent="true"]::before { background: linear-gradient(to bottom, rgba(8, 8, 10, 0.82) 0%, rgba(8, 8, 10, 0.5) 55%, rgba(8, 8, 10, 0) 100%); opacity: 1; }
 }
-/* overflow-x: auto also clips vertically, so the hover / focus ring (the item scales up 8%) needs room INSIDE this box: padding, cancelled by a negative margin so the bar keeps its size. */
-.topnav__items { display: flex; align-items: center; gap: calc(4 * var(--dp)); padding: 6px calc(8 * var(--dp)); margin: -6px 0; overflow-x: auto; min-width: 0; flex: 0 1 auto; scrollbar-width: none; }
+/* The links sit in a frosted pill. Nothing inside scales on hover or focus any more (it used to grow 8% and got cut off by this box's overflow), so the hover wash and the focus ring always fit. */
+.topnav__items { display: flex; align-items: center; gap: calc(2 * var(--dp)); padding: 4px; margin: 0; overflow-x: auto; min-width: 0; flex: 0 1 auto; scrollbar-width: none; border-radius: 999px; background: rgba(20, 20, 23, 0.58); border: 1px solid rgba(255, 255, 255, 0.09); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35); -webkit-backdrop-filter: blur(14px) saturate(140%); backdrop-filter: blur(14px) saturate(140%); }
 /* On a desktop-width window the logo stays at the left and the nav items sit in the middle of the screen. */
 @media (min-width: 1101px) {
   /* The logo keeps its original size and place (12 dp from the top); the links sit higher, on their own line, so they don't follow the logo's centre. */
   .topnav { display: grid; grid-template-columns: 1fr auto 1fr; padding-top: 0; padding-bottom: calc(8 * var(--dp)); }
   .topnav__logo { justify-self: start; align-self: start; margin-top: calc(4 * var(--dp)); font-size: calc(22 * var(--dp)); }
-  .topnav__items { justify-self: center; align-self: start; margin: -2px 0 -6px; gap: calc(8 * var(--dp)); }
+  .topnav__items { justify-self: center; align-self: start; margin: calc(4 * var(--dp)) 0 -6px; gap: calc(4 * var(--dp)); }
 }
 .topnav__items::-webkit-scrollbar { display: none; }
 .navitem {
-  --tvs-radius: calc(6 * var(--dp));
+  --tvs-radius: 999px;
   --tvs-border: var(--text);
-  padding: calc(8 * var(--dp)) calc(10 * var(--dp));
+  --tvs-scale: 1;
+  position: relative;
+  padding: calc(8 * var(--dp)) calc(14 * var(--dp));
   color: var(--text-2);
   font-weight: 500;
   font-size: calc(13 * var(--dp));
@@ -190,13 +197,19 @@
   min-height: 32px;
   display: flex;
   align-items: center;
+  transition: background-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
 }
-.navitem[data-selected="true"], .navitem:hover, .navitem:focus-visible { color: var(--text); }
-.navitem[data-selected="true"] { font-weight: 700; }
+.navitem:hover, .navitem:focus-visible { color: var(--text); background-color: rgba(255, 255, 255, 0.09); }
+.navitem[data-selected="true"] { color: var(--text); font-weight: 700; background-color: rgba(255, 255, 255, 0.14); }
+/* a small brand-gradient underline marks the page you are on */
+.navitem[data-selected="true"]::before { content: ""; position: absolute; left: 28%; right: 28%; bottom: 4px; height: 2px; border-radius: 2px; background: var(--brand-gradient-wide); }
+/* hover is a wash, not a ring or a shadow; a keyboard / remote user still gets the ring, drawn inside the pill */
+@media (hover: hover) { .tvs.navitem:not(:disabled):not([aria-disabled="true"]):not(:focus-visible):hover::after { opacity: 0; } }
 .topnav__spacer { flex: 1; }
 .topnav__user { flex: none; }
 @media (min-width: 1101px) {
-  .navitem { --tvs-radius: calc(8 * var(--dp)); padding: calc(10 * var(--dp)) calc(16 * var(--dp)); font-size: calc(17 * var(--dp)); min-height: 40px; }
+  .navitem { padding: calc(9 * var(--dp)) calc(20 * var(--dp)); font-size: calc(17 * var(--dp)); min-height: 40px; }
+  .navitem[data-selected="true"]::before { bottom: calc(5 * var(--dp)); }
 }
 @media (max-width: 720px) {
   .topnav { flex-wrap: wrap; gap: 6px 12px; padding-top: 10px; padding-bottom: 10px; }
@@ -335,9 +348,10 @@
 
 /* ── Phones: ArcTV's bottom tab bar ────────────────────────────────────── */
 .tabbar, .topnav__gear { display: none; }
-.topnav__profile { flex: none; margin-left: auto; display: inline-flex; align-items: center; gap: calc(10 * var(--dp)); padding: 3px calc(10 * var(--dp)) 3px 3px; border-radius: 10px; border: 2px solid transparent; color: var(--text); text-decoration: none; }
-.topnav__profile:hover, .topnav__profile:focus-visible { border-color: var(--text); }
-.topnav__profileavatar { flex: none; width: calc(36 * var(--dp)); min-width: 30px; aspect-ratio: 1; border-radius: 8px; overflow: hidden; display: inline-flex; }
+.topnav__profile { flex: none; margin-left: auto; display: inline-flex; align-items: center; gap: calc(10 * var(--dp)); padding: 3px calc(14 * var(--dp)) 3px 3px; border-radius: 999px; background: rgba(20, 20, 23, 0.58); border: 2px solid transparent; transition: background-color var(--t-fast) var(--ease); color: var(--text); text-decoration: none; }
+.topnav__profile:hover { background: rgba(255, 255, 255, 0.12); }
+.topnav__profile:focus-visible { border-color: var(--text); }
+.topnav__profileavatar { flex: none; width: calc(36 * var(--dp)); min-width: 30px; aspect-ratio: 1; border-radius: 50%; overflow: hidden; display: inline-flex; }
 .topnav__profileavatar .pavatar { width: 100%; height: 100%; }
 .topnav__profilename { font-weight: 600; font-size: calc(16 * var(--dp)); line-height: 1.2; max-width: 14ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 720px) {
