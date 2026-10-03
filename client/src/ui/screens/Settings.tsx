@@ -24,27 +24,47 @@ import { Spinner } from "../components/States";
 import { Surface } from "../components/Surface";
 
 type Tab = "account" | "addons" | "home-rows" | "blocked-genres" | "plus" | "sounds" | "subtitles";
-const CATEGORIES: Array<{ id: Tab; icon: ReactNode; title: string; subtitle: string }> = [
-  { id: "account", icon: <MdAccountCircle />, title: "Account", subtitle: "Manage your ArcTV account" },
-  { id: "addons", icon: <MdExtension />, title: "Addons", subtitle: "Manage installed content providers" },
-  { id: "home-rows", icon: <MdGridView />, title: "Home Rows", subtitle: "Choose which rows show up on Home" },
-  { id: "blocked-genres", icon: <MdBlock />, title: "Blocked Genres", subtitle: "Hide genres you don't want to see" },
-  { id: "plus", icon: <MdWorkspacePremium />, title: "ArcTV Plus", subtitle: "Extra features for supporters" },
-  { id: "sounds", icon: <MdMusicNote />, title: "Sounds", subtitle: "Choose your app boot sound" },
-  { id: "subtitles", icon: <MdSubtitles />, title: "Subtitles", subtitle: "Default on/off and preferred language" },
+type Category = { id: Tab; icon: ReactNode; title: string; subtitle: string };
+const GROUPS: Array<{ label: string; items: Category[] }> = [
+  {
+    label: "You",
+    items: [
+      { id: "account", icon: <MdAccountCircle />, title: "Account", subtitle: "Manage your ArcTV account" },
+      { id: "plus", icon: <MdWorkspacePremium />, title: "ArcTV Plus", subtitle: "Extra features for supporters" },
+    ],
+  },
+  {
+    label: "Content",
+    items: [
+      { id: "addons", icon: <MdExtension />, title: "Addons", subtitle: "Manage installed content providers" },
+      { id: "home-rows", icon: <MdGridView />, title: "Home Rows", subtitle: "Choose which rows show up on Home" },
+      { id: "blocked-genres", icon: <MdBlock />, title: "Blocked Genres", subtitle: "Hide genres you don't want to see" },
+    ],
+  },
+  {
+    label: "Playback & sound",
+    items: [
+      { id: "subtitles", icon: <MdSubtitles />, title: "Subtitles", subtitle: "Default on/off and preferred language" },
+      { id: "sounds", icon: <MdMusicNote />, title: "Sounds", subtitle: "Choose your app boot sound" },
+    ],
+  },
 ];
+const CATEGORIES: Category[] = GROUPS.flatMap((g) => g.items);
 const isTab = (value: string | undefined): value is Tab => CATEGORIES.some((c) => c.id === value);
 
-/** ui/settings/SettingsScreen.kt — two panes: categories on the left, the selected category's settings on the right. */
+/** ui/settings/SettingsScreen.kt — a side navigation of grouped categories; the selected category's settings open beside it. */
 export function SettingsScreen() {
   const { tab } = useParams<{ tab?: string }>();
   const navigate = useNavigate();
-  const categories = CATEGORIES;
   const selected: Tab = isTab(tab) ? tab : "account";
   const category = CATEGORIES.find((c) => c.id === selected)!;
   useEffect(() => {
     document.title = `Settings · ${category.title} · Arc TV`;
   }, [category]);
+  // on a phone the categories scroll sideways: keep the open one in view
+  useEffect(() => {
+    document.querySelector<HTMLElement>('.settings__cat[data-selected="true"]')?.scrollIntoView?.({ block: "nearest", inline: "center" });
+  }, [selected]);
   if (tab && !isTab(tab) && tab !== "addons") return <Navigate to="/settings" replace />;
 
   return (
@@ -52,16 +72,26 @@ export function SettingsScreen() {
       <h1 className="t-display-md page__title">Settings</h1>
       <div className="settings">
         <nav className="settings__side" aria-label="Settings categories">
-          {categories.map((c) => (
-            <Surface key={c.id} className="settings__cat" onClick={() => navigate(routes.settings(c.id))} alwaysBorder={c.id === selected} borderColor="var(--text)" scale={1.02} ariaCurrent={c.id === selected ? "page" : undefined} dataAttrs={{ selected: c.id === selected, autofocus: c.id === selected }}>
-              {c.icon}
-              <span className="t-title-md">{c.title}</span>
-            </Surface>
+          {GROUPS.map((group) => (
+            <div className="settings__group" key={group.label}>
+              <div className="settings__grouplabel">{group.label}</div>
+              {group.items.map((c) => (
+                <Surface key={c.id} className="settings__cat" onClick={() => navigate(routes.settings(c.id))} scale={1.02} ariaCurrent={c.id === selected ? "page" : undefined} dataAttrs={{ selected: c.id === selected, autofocus: c.id === selected }}>
+                  <span className="settings__caticon" aria-hidden="true">{c.icon}</span>
+                  <span className="t-title-md">{c.title}</span>
+                </Surface>
+              ))}
+            </div>
           ))}
         </nav>
         <section className="settings__pane" aria-labelledby="pane-title">
-          <h2 id="pane-title" className="t-title-lg" style={{ margin: 0 }}>{category.title}</h2>
-          <p className="t-body-sm c-text-2" style={{ margin: "4px 0 14px" }}>{category.subtitle}</p>
+          <header className="settings__head">
+            <span className="settings__headicon" aria-hidden="true">{category.icon}</span>
+            <div>
+              <h2 id="pane-title" className="t-title-lg" style={{ margin: 0 }}>{category.title}</h2>
+              <p className="t-body-sm c-text-2" style={{ margin: "2px 0 0" }}>{category.subtitle}</p>
+            </div>
+          </header>
           {selected === "account" ? <AccountPane /> : null}
           {selected === "addons" ? <AddonsPane /> : null}
           {selected === "home-rows" ? <HomeRowsPane /> : null}

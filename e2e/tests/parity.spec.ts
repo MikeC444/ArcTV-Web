@@ -134,7 +134,7 @@ test.describe("Fire TV layout parity @ 1920×1080 (1dp = 2px)", () => {
     }
   });
 
-  test("Sources: 35 / 65 split, 76dp-ish rows; Settings: 1 : 3 panes (SourcesScreen.kt, SettingsScreen.kt)", async ({ page }) => {
+  test("Sources: 35 / 65 split, 76dp-ish rows; Settings: side navigation + wider pane (SourcesScreen.kt; the web settings use a sticky side nav)", async ({ page }) => {
     const account = await newAccount("parity-panes");
     await openSignedIn(page, account, "/sources/test.mangotv.fixture/MOVIE/fxm1/-1/-1");
     await expect(page.locator(".source").first()).toBeVisible();
@@ -148,7 +148,8 @@ test.describe("Fire TV layout parity @ 1920×1080 (1dp = 2px)", () => {
     await expect(page.locator(".settings__cat").first()).toBeVisible();
     const side = (await page.locator(".settings__side").boundingBox())!;
     const pane = (await page.locator(".settings__pane").boundingBox())!;
-    near(pane.width / side.width, 3, 0.35); // weight(1f) : weight(3f)
+    near(side.width, 280 * DP, 2);
+    expect(pane.width).toBeGreaterThan(side.width * 2);
   });
 
   test("Player: control sizes and 360dp menu panel (PlayerScreen.kt, MenuOverlayScaffold.kt)", async ({ page }) => {
