@@ -34,15 +34,6 @@
 .hero__layer img[data-loaded="true"] { transform-origin: 50% 12%; animation: kenburns 9s linear infinite alternate; }
 @keyframes kenburns { from { transform: scale(1); } to { transform: scale(1.04); } }
 .hero__scrim-x { position: absolute; inset: 0; background: linear-gradient(to right, rgba(8, 8, 10, 0.55), rgba(8, 8, 10, 0.2), transparent); }
-/* Desktop: the same soft shade as the top nav bar also wraps the left and right edges of the picture. */
-@media (min-width: 721px) {
-  .hero__scrim-x {
-    background:
-      linear-gradient(to right, rgba(8, 8, 10, 0.88) 0%, rgba(8, 8, 10, 0.55) 4%, rgba(8, 8, 10, 0) 10%),
-      linear-gradient(to left, rgba(8, 8, 10, 0.88) 0%, rgba(8, 8, 10, 0.55) 4%, rgba(8, 8, 10, 0) 10%),
-      linear-gradient(to right, rgba(8, 8, 10, 0.55), rgba(8, 8, 10, 0.2), transparent);
-  }
-}
 .hero__scrim-y { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 0%, transparent 25%, rgba(8, 8, 10, 0.15) 50%, rgba(8, 8, 10, 0.6) 75%, var(--bg) 100%); }
 /* The logo / title, details and buttons sit left-aligned in the vertical middle of the hero photo (phones keep them at the bottom). */
 .hero__content { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); padding: 0 var(--pad-x); max-width: calc(760 * var(--dp) + 2 * var(--pad-x)); display: flex; flex-direction: column; }
