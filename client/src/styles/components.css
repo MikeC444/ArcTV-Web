@@ -161,6 +161,11 @@
   .topnav__logo.tvs:not(:focus-visible):hover { transform: translateZ(0) scale(1); box-shadow: none; }
   .topnav__logo.tvs:not(:focus-visible):hover::after { opacity: 0; }
 }
+/* The logo never draws a white outline, not even with keyboard / remote focus; focus shows as a soft glow behind the mark instead, so it is still findable without a box. */
+.topnav__logo.tvs { overflow: visible; }
+.topnav__logo.tvs:focus-visible { transform: translateZ(0) scale(1); box-shadow: none; }
+.topnav__logo.tvs:focus-visible::after { opacity: 0; }
+.topnav__logo.tvs:focus-visible .logo__img { filter: drop-shadow(0 0 7px rgba(25, 230, 255, 0.6)); }
 /* Over the Home / Detail picture the bar is a slim, soft shade rather than a thick dark band. */
 @media (min-width: 721px) {
   .topnav[data-transparent="true"] { padding-bottom: calc(6 * var(--dp)); }
