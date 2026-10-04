@@ -45,6 +45,8 @@ export const routes = {
   myList: "/my-list",
   settings: (tab?: "account" | "addons" | "home-rows" | "blocked-genres" | "plus" | "sounds" | "subtitles") => (tab ? `/settings/${tab}` : "/settings"),
   addAddon: "/settings/addons/add",
+  /** Hidden guide: debrid service → Torrentio → Arc TV. Not linked from the app yet. */
+  debridGuide: "/guides/debrid",
   /** A title page. Cinemeta titles get a readable address (/movies/inception-tt1375666, /tv-shows/prison-break-tt0455275); everything else keeps the long one. */
   detail: (providerId: string, type: ContentType, id: string, title?: string | null) =>
     providerId === CINEMETA_PROVIDER_ID && IMDB_ID.test(id)

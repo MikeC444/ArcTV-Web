@@ -11,6 +11,7 @@ import { Spinner } from "./ui/components/States";
 import { AddAddonScreen, SettingsScreen } from "./ui/screens/Settings";
 import { AllowGuests, AuthLayout, AuthMethodScreen, AuthStartScreen, PasswordSignInScreen, QrSignInScreen, RequireAuth } from "./ui/screens/Auth";
 import { MoviesScreen, MyListScreen, TvShowsScreen } from "./ui/screens/Browse";
+import { DebridGuideScreen } from "./ui/screens/DebridGuide";
 import { DetailScreen } from "./ui/screens/Detail";
 import { Home } from "./ui/screens/Home";
 import { ProfilesScreen } from "./ui/screens/Profiles";
@@ -107,6 +108,8 @@ export function App() {
           <Route path="settings" element={<RequireAuth><RequireAdult><SettingsScreen /></RequireAdult></RequireAuth>} />
           <Route path="settings/addons/add" element={<RequireAuth><RequireAdult><AddAddonScreen /></RequireAdult></RequireAuth>} />
           <Route path="settings/:tab" element={<RequireAuth><RequireAdult><SettingsScreen /></RequireAdult></RequireAuth>} />
+          {/* Hidden for now: not linked from anywhere. Public, so the address can be shared. */}
+          <Route path="guides/debrid" element={<DebridGuideScreen />} />
           <Route path="admin" element={<RequireAuth><RequireAdmin><Suspense fallback={<Spinner />}><AdminScreen /></Suspense></RequireAdmin></RequireAuth>} />
           <Route path="detail/:providerId/:type/:id" element={<DetailScreen />} />
           <Route path="movies/:slug" element={<DetailScreen kind="MOVIE" />} />

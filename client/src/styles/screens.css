@@ -294,6 +294,19 @@
 @media (max-width: 860px) { .langlist { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .addaddon { padding: calc(28 * var(--dp)) var(--pad-x); max-width: calc(680 * var(--dp) + 2 * var(--pad-x)); }
 .addaddon code { background: var(--surface-high); padding: 1px 5px; border-radius: 4px; }
+/* Hidden setup guide */
+.guide { padding: calc(28 * var(--dp)) var(--pad-x) calc(64 * var(--dp)); max-width: calc(780 * var(--dp) + 2 * var(--pad-x)); }
+.guide__lead { margin: 0 0 20px; }
+.guide__toc { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 14px 0; border-top: 1px solid var(--divider); border-bottom: 1px solid var(--divider); }
+.guide__section { margin-top: calc(36 * var(--dp)); }
+.guide__section h2 { margin: 0 0 8px; }
+.guide a { color: var(--accent); }
+.guide code { background: var(--surface-high); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.guide__steps { margin: 14px 0 0; padding-left: 1.4em; display: flex; flex-direction: column; gap: 12px; line-height: 1.55; }
+.guide__steps ul { margin: 8px 0 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 6px; }
+.guide__note { margin: 16px 0 0; padding: 12px 14px; border-radius: 10px; background: var(--surface-high); color: var(--text-2); line-height: 1.5; }
+.guide__faq dt { margin-top: 14px; font-weight: 700; }
+.guide__faq dd { margin: 4px 0 0; color: var(--text-2); line-height: 1.5; }
 .addaddon__suggest { margin-top: calc(32 * var(--dp)); padding-top: calc(18 * var(--dp)); border-top: 1px solid var(--divider); }
 
 /* ── Auth ────────────────────────────────────────────────────────────────── */
