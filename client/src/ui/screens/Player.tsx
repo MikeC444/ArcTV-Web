@@ -128,7 +128,9 @@ function startTimeoutError(stream: Stream, video: HTMLVideoElement | null, fellB
       : `This source didn't start playing within ${seconds} seconds — its server${where} didn't send any video. Try again, or choose another source.`,
   };
 }
-const REPORT_EVERY_MS = 30_000;
+/** Progress is saved a few seconds into playback (so even a short watch counts) and then regularly; also on pause, on leaving and when the tab is hidden. */
+const FIRST_REPORT_AFTER_MS = 4_000;
+const REPORT_EVERY_MS = 15_000;
 const EMPTY_TRACKS: EngineTracks = { audio: [], subtitles: [], quality: [] };
 const KNOWN_NATIVE_EXT = /\.(mp4|m4v|webm|mov|ogv|ogg|mkv)(\?|#|$)/i;
 
@@ -154,6 +156,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
 
   const container = useRef<HTMLDivElement>(null);
   const video = useRef<HTMLVideoElement>(null);
+  const lastVideo = useRef<HTMLVideoElement | null>(null);
   const engine = useRef<PlayerEngine | null>(null);
   const prefsRef = useRef(prefs);
   prefsRef.current = prefs;
@@ -237,7 +240,8 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
   // ── progress reporting ──────────────────────────────────────────────────────
   const report = useCallback(
     (completed: boolean, keepalive = false) => {
-      const v = video.current;
+      // `video.current` is already cleared when the player is torn down (leaving it), so fall back to the element seen at mount
+      const v = video.current ?? lastVideo.current;
       if (!v || !Number.isFinite(v.duration)) return;
       const durationMs = Math.round(v.duration * 1000);
       const positionMs = completed ? durationMs : Math.round(v.currentTime * 1000);
@@ -256,9 +260,16 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
   reportRef.current = report;
 
   useEffect(() => {
+    lastVideo.current = video.current;
+  }, []);
+  useEffect(() => {
     if (phase !== "playing") return;
+    const first = window.setTimeout(() => reportRef.current(false), FIRST_REPORT_AFTER_MS);
     const timer = window.setInterval(() => reportRef.current(false), REPORT_EVERY_MS);
-    return () => window.clearInterval(timer);
+    return () => {
+      window.clearTimeout(first);
+      window.clearInterval(timer);
+    };
   }, [phase]);
   useEffect(() => {
     const flush = () => document.visibilityState === "hidden" && reportRef.current(false, true);
@@ -552,6 +563,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
   };
 
   const handleBack = useCallback(() => {
+    reportRef.current(false); // save the position before leaving, however little was watched
     if (document.fullscreenElement) void document.exitFullscreen();
     onBack();
   }, [onBack]);

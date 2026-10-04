@@ -69,7 +69,8 @@ function fromDto(dto: ContinueWatchingDto): ContinueWatchingEntry | null {
 
 /** Movies finishing past this fraction drop out of Continue Watching (and count as watched). */
 export const COMPLETION_THRESHOLD = 0.85;
-export const MIN_REPORTABLE_POSITION_MS = 10_000;
+/** Any real watching is saved (a second or more); a source that never played reports 0 and is not. */
+export const MIN_REPORTABLE_POSITION_MS = 1_000;
 
 interface ContinueWatchingState {
   userId: string | null;

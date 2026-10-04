@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { applyRowOrder, dedupeRows, withoutShownTitles } from "../domain/homeRows";
+import { applyRowOrder, dedupeRows } from "../domain/homeRows";
 import { useProviders } from "../domain/registry";
 import type { CatalogProvider } from "../domain/provider";
 import { pickHeroTitles } from "../domain/heroPool";
@@ -152,7 +152,7 @@ export function useHome(): { state: HomeState; reload(): void; ready: boolean } 
     if (!fetched || !addonsReady) return { kind: "loading" };
     const rawSections = blocked.size ? raw.map((s) => ({ ...s, items: withoutBlocked(s.items, blocked) })).filter((s) => s.items.length > 0) : raw;
     const visible = dedupeRows(applyRowOrder(rawSections, prefs).filter((s) => !prefs.hiddenRowIds.includes(s.id))).map((s) => sectionWithWatched(s, watchedIds));
-    const cwEntries = withoutShownTitles(cw, visible); // a title that already sits in another row is not repeated under Continue Watching
+    const cwEntries = cw; // everything you have started is listed, even when a catalogue row shows the same title
     const cwSection: HomeSection | null = cwEntries.length ? { id: CONTINUE_WATCHING_ROW_ID, title: "Continue Watching", style: "CONTINUE_WATCHING", items: cwEntries.map(entryToContent).map((c) => (watchedIds.has(c.id) ? { ...c, watched: true } : c)) } : null;
     const sections = [...(cwSection ? [cwSection] : []), ...visible];
 
