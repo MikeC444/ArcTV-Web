@@ -18,6 +18,7 @@ import { SearchScreen } from "./ui/screens/Search";
 import { SourcesScreen } from "./ui/screens/Sources";
 
 // The player pulls in hls.js / dash.js — only load them when someone actually presses Play.
+const AdminScreen = lazy(() => import("./ui/screens/Admin").then((m) => ({ default: m.AdminScreen })));
 const PlayerScreen = lazy(() => import("./ui/screens/Player").then((m) => ({ default: m.PlayerScreen })));
 
 /** Owns the data lifecycle: start syncing when a session exists, detach the stores when it ends. */
@@ -49,6 +50,12 @@ function ProfileGate() {
 function RequireAdult({ children }: { children: React.ReactNode }) {
   const kids = useProfiles((s) => s.plus && activeProfileOf(s)?.kind === "kids");
   return kids ? <Navigate to="/" replace /> : <>{children}</>;
+}
+
+/** The developer panel: only for an account flagged as an admin (the backend checks too; this just hides the page). */
+function RequireAdmin({ children }: { children: React.ReactNode }) {
+  const isAdmin = useAuth((s) => s.user?.isAdmin === true);
+  return isAdmin ? <>{children}</> : <NotFound />;
 }
 
 function NotFound() {
@@ -100,6 +107,7 @@ export function App() {
           <Route path="settings" element={<RequireAuth><RequireAdult><SettingsScreen /></RequireAdult></RequireAuth>} />
           <Route path="settings/addons/add" element={<RequireAuth><RequireAdult><AddAddonScreen /></RequireAdult></RequireAuth>} />
           <Route path="settings/:tab" element={<RequireAuth><RequireAdult><SettingsScreen /></RequireAdult></RequireAuth>} />
+          <Route path="admin" element={<RequireAuth><RequireAdmin><Suspense fallback={<Spinner />}><AdminScreen /></Suspense></RequireAdmin></RequireAuth>} />
           <Route path="detail/:providerId/:type/:id" element={<DetailScreen />} />
           <Route path="movies/:slug" element={<DetailScreen kind="MOVIE" />} />
           <Route path="tv-shows/:slug" element={<DetailScreen kind="TV_SHOW" />} />

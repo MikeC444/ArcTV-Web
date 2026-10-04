@@ -112,8 +112,8 @@ export function createAuthRouter(ctx: AppContext): Router {
     if (response.status !== 200 || typeof response.json !== "object" || response.json === null) {
       throw fromBackendStatus(response.status, backendMessage(response.json), response.retryAfter);
     }
-    const { id, email: mail, displayName } = response.json as { id: string; email: string; displayName: string | null };
-    res.json({ user: { id, email: mail, displayName: displayName ?? null } });
+    const { id, email: mail, displayName, isAdmin } = response.json as { id: string; email: string; displayName: string | null; isAdmin?: boolean };
+    res.json({ user: { id, email: mail, displayName: displayName ?? null, isAdmin: isAdmin === true } });
   });
 
   router.post("/logout", async (req, res) => {

@@ -17,7 +17,7 @@ export interface AppContext {
  * makes "user A cannot read user B's data" true by construction.
  */
 /** Account-level calls: who the account is, whether it has Plus, and the profile list itself. Everything else belongs to one profile. */
-const ACCOUNT_LEVEL = /^\/user\/(?:me|plus|profiles)(?:\/|$)/;
+const ACCOUNT_LEVEL = /^\/(?:user\/(?:me|plus|profiles)|admin)(?:\/|$)/;
 
 export async function authedBackendRequest(
   ctx: AppContext,

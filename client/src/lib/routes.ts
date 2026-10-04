@@ -41,6 +41,7 @@ export const routes = {
   movies: "/movies",
   tv: "/tv",
   search: "/search",
+  admin: "/admin",
   myList: "/my-list",
   settings: (tab?: "account" | "addons" | "home-rows" | "blocked-genres" | "plus" | "sounds" | "subtitles") => (tab ? `/settings/${tab}` : "/settings"),
   addAddon: "/settings/addons/add",

@@ -88,7 +88,7 @@ export function createMockBackend(options: { accessTtlMs?: number } = {}) {
       access.delete(request.bearer!);
       return json(204);
     }
-    if (request.path === "/user/me") return json(200, { id: user.id, email: user.email, displayName: user.displayName });
+    if (request.path === "/user/me") return json(200, { id: user.id, email: user.email, displayName: user.displayName, isAdmin: user.email.startsWith("admin") });
     // Profiles: a library belongs to the profile named in X-ArcTV-Profile (absent = the account's own).
     const library = `watchlist:${request.profileId ?? "main"}`;
     if (request.path === "/user/watchlist" && request.method === "GET") {
@@ -143,6 +143,9 @@ export function createMockBackend(options: { accessTtlMs?: number } = {}) {
     if (request.path === "/user/plus" && request.method === "GET") return json(200, state.plus ? { active: true, plan: "early_access", validUntil: null, paywall: false } : { active: false, plan: null, validUntil: null, paywall: true });
     if (request.path === "/user/plus/checkout" && request.method === "POST") return json(200, { url: `https://checkout.example/${(request.body as { plan?: string })?.plan ?? "none"}` });
     if (request.path === "/user/plus/cancel" && request.method === "POST") return json(200, { active: true, plan: "monthly", validUntil: "2099-01-01T00:00:00.000Z", cancelAtPeriodEnd: true, paywall: true });
+    if (request.path === "/admin/summary" && request.method === "GET") return json(200, { users: 3, newLast7Days: 1, activeLast7Days: 2, plus: { monthly: 1, yearly: 0, lifetime: 1 }, versions: [{ version: "0.1.7", platform: "fire_tv", devices: 2 }] });
+    if (request.path === "/admin/users" && request.method === "GET") return json(200, { total: 1, users: [{ id: "u1", email: "sam@example.com", query: request.query ?? "" }] });
+    if (/^\/admin\/users\/[0-9a-f-]{36}$/.test(request.path) && request.method === "GET") return json(200, { user: { id: request.path.split("/").pop(), email: "sam@example.com" } });
     if (request.path === "/user/trailer") return json(200, { youtubeVideoId: "abc123" });
     return json(404, { error: "Not found" });
   };

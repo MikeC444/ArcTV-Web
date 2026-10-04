@@ -6,6 +6,8 @@ export interface SessionUser {
   id: string;
   email: string;
   displayName: string | null;
+  /** The developer panel is for flagged accounts only (the backend decides; this only shows or hides the link). */
+  isAdmin?: boolean;
 }
 
 /**
