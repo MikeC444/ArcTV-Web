@@ -7,6 +7,7 @@ import { useAuth } from "./auth";
 import { useAddonsReady } from "./hooks";
 import { useContinueWatching } from "./continueWatching";
 import { findLastStreamId } from "./lastSource";
+import { rememberPlayerArt } from "./playerArt";
 
 /** One installed addon and what it answered (or that it is still being asked). */
 export interface AddonLookupRow {
@@ -57,6 +58,7 @@ export function useSources(providerId: string, type: ContentType, id: string, se
         const content = await contentPromise;
         if (cancelled) return;
         if (!content) return fail();
+        rememberPlayerArt(content);
         const lastId = userId ? findLastStreamId(userId, providerId, id, type, season, episode) : null;
         setState({ kind: "loaded", content, streams, addons: reports.map((r) => ({ name: r.addonName, lookup: r.lookup })), recommendedId: recommendedStreamId(streams), searchingMore: false, autoSelect: lastId ? (streams.find((s) => s.id === lastId) ?? null) : null });
         return;
@@ -65,6 +67,7 @@ export function useSources(providerId: string, type: ContentType, id: string, se
       const content = await contentPromise;
       if (cancelled) return;
       if (!content) return fail();
+      rememberPlayerArt(content);
       if (providers.length === 0) return setState({ kind: "loaded", content, streams: [], addons: [], recommendedId: null, searchingMore: false, autoSelect: null });
       const accumulated: Stream[] = [];
       const rows: AddonLookupRow[] = providers.map((p) => ({ name: p.name, lookup: { kind: "searching" } }));

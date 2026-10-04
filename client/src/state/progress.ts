@@ -36,3 +36,15 @@ export function nextEpisodeAfter(seasons: Array<{ seasonNumber: number; episodes
   const nextSeason = seasons[s + 1]?.episodes[0];
   return nextSeason ? { season: seasons[s + 1]!.seasonNumber, episode: nextSeason.episodeNumber, title: nextSeason.title } : null;
 }
+
+/** "Next episode" appears in the corner for the last minute of an episode (or once it has ended), so it can be taken without waiting for the countdown. */
+export const NEXT_EPISODE_OFFER_S = 60;
+export function offerNextEpisode(positionS: number, durationS: number, hasNext: boolean): boolean {
+  if (!hasNext || !(durationS > 0) || !(positionS > 0)) return false;
+  return durationS - positionS <= NEXT_EPISODE_OFFER_S;
+}
+
+/** A saved position is offered as "Resume from …" unless it is (almost) the end of the file. */
+export function shouldOfferResume(resumeMs: number | null, durationS: number): boolean {
+  return resumeMs != null && resumeMs > 0 && Number.isFinite(durationS) && durationS * 1000 - resumeMs > 10_000;
+}

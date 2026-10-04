@@ -67,3 +67,27 @@
 .perror__copy { background: none; border: 1px solid var(--divider); border-radius: 999px; color: var(--text); padding: 6px 14px; cursor: pointer; }
 .perror__copy:hover { background: rgba(255, 255, 255, 0.1); }
 .perror__copy:disabled { opacity: 0.6; cursor: default; }
+
+/* ── Loading screen: the title's picture and logo, with a loading symbol under ── */
+.ploading { position: absolute; inset: 0; z-index: 2; background: #000; overflow: hidden; }
+.ploading__bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 500ms ease; }
+.ploading__bg[data-ready="true"] { opacity: 0.8; }
+.ploading__scrim { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 50%, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.65) 100%); }
+.ploading__back { position: absolute; z-index: 1; left: calc(40 * var(--dp)); top: calc(28 * var(--dp)); }
+.ploading__center { position: absolute; z-index: 1; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(28 * var(--dp)); padding: 24px; text-align: center; }
+.ploading__logo { width: min(520px, 62vw); max-height: 26vh; object-fit: contain; filter: drop-shadow(0 4px 24px rgba(0, 0, 0, 0.7)); }
+.ploading__title { font-size: clamp(28px, 4.4vw, 64px); font-weight: 800; letter-spacing: 0.02em; line-height: 1.1; text-shadow: 0 4px 24px rgba(0, 0, 0, 0.7); max-width: 80vw; }
+.ploading__caption { color: var(--text-2); margin-top: calc(-12 * var(--dp)); }
+.player__slow--inline { position: static; transform: none; width: min(520px, 100%); }
+.player[data-loading="true"] .pbottom, .player[data-loading="true"] .ptop__title { visibility: hidden; }
+.player[data-loading="true"] .pctl__scrim { opacity: 0.4; }
+
+/* ── Resume prompt and "Next episode" ── */
+.presume { position: absolute; left: 50%; bottom: calc(18% + 20px); transform: translateX(-50%); z-index: 15; display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 22px 26px; border-radius: 18px; background: rgba(20, 20, 23, 0.94); border: 1px solid var(--divider); max-width: calc(100vw - 32px); text-align: center; }
+.presume__actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.pnext { position: absolute; right: calc(40 * var(--dp)); bottom: calc(110 * var(--dp)); z-index: 14; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; max-width: min(360px, calc(100vw - 32px)); animation: heroIn 220ms ease both; }
+.pnext__title { color: var(--text); text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8); max-width: 100%; }
+.ptime--btn { background: none; border: 0; padding: 4px 6px; border-radius: 8px; cursor: pointer; }
+.ptime--btn:hover { color: var(--text); background: rgba(255, 255, 255, 0.08); }
+.ptime--btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.pbottom .ptime--btn { min-width: 52px; }
