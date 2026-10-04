@@ -11,7 +11,7 @@ describe("/api/profiles", () => {
     return { backend, client };
   }
   const create = (client: Awaited<ReturnType<typeof signedIn>>["client"], body: Record<string, unknown> = {}) =>
-    client.post("/api/profiles").send({ name: "Sam", avatar: "ocean", kind: "adult", ...body });
+    client.post("/api/profiles").send({ name: "Sam", avatar: "cat", kind: "adult", ...body });
 
   it("requires a session", async () => {
     const backend = createMockBackend();
@@ -24,7 +24,7 @@ describe("/api/profiles", () => {
     const res = await client.get("/api/profiles");
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ supported: true, plus: true, limit: 5, active: "main" });
-    expect(res.body.profiles).toEqual([{ id: "main", name: "Alex", avatar: "sunrise", kind: "adult", hasPin: false, isDefault: true }]);
+    expect(res.body.profiles).toEqual([{ id: "main", name: "Alex", avatar: "fox", kind: "adult", hasPin: false, isDefault: true }]);
   });
 
   it("reports an older backend (no profiles) as unsupported rather than failing", async () => {
@@ -193,7 +193,7 @@ describe("/api/profiles", () => {
     const bob = agentFor(app);
     await alice.post("/api/auth/login").send({ email: "alice@example.com", password: "password-1234" });
     await bob.post("/api/auth/login").send({ email: "bob@example.com", password: "password-1234" });
-    const aliceKid = (await alice.post("/api/profiles").send({ name: "Kid", avatar: "monster", kind: "kids" })).body.profile.id as string;
+    const aliceKid = (await alice.post("/api/profiles").send({ name: "Kid", avatar: "alien", kind: "kids" })).body.profile.id as string;
     expect((await bob.get("/api/profiles")).body.profiles).toHaveLength(1);
     expect((await bob.post("/api/profiles/select").send({ profileId: aliceKid })).status).toBe(404);
     expect((await bob.delete(`/api/profiles/${aliceKid}`)).status).toBe(404);

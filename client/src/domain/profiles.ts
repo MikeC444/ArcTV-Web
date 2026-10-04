@@ -22,28 +22,36 @@ export const isValidPin = (pin: string): boolean => /^\d{4}$/.test(pin);
 export interface Avatar {
   id: string;
   label: string;
-  glyph: string;
-  from: string;
-  to: string;
+  /** Picture file under /avatars/. */
+  src: string;
 }
 
-/** Preset avatars, drawn as a coloured tile with a glyph. The ids are what is stored (and what the Firestick app must map to its own artwork). */
+const avatar = (id: string, label: string): Avatar => ({ id, label, src: `/avatars/${id}.webp` });
+
+/** Preset avatars (pictures in public/avatars). The ids are what is stored (and what the Firestick app must map to its own artwork). */
 export const AVATARS: readonly Avatar[] = [
-  { id: "sunrise", label: "Sunrise", glyph: "🌄", from: "#ff9a3d", to: "#ff3d68" },
-  { id: "ocean", label: "Ocean", glyph: "🌊", from: "#19e6ff", to: "#2f80ff" },
-  { id: "forest", label: "Forest", glyph: "🌲", from: "#2dd9a8", to: "#1f8f5f" },
-  { id: "violet", label: "Violet", glyph: "🔮", from: "#9b5cff", to: "#5a3df0" },
-  { id: "ember", label: "Ember", glyph: "🔥", from: "#ff7a3d", to: "#c8231a" },
-  { id: "mint", label: "Mint", glyph: "🍃", from: "#7af0c9", to: "#19b4a8" },
-  { id: "astro", label: "Astronaut", glyph: "🧑‍🚀", from: "#4f7cff", to: "#1b2a6b" },
-  { id: "monster", label: "Monster", glyph: "👾", from: "#ffc83d", to: "#ff7a3d" },
-  { id: "fox", label: "Fox", glyph: "🦊", from: "#ff9f5a", to: "#d9531e" },
-  { id: "robot", label: "Robot", glyph: "🤖", from: "#9aa7bd", to: "#4b566b" },
-  { id: "wave", label: "Wave", glyph: "🏄", from: "#3dd6ff", to: "#2a62ff" },
-  { id: "bolt", label: "Bolt", glyph: "⚡", from: "#ffe14d", to: "#ff9d1f" },
+  avatar("fox", "Fox"),
+  avatar("cat", "Cat"),
+  avatar("dog", "Dog"),
+  avatar("panda", "Panda"),
+  avatar("frog", "Frog"),
+  avatar("owl", "Owl"),
+  avatar("ghost", "Ghost"),
+  avatar("robot", "Robot"),
+  avatar("alien", "Alien"),
+  avatar("astronaut", "Astronaut"),
+  avatar("raccoon", "Raccoon"),
+  avatar("penguin", "Penguin"),
+  avatar("octopus", "Octopus"),
+  avatar("dragon", "Dragon"),
+  avatar("retro-tv", "Retro TV"),
+  avatar("lion", "Lion"),
 ];
 
-export const avatarById = (id: string): Avatar => AVATARS.find((a) => a.id === id) ?? AVATARS[0]!;
+/** Ids from the old colour-tile set that profiles may still carry, shown as the nearest new picture. */
+const LEGACY_AVATARS: Record<string, string> = { astro: "astronaut", monster: "alien", sunrise: "fox", ocean: "octopus", forest: "frog", violet: "ghost", ember: "dragon", mint: "owl", wave: "penguin", bolt: "robot" };
+
+export const avatarById = (id: string): Avatar => AVATARS.find((a) => a.id === (LEGACY_AVATARS[id] ?? id)) ?? AVATARS[0]!;
 
 /**
  * Genres a kids profile never shows (Home, Movies, TV Shows, Search, Genres, "You may also like"), on top of whatever the profile blocks itself.

@@ -453,7 +453,7 @@
 
 /* ── Profiles: "Who's watching?", PIN prompt, profile editor ─────────────── */
 .pavatar { display: inline-flex; align-items: center; justify-content: center; aspect-ratio: 1; border-radius: inherit; overflow: hidden; container-type: inline-size; }
-.pavatar__glyph { font-size: 50cqw; line-height: 1; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35)); }
+.pavatar__img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .profileedit__row > .pavatar, .profilepin > .pavatar { border-radius: 14px; }
 .profiles { min-height: 100vh; display: flex; flex-direction: column; background: radial-gradient(120% 80% at 50% 0%, #15151c 0%, var(--bg) 70%); }
 .profiles__top { display: flex; align-items: center; justify-content: space-between; padding: calc(24 * var(--dp)) var(--pad-x); }
@@ -489,7 +489,7 @@
 .profileedit__field { flex: 1; display: flex; flex-direction: column; gap: 6px; }
 .profileedit__group { border: 0; margin: 0; padding: 0; min-width: 0; }
 .profileedit__group > legend { padding: 0 0 8px; }
-.profileedit__avatars { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+.profileedit__avatars { display: grid; grid-template-columns: repeat(8, 1fr); gap: 10px; }
 .profileedit__avatar { display: block; width: 100%; aspect-ratio: 1; padding: 0; border: 0; overflow: hidden; background: var(--surface); }
 .profileedit__avatar > .pavatar { width: 100%; height: 100%; }
 .profileedit__kinds { display: flex; gap: 10px; }

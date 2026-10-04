@@ -27,7 +27,7 @@ export function createMockBackend(options: { accessTtlMs?: number } = {}) {
   /** userId → profiles (the account's own "main" profile is created on first use) and their PINs. */
   const profiles = new Map<string, Array<{ id: string; name: string; avatar: string; kind: "adult" | "kids"; isDefault: boolean; pin: string | null }>>();
   const profilesOf = (user: MockUser) => {
-    if (!profiles.has(user.id)) profiles.set(user.id, [{ id: "main", name: user.displayName ?? "Me", avatar: "sunrise", kind: "adult", isDefault: true, pin: null }]);
+    if (!profiles.has(user.id)) profiles.set(user.id, [{ id: "main", name: user.displayName ?? "Me", avatar: "fox", kind: "adult", isDefault: true, pin: null }]);
     return profiles.get(user.id)!;
   };
   const publicProfile = (p: { pin: string | null }) => {

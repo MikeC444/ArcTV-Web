@@ -259,7 +259,7 @@ function PinDialog({ profile, onCancel, onSubmit }: { profile: Profile; onCancel
 function ProfileEditor({ profile, onClose }: { profile: Profile | null; onClose: () => void }) {
   const { create, update, remove, profiles } = useProfiles();
   const [name, setName] = useState(profile?.name ?? "");
-  const [avatar, setAvatar] = useState(profile?.avatar ?? AVATARS[profiles.length % AVATARS.length]!.id);
+  const [avatar, setAvatar] = useState(profile ? avatarById(profile.avatar).id : AVATARS[profiles.length % AVATARS.length]!.id);
   const [kind, setKind] = useState<ProfileKind>(profile?.kind ?? "adult");
   const [lock, setLock] = useState(profile?.hasPin ?? false);
   const [newPin, setNewPin] = useState("");

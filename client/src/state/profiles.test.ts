@@ -23,8 +23,8 @@ const { useMyList } = await import("./myList");
 const { useBlockedSet, effectiveBlockedSet } = await import("./blockedGenres");
 const { resetAllStores } = await import("./sync");
 
-const main = { id: "main", name: "Alex", avatar: "sunrise", kind: "adult", hasPin: false, isDefault: true } as const;
-const kid = { id: "p_kid", name: "Kids", avatar: "monster", kind: "kids", hasPin: false, isDefault: false } as const;
+const main = { id: "main", name: "Alex", avatar: "fox", kind: "adult", hasPin: false, isDefault: true } as const;
+const kid = { id: "p_kid", name: "Kids", avatar: "alien", kind: "kids", hasPin: false, isDefault: false } as const;
 const sam = { id: "p_sam", name: "Sam", avatar: "ocean", kind: "adult", hasPin: true, isDefault: false } as const;
 const answer = (over: Record<string, unknown> = {}) => ({ supported: true, plus: true, limit: 5, profiles: [main, kid, sam], active: "main", ...over });
 
@@ -154,7 +154,7 @@ describe("choosing and managing", () => {
     respond = () => answer();
     await useProfiles.getState().load("u1");
     respond = (path, method) => (path === "/profiles" && method === "GET" ? answer() : { profile: kid });
-    await useProfiles.getState().create({ name: "Kids", avatar: "monster", kind: "kids" });
+    await useProfiles.getState().create({ name: "Kids", avatar: "alien", kind: "kids" });
     expect(calls.some((c) => c.method === "POST" && c.path === "/profiles")).toBe(true);
 
     await useProfiles.getState().update("p_sam", { name: "Samuel", pin: null }, "1234");
