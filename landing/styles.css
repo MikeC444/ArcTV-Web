@@ -95,7 +95,7 @@ p { text-wrap: pretty; }
 .feat { padding-top: 40px; }
 .feat h2 { text-align: center; }
 .feat .lede { text-align: center; margin-inline: auto; }
-.row { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; padding: 70px 0 10px; }
+.row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 64px; align-items: center; padding: 70px 0 10px; }
 .row--flip .row__copy { order: 2; }
 .row h3 { font-size: clamp(28px, 3.6vw, 40px); }
 .row p { margin-top: 16px; font-size: 17px; color: var(--ink-2); max-width: 30em; }
