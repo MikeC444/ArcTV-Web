@@ -698,7 +698,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
         </PlayerLoading>
       ) : null}
       {phase === "buffering" && started && !error ? <div className="player__spinner"><Spinner white /></div> : null}
-      {resumePrompt != null && !error ? <ResumeCard positionMs={resumePrompt} onResume={() => answerResume(true)} onStartOver={() => answerResume(false)} /> : null}
+      {resumePrompt != null && !error ? <ResumeCard positionMs={resumePrompt} onResume={() => answerResume(true)} onStartOver={() => answerResume(false)} onChangeSource={onChangeSource} /> : null}
       {phase === "paused" && !showControls ? null : null}
       {pill ? <div className="ppill t-title-md" role="status">{pill}</div> : null}
       {flash ? <div className="pflash" aria-hidden="true">{flash === "play" ? <MdPlayArrow /> : <MdPause />}</div> : null}
@@ -853,8 +853,8 @@ function UpNext({ next, onCancel, onGo }: { next: { season: number; episode: num
   );
 }
 
-/** "Resume from 32:10 / Start over": the video waits at the saved position until one is chosen. */
-function ResumeCard({ positionMs, onResume, onStartOver }: { positionMs: number; onResume(): void; onStartOver(): void }) {
+/** "Resume from 32:10 / Start over": the video waits at the saved position until one is chosen; a different source can be picked instead. */
+function ResumeCard({ positionMs, onResume, onStartOver, onChangeSource }: { positionMs: number; onResume(): void; onStartOver(): void; onChangeSource(): void }) {
   return (
     <div className="presume" role="alertdialog" aria-label="Resume watching" data-spatial-trap="true">
       <div className="t-title-md">Pick up where you left off?</div>
@@ -862,6 +862,7 @@ function ResumeCard({ positionMs, onResume, onStartOver }: { positionMs: number;
         <MangoButton text={`Resume from ${formatTimestamp(positionMs)}`} icon={<MdPlayArrow />} variant="light" onClick={onResume} dataAttrs={{ autofocus: true }} />
         <MangoButton text="Start over" icon={<MdReplay />} onClick={onStartOver} />
       </div>
+      <MangoButton text="Choose a different source" icon={<MdSwapHoriz />} compact onClick={onChangeSource} />
     </div>
   );
 }
