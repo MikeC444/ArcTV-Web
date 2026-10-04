@@ -294,19 +294,33 @@
 @media (max-width: 860px) { .langlist { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .addaddon { padding: calc(28 * var(--dp)) var(--pad-x); max-width: calc(680 * var(--dp) + 2 * var(--pad-x)); }
 .addaddon code { background: var(--surface-high); padding: 1px 5px; border-radius: 4px; }
-/* Hidden setup guide */
-.guide { padding: calc(28 * var(--dp)) var(--pad-x) calc(64 * var(--dp)); max-width: calc(780 * var(--dp) + 2 * var(--pad-x)); }
-.guide__lead { margin: 0 0 20px; }
-.guide__toc { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 14px 0; border-top: 1px solid var(--divider); border-bottom: 1px solid var(--divider); }
-.guide__section { margin-top: calc(36 * var(--dp)); }
-.guide__section h2 { margin: 0 0 8px; }
+/* Hidden setup guide: roomy, big text, one idea per block */
+.guide { padding: calc(28 * var(--dp)) var(--pad-x) calc(120 * var(--dp)); max-width: calc(820 * var(--dp) + 2 * var(--pad-x)); font-size: calc(18 * var(--dp)); line-height: 1.7; }
 .guide a { color: var(--accent); }
-.guide code { background: var(--surface-high); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
-.guide__steps { margin: 14px 0 0; padding-left: 1.4em; display: flex; flex-direction: column; gap: 12px; line-height: 1.55; }
-.guide__steps ul { margin: 8px 0 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 6px; }
-.guide__note { margin: 16px 0 0; padding: 12px 14px; border-radius: 10px; background: var(--surface-high); color: var(--text-2); line-height: 1.5; }
-.guide__faq dt { margin-top: 14px; font-weight: 700; }
-.guide__faq dd { margin: 4px 0 0; color: var(--text-2); line-height: 1.5; }
+.guide code { background: var(--surface-high); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; overflow-wrap: anywhere; }
+.guide__lead { margin: 0 0 calc(32 * var(--dp)); font-size: calc(21 * var(--dp)); color: var(--text-2); }
+.guide__box { padding: calc(28 * var(--dp)); border-radius: 16px; background: var(--surface-high); }
+.guide__boxtitle { margin: 0 0 14px; font-size: calc(22 * var(--dp)); font-weight: 700; }
+.guide__short { margin: 0; padding-left: 1.4em; display: flex; flex-direction: column; gap: 12px; }
+.guide__plain { margin: 22px 0 0; padding-top: 20px; border-top: 1px solid var(--divider); }
+.guide__toc { display: flex; flex-wrap: wrap; gap: 12px 24px; margin-top: calc(32 * var(--dp)); padding: 18px 0; border-top: 1px solid var(--divider); border-bottom: 1px solid var(--divider); }
+.guide__section { margin-top: calc(72 * var(--dp)); scroll-margin-top: calc(var(--nav-h) + 16px); }
+.guide__part { margin: 0 0 6px; font-size: calc(14 * var(--dp)); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.guide__h2 { margin: 0 0 14px; font-size: calc(32 * var(--dp)); line-height: 1.25; font-weight: 800; }
+.guide__p { margin: 0; color: var(--text-2); }
+.guide__steps { list-style: none; margin: calc(32 * var(--dp)) 0 0; padding: 0; display: flex; flex-direction: column; gap: calc(28 * var(--dp)); }
+.guide__step { display: flex; gap: calc(20 * var(--dp)); padding: calc(24 * var(--dp)); border-radius: 16px; background: var(--surface-high); }
+.guide__num { flex: none; width: 2.2em; height: 2.2em; display: grid; place-items: center; border-radius: 50%; background: var(--accent); color: #08080a; font-weight: 800; }
+.guide__stepbody { min-width: 0; }
+.guide__stepbody p { margin: 0 0 12px; color: var(--text-2); }
+.guide__stepbody p:last-child { margin-bottom: 0; }
+.guide__steptitle { margin: 2px 0 10px; font-size: calc(22 * var(--dp)); font-weight: 700; line-height: 1.3; }
+.guide__stepbody ul { margin: 0 0 12px; padding-left: 1.3em; display: flex; flex-direction: column; gap: 10px; color: var(--text-2); }
+.guide__warn, .guide__done { margin: calc(32 * var(--dp)) 0 0; padding: 18px 22px; border-radius: 12px; border-left: 4px solid var(--accent); background: var(--surface-high); }
+.guide__faq { margin: calc(24 * var(--dp)) 0 0; }
+.guide__faq dt { margin-top: calc(28 * var(--dp)); font-weight: 700; font-size: calc(20 * var(--dp)); }
+.guide__faq dd { margin: 8px 0 0; color: var(--text-2); }
+@media (max-width: 720px) { .guide { font-size: 17px; } .guide__step { padding: 18px; gap: 14px; } }
 .addaddon__suggest { margin-top: calc(32 * var(--dp)); padding-top: calc(18 * var(--dp)); border-top: 1px solid var(--divider); }
 
 /* ── Auth ────────────────────────────────────────────────────────────────── */
