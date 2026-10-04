@@ -45,12 +45,6 @@ export function dedupeRows(sections: HomeSection[]): HomeSection[] {
   return out;
 }
 
-/** Continue Watching keeps only titles that no catalogue row shows (they already have a place on the page). */
-export function withoutShownTitles<T extends { contentId: string }>(entries: readonly T[], sections: readonly HomeSection[]): T[] {
-  const shown = new Set(sections.flatMap((section) => section.items.map((item) => item.id)));
-  return entries.filter((entry) => !shown.has(entry.contentId));
-}
-
 export function moveRow(displayOrder: string[], rowId: string, delta: number): string[] | null {
   const ids = displayOrder.slice();
   const index = ids.indexOf(rowId);

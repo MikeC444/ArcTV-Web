@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { MdArrowBack, MdBolt, MdExpandMore, MdHourglassTop, MdRefresh, MdExtension, MdInfo, MdPerson, MdSearchOff, MdSecurity, MdStar, MdSurroundSound, MdCheckCircle, MdOutlineCheckCircle, MdWifi, MdPlayArrow, MdWarningAmber } from "react-icons/md";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useNavigationType, useParams, useSearchParams } from "react-router-dom";
 import { DEBRID_NAMES, describeCaps, deviceVerdict, getDeviceCaps, hasSoundHere, isWebFormat, startRank, type DeviceCaps } from "../../domain/deviceSupport";
 import { resolutionOrdinal, SOURCE_HEALTH_LABEL, type Content, type ContentType, type ResolutionTier, type Stream } from "../../domain/types";
 import { formatRuntime } from "../../lib/format";
@@ -58,7 +58,9 @@ export function SourcesScreen() {
   const type: ContentType = params.type === "TV_SHOW" ? "TV_SHOW" : "MOVIE";
   const season = parseOptionalInt(params.season);
   const episode = parseOptionalInt(params.episode);
-  const { state, reload } = useSources(providerId, type, id, season, episode, search.get("skip") === "1");
+  // Coming back to this list with Back (from the player) must show the list, not throw you straight into the player again.
+  const cameBack = useNavigationType() === "POP";
+  const { state, reload } = useSources(providerId, type, id, season, episode, search.get("skip") === "1" || cameBack);
   const goPlay = (streamId: string, replace = false) => navigate(routes.player(providerId, type, id, season, episode, streamId), { replace });
 
   // "Resume" with a remembered source skips the list entirely.
