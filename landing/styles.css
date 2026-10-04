@@ -200,6 +200,10 @@ p { text-wrap: pretty; }
 .btn--ghost { background: transparent; border-color: rgba(15, 21, 25, .18); color: var(--ink); }
 .btn--ghost:hover { background: rgba(15, 21, 25, .05); }
 .dl__soon { display: inline-block; padding: 10px 20px; border-radius: 99px; background: #f1f0ec; color: var(--ink); font-weight: 600; font-size: 15px; }
+.dl__code { margin-top: 8px; padding: 20px 24px; border-radius: 18px; background: #f1f0ec; display: grid; gap: 6px; justify-items: start; }
+.dl__digits { font: 700 clamp(30px, 6vw, 42px)/1.1 var(--font); letter-spacing: .14em; color: var(--ink); font-variant-numeric: tabular-nums; }
+.panel__code { margin-top: 10px; font-size: 14px; opacity: .85; }
+.panel__code strong { letter-spacing: .1em; }
 .dl__nojs { margin-top: 24px; text-align: center; }
 @media (max-width: 860px) { .dl__card { grid-template-columns: 1fr; padding: 24px 20px; gap: 24px; } .dl__list { grid-template-columns: 1fr 1fr; } .dl__tabs { justify-content: flex-start; } }
 @media (max-width: 480px) { .dl__list { grid-template-columns: 1fr; } }

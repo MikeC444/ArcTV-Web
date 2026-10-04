@@ -90,6 +90,7 @@
             <div class="panel__act">
               <svg class="panel__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-6l1 2h2v2H6v-2h2l1-2H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1 2v8h16V7H4z"/></svg>
               <div class="panel__btns"><a class="btn btn--light btn--sm" href="https://github.com/MikeC444/ArcTV-AndroidTV/releases" rel="noopener">Get the Fire TV app</a></div>
+              <p class="panel__code">Or enter <strong>2368012</strong> in the Downloader app</p>
             </div>
           </div>
           <div class="panel" role="tabpanel" id="p-phone" aria-labelledby="t-phone" hidden>
@@ -237,6 +238,7 @@
       (function () {
         var APK = "https://github.com/MikeC444/ArcTV-MobileAPK/releases/latest/download/ArcTV-Mobile.apk";
         var TVAPP = "https://github.com/MikeC444/ArcTV-AndroidTV/releases";
+        var DLCODE = "2368012"; // Downloader (by AFTVnews) code for the latest Fire TV app
         // Each platform either has a "get" list of buttons, or none (shown as Coming soon).
         var DATA = [
           { id: "desktop", label: "Desktop", platforms: [
@@ -245,7 +247,7 @@
             { name: "Android", icon: "phone", note: "Phones and tablets", get: [{ text: "Download for Android", href: APK, note: "Latest release (APK)" }] },
             { name: "iPhone & iPad", icon: "phone" } ] },
           { id: "tv", label: "TV", platforms: [
-            { name: "Fire TV", icon: "tv", get: [{ text: "Get the Fire TV app", href: TVAPP, note: "Latest release" }] },
+            { name: "Fire TV", icon: "tv", code: DLCODE, get: [{ text: "Get the Fire TV app", href: TVAPP, note: "Latest release" }] },
             { name: "Android TV", icon: "tv", get: [{ text: "Get the Android TV app", href: TVAPP, note: "Latest release" }] },
             { name: "Apple TV", icon: "tv" }, { name: "Samsung & LG", icon: "tv" } ] },
           { id: "vr", label: "VR", platforms: [ { name: "VR headsets", icon: "vr" } ] },
@@ -291,6 +293,13 @@
             var a = el("a", "btn btn--sm btn--ghost", "Launch Web App"); a.href = "https://web.arctv.org"; box.appendChild(a);
           }
           mainEl.appendChild(box);
+          if (p.code) {
+            var dl = el("div", "dl__code");
+            dl.appendChild(el("p", "dl__label", "Install with Downloader"));
+            dl.appendChild(el("p", "dl__digits", p.code));
+            dl.appendChild(el("p", "dl__note", "Open the Downloader app on your Fire TV, choose Home, type this code and press Go, then install."));
+            mainEl.appendChild(dl);
+          }
         }
         function renderList() {
           listEl.textContent = "";
