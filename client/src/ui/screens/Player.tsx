@@ -25,7 +25,7 @@ import { FullScreenError, Spinner } from "../components/States";
 import { PlayerLoading } from "../player/Loading";
 import { describeAttempt, describeDiagnostics, EVENTS_WORTH_KEEPING, probeSource, snapshotVideo, type TrailEntry } from "../player/diagnostics";
 import { createEngine, mediaErrorToPlaybackError, pickDefaultSubtitle, type EngineTracks, type PlaybackError, type PlayerEngine } from "../player/engine";
-import { AdvancedPanel, PlaybackErrorOverlay, SettingsPanel, SourceInfoPanel, SpeedMenu, TrackMenu } from "../player/overlays";
+import { AdvancedPanel, AudioInfoPanel, PlaybackErrorOverlay, SettingsPanel, SourceInfoPanel, SpeedMenu, TrackMenu } from "../player/overlays";
 
 type Screen = { kind: "loading" } | { kind: "error"; message: string } | { kind: "ready"; content: Content; episode: Episode | null; stream: Stream };
 
@@ -87,7 +87,7 @@ export function PlayerScreen() {
   );
 }
 
-type Overlay = "settings" | "subtitles" | "audio" | "quality" | "speed" | "advanced" | "info";
+type Overlay = "settings" | "subtitles" | "audio" | "audio-info" | "quality" | "speed" | "advanced" | "info";
 const HIDE_AFTER_MS = 4000;
 /** A source that hasn't produced a picture yet: reassure after this long, give up (with a reason) after the second. */
 const SLOW_START_MS = 15_000;
@@ -674,6 +674,8 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
   const showControls = controls || phase === "paused" || phase === "ended" || !!overlay;
   const pct = time.dur > 0 ? (time.pos / time.dur) * 100 : 0;
   const bufPct = time.dur > 0 ? (time.buffered / time.dur) * 100 : 0;
+  // no audio choice: either one track, or a plain file in a browser that cannot list its tracks (Chrome, Edge, Firefox; Safari can)
+  const audioHint: "single" | "unsupported" = engine.current?.kind === "native" && video.current != null && !("audioTracks" in video.current) ? "unsupported" : "single";
   const loadingScreen = (!started || resumePrompt != null) && !error;
   const offerNext = !!next && !upNext && !error && !overlay && resumePrompt == null && offerNextEpisode(time.pos, time.dur, true);
   const slowNote =
@@ -748,12 +750,13 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
         </div>
       </div>
 
-      {overlay === "settings" ? <SettingsPanel tracks={tracks} speed={speed} autoplayNext={prefs.autoplayNextEpisode} onAutoplayChange={(v) => setPlayer({ autoplayNextEpisode: v })} onOpen={push} onClose={pop} /> : null}
+      {overlay === "settings" ? <SettingsPanel tracks={tracks} audioHint={audioHint} speed={speed} autoplayNext={prefs.autoplayNextEpisode} onAutoplayChange={(v) => setPlayer({ autoplayNextEpisode: v })} onOpen={push} onClose={pop} /> : null}
       {overlay === "advanced" ? <AdvancedPanel skipIntro={prefs.skipIntroEnabled} onSkipIntro={(v) => setPlayer({ skipIntroEnabled: v })} onSourceInfo={() => push("info")} onChangeSource={onChangeSource} onClose={pop} /> : null}
       {overlay === "info" ? <SourceInfoPanel stream={stream} tracks={tracks} engine={engine.current?.kind ?? "native"} onClose={pop} /> : null}
       {overlay === "subtitles" ? <TrackMenu title="Subtitles" options={tracks.subtitles} offLabel="Off" onClose={pop} onSelect={(id) => { engine.current?.selectSubtitle(id); setTracks((t) => ({ ...t, subtitles: t.subtitles.map((o) => ({ ...o, selected: o.id === id })) })); pop(); }} /> : null}
       {overlay === "audio" ? <TrackMenu title="Audio" options={tracks.audio} onClose={pop} onSelect={(id) => { if (id) engine.current?.selectAudio(id); setTracks((t) => ({ ...t, audio: t.audio.map((o) => ({ ...o, selected: o.id === id })) })); pop(); }} /> : null}
       {overlay === "quality" ? <TrackMenu title="Quality" options={tracks.quality} onClose={pop} onSelect={(id) => { if (id) engine.current?.selectQuality(id); setTracks((t) => ({ ...t, quality: t.quality.map((o) => ({ ...o, selected: o.id === id })) })); pop(); }} /> : null}
+      {overlay === "audio-info" ? <AudioInfoPanel hint={audioHint} onClose={pop} /> : null}
       {overlay === "speed" ? <SpeedMenu speed={speed} onSelect={changeSpeed} onClose={pop} /> : null}
 
       {offerNext && next ? (

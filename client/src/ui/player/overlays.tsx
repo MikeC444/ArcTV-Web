@@ -113,21 +113,43 @@ export interface SettingsPanelProps {
   speed: number;
   autoplayNext: boolean;
   onAutoplayChange(v: boolean): void;
-  onOpen(target: "quality" | "subtitles" | "audio" | "speed" | "advanced"): void;
+  /** Why there is no audio choice: the source has one track, or this browser cannot list the tracks of a plain video file. */
+  audioHint: "single" | "unsupported";
+  onOpen(target: "quality" | "subtitles" | "audio" | "audio-info" | "speed" | "advanced"): void;
   onClose(): void;
 }
 
-export function SettingsPanel({ tracks, speed, autoplayNext, onAutoplayChange, onOpen, onClose }: SettingsPanelProps) {
+export function SettingsPanel({ tracks, speed, autoplayNext, audioHint, onAutoplayChange, onOpen, onClose }: SettingsPanelProps) {
   const label = (list: TrackOption[], fallback: string) => list.find((t) => t.selected)?.label ?? fallback;
   return (
     <SettingsCard icon={<MdSettings />} title="Settings" subtitle="Adjust your playback preferences" onClose={onClose}>
       {tracks.quality.length > 1 ? <SettingsRow icon={<MdHighQuality />} title="Quality" subtitle={label(tracks.quality, "Auto")} onClick={() => onOpen("quality")} /> : null}
       {tracks.subtitles.length > 0 ? <SettingsRow icon={<MdSubtitles />} title="Subtitles" subtitle={label(tracks.subtitles, "Off")} onClick={() => onOpen("subtitles")} /> : null}
-      {tracks.audio.length > 1 ? <SettingsRow icon={<MdGraphicEq />} title="Audio" subtitle={label(tracks.audio, "Auto")} onClick={() => onOpen("audio")} /> : null}
+      {tracks.audio.length > 1 ? (
+        <SettingsRow icon={<MdGraphicEq />} title="Audio" subtitle={label(tracks.audio, "Auto")} onClick={() => onOpen("audio")} />
+      ) : (
+        <SettingsRow icon={<MdGraphicEq />} title="Audio" subtitle={audioHint === "single" ? (tracks.audio[0]?.label ?? "One audio track") : "Can't be changed for this source here"} onClick={() => onOpen("audio-info")} />
+      )}
       <SettingsRow icon={<MdSpeed />} title="Playback Speed" subtitle={formatSpeed(speed)} onClick={() => onOpen("speed")} />
       <SettingsRow icon={<MdPlayCircle />} title="Auto Play Next Episode" subtitle={autoplayNext ? "On" : "Off"} onClick={() => onAutoplayChange(!autoplayNext)} trailing={<Switch checked={autoplayNext} />} />
       <SettingsRow icon={<MdTune />} title="Advanced" subtitle="Additional settings" onClick={() => onOpen("advanced")} />
     </SettingsCard>
+  );
+}
+
+/** Shown when there is nothing to choose between, and says why. */
+export function AudioInfoPanel({ hint, onClose }: { hint: "single" | "unsupported"; onClose(): void }) {
+  return (
+    <MenuOverlay title="Audio" onClose={onClose}>
+      {hint === "single" ? (
+        <p className="t-body-md c-text-2" style={{ margin: 0 }}>This source has a single audio track, so there is nothing to switch between. Pick another source on the Sources screen if you want a different language or mix.</p>
+      ) : (
+        <>
+          <p className="t-body-md c-text-2" style={{ margin: 0 }}>This browser can't list or switch the audio tracks of a plain video file (MP4, MKV, WebM). If the file has several languages, you hear its default one.</p>
+          <p className="t-body-md c-text-2" style={{ margin: "12px 0 0" }}>Audio can be switched here on streaming (HLS or DASH) sources, and on most files in Safari. Otherwise pick another source, or use the Fire TV app.</p>
+        </>
+      )}
+    </MenuOverlay>
   );
 }
 
