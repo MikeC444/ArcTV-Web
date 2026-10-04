@@ -6,7 +6,7 @@ import { resolutionOrdinal, type Content, type ContentType, type Stream } from "
 import { useAuth } from "./auth";
 import { useAddonsReady } from "./hooks";
 import { useContinueWatching } from "./continueWatching";
-import { findLastStreamId } from "./lastSource";
+import { findLastSource, matchLastSource } from "./lastSource";
 import { rememberPlayerArt } from "./playerArt";
 
 /** One installed addon and what it answered (or that it is still being asked). */
@@ -59,8 +59,8 @@ export function useSources(providerId: string, type: ContentType, id: string, se
         if (cancelled) return;
         if (!content) return fail();
         rememberPlayerArt(content);
-        const lastId = userId ? findLastStreamId(userId, providerId, id, type, season, episode) : null;
-        setState({ kind: "loaded", content, streams, addons: reports.map((r) => ({ name: r.addonName, lookup: r.lookup })), recommendedId: recommendedStreamId(streams), searchingMore: false, autoSelect: lastId ? (streams.find((s) => s.id === lastId) ?? null) : null });
+        const last = userId ? findLastSource(userId, providerId, id, type, season, episode) : null;
+        setState({ kind: "loaded", content, streams, addons: reports.map((r) => ({ name: r.addonName, lookup: r.lookup })), recommendedId: recommendedStreamId(streams), searchingMore: false, autoSelect: matchLastSource(streams, last) });
         return;
       }
 

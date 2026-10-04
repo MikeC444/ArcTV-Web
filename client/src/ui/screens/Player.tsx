@@ -13,7 +13,7 @@ import { playSound } from "../../lib/sounds";
 import { useAuth } from "../../state/auth";
 import { useAddonsReady } from "../../state/hooks";
 import { useContinueWatching } from "../../state/continueWatching";
-import { setLastStreamId } from "../../state/lastSource";
+import { findLastSource, matchLastSource, setLastSource } from "../../state/lastSource";
 import { useMyList } from "../../state/myList";
 import { peekPlayerArt } from "../../state/playerArt";
 import { readPlayerPrefs, writePlayerPrefs } from "../../state/playerPrefs";
@@ -42,6 +42,7 @@ export function PlayerScreen() {
   const [screen, setScreen] = useState<Screen>({ kind: "loading" });
   const [tick, setTick] = useState(0);
   const ready = useAddonsReady();
+  const loaderUserId = useAuth((s) => s.user?.id);
 
   useEffect(() => {
     let cancelled = false;
@@ -55,7 +56,8 @@ export function PlayerScreen() {
       if (!content) return setScreen({ kind: "error", message: "Couldn't load details for this title." });
       const streams = (await Promise.all(providers.map((x) => x.getStreams(type, id, season, episodeNumber).catch(() => [] as Stream[])))).flat();
       if (cancelled) return;
-      const stream = streams.find((s) => s.id === streamId);
+      // the source's id can change between two fetches of the same addon: carry on with the same release when it is still offered
+      const stream = streams.find((s) => s.id === streamId) ?? matchLastSource(streams, loaderUserId ? findLastSource(loaderUserId, providerId, id, type, season, episodeNumber) : null);
       if (!stream) return setScreen({ kind: "error", message: "This source is no longer available." });
       const episode = season != null && episodeNumber != null ? (content.seasons.find((s) => s.seasonNumber === season)?.episodes.find((e) => e.episodeNumber === episodeNumber) ?? null) : null;
       setScreen({ kind: "ready", content: { ...content, providerId: content.providerId ?? providerId }, episode, stream });
@@ -63,7 +65,7 @@ export function PlayerScreen() {
     return () => {
       cancelled = true;
     };
-  }, [providerId, type, id, season, episodeNumber, streamId, tick, ready]);
+  }, [providerId, type, id, season, episodeNumber, streamId, tick, ready, loaderUserId]);
 
   const changeSource = useCallback(() => navigate(routes.sources(providerId, type, id, season, episodeNumber, true), { replace: true }), [navigate, providerId, type, id, season, episodeNumber]);
   const back = useCallback(() => navigate(-1), [navigate]);
@@ -245,14 +247,14 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
       const positionMs = completed ? durationMs : Math.round(v.currentTime * 1000);
       const decision = decideProgress(type, positionMs, durationMs, completed);
       if (!decision.report) return;
-      if (decision.rememberSource && userId) setLastStreamId(userId, providerId, content.id, type, season, episodeNumber, stream.id);
+      if (decision.rememberSource && userId) setLastSource(userId, providerId, content.id, type, season, episodeNumber, stream);
       if (decision.markWatched) markWatched(content);
       reportProgress(
         { providerId, contentId: content.id, contentType: type, seasonNumber: season, episodeNumber, episodeTitle: episode?.title ?? null, title: content.title, posterUrl: content.posterUrl, backdropUrl: content.backdropUrl, positionMs, durationMs, completed },
         { keepalive },
       );
     },
-    [type, userId, providerId, content, season, episodeNumber, stream.id, episode, markWatched, reportProgress],
+    [type, userId, providerId, content, season, episodeNumber, stream, episode, markWatched, reportProgress],
   );
   const reportRef = useRef(report);
   reportRef.current = report;
