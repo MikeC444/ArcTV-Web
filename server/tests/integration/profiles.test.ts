@@ -27,7 +27,7 @@ describe.skipIf(!supported)("profiles (real backend)", () => {
     const h = (r: request.Test) => r.set("X-MangoTV-Client", "web").set("X-Forwarded-For", ip);
     return { get: (p: string) => h(web.get(p)), post: (p: string) => h(web.post(p)), put: (p: string) => h(web.put(p)), del: (p: string) => h(web.delete(p)) };
   }
-  const profile = (over: Record<string, unknown> = {}) => ({ name: "Sam", avatar: "ocean", kind: "adult", ...over });
+  const profile = (over: Record<string, unknown> = {}) => ({ name: "Sam", avatar: "cat", kind: "adult", ...over });
   const movie = (id: string) => ({ providerId: "com.linvo.cinemeta", contentId: id, contentType: "MOVIE", title: id, updatedAt: nowIso(-60_000) });
 
   it("every account has its own profile, and Plus (early access) lets it add up to four more", async () => {

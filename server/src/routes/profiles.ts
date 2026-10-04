@@ -17,7 +17,7 @@ import { ApiError, fromBackendStatus, sendError } from "../errors.js";
 export const PROFILE_LIMIT = 5;
 export const DEFAULT_PROFILE_ID = "main";
 
-export const AVATARS = ["sunrise", "ocean", "forest", "violet", "ember", "mint", "astro", "monster", "fox", "robot", "wave", "bolt"] as const;
+export const AVATARS = ["fox", "cat", "dog", "panda", "frog", "owl", "ghost", "robot", "alien", "astronaut", "raccoon", "penguin", "octopus", "dragon", "retro-tv", "lion"] as const;
 
 const pin = z.string().regex(/^\d{4}$/, "A PIN is 4 digits.");
 const name = z.string().trim().min(1, "Give the profile a name.").max(24, "Profile names are at most 24 characters.");

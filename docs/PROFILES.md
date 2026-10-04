@@ -10,7 +10,7 @@ This file is the source of truth for the web app's behaviour **and** for what th
 * **Manage profiles**: rename, change the picture, Adult / Kids, PIN on / off / change, remove. A locked profile needs its current PIN to be changed or removed. The account's own profile can't be removed or made a kids profile.
 * **Top bar**: the active profile's avatar and name at the top right (opens the picker). **Settings → Account** shows "Watching as …" with a link. **Settings → ArcTV Plus** lists Profiles as included (or "Coming soon" while the backend has no profiles).
 * **Kids profile**: no Settings (so no addons, sign-out or Plus page; the Settings link and gear are gone and `/settings` goes Home), and these genres are hidden everywhere Blocked Genres applies, on top of the profile's own list: `Horror, Thriller, Crime, War, Mystery, Film-Noir, Adult` (`KIDS_BLOCKED_GENRES` in `domain/profiles.ts`). A title page for such a title can't be opened by its address either. Limit: filtering is by the genres an addon reports, so a title that comes with no genres can't be matched (same as Blocked Genres).
-* Avatars are 12 preset colour tiles with a glyph (`AVATARS` in `domain/profiles.ts`); the **ids** are what is stored. The Firestick should map the same ids to its own artwork.
+* Avatars are 16 preset pictures (`AVATARS` in `domain/profiles.ts`, files in `client/public/avatars/`); the **ids** are what is stored. The Firestick should map the same ids to its own artwork.
 
 ## How it works
 
@@ -36,7 +36,7 @@ Error codes (in the usual `{ error: { code, message } }`): `plus_required` (403)
 
 **Built** on branch `claude/kind-franklin-1m27l9` of `MikeC444/ArcTV-AndroidTV` (migration `0018_profiles`, 220 backend tests passing, `CHANGELOG.md` Post-Milestone-51), **not merged or deployed yet**. The web server only holds the *behaviour* around the list; the profiles themselves and each profile's library live in the backend. Until the backend is deployed, the web app runs in the "no profiles" mode above. What it implements, for the Firestick to rely on:
 
-1. **`profiles` table**: `id` (text, stable; the account's own profile is always `main`), `account_id`, `name` (≤24), `avatar` (one of the 12 ids), `kind` (`adult` | `kids`), `pin_hash` (null = no PIN; **hash it** with a slow hash, 4 digits, never return it), `is_default`, timestamps. Created lazily: every account has `main` (named after the account's display name, avatar `sunrise`). Max 5 per account (the web server checks too).
+1. **`profiles` table**: `id` (text, stable; the account's own profile is always `main`), `account_id`, `name` (≤24), `avatar` (one of the 16 ids), `kind` (`adult` | `kids`), `pin_hash` (null = no PIN; **hash it** with a slow hash, 4 digits, never return it), `is_default`, timestamps. Created lazily: every account has `main` (named after the account's display name, avatar `fox`). Max 5 per account (the web server checks too).
 2. **Endpoints** (all bearer-authenticated, all for the signed-in account only):
    * `GET /user/profiles` → `{ profiles: [{ id, name, avatar, kind, hasPin, isDefault }] }`
    * `POST /user/profiles` `{ name, avatar, kind, pin? }` → 201 with the profile
