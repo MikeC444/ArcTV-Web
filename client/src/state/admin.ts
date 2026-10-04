@@ -44,7 +44,25 @@ export interface AdminUserDetail {
 }
 
 export const fetchAdminSummary = () => api<AdminSummary>("/admin/summary");
-export const fetchAdminUsers = (q: string, limit: number, offset = 0) => api<AdminUserList>(`/admin/users?${new URLSearchParams({ ...(q ? { q } : {}), limit: String(limit), offset: String(offset) })}`);
+/** The user list filters; an empty value means "no filter". `device` is "<platform>|<app version>". */
+export interface AdminFilters {
+  q: string;
+  plan: "" | "free" | "monthly" | "yearly" | "lifetime";
+  device: string;
+  addons: "" | "with" | "none";
+  watching: "" | "with" | "none";
+  seen: "" | "1h" | "24h" | "7d" | "30d" | "older" | "never";
+}
+export const NO_FILTERS: AdminFilters = { q: "", plan: "", device: "", addons: "", watching: "", seen: "" };
+export const filtersActive = (f: AdminFilters): boolean => (Object.keys(NO_FILTERS) as Array<keyof AdminFilters>).some((k) => f[k] !== "");
+export const adminUsersQuery = (f: AdminFilters, limit: number, offset: number): string => {
+  const params = new URLSearchParams();
+  for (const k of Object.keys(NO_FILTERS) as Array<keyof AdminFilters>) if (f[k]) params.set(k, f[k]);
+  params.set("limit", String(limit));
+  params.set("offset", String(offset));
+  return params.toString();
+};
+export const fetchAdminUsers = (f: AdminFilters, limit: number, offset = 0) => api<AdminUserList>(`/admin/users?${adminUsersQuery(f, limit, offset)}`);
 export const fetchAdminUser = (id: string) => api<AdminUserDetail>(`/admin/users/${encodeURIComponent(id)}`);
 
 /** The newest version number among devices, comparing dotted numbers ("0.1.10" is newer than "0.1.9"); non-numeric ones (web, unknown) never count. */

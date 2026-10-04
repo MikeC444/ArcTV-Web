@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { MdExpandMore, MdRefresh, MdSearch } from "react-icons/md";
+import { MdClear, MdExpandMore, MdRefresh } from "react-icons/md";
 import { formatElapsed, pluralize, timeAgo } from "../../lib/format";
-import { fetchAdminSummary, fetchAdminUser, fetchAdminUsers, newestVersion, type AdminDevice, type AdminSummary, type AdminUserDetail, type AdminUserRow } from "../../state/admin";
+import { fetchAdminSummary, fetchAdminUser, fetchAdminUsers, filtersActive, newestVersion, NO_FILTERS, type AdminDevice, type AdminFilters, type AdminSummary, type AdminUserDetail, type AdminUserRow } from "../../state/admin";
 import { MangoButton } from "../components/Buttons";
 import { Spinner } from "../components/States";
 
@@ -17,14 +17,15 @@ export function AdminScreen() {
   const [summary, setSummary] = useState<AdminSummary | null>(null);
   const [users, setUsers] = useState<AdminUserRow[]>([]);
   const [total, setTotal] = useState(0);
-  const [query, setQuery] = useState("");
-  const [applied, setApplied] = useState("");
+  const [filters, setFilters] = useState<AdminFilters>(NO_FILTERS);
+  const [typed, setTyped] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
   const [detail, setDetail] = useState<AdminUserDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [updatedAt, setUpdatedAt] = useState<number | null>(null);
   const shown = useRef(PAGE);
+  const filtersKey = JSON.stringify(filters);
 
   useEffect(() => {
     document.title = "Developer panel · Arc TV";
@@ -32,7 +33,7 @@ export function AdminScreen() {
 
   const refresh = useCallback(async () => {
     try {
-      const [s, list] = await Promise.all([fetchAdminSummary(), fetchAdminUsers(applied, shown.current)]);
+      const [s, list] = await Promise.all([fetchAdminSummary(), fetchAdminUsers(filters, shown.current)]);
       setSummary(s);
       setUsers(list.users);
       setTotal(list.total);
@@ -44,7 +45,8 @@ export function AdminScreen() {
     } finally {
       setLoading(false);
     }
-  }, [applied, openId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtersKey, openId]);
 
   useEffect(() => {
     void refresh();
@@ -56,9 +58,20 @@ export function AdminScreen() {
     shown.current += PAGE;
     await refresh();
   };
-  const search = () => {
+  const setFilter = <K extends keyof AdminFilters>(key: K, value: AdminFilters[K]) => {
     shown.current = PAGE;
-    setApplied(query.trim());
+    setFilters((f) => ({ ...f, [key]: value }));
+  };
+  // typing in the User box searches after a short pause
+  useEffect(() => {
+    const t = window.setTimeout(() => typed.trim() !== filters.q && setFilter("q", typed.trim()), 300);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [typed]);
+  const clearFilters = () => {
+    shown.current = PAGE;
+    setTyped("");
+    setFilters(NO_FILTERS);
   };
   const open = async (id: string) => {
     setOpenId(id === openId ? null : id);
@@ -110,14 +123,31 @@ export function AdminScreen() {
       ) : null}
 
       <section className="admin__users page__pad" aria-label="Users">
-        <form className="admin__search" onSubmit={(e) => { e.preventDefault(); search(); }}>
-          <input className="admin__input" type="search" placeholder="Search by email or name" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search users" />
-          <MangoButton text="Search" icon={<MdSearch />} compact variant="filled" onClick={search} />
-        </form>
         {loading ? <Spinner /> : null}
         <div className="admin__table" role="table" aria-label={`${total} users`}>
           <div className="admin__row admin__row--head t-label-md c-text-3" role="row">
             <span>User</span><span>Plan</span><span>Devices (app version)</span><span>Addons</span><span>Watching</span><span>Last seen</span>
+          </div>
+          <div className="admin__row admin__row--filters" role="row">
+            <input className="admin__input" type="search" placeholder="Email or name" value={typed} onChange={(e) => setTyped(e.target.value)} aria-label="Filter by email or name" />
+            <select className="admin__input" value={filters.plan} onChange={(e) => setFilter("plan", e.target.value as AdminFilters["plan"])} aria-label="Filter by plan">
+              <option value="">All</option><option value="free">Free</option><option value="monthly">Monthly</option><option value="yearly">Yearly</option><option value="lifetime">Lifetime</option>
+            </select>
+            <select className="admin__input" value={filters.device} onChange={(e) => setFilter("device", e.target.value)} aria-label="Filter by app version">
+              <option value="">All versions</option>
+              {(summary?.versions ?? []).map((v) => (
+                <option key={`${v.platform}|${v.version}`} value={`${v.platform}|${v.version}`}>{deviceLabel({ platform: v.platform, appVersion: v.version === "unknown" ? null : v.version })} ({v.devices})</option>
+              ))}
+            </select>
+            <select className="admin__input" value={filters.addons} onChange={(e) => setFilter("addons", e.target.value as AdminFilters["addons"])} aria-label="Filter by addons">
+              <option value="">All</option><option value="with">Has</option><option value="none">None</option>
+            </select>
+            <select className="admin__input" value={filters.watching} onChange={(e) => setFilter("watching", e.target.value as AdminFilters["watching"])} aria-label="Filter by Continue Watching">
+              <option value="">All</option><option value="with">Has</option><option value="none">None</option>
+            </select>
+            <select className="admin__input" value={filters.seen} onChange={(e) => setFilter("seen", e.target.value as AdminFilters["seen"])} aria-label="Filter by last seen">
+              <option value="">Any time</option><option value="1h">Last hour</option><option value="24h">Last 24 h</option><option value="7d">Last 7 days</option><option value="30d">Last 30 days</option><option value="older">Over 30 days</option><option value="never">Never</option>
+            </select>
           </div>
           {users.map((u) => (
             <div key={u.id}>
@@ -133,6 +163,10 @@ export function AdminScreen() {
             </div>
           ))}
           {!loading && users.length === 0 ? <p className="c-text-2" style={{ padding: 16 }}>No users match.</p> : null}
+        </div>
+        <div className="admin__foot t-label-md c-text-2">
+          {filtersActive(filters) ? `${total} of ${summary?.users ?? total} users match` : `${total} users`}
+          {filtersActive(filters) ? <MangoButton text="Clear filters" icon={<MdClear />} compact onClick={clearFilters} /> : null}
         </div>
         {users.length < total ? <MangoButton text={`Show more (${users.length} of ${total})`} icon={<MdExpandMore />} compact onClick={() => void loadMore()} /> : null}
       </section>

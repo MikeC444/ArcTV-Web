@@ -1,7 +1,7 @@
 # Developer panel (web)
 
 `/admin`, linked from Settings → Account for accounts the backend flags as admins (`users.is_admin`, set by hand in the database; see the backend's
-`docs/ADMIN.md`). Read-only: a summary (users, activity, plans, **which app versions are in use**), a searchable user list, and per user the devices
+`docs/ADMIN.md`). Read-only: a summary (users, activity, plans, **which app versions are in use**), a user list you can filter by email or name, plan, app version, has addons, has Continue Watching and last seen (a filter row under the column headings, "Clear filters" to reset; the filtering is done on the server so it covers every user, not only the rows shown), and per user the devices
 with their app version, profiles, addons (host and debrid service only, never the key), Continue Watching and recent history. It refreshes itself every
 30 seconds, so a device that updates its app shows the new version without a reload.
 
