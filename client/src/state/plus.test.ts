@@ -21,7 +21,7 @@ const { usePlus, watchForPurchase } = await import("./plus");
 const { hasPlusNow } = await import("./plusAccess");
 const { hydrateAll, resetAllStores } = await import("./sync");
 
-const status = (over: Record<string, unknown> = {}) => ({ active: false, plan: null, validUntil: null, paywall: true, ...over });
+const status = (over: Record<string, unknown> = {}) => ({ active: false, plan: null, validUntil: null, cancelAtPeriodEnd: false, paywall: true, ...over });
 
 beforeEach(() => {
   localStorage.clear();
@@ -84,6 +84,30 @@ describe("ArcTV Plus status", () => {
     respond = () => ({ url: "https://checkout.stripe.com/c/pay_1" });
     expect(await usePlus.getState().checkout("lifetime")).toBe("https://checkout.stripe.com/c/pay_1");
     expect(calls.at(-1)).toEqual({ path: "/user/plus/checkout", method: "POST", body: { plan: "lifetime" } });
+  });
+});
+
+describe("cancelling a subscription", () => {
+  it("asks the backend, then shows Plus as ending rather than gone", async () => {
+    hydrateAll("u1");
+    respond = () => status({ active: true, plan: "monthly", validUntil: "2099-01-01T00:00:00.000Z" });
+    await usePlus.getState().pull();
+    expect(usePlus.getState().cancelAtPeriodEnd).toBe(false);
+
+    respond = () => status({ active: true, plan: "monthly", validUntil: "2099-01-01T00:00:00.000Z", cancelAtPeriodEnd: true });
+    await usePlus.getState().cancelSubscription();
+    expect(calls.at(-1)).toEqual({ path: "/user/plus/cancel", method: "POST", body: {} });
+    expect(usePlus.getState()).toMatchObject({ active: true, plan: "monthly", cancelAtPeriodEnd: true });
+    expect(hasPlusNow()).toBe(true);
+  });
+
+  it("leaves the status alone when the backend refuses", async () => {
+    hydrateAll("u1");
+    respond = () => status({ active: true, plan: "yearly", validUntil: "2099-01-01T00:00:00.000Z" });
+    await usePlus.getState().pull();
+    respond = () => new ApiClientError(500, "server_error", "nope");
+    await expect(usePlus.getState().cancelSubscription()).rejects.toBeInstanceOf(ApiClientError);
+    expect(usePlus.getState().cancelAtPeriodEnd).toBe(false);
   });
 });
 

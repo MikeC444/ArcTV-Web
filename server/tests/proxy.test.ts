@@ -59,6 +59,7 @@ describe("/api/user allow-list proxy", () => {
     const { client } = await signedIn();
     expect((await client.get("/api/user/plus")).body).toMatchObject({ active: true, paywall: false });
     expect((await client.post("/api/user/plus/checkout").send({ plan: "yearly" })).body).toEqual({ url: "https://checkout.example/yearly" });
+    expect((await client.post("/api/user/plus/cancel").send({})).body).toMatchObject({ active: true, cancelAtPeriodEnd: true });
     expect((await client.agent.post("/api/user/plus/checkout").set("X-MangoTV-Client", "web").set("Content-Type", "application/json").send("[1]")).status).toBe(400);
     const backend = createMockBackend();
     expect((await request(appWith(backend.fetch)).get("/api/user/plus")).status).toBe(401);
