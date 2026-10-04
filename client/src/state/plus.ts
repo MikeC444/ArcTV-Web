@@ -10,11 +10,13 @@ export interface PlusStatus {
   /** "early_access" while the paywall is off and everyone has Plus; null when there is no Plus. */
   plan: PlusPlanId | "early_access" | null;
   validUntil: string | null;
+  /** A monthly or yearly subscription that has been cancelled: Plus runs to validUntil and then ends. */
+  cancelAtPeriodEnd: boolean;
   /** True once Plus is paid; false while it is free for everyone (early access). */
   paywall: boolean;
 }
 
-const NONE: PlusStatus = { active: false, plan: null, validUntil: null, paywall: false };
+const NONE: PlusStatus = { active: false, plan: null, validUntil: null, cancelAtPeriodEnd: false, paywall: false };
 
 interface PlusState extends PlusStatus {
   userId: string | null;
@@ -24,6 +26,8 @@ interface PlusState extends PlusStatus {
   pull(): Promise<boolean>;
   /** Starts a checkout for one plan and returns the hosted payment page's URL. */
   checkout(plan: PlusPlanId): Promise<string>;
+  /** Cancels a monthly or yearly subscription at the end of the period already paid for; Plus stays on until then. */
+  cancelSubscription(): Promise<void>;
 }
 
 /**
@@ -47,7 +51,7 @@ export const usePlus = create<PlusState>((set, get) => ({
     try {
       const status = await api<PlusStatus>("/user/plus");
       if (get().userId !== userId) return false; // signed out or switched account while waiting
-      const next: PlusStatus = { active: status.active === true, plan: status.plan ?? null, validUntil: status.validUntil ?? null, paywall: status.paywall === true };
+      const next: PlusStatus = { active: status.active === true, plan: status.plan ?? null, validUntil: status.validUntil ?? null, cancelAtPeriodEnd: status.cancelAtPeriodEnd === true, paywall: status.paywall === true };
       set(next);
       writeJson(userKey(userId, "plus"), next);
       return true;
@@ -59,6 +63,15 @@ export const usePlus = create<PlusState>((set, get) => ({
   async checkout(plan) {
     const { url } = await api<{ url: string }>("/user/plus/checkout", { method: "POST", body: { plan } });
     return url;
+  },
+
+  async cancelSubscription() {
+    const { userId } = get();
+    const status = await api<PlusStatus>("/user/plus/cancel", { method: "POST", body: {} });
+    if (!userId || get().userId !== userId) return;
+    const next: PlusStatus = { active: status.active === true, plan: status.plan ?? null, validUntil: status.validUntil ?? null, cancelAtPeriodEnd: status.cancelAtPeriodEnd === true, paywall: status.paywall === true };
+    set(next);
+    writeJson(userKey(userId, "plus"), next);
   },
 }));
 

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { MdAccountCircle, MdAdd, MdBlock, MdFavorite, MdWorkspacePremium, MdArrowDownward, MdArrowUpward, MdCheck, MdCloudUpload, MdDelete, MdExtension, MdGridView, MdInfo, MdLogout, MdMusicNote, MdSubtitles, MdSwitchAccount, MdVolumeUp } from "react-icons/md";
+import { MdAccountCircle, MdAdd, MdBlock, MdCancel, MdFavorite, MdWorkspacePremium, MdArrowDownward, MdArrowUpward, MdCheck, MdCloudUpload, MdDelete, MdExtension, MdGridView, MdInfo, MdLogout, MdMusicNote, MdSubtitles, MdSwitchAccount, MdVolumeUp } from "react-icons/md";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { PLUS_FREE_NOTE, PLUS_PERKS, PLUS_PLANS, PLUS_PROCEEDS_NOTE } from "../../domain/plus";
 import { applyRowOrder, moveRow } from "../../domain/homeRows";
@@ -265,6 +265,7 @@ function AccountPane() {
   const [busy, setBusy] = useState(false);
   return (
     <div>
+      <PlusSubscription />
       {profile ? (
         <div className="accountprofile">
           <div className="accountprofile__avatar">
@@ -298,6 +299,58 @@ function AccountPane() {
       <p className="t-label-sm c-text-3" style={{ marginTop: 18, maxWidth: 520 }}>
         Signing out flushes any unsynced changes, then removes this account's data from this browser. Your library stays safe in your ArcTV account.
       </p>
+    </div>
+  );
+}
+
+/** Account → ArcTV Plus: for a paying monthly or yearly subscriber, when it renews and a way to cancel it. Lifetime (and no Plus) shows nothing. */
+function PlusSubscription() {
+  const plus = usePlus();
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    void usePlus.getState().pull();
+  }, []);
+  if (!plus.paywall || !plus.active || (plus.plan !== "monthly" && plus.plan !== "yearly")) return null;
+  const planLabel = PLUS_PLANS.find((p) => p.id === plus.plan)?.label ?? "";
+  const until = plus.validUntil ? new Date(plus.validUntil).toLocaleDateString() : null;
+
+  async function cancel() {
+    setBusy(true);
+    setError(null);
+    try {
+      await plus.cancelSubscription();
+      setConfirming(false);
+    } catch {
+      setError("Couldn't cancel your subscription. Try again in a moment.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="accountplus">
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="t-label-sm c-text-3">ArcTV Plus · {planLabel}</div>
+        <div className="t-body-md">
+          {plus.cancelAtPeriodEnd ? `Your subscription won't renew.${until ? ` You keep Plus until ${until}.` : ""}` : until ? `Renews on ${until}.` : "Active."}
+        </div>
+      </div>
+      {plus.cancelAtPeriodEnd ? null : <MangoButton text="Cancel subscription" icon={<MdCancel />} compact onClick={() => { setError(null); setConfirming(true); }} />}
+      {confirming ? (
+        <div className="scrim" onMouseDown={(e) => e.target === e.currentTarget && !busy && setConfirming(false)}>
+          <div className="dialog" role="alertdialog" aria-modal="true" aria-label={`Cancel your ${planLabel.toLowerCase()} subscription?`} data-spatial-trap="true" style={{ flexDirection: "column", maxWidth: 480 }}>
+            <h2 className="t-title-lg" style={{ margin: 0 }}>Cancel your {planLabel.toLowerCase()} subscription?</h2>
+            <p className="c-text-2 t-body-md">{until ? `You keep ArcTV Plus until ${until}. After that it won't renew and you won't be charged again.` : "You keep ArcTV Plus until the end of the period you've paid for. After that it won't renew and you won't be charged again."}</p>
+            {error ? <p className="t-body-sm" role="alert" style={{ margin: 0, color: "var(--coral)" }}>{error}</p> : null}
+            <div style={{ display: "flex", gap: 12 }}>
+              <MangoButton text="Keep Plus" icon={<MdCheck />} disabled={busy} onClick={() => setConfirming(false)} dataAttrs={{ autofocus: true }} />
+              <MangoButton text={busy ? "Cancelling…" : "Cancel subscription"} icon={<MdCancel />} variant="filled" disabled={busy} onClick={() => void cancel()} />
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
