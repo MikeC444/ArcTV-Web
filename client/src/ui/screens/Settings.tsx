@@ -210,6 +210,7 @@ function PlusPane() {
           </>
         )}
       </div>
+      <PlusSubscription />
       <p className="t-body-md plus__free">{PLUS_FREE_NOTE}</p>
       <p className="plus__proceeds">
         <MdFavorite aria-hidden="true" /> <span>{PLUS_PROCEEDS_NOTE}</span>
@@ -265,7 +266,6 @@ function AccountPane() {
   const [busy, setBusy] = useState(false);
   return (
     <div>
-      <PlusSubscription />
       {profile ? (
         <div className="accountprofile">
           <div className="accountprofile__avatar">
@@ -303,7 +303,7 @@ function AccountPane() {
   );
 }
 
-/** Account → ArcTV Plus: for a paying monthly or yearly subscriber, when it renews and a way to cancel it. Lifetime (and no Plus) shows nothing. */
+/** Settings → ArcTV Plus: for a paying monthly or yearly subscriber, when it renews and a way to cancel it. Lifetime (and no Plus) shows nothing. */
 function PlusSubscription() {
   const plus = usePlus();
   const [confirming, setConfirming] = useState(false);
