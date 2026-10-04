@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
-import { MdArrowBack, MdFastForward, MdForward10, MdFullscreen, MdFullscreenExit, MdGraphicEq, MdHighQuality, MdPause, MdPlayArrow, MdReplay, MdReplay10, MdSettings, MdSkipNext, MdSubtitles, MdSwapHoriz, MdVolumeOff, MdVolumeUp } from "react-icons/md";
+import { MdArrowBack, MdFastForward, MdForward10, MdFullscreen, MdFullscreenExit, MdGraphicEq, MdHighQuality, MdPause, MdPlayArrow, MdReplay10, MdSettings, MdSkipNext, MdSubtitles, MdSwapHoriz, MdVolumeOff, MdVolumeUp } from "react-icons/md";
 import { useNavigate, useParams } from "react-router-dom";
 import { DEBRID_NAMES, deviceVerdict, getDeviceCaps, parseStreamFacts } from "../../domain/deviceSupport";
 import { buildRelayUrl, needsRelay, playbackUrl, relayRefusal } from "../../domain/relay";
@@ -213,8 +213,6 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
   const [time, setTime] = useState({ pos: 0, dur: 0, buffered: 0 });
   const [volume, setVolume] = useState(() => readPlayerPrefs().volume);
   const [showRemaining, setShowRemaining] = useState(() => readPlayerPrefs().showRemaining);
-  /** A saved position (ms) waiting for "Resume" or "Start over"; the video sits paused there until one is chosen. */
-  const [resumePrompt, setResumePrompt] = useState<number | null>(null);
   const [muted, setMuted] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [pill, setPill] = useState<string | null>(null);
@@ -343,12 +341,8 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
     const onMeta = () => {
       const r = resumeMs.current;
       resumeMs.current = null;
-      if (shouldOfferResume(r, v.duration)) {
-        // wait at the saved position and ask, instead of jumping there on its own
-        v.currentTime = (r as number) / 1000;
-        v.pause();
-        setResumePrompt(r);
-      }
+      // a part-watched title carries on from where it was left (unless that is the very end)
+      if (shouldOfferResume(r, v.duration)) v.currentTime = (r as number) / 1000;
     };
     const onTime = () => setTime((t) => ({ pos: v.currentTime, dur: Number.isFinite(v.duration) ? v.duration : 0, buffered: v.buffered.length ? v.buffered.end(v.buffered.length - 1) : t.buffered }));
     const onPlaying = () => {
@@ -553,15 +547,6 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
   };
   const pop = useCallback(() => setOverlays((s) => s.slice(0, -1)), []);
   const closeAll = () => setOverlays([]);
-  const answerResume = (resume: boolean) => {
-    const v = video.current;
-    setResumePrompt(null);
-    if (!v) return;
-    if (!resume) v.currentTime = 0;
-    void v.play().catch(() => setPhase("paused"));
-    bump();
-  };
-
   const handleBack = useCallback(() => {
     reportRef.current(false); // save the position before leaving, however little was watched
     if (document.fullscreenElement) void document.exitFullscreen();
@@ -572,14 +557,6 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
   const hold = useRef<{ anchor: number; delta: number } | null>(null);
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (resumePrompt != null) {
-        // only the card's own buttons answer (arrows / Enter move between them); leaving still works
-        if (e.key === "Escape" || e.key === "Backspace") {
-          e.preventDefault();
-          handleBack();
-        }
-        return;
-      }
       if (overlay || error || e.ctrlKey || e.metaKey || e.altKey) return;
       const target = e.target as HTMLElement | null;
       if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return; // the volume slider etc. handle their own keys
@@ -660,7 +637,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
     };
-  }, [overlay, error, resumePrompt, controls, phase, toggle, toggleFullscreen, bump, handleBack, setVolumeTo]);
+  }, [overlay, error, controls, phase, toggle, toggleFullscreen, bump, handleBack, setVolumeTo]);
 
   // ── pointer ─────────────────────────────────────────────────────────────────
   const coarse = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
@@ -676,8 +653,8 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
   const bufPct = time.dur > 0 ? (time.buffered / time.dur) * 100 : 0;
   // no audio choice: either one track, or a plain file in a browser that cannot list its tracks (Chrome, Edge, Firefox; Safari can)
   const audioHint: "single" | "unsupported" = engine.current?.kind === "native" && video.current != null && !("audioTracks" in video.current) ? "unsupported" : "single";
-  const loadingScreen = (!started || resumePrompt != null) && !error;
-  const offerNext = !!next && !upNext && !error && !overlay && resumePrompt == null && offerNextEpisode(time.pos, time.dur, true);
+  const loadingScreen = !started && !error;
+  const offerNext = !!next && !upNext && !error && !overlay && offerNextEpisode(time.pos, time.dur, true);
   const slowNote =
     slowStart && !error && (video.current?.readyState ?? 0) === 0 ? (
       <div className="player__slow player__slow--inline" role="status">
@@ -693,12 +670,11 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
       <video ref={video} className="player__video" playsInline crossOrigin={undefined} onClick={onSurfaceClick} onDoubleClick={() => !coarse && toggleFullscreen()} aria-label={`${content.title} video`} />
 
       {loadingScreen ? (
-        <PlayerLoading art={content} caption={episode ? `S${episode.seasonNumber} E${episode.episodeNumber} • ${episode.title}` : null} busy={resumePrompt == null && phase !== "paused"} onPlay={resumePrompt == null && phase === "paused" ? toggle : undefined}>
+        <PlayerLoading art={content} caption={episode ? `S${episode.seasonNumber} E${episode.episodeNumber} • ${episode.title}` : null} busy={phase !== "paused"} onPlay={phase === "paused" ? toggle : undefined}>
           {slowNote}
         </PlayerLoading>
       ) : null}
       {phase === "buffering" && started && !error ? <div className="player__spinner"><Spinner white /></div> : null}
-      {resumePrompt != null && !error ? <ResumeCard positionMs={resumePrompt} onResume={() => answerResume(true)} onStartOver={() => answerResume(false)} onChangeSource={onChangeSource} /> : null}
       {phase === "paused" && !showControls ? null : null}
       {pill ? <div className="ppill t-title-md" role="status">{pill}</div> : null}
       {flash ? <div className="pflash" aria-hidden="true">{flash === "play" ? <MdPlayArrow /> : <MdPause />}</div> : null}
@@ -849,20 +825,6 @@ function UpNext({ next, onCancel, onGo }: { next: { season: number; episode: num
         <MangoButton text="Play now" icon={<MdFastForward />} variant="light" compact onClick={onGo} dataAttrs={{ autofocus: true }} />
         <MangoButton text="Cancel" icon={<MdArrowBack />} compact onClick={onCancel} />
       </div>
-    </div>
-  );
-}
-
-/** "Resume from 32:10 / Start over": the video waits at the saved position until one is chosen; a different source can be picked instead. */
-function ResumeCard({ positionMs, onResume, onStartOver, onChangeSource }: { positionMs: number; onResume(): void; onStartOver(): void; onChangeSource(): void }) {
-  return (
-    <div className="presume" role="alertdialog" aria-label="Resume watching" data-spatial-trap="true">
-      <div className="t-title-md">Pick up where you left off?</div>
-      <div className="presume__actions">
-        <MangoButton text={`Resume from ${formatTimestamp(positionMs)}`} icon={<MdPlayArrow />} variant="light" onClick={onResume} dataAttrs={{ autofocus: true }} />
-        <MangoButton text="Start over" icon={<MdReplay />} onClick={onStartOver} />
-      </div>
-      <MangoButton text="Choose a different source" icon={<MdSwapHoriz />} compact onClick={onChangeSource} />
     </div>
   );
 }
