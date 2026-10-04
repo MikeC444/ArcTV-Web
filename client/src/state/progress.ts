@@ -44,7 +44,7 @@ export function offerNextEpisode(positionS: number, durationS: number, hasNext: 
   return durationS - positionS <= NEXT_EPISODE_OFFER_S;
 }
 
-/** A saved position is offered as "Resume from …" unless it is (almost) the end of the file. */
+/** A saved position is resumed from unless it is (almost) the end of the file. */
 export function shouldOfferResume(resumeMs: number | null, durationS: number): boolean {
   return resumeMs != null && resumeMs > 0 && Number.isFinite(durationS) && durationS * 1000 - resumeMs > 10_000;
 }
