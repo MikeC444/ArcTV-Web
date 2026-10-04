@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { MdAccountCircle, MdAdd, MdBlock, MdCancel, MdFavorite, MdWorkspacePremium, MdArrowDownward, MdArrowUpward, MdCheck, MdCloudUpload, MdDelete, MdExtension, MdGridView, MdInfo, MdLogout, MdMusicNote, MdSubtitles, MdSwitchAccount, MdTune, MdVolumeUp } from "react-icons/md";
-import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { PLUS_FREE_NOTE, PLUS_PERKS, PLUS_PLANS, PLUS_PROCEEDS_NOTE } from "../../domain/plus";
 import { applyRowOrder, moveRow } from "../../domain/homeRows";
 import { useProviders } from "../../domain/registry";
@@ -384,7 +384,7 @@ function AddonsPane() {
       <p className="addons__notice t-body-sm" role="note">
         <MdInfo aria-hidden="true" />
         <span>
-          <strong>Only addons with a debrid service will play.</strong> Arc TV plays links, not torrents: sources that are only a torrent can't be played. Use an addon set up with your own debrid service (such as Real-Debrid or TorBox), whose sources arrive as ready-to-play links.
+          <strong>Only addons with a debrid service will play.</strong> Arc TV plays links, not torrents: sources that are only a torrent can't be played. Use an addon set up with your own debrid service (such as Real-Debrid or TorBox), whose sources arrive as ready-to-play links. <Link to={routes.debridGuide}>Step-by-step guide to setting one up</Link>.
         </span>
       </p>
       {addons.length === 0 ? (

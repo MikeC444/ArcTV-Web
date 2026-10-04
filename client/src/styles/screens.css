@@ -271,6 +271,7 @@
 }
 .addons__notice { display: flex; gap: 10px; align-items: flex-start; margin: 14px 0 0; padding: 12px 16px; border-radius: var(--card-radius); background: rgba(25, 230, 255, 0.08); border: 1px solid rgba(25, 230, 255, 0.25); color: var(--text); line-height: 1.5; max-width: 960px; }
 .addons__notice svg { color: var(--accent); width: 20px; height: 20px; flex: none; margin-top: 2px; }
+.addons__notice a { color: var(--accent); text-decoration: underline; }
 .addons__head { display: flex; align-items: center; gap: calc(20 * var(--dp)); }
 .addons__list { list-style: none; margin: calc(14 * var(--dp)) 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, calc(380 * var(--dp))), 1fr)); gap: calc(12 * var(--dp)); }
 .addon { display: flex; align-items: center; gap: calc(16 * var(--dp)); background: var(--surface); border-radius: var(--card-radius); padding: calc(10 * var(--dp)) calc(16 * var(--dp)); }
@@ -295,10 +296,11 @@
 .addaddon { padding: calc(28 * var(--dp)) var(--pad-x); max-width: calc(680 * var(--dp) + 2 * var(--pad-x)); }
 .addaddon code { background: var(--surface-high); padding: 1px 5px; border-radius: 4px; }
 /* Hidden setup guide: roomy, big text, one idea per block */
-.guide { padding: calc(28 * var(--dp)) var(--pad-x) calc(120 * var(--dp)); max-width: calc(820 * var(--dp) + 2 * var(--pad-x)); font-size: calc(18 * var(--dp)); line-height: 1.7; }
+.guide__title { max-width: calc(820 * var(--dp) + 2 * var(--pad-x)); margin: 0 auto; text-align: center; }
+.guide { margin: 0 auto; padding: calc(28 * var(--dp)) var(--pad-x) calc(120 * var(--dp)); max-width: calc(820 * var(--dp) + 2 * var(--pad-x)); font-size: calc(18 * var(--dp)); line-height: 1.7; }
 .guide a { color: var(--accent); }
 .guide code { background: var(--surface-high); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; overflow-wrap: anywhere; }
-.guide__lead { margin: 0 0 calc(32 * var(--dp)); font-size: calc(21 * var(--dp)); color: var(--text-2); }
+.guide__lead { text-align: center; margin: 0 0 calc(32 * var(--dp)); font-size: calc(21 * var(--dp)); color: var(--text-2); }
 .guide__box { padding: calc(28 * var(--dp)); border-radius: 16px; background: var(--surface-high); }
 .guide__boxtitle { margin: 0 0 14px; font-size: calc(22 * var(--dp)); font-weight: 700; }
 .guide__short { margin: 0; padding-left: 1.4em; display: flex; flex-direction: column; gap: 12px; }
