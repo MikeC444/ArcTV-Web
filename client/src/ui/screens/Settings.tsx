@@ -379,7 +379,7 @@ function AddonsPane() {
       <p className="addons__notice t-body-sm" role="note">
         <MdInfo aria-hidden="true" />
         <span>
-          <strong>Only addons with a debrid service will play.</strong> Arc TV plays links, not torrents: sources that are only a torrent can't be played. Use an addon set up with your own debrid service (such as Real-Debrid), whose sources arrive as ready-to-play links.
+          <strong>Only addons with a debrid service will play.</strong> Arc TV plays links, not torrents: sources that are only a torrent can't be played. Use an addon set up with your own debrid service (such as Real-Debrid or TorBox), whose sources arrive as ready-to-play links.
         </span>
       </p>
       {addons.length === 0 ? (
