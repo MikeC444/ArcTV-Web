@@ -498,6 +498,6 @@
 .profileedit__confirm { display: flex; flex-direction: column; gap: 12px; }
 @media (max-width: 560px) { .profileedit__avatars { grid-template-columns: repeat(4, 1fr); } .profiles__grid { gap: 18px; } }
 .accountprofile { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 0 0 20px; padding: 12px 14px; background: var(--bg-elevated); border: 1px solid var(--divider); border-radius: 14px; max-width: 560px; }
-.accountplus { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 0 0 20px; padding: 12px 14px; background: var(--bg-elevated); border: 1px solid var(--divider); border-radius: 14px; max-width: 560px; }
+.accountplus { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 14px 0 0; padding: 12px 14px; background: var(--bg-elevated); border: 1px solid var(--divider); border-radius: 14px; max-width: 560px; }
 .accountprofile__avatar { width: calc(48 * var(--dp)); min-width: 40px; aspect-ratio: 1; border-radius: 10px; overflow: hidden; }
 .accountprofile__avatar .pavatar { width: 100%; height: 100%; }
