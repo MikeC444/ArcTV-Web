@@ -6,8 +6,10 @@
 .player__video::cue { background: rgba(0, 0, 0, 0.72); color: #fff; font-family: var(--font); }
 .player__slow { position: absolute; z-index: 5; left: 50%; top: calc(50% + 48px); transform: translateX(-50%); width: min(520px, calc(100% - 32px)); display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
 .player__spinner { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); pointer-events: none; }
-.pctl { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; opacity: 0; pointer-events: none; transition: opacity 250ms ease; }
-.pctl[data-visible="true"] { opacity: 1; pointer-events: auto; }
+.pctl { position: absolute; z-index: 3; inset: 0; display: flex; flex-direction: column; justify-content: space-between; opacity: 0; pointer-events: none; transition: opacity 250ms ease; }
+.pctl[data-visible="true"] { opacity: 1; }
+/* only the bars take clicks; the rest of the screen passes them through to the video (and to the loading screen's play button) */
+.pctl[data-visible="true"] .ptop, .pctl[data-visible="true"] .pbottom { pointer-events: auto; }
 .pctl__scrim { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0) 16%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.45) 78%, rgba(0, 0, 0, 0.88) 100%); }
 .ptop { position: relative; display: flex; align-items: center; gap: 16px; padding: calc(28 * var(--dp)) calc(40 * var(--dp)); }
 .ptop__title { flex: 1; min-width: 0; text-align: center; display: flex; flex-direction: column; align-items: center; }
@@ -31,7 +33,7 @@
 .pflash { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); pointer-events: none; animation: pflash 700ms ease both; }
 .pflash svg { width: 56px; height: 56px; }
 @keyframes pflash { 0% { opacity: 0.95; transform: translate(-50%, -50%) scale(0.85); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(1.25); } }
-.pbig { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 88px; height: 88px; border-radius: 50%; background: rgba(0, 0, 0, 0.6); border: 2px solid rgba(255, 255, 255, 0.85); color: #fff; display: flex; align-items: center; justify-content: center; }
+.pbig { position: absolute; z-index: 4; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 88px; height: 88px; border-radius: 50%; background: rgba(0, 0, 0, 0.6); border: 2px solid rgba(255, 255, 255, 0.85); color: #fff; display: flex; align-items: center; justify-content: center; }
 .pbig svg { width: 48px; height: 48px; }
 .pbig:focus-visible { outline: 3px solid var(--focus-border); outline-offset: 4px; }
 /* menus */
@@ -91,3 +93,4 @@
 .ptime--btn:hover { color: var(--text); background: rgba(255, 255, 255, 0.08); }
 .ptime--btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .pbottom .ptime--btn { min-width: 52px; }
+.pbig--inline { position: relative; left: auto; top: auto; transform: none; flex: none; }

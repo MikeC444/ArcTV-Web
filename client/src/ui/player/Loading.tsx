@@ -1,11 +1,12 @@
 import { useState, type ReactNode } from "react";
-import { MdArrowBack } from "react-icons/md";
+import { MdArrowBack, MdPlayArrow } from "react-icons/md";
 import type { PlayerArt } from "../../state/playerArt";
 import { IconButton } from "../components/Buttons";
 import { Spinner } from "../components/States";
 
 /** Shown while a title is opening: its picture behind its logo (or name), with a loading symbol underneath. */
-export function PlayerLoading({ art, caption, busy = true, onBack, children }: { art: PlayerArt | null; caption?: string | null; busy?: boolean; onBack?: () => void; children?: ReactNode }) {
+/** `onPlay`: the browser held back autoplay, so a play button takes the place of the spinner. */
+export function PlayerLoading({ art, caption, busy = true, onBack, onPlay, children }: { art: PlayerArt | null; caption?: string | null; busy?: boolean; onBack?: () => void; onPlay?: () => void; children?: ReactNode }) {
   const [logoFailed, setLogoFailed] = useState(false);
   const [backdropReady, setBackdropReady] = useState(false);
   return (
@@ -24,7 +25,13 @@ export function PlayerLoading({ art, caption, busy = true, onBack, children }: {
           <h1 className="ploading__title">{art.title}</h1>
         ) : null}
         {caption ? <div className="ploading__caption t-label-md">{caption}</div> : null}
-        {busy ? <Spinner white /> : null}
+        {onPlay ? (
+          <button type="button" className="pbig pbig--inline" aria-label="Play" onClick={onPlay} data-autofocus="true">
+            <MdPlayArrow />
+          </button>
+        ) : busy ? (
+          <Spinner white />
+        ) : null}
         {children}
       </div>
     </div>

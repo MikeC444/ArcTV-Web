@@ -679,7 +679,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
       <video ref={video} className="player__video" playsInline crossOrigin={undefined} onClick={onSurfaceClick} onDoubleClick={() => !coarse && toggleFullscreen()} aria-label={`${content.title} video`} />
 
       {loadingScreen ? (
-        <PlayerLoading art={content} caption={episode ? `S${episode.seasonNumber} E${episode.episodeNumber} • ${episode.title}` : null} busy={resumePrompt == null && phase !== "paused"}>
+        <PlayerLoading art={content} caption={episode ? `S${episode.seasonNumber} E${episode.episodeNumber} • ${episode.title}` : null} busy={resumePrompt == null && phase !== "paused"} onPlay={resumePrompt == null && phase === "paused" ? toggle : undefined}>
           {slowNote}
         </PlayerLoading>
       ) : null}
@@ -688,7 +688,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
       {phase === "paused" && !showControls ? null : null}
       {pill ? <div className="ppill t-title-md" role="status">{pill}</div> : null}
       {flash ? <div className="pflash" aria-hidden="true">{flash === "play" ? <MdPlayArrow /> : <MdPause />}</div> : null}
-      {phase === "paused" && time.pos === 0 && !error ? (
+      {phase === "paused" && time.pos === 0 && !error && !loadingScreen ? (
         <button type="button" className="pbig" aria-label="Play" onClick={toggle}><MdPlayArrow /></button>
       ) : null}
 
