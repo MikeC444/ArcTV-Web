@@ -1,0 +1,208 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+import { MdExpandMore, MdRefresh, MdSearch } from "react-icons/md";
+import { formatElapsed, pluralize, timeAgo } from "../../lib/format";
+import { fetchAdminSummary, fetchAdminUser, fetchAdminUsers, newestVersion, type AdminDevice, type AdminSummary, type AdminUserDetail, type AdminUserRow } from "../../state/admin";
+import { MangoButton } from "../components/Buttons";
+import { Spinner } from "../components/States";
+
+const PAGE = 50;
+const REFRESH_MS = 30_000;
+const platformName = (p: string) => (p === "fire_tv" ? "Fire TV" : p === "web" ? "Web" : p === "android_tv" ? "Android TV" : p);
+/** "Fire TV 0.1.7", or just "Web" for the web app. */
+const deviceLabel = (d: Pick<AdminDevice, "appVersion" | "platform">) => (d.appVersion === "web" || d.platform === "web" ? "Web" : `${platformName(d.platform)} ${d.appVersion ?? "unknown"}`);
+const sxe = (s: number | null, e: number | null) => (s != null && e != null ? ` S${s} E${e}` : "");
+
+/** The developer panel: every account, what it has installed and watched, and which app version each device is on. Read-only; refreshes itself. */
+export function AdminScreen() {
+  const [summary, setSummary] = useState<AdminSummary | null>(null);
+  const [users, setUsers] = useState<AdminUserRow[]>([]);
+  const [total, setTotal] = useState(0);
+  const [query, setQuery] = useState("");
+  const [applied, setApplied] = useState("");
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [detail, setDetail] = useState<AdminUserDetail | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [updatedAt, setUpdatedAt] = useState<number | null>(null);
+  const shown = useRef(PAGE);
+
+  useEffect(() => {
+    document.title = "Developer panel · Arc TV";
+  }, []);
+
+  const refresh = useCallback(async () => {
+    try {
+      const [s, list] = await Promise.all([fetchAdminSummary(), fetchAdminUsers(applied, shown.current)]);
+      setSummary(s);
+      setUsers(list.users);
+      setTotal(list.total);
+      if (openId) setDetail(await fetchAdminUser(openId));
+      setError(null);
+      setUpdatedAt(Date.now());
+    } catch {
+      setError("Couldn't load the panel. You may not be an admin, or the service is unreachable.");
+    } finally {
+      setLoading(false);
+    }
+  }, [applied, openId]);
+
+  useEffect(() => {
+    void refresh();
+    const timer = window.setInterval(() => document.visibilityState === "visible" && void refresh(), REFRESH_MS);
+    return () => window.clearInterval(timer);
+  }, [refresh]);
+
+  const loadMore = async () => {
+    shown.current += PAGE;
+    await refresh();
+  };
+  const search = () => {
+    shown.current = PAGE;
+    setApplied(query.trim());
+  };
+  const open = async (id: string) => {
+    setOpenId(id === openId ? null : id);
+    setDetail(null);
+    if (id !== openId) {
+      try {
+        setDetail(await fetchAdminUser(id));
+      } catch {
+        setError("Couldn't load that user.");
+      }
+    }
+  };
+
+  const newest = summary ? newestVersion(summary.versions.map((v) => v.version)) : null;
+
+  return (
+    <div className="page admin">
+      <div className="admin__head page__pad">
+        <h1 className="t-display-md" style={{ margin: 0 }}>Developer panel</h1>
+        <div className="admin__refresh t-label-md c-text-2">
+          {updatedAt ? `Updated ${timeAgo(new Date(updatedAt).toISOString())} · refreshes every 30 s` : "Loading…"}
+          <MangoButton text="Refresh" icon={<MdRefresh />} compact onClick={() => void refresh()} />
+        </div>
+      </div>
+      {error ? <p className="admin__error page__pad" role="alert">{error}</p> : null}
+
+      {summary ? (
+        <section className="admin__stats page__pad" aria-label="Summary">
+          <Stat label="Users" value={summary.users} />
+          <Stat label="Active, last 7 days" value={summary.activeLast7Days} />
+          <Stat label="New, last 7 days" value={summary.newLast7Days} />
+          <Stat label="Plus" value={summary.plus.monthly + summary.plus.yearly + summary.plus.lifetime} note={`${summary.plus.monthly} monthly · ${summary.plus.yearly} yearly · ${summary.plus.lifetime} lifetime`} />
+        </section>
+      ) : null}
+
+      {summary && summary.versions.length > 0 ? (
+        <section className="admin__versions page__pad" aria-label="App versions">
+          <h2 className="t-title-md">App versions in use</h2>
+          <div className="admin__chips">
+            {summary.versions.map((v) => (
+              <span className="admin__chip" key={`${v.platform}-${v.version}`} data-old={newest != null && v.version !== newest && /^\d/.test(v.version) ? "true" : undefined}>
+                {platformName(v.platform)} {v.version === "web" ? "" : v.version}
+                <b>{pluralize(v.devices, "device")}</b>
+              </span>
+            ))}
+          </div>
+          {newest ? <p className="t-label-md c-text-3" style={{ margin: "8px 0 0" }}>Newest seen: {newest}. Devices on an older version are marked.</p> : null}
+        </section>
+      ) : null}
+
+      <section className="admin__users page__pad" aria-label="Users">
+        <form className="admin__search" onSubmit={(e) => { e.preventDefault(); search(); }}>
+          <input className="admin__input" type="search" placeholder="Search by email or name" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search users" />
+          <MangoButton text="Search" icon={<MdSearch />} compact variant="filled" onClick={search} />
+        </form>
+        {loading ? <Spinner /> : null}
+        <div className="admin__table" role="table" aria-label={`${total} users`}>
+          <div className="admin__row admin__row--head t-label-md c-text-3" role="row">
+            <span>User</span><span>Plan</span><span>Devices (app version)</span><span>Addons</span><span>Watching</span><span>Last seen</span>
+          </div>
+          {users.map((u) => (
+            <div key={u.id}>
+              <button type="button" className="admin__row admin__row--user" data-open={u.id === openId} onClick={() => void open(u.id)} aria-expanded={u.id === openId}>
+                <span className="admin__who"><b className="ellipsis">{u.email}</b><i className="ellipsis">{u.displayName ?? ""}{u.isAdmin ? " · admin" : ""}</i></span>
+                <span>{u.plan ? `${u.plan}${u.cancelling ? " (ending)" : ""}` : "Free"}</span>
+                <span className="admin__devs">{u.devices.length === 0 ? "none" : u.devices.map((d, i) => <em key={i} data-old={newest != null && d.appVersion != null && /^\d/.test(d.appVersion) && d.appVersion !== newest ? "true" : undefined}>{deviceLabel(d)}</em>)}</span>
+                <span>{u.addons}</span>
+                <span>{u.continueWatching}</span>
+                <span>{timeAgo(u.lastSeenAt)}</span>
+              </button>
+              {u.id === openId ? <UserDetail detail={detail} newest={newest} /> : null}
+            </div>
+          ))}
+          {!loading && users.length === 0 ? <p className="c-text-2" style={{ padding: 16 }}>No users match.</p> : null}
+        </div>
+        {users.length < total ? <MangoButton text={`Show more (${users.length} of ${total})`} icon={<MdExpandMore />} compact onClick={() => void loadMore()} /> : null}
+      </section>
+    </div>
+  );
+}
+
+function Stat({ label, value, note }: { label: string; value: number; note?: string }) {
+  return (
+    <div className="admin__stat">
+      <div className="t-label-md c-text-3">{label}</div>
+      <div className="admin__statvalue">{value}</div>
+      {note ? <div className="t-label-sm c-text-2">{note}</div> : null}
+    </div>
+  );
+}
+
+function UserDetail({ detail, newest }: { detail: AdminUserDetail | null; newest: string | null }) {
+  if (!detail) return <div className="admin__detail"><Spinner small /></div>;
+  const u = detail.user;
+  return (
+    <div className="admin__detail">
+      <p className="t-body-sm c-text-2" style={{ margin: 0 }}>
+        Joined {new Date(u.createdAt).toLocaleDateString()} · {u.plan ? `Plus ${u.plan}${u.plusUntil ? ` until ${new Date(u.plusUntil).toLocaleDateString()}` : ""}${u.cancelling ? " (cancelled, will not renew)" : ""}${u.plan !== "lifetime" && !u.hasStripeSubscription ? " · no Stripe subscription stored" : ""}` : "Free plan"} · My List: {detail.myListCount}
+      </p>
+      <div className="admin__cols">
+        <div>
+          <h3 className="t-title-sm">Devices</h3>
+          <ul className="admin__list">
+            {detail.devices.map((d, i) => (
+              <li key={i}>
+                <b>{d.name}</b> · <span data-old={newest != null && d.appVersion != null && /^\d/.test(d.appVersion) && d.appVersion !== newest ? "true" : undefined} className="admin__ver">{deviceLabel(d)}</span> · seen {timeAgo(d.lastSeenAt)}{d.revokedAt ? " · signed out" : ""}
+              </li>
+            ))}
+          </ul>
+          <h3 className="t-title-sm">Profiles</h3>
+          <ul className="admin__list">
+            {detail.profiles.map((p) => (
+              <li key={p.id}><b>{p.name}</b> · {p.kind}{p.isDefault ? " · main" : ""}{p.hasPin ? " · PIN" : ""}</li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <h3 className="t-title-sm">Addons</h3>
+          <ul className="admin__list">
+            {detail.addons.length === 0 ? <li className="c-text-3">None</li> : null}
+            {detail.addons.map((a, i) => (
+              <li key={i}>
+                <b>{a.name}</b> · {a.host}{a.debrid ? ` · ${a.debrid}` : a.configured ? " · configured" : ""}{a.enabled ? "" : " · off"}{detail.profiles.length > 1 ? ` · profile ${a.profileId}` : ""}
+              </li>
+            ))}
+          </ul>
+          <p className="t-label-sm c-text-3" style={{ margin: "4px 0 0" }}>Addon keys are never shown.</p>
+        </div>
+        <div>
+          <h3 className="t-title-sm">Continue Watching</h3>
+          <ul className="admin__list">
+            {detail.continueWatching.length === 0 ? <li className="c-text-3">Nothing</li> : null}
+            {detail.continueWatching.map((c, i) => (
+              <li key={i}><b>{c.title}</b>{sxe(c.seasonNumber, c.episodeNumber)} · {formatElapsed(c.positionMs)} of {formatElapsed(c.durationMs)} · {timeAgo(c.lastWatchedAt)}</li>
+            ))}
+          </ul>
+          <h3 className="t-title-sm">Recently watched</h3>
+          <ul className="admin__list">
+            {detail.history.slice(0, 12).map((h, i) => (
+              <li key={i}><b>{h.title}</b>{sxe(h.seasonNumber, h.episodeNumber)} · {h.completed ? "finished" : formatElapsed(h.positionMs)} · {timeAgo(h.watchedAt)}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { MdAccountCircle, MdAdd, MdBlock, MdCancel, MdFavorite, MdWorkspacePremium, MdArrowDownward, MdArrowUpward, MdCheck, MdCloudUpload, MdDelete, MdExtension, MdGridView, MdInfo, MdLogout, MdMusicNote, MdSubtitles, MdSwitchAccount, MdVolumeUp } from "react-icons/md";
+import { MdAccountCircle, MdAdd, MdBlock, MdCancel, MdFavorite, MdWorkspacePremium, MdArrowDownward, MdArrowUpward, MdCheck, MdCloudUpload, MdDelete, MdExtension, MdGridView, MdInfo, MdLogout, MdMusicNote, MdSubtitles, MdSwitchAccount, MdTune, MdVolumeUp } from "react-icons/md";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { PLUS_FREE_NOTE, PLUS_PERKS, PLUS_PLANS, PLUS_PROCEEDS_NOTE } from "../../domain/plus";
 import { applyRowOrder, moveRow } from "../../domain/homeRows";
@@ -283,6 +283,11 @@ function AccountPane() {
           <div className="t-title-md">{user.displayName ?? user.email}</div>
           {user.displayName ? <div className="t-body-sm c-text-2">{user.email}</div> : null}
         </>
+      ) : null}
+      {user?.isAdmin ? (
+        <div style={{ marginTop: 16 }}>
+          <MangoButton text="Developer panel" icon={<MdTune />} compact onClick={() => navigate(routes.admin)} />
+        </div>
       ) : null}
       <div style={{ marginTop: 16 }}>
         <MangoButton

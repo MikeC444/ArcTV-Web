@@ -33,6 +33,19 @@ export function formatSpeed(speed: number): string {
   return Number.isInteger(speed) ? `${speed}x` : `${speed}x`;
 }
 
+/** "just now", "5 min ago", "3 h ago", "2 d ago", then a date; "never" for nothing. */
+export function timeAgo(iso: string | null | undefined, now: number = Date.now()): string {
+  if (!iso) return "never";
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return "never";
+  const s = Math.max(0, Math.round((now - t) / 1000));
+  if (s < 60) return "just now";
+  if (s < 3600) return `${Math.floor(s / 60)} min ago`;
+  if (s < 86_400) return `${Math.floor(s / 3600)} h ago`;
+  if (s < 30 * 86_400) return `${Math.floor(s / 86_400)} d ago`;
+  return new Date(t).toLocaleDateString();
+}
+
 export function pluralize(count: number, one: string, many = `${one}s`): string {
   return count === 1 ? `1 ${one}` : `${count} ${many}`;
 }

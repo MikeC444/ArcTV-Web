@@ -36,6 +36,7 @@ export function createBackendClient(baseUrl: string, fetchImpl: typeof fetch = f
     if (request.bearer) headers.Authorization = `Bearer ${request.bearer}`;
     if (request.clientIp) headers["X-Forwarded-For"] = request.clientIp;
     if (request.profileId) headers["X-ArcTV-Profile"] = request.profileId;
+    headers["X-ArcTV-App-Version"] = "web"; // so the developer panel can tell web sessions from TVs
     let body: string | undefined;
     if (request.body !== undefined) {
       headers["Content-Type"] = "application/json";
