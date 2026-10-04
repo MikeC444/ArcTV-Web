@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { MdArrowBack, MdBolt, MdExpandMore, MdHourglassTop, MdRefresh, MdExtension, MdInfo, MdPerson, MdSearchOff, MdSecurity, MdStar, MdSurroundSound, MdCheckCircle, MdOutlineCheckCircle, MdWifi, MdPlayArrow, MdWarningAmber } from "react-icons/md";
-import { useNavigate, useNavigationType, useParams, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useNavigationType, useParams, useSearchParams } from "react-router-dom";
 import { DEBRID_NAMES, describeCaps, deviceVerdict, getDeviceCaps, hasSoundHere, isWebFormat, startRank, type DeviceCaps } from "../../domain/deviceSupport";
 import { resolutionOrdinal, SOURCE_HEALTH_LABEL, type Content, type ContentType, type ResolutionTier, type Stream } from "../../domain/types";
 import { formatRuntime } from "../../lib/format";
@@ -163,6 +163,9 @@ function SourcesLoaded({ state, onBack, onSelect, onManage, onRetry }: { state: 
                 {state.addons.some((a) => a.lookup.kind === "failed") ? <MangoButton text="Try Again" icon={<MdRefresh />} onClick={onRetry} /> : null}
                 <MangoButton text="Manage Addons" icon={<MdExtension />} onClick={onManage} />
               </div>
+              <p className="t-body-sm c-text-2" style={{ margin: "8px 0 0" }}>
+                New to this? <Link className="linkbtn" to={routes.debridGuide}>Step-by-step guide to setting up your sources</Link>
+              </p>
             </div>
           ) : (
             <>
