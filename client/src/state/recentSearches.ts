@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { useAuth } from "./auth";
-import { globalKey, readJson, userKey, writeJson } from "./persist";
+import { globalKey, readJson, writeJson } from "./persist";
+import { libraryKey } from "./profile";
 
 export const RECENT_SEARCH_LIMIT = 8;
 
@@ -11,10 +12,10 @@ export function withRecentSearch(list: string[], query: string): string[] {
   return [q, ...list.filter((s) => s.toLowerCase() !== q.toLowerCase())].slice(0, RECENT_SEARCH_LIMIT);
 }
 
-/** Signed in: kept per account (wiped on sign-out with the rest). Not signed in: kept in this browser. */
+/** Signed in: kept per profile (the account's own profile keeps the name it always had; wiped on sign-out with the rest). Not signed in: kept in this browser. */
 const storageKey = (): string => {
   const userId = useAuth.getState().user?.id;
-  return userId ? userKey(userId, "recent-searches") : globalKey("recentSearches");
+  return userId ? libraryKey(userId, "recent-searches") : globalKey("recentSearches");
 };
 
 interface RecentSearchesState {
