@@ -1,5 +1,7 @@
 import { MdCheck, MdMoreVert } from "react-icons/md";
 import { routes } from "../../lib/routes";
+import { useAuth } from "../../state/auth";
+import { findLastStreamId } from "../../state/lastSource";
 import { useCardMenu } from "../../state/cardMenu";
 import { stashDetailPreview } from "../../state/pendingDetail";
 import type { Content, RowStyle } from "../../domain/types";
@@ -9,7 +11,7 @@ interface ContentCardProps {
   content: Content;
   style?: RowStyle;
   autoFocus?: boolean;
-  /** Where a click goes; defaults to the Detail page (Continue Watching resumes via the menu / Detail). */
+  /** Where a click goes; defaults to the Detail page, except a Continue Watching poster, which carries straight on (the player on the source it was watched on, or the source list the first time). */
   to?: string;
 }
 
@@ -21,7 +23,15 @@ export function ContentCard({ content, style = "STANDARD", autoFocus, to }: Cont
   const progress = content.watchProgress;
   const fraction = progress && progress.durationMs > 0 ? Math.min(1, Math.max(0, progress.positionMs / progress.durationMs)) : 0;
   const providerId = content.providerId ?? "";
-  const target = to ?? (providerId ? routes.detail(providerId, content.type, content.id, content.title) : undefined);
+  const userId = useAuth((s) => s.user?.id);
+  let resumeTarget: string | undefined;
+  if (isCw && providerId) {
+    const season = progress?.seasonNumber ?? null;
+    const episode = progress?.episodeNumber ?? null;
+    const last = userId ? findLastStreamId(userId, providerId, content.id, content.type, season, episode) : null;
+    resumeTarget = last ? routes.player(providerId, content.type, content.id, season, episode, last) : routes.sources(providerId, content.type, content.id, season, episode);
+  }
+  const target = to ?? resumeTarget ?? (providerId ? routes.detail(providerId, content.type, content.id, content.title) : undefined);
 
   return (
     <div className="card" data-cw={isCw || undefined}>
