@@ -34,6 +34,7 @@
       <nav class="nav__links" aria-label="Main">
         <a href="#top" class="is-active">Home</a>
         <a href="#screens">Screens</a>
+        <a href="#download">Downloads</a>
         <a href="#features">Features</a>
         <a href="#faq">FAQ</a>
       </nav>
@@ -98,6 +99,32 @@
               <div class="panel__btns"><a class="btn btn--light btn--sm" href="https://web.arctv.org">Open in browser</a></div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <!-- DOWNLOADS -->
+      <section id="download" class="light dl">
+        <div class="wrap">
+          <h2>Get Arc TV.</h2>
+          <p class="lede">Every way to watch, in one place. Where an app isn&rsquo;t ready yet, it says so.</p>
+
+          <div class="dl__tabs" role="tablist" aria-label="Choose a device type" id="dl-tabs"></div>
+
+          <div class="dl__card">
+            <div class="dl__side">
+              <p class="dl__label">Choose a platform</p>
+              <div class="dl__list" id="dl-list" role="group" aria-label="Platforms"></div>
+            </div>
+            <div class="dl__main" id="dl-main" aria-live="polite"></div>
+          </div>
+
+          <noscript>
+            <p class="dl__nojs">
+              <a href="https://web.arctv.org">Web app</a> &middot;
+              <a href="https://github.com/MikeC444/ArcTV-MobileAPK/releases/latest/download/ArcTV-Mobile.apk">Android phone &amp; tablet</a> &middot;
+              <a href="https://github.com/MikeC444/ArcTV-AndroidTV/releases">Fire TV &amp; Android TV</a>
+            </p>
+          </noscript>
         </div>
       </section>
 
@@ -181,7 +208,7 @@
     <footer class="footer">
       <div class="wrap footer__in">
         <div class="footer__brand"><img src="/arctv-logo.png" alt="Arc TV" /><p>&copy; <span id="year">2026</span> Arc TV</p></div>
-        <nav aria-label="Product"><a href="https://web.arctv.org">Web App</a><a href="#screens">Fire TV App</a><a href="#features">Features</a></nav>
+        <nav aria-label="Product"><a href="https://web.arctv.org">Web App</a><a href="#download">Downloads</a><a href="#features">Features</a></nav>
         <nav aria-label="Account"><a href="https://web.arctv.org/auth">Log in</a><a href="https://web.arctv.org/auth">Sign up</a></nav>
         <nav aria-label="Help"><a href="#faq">FAQ</a></nav>
       </div>
@@ -206,6 +233,87 @@
             if (n) { var next = tabs[(i + n + tabs.length) % tabs.length]; select(next); next.focus(); }
           });
         });
+      })();
+      (function () {
+        var APK = "https://github.com/MikeC444/ArcTV-MobileAPK/releases/latest/download/ArcTV-Mobile.apk";
+        var TVAPP = "https://github.com/MikeC444/ArcTV-AndroidTV/releases";
+        // Each platform either has a "get" list of buttons, or none (shown as Coming soon).
+        var DATA = [
+          { id: "desktop", label: "Desktop", platforms: [
+            { name: "Windows", icon: "desktop" }, { name: "macOS", icon: "desktop" }, { name: "Linux", icon: "desktop" } ] },
+          { id: "mobile", label: "Mobile", platforms: [
+            { name: "Android", icon: "phone", note: "Phones and tablets", get: [{ text: "Download for Android", href: APK, note: "Latest release (APK)" }] },
+            { name: "iPhone & iPad", icon: "phone" } ] },
+          { id: "tv", label: "TV", platforms: [
+            { name: "Fire TV", icon: "tv", get: [{ text: "Get the Fire TV app", href: TVAPP, note: "Latest release" }] },
+            { name: "Android TV", icon: "tv", get: [{ text: "Get the Android TV app", href: TVAPP, note: "Latest release" }] },
+            { name: "Apple TV", icon: "tv" }, { name: "Samsung & LG", icon: "tv" } ] },
+          { id: "vr", label: "VR", platforms: [ { name: "VR headsets", icon: "vr" } ] },
+          { id: "other", label: "Other devices", platforms: [
+            { name: "Game consoles", icon: "tv" }, { name: "Streaming sticks & boxes", icon: "tv" } ] },
+          { id: "web", label: "Web", platforms: [
+            { name: "Web app", icon: "desktop", note: "Nothing to install", get: [
+              { text: "Launch Web App", href: "https://web.arctv.org", note: "Any modern browser" },
+              { text: "Sign up", href: "https://web.arctv.org/auth", ghost: true } ] } ] }
+        ];
+        var ICONS = {
+          desktop: "M3 4h18a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1h-7v2h3v2H7v-2h3v-2H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm1 2v9h16V6H4z",
+          phone: "M8 2h8a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 2v14h8V4H8zm4 15.2a1 1 0 1 0 0 2 1 1 0 0 0 0-2z",
+          tv: "M3 5h18a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-6l1 2h2v2H6v-2h2l1-2H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1 2v8h16V7H4z",
+          vr: "M3 8h18a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-4.5l-1.6-2.4a1.2 1.2 0 0 0-2 0L11.2 16H3a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1zm1 2v4h4v-4H4zm12 0v4h4v-4h-4z"
+        };
+        var tabsEl = document.getElementById("dl-tabs"), listEl = document.getElementById("dl-list"), mainEl = document.getElementById("dl-main");
+        var cat = 0, plat = 0;
+        function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text) e.textContent = text; return e; }
+        function icon(name) {
+          var ns = "http://www.w3.org/2000/svg", s = document.createElementNS(ns, "svg"), p = document.createElementNS(ns, "path");
+          s.setAttribute("viewBox", "0 0 24 24"); s.setAttribute("aria-hidden", "true"); p.setAttribute("d", ICONS[name] || ICONS.desktop);
+          s.appendChild(p); return s;
+        }
+        function renderMain() {
+          var p = DATA[cat].platforms[plat];
+          mainEl.textContent = "";
+          var head = el("div", "dl__head"); head.appendChild(icon(p.icon)); head.appendChild(el("h3", "", p.name)); mainEl.appendChild(head);
+          if (p.note) mainEl.appendChild(el("p", "dl__note", p.note));
+          var box = el("div", "dl__get");
+          if (p.get) {
+            box.appendChild(el("p", "dl__label", "Available now"));
+            p.get.forEach(function (g) {
+              var item = el("div", "dl__item");
+              var a = el("a", "btn btn--sm " + (g.ghost ? "btn--ghost" : "btn--grad"), g.text);
+              a.href = g.href; if (g.href.indexOf("http") === 0 && g.href.indexOf("web.arctv.org") < 0) a.rel = "noopener";
+              item.appendChild(a); if (g.note) item.appendChild(el("span", "", g.note)); box.appendChild(item);
+            });
+          } else {
+            box.appendChild(el("p", "dl__label", "Status"));
+            box.appendChild(el("span", "dl__soon", "Coming soon"));
+            box.appendChild(el("p", "dl__note", "In the meantime, Arc TV works in any modern browser."));
+            var a = el("a", "btn btn--sm btn--ghost", "Launch Web App"); a.href = "https://web.arctv.org"; box.appendChild(a);
+          }
+          mainEl.appendChild(box);
+        }
+        function renderList() {
+          listEl.textContent = "";
+          DATA[cat].platforms.forEach(function (p, i) {
+            var b = el("button", "dl__plat", p.name); b.type = "button"; b.setAttribute("aria-pressed", i === plat);
+            if (!p.get) b.appendChild(el("small", "", "Soon"));
+            b.addEventListener("click", function () { plat = i; renderList(); renderMain(); });
+            listEl.appendChild(b);
+          });
+        }
+        function renderTabs() {
+          tabsEl.textContent = "";
+          DATA.forEach(function (c, i) {
+            var b = el("button", "", c.label); b.type = "button"; b.setAttribute("role", "tab"); b.setAttribute("aria-selected", i === cat); b.tabIndex = i === cat ? 0 : -1;
+            b.addEventListener("click", function () { cat = i; plat = 0; renderTabs(); renderList(); renderMain(); });
+            b.addEventListener("keydown", function (e) {
+              var n = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+              if (n) { cat = (i + n + DATA.length) % DATA.length; plat = 0; renderTabs(); renderList(); renderMain(); tabsEl.children[cat].focus(); }
+            });
+            tabsEl.appendChild(b);
+          });
+        }
+        renderTabs(); renderList(); renderMain();
       })();
       (function () {
         var links = [].slice.call(document.querySelectorAll(".nav__links a"));
