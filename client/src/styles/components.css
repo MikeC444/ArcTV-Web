@@ -71,6 +71,8 @@
 .mbtn[data-variant="light"] { --tvs-bg: #fff; --tvs-radius: 999px; color: #000; }
 .mbtn[data-variant="filled"] { --tvs-bg-image: var(--brand-gradient-wide); color: var(--bg); }
 .mbtn[data-variant="white"] { --tvs-bg: #fff; color: #000; }
+/* Home / Detail action row: Trailer is a pill like Play */
+:is(.hero__actions, .detail__actions) .mbtn { --tvs-radius: 999px; }
 .mbtn__inner { display: flex; align-items: center; justify-content: flex-start; gap: calc(10 * var(--dp)); width: 100%; min-width: 0; font-weight: 700; font-size: calc(15 * var(--dp)); letter-spacing: calc(0.3 * var(--dp)); white-space: nowrap; }
 .mbtn[data-compact="true"] .mbtn__inner { gap: calc(6 * var(--dp)); font-size: calc(13 * var(--dp)); font-weight: 500; letter-spacing: calc(0.2 * var(--dp)); }
 .mbtn__inner svg { flex: none; width: calc(22 * var(--dp)); height: calc(22 * var(--dp)); min-width: 18px; min-height: 18px; }
