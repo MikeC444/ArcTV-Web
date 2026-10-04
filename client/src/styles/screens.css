@@ -296,7 +296,7 @@
 .addaddon { padding: calc(28 * var(--dp)) var(--pad-x); max-width: calc(680 * var(--dp) + 2 * var(--pad-x)); }
 .addaddon code { background: var(--surface-high); padding: 1px 5px; border-radius: 4px; }
 /* Hidden setup guide: roomy, big text, one idea per block */
-.guide__title { max-width: calc(820 * var(--dp) + 2 * var(--pad-x)); margin: 0 auto; text-align: center; }
+.guide__title { background: var(--brand-gradient-wide); -webkit-background-clip: text; background-clip: text; padding-bottom: 0.1em; max-width: calc(820 * var(--dp) + 2 * var(--pad-x)); margin: 0 auto; text-align: center; }
 .guide { margin: 0 auto; padding: calc(28 * var(--dp)) var(--pad-x) calc(120 * var(--dp)); max-width: calc(820 * var(--dp) + 2 * var(--pad-x)); font-size: calc(18 * var(--dp)); line-height: 1.7; }
 .guide a { color: var(--accent); }
 .guide code { background: var(--surface-high); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; overflow-wrap: anywhere; }

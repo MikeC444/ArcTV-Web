@@ -32,7 +32,7 @@ export function DebridGuideScreen() {
 
   return (
     <div className="page">
-      <h1 className="t-display-md page__title guide__title">How to get sources that play</h1>
+      <h1 className="t-display-md page__title guide__title brand-text">Set up your sources</h1>
       <div className="guide">
         <p className="guide__lead">
           Arc TV is a player. It shows you movies and shows, but it needs somewhere to get the video from. This guide shows you how to connect that, one small
