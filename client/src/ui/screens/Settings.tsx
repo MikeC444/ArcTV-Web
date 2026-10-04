@@ -322,8 +322,16 @@ function PlusSubscription() {
     try {
       await plus.cancelSubscription();
       setConfirming(false);
-    } catch {
-      setError("Couldn't cancel your subscription. Try again in a moment.");
+    } catch (e) {
+      setError(
+        e instanceof ApiClientError && e.status === 409
+          ? "Lifetime Plus has no subscription to cancel."
+          : e instanceof ApiClientError && e.status === 404 && /subscription/i.test(e.message)
+            ? "We couldn't find a subscription to cancel on this account."
+            : e instanceof ApiClientError && e.status === 429
+              ? e.message
+              : "Couldn't cancel your subscription. Try again in a moment.",
+      );
     } finally {
       setBusy(false);
     }
@@ -340,13 +348,13 @@ function PlusSubscription() {
       {plus.cancelAtPeriodEnd ? null : <MangoButton text="Cancel subscription" icon={<MdCancel />} compact onClick={() => { setError(null); setConfirming(true); }} />}
       {confirming ? (
         <div className="scrim" onMouseDown={(e) => e.target === e.currentTarget && !busy && setConfirming(false)}>
-          <div className="dialog" role="alertdialog" aria-modal="true" aria-label={`Cancel your ${planLabel.toLowerCase()} subscription?`} data-spatial-trap="true" style={{ flexDirection: "column", maxWidth: 480 }}>
+          <div className="dialog" role="alertdialog" aria-modal="true" aria-label={`Cancel your ${planLabel.toLowerCase()} subscription?`} data-spatial-trap="true" style={{ flexDirection: "column", width: "min(480px, 100%)" }}>
             <h2 className="t-title-lg" style={{ margin: 0 }}>Cancel your {planLabel.toLowerCase()} subscription?</h2>
             <p className="c-text-2 t-body-md">{until ? `You keep ArcTV Plus until ${until}. After that it won't renew and you won't be charged again.` : "You keep ArcTV Plus until the end of the period you've paid for. After that it won't renew and you won't be charged again."}</p>
             {error ? <p className="t-body-sm" role="alert" style={{ margin: 0, color: "var(--coral)" }}>{error}</p> : null}
-            <div style={{ display: "flex", gap: 12 }}>
-              <MangoButton text="Keep Plus" icon={<MdCheck />} disabled={busy} onClick={() => setConfirming(false)} dataAttrs={{ autofocus: true }} />
-              <MangoButton text={busy ? "Cancelling…" : "Cancel subscription"} icon={<MdCancel />} variant="filled" disabled={busy} onClick={() => void cancel()} />
+            <div className="dialog__actions">
+              <MangoButton text="Keep Plus" icon={<MdCheck />} variant="filled" disabled={busy} onClick={() => setConfirming(false)} dataAttrs={{ autofocus: true }} />
+              <MangoButton text={busy ? "Cancelling…" : "Cancel subscription"} icon={<MdCancel />} disabled={busy} onClick={() => void cancel()} />
             </div>
           </div>
         </div>
