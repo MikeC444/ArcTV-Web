@@ -376,6 +376,12 @@ function AddonsPane() {
         <p className="t-body-sm c-text-2" style={{ margin: 0, flex: 1 }}>Stremio-compatible addons contribute their catalogs directly into Home.</p>
         <MangoButton text="Add Addon" icon={<MdAdd />} variant="filled" compact onClick={() => navigate(routes.addAddon)} />
       </div>
+      <p className="addons__notice t-body-sm" role="note">
+        <MdInfo aria-hidden="true" />
+        <span>
+          <strong>Only addons with a debrid service will play.</strong> Arc TV plays links, not torrents: sources that are only a torrent can't be played. Use an addon set up with your own debrid service (such as Real-Debrid), whose sources arrive as ready-to-play links.
+        </span>
+      </p>
       {addons.length === 0 ? (
         <div style={{ marginTop: 14 }}>
           <MdExtension className="c-text-3" size={32} aria-hidden="true" />
