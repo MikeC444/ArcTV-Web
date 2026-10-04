@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
-import { MdArrowBack, MdFastForward, MdForward10, MdFullscreen, MdFullscreenExit, MdGraphicEq, MdHighQuality, MdPause, MdPlayArrow, MdReplay10, MdSettings, MdSkipNext, MdSubtitles, MdSwapHoriz, MdVolumeOff, MdVolumeUp } from "react-icons/md";
+import { MdArrowBack, MdFastForward, MdForward10, MdFullscreen, MdFullscreenExit, MdGraphicEq, MdHighQuality, MdPause, MdPlayArrow, MdReplay, MdReplay10, MdSettings, MdSkipNext, MdSubtitles, MdSwapHoriz, MdVolumeOff, MdVolumeUp } from "react-icons/md";
 import { useNavigate, useParams } from "react-router-dom";
 import { DEBRID_NAMES, deviceVerdict, getDeviceCaps, parseStreamFacts } from "../../domain/deviceSupport";
 import { buildRelayUrl, needsRelay, playbackUrl, relayRefusal } from "../../domain/relay";
@@ -15,11 +15,14 @@ import { useAddonsReady } from "../../state/hooks";
 import { useContinueWatching } from "../../state/continueWatching";
 import { setLastStreamId } from "../../state/lastSource";
 import { useMyList } from "../../state/myList";
-import { decideProgress, nextEpisodeAfter, nextHoldSeekDelta } from "../../state/progress";
+import { peekPlayerArt } from "../../state/playerArt";
+import { readPlayerPrefs, writePlayerPrefs } from "../../state/playerPrefs";
+import { decideProgress, nextEpisodeAfter, nextHoldSeekDelta, offerNextEpisode, shouldOfferResume } from "../../state/progress";
 import { useSettings } from "../../state/settings";
 import { IconButton, MangoButton } from "../components/Buttons";
 import { MangoLogo } from "../components/Logo";
 import { FullScreenError, Spinner } from "../components/States";
+import { PlayerLoading } from "../player/Loading";
 import { describeAttempt, describeDiagnostics, EVENTS_WORTH_KEEPING, probeSource, snapshotVideo, type TrailEntry } from "../player/diagnostics";
 import { createEngine, mediaErrorToPlaybackError, pickDefaultSubtitle, type EngineTracks, type PlaybackError, type PlayerEngine } from "../player/engine";
 import { AdvancedPanel, PlaybackErrorOverlay, SettingsPanel, SourceInfoPanel, SpeedMenu, TrackMenu } from "../player/overlays";
@@ -65,7 +68,7 @@ export function PlayerScreen() {
   const changeSource = useCallback(() => navigate(routes.sources(providerId, type, id, season, episodeNumber, true), { replace: true }), [navigate, providerId, type, id, season, episodeNumber]);
   const back = useCallback(() => navigate(-1), [navigate]);
 
-  if (screen.kind === "loading") return <div className="player player--center"><Spinner white /></div>;
+  if (screen.kind === "loading") return <main className="player" id="main"><PlayerLoading art={peekPlayerArt(id)} caption={season != null && episodeNumber != null ? `S${season} E${episodeNumber}` : null} onBack={back} /></main>;
   if (screen.kind === "error") return <main className="player" id="main"><FullScreenError message={screen.message} onRetry={() => setTick((t) => t + 1)} secondaryLabel="Choose a Different Source" onSecondary={changeSource} /></main>;
   return (
     <Playback
@@ -161,6 +164,8 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
   const [phase, setPhase] = useState<"loading" | "playing" | "paused" | "buffering" | "ended">("loading");
   const [error, setError] = useState<PlaybackError | null>(null);
   const [slowStart, setSlowStart] = useState(false);
+  /** True once this source has shown its first moving picture; until then the title's loading screen covers the video. */
+  const [started, setStarted] = useState(false);
   const [attempt, setAttempt] = useState(0);
   /** How the media is fetched: straight from the host, or through this site's relay (needed for header-locked / plain-http links; also the fallback when a direct request never delivers video). */
   const [route, setRoute] = useState<Route>(() => (needsRelay(stream) ? "relay" : "direct"));
@@ -199,11 +204,14 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
     [stream, route, fellBack],
   );
   const [tracks, setTracks] = useState<EngineTracks>(EMPTY_TRACKS);
-  const [speed, setSpeed] = useState(1);
+  const [speed, setSpeed] = useState(() => readPlayerPrefs().speed);
   const [controls, setControls] = useState(true);
   const [overlays, setOverlays] = useState<Overlay[]>([]);
   const [time, setTime] = useState({ pos: 0, dur: 0, buffered: 0 });
-  const [volume, setVolume] = useState(1);
+  const [volume, setVolume] = useState(() => readPlayerPrefs().volume);
+  const [showRemaining, setShowRemaining] = useState(() => readPlayerPrefs().showRemaining);
+  /** A saved position (ms) waiting for "Resume" or "Start over"; the video sits paused there until one is chosen. */
+  const [resumePrompt, setResumePrompt] = useState<number | null>(null);
   const [muted, setMuted] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [pill, setPill] = useState<string | null>(null);
@@ -264,12 +272,18 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
     };
   }, []);
 
+  // the volume you last chose, for every title on this device
+  useEffect(() => {
+    if (video.current) video.current.volume = readPlayerPrefs().volume;
+  }, []);
+
   // ── media pipeline ──────────────────────────────────────────────────────────
   useEffect(() => {
     const v = video.current;
     if (!v) return;
     setError(null);
     setPhase("loading");
+    setStarted(false);
     setTracks(EMPTY_TRACKS);
     const verdict = assessStream(stream);
     if (verdict.level === "no") {
@@ -317,11 +331,19 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
 
     const onMeta = () => {
       const r = resumeMs.current;
-      if (r && r > 0 && Number.isFinite(v.duration) && v.duration * 1000 - r > 10_000) v.currentTime = r / 1000;
       resumeMs.current = null;
+      if (shouldOfferResume(r, v.duration)) {
+        // wait at the saved position and ask, instead of jumping there on its own
+        v.currentTime = (r as number) / 1000;
+        v.pause();
+        setResumePrompt(r);
+      }
     };
     const onTime = () => setTime((t) => ({ pos: v.currentTime, dur: Number.isFinite(v.duration) ? v.duration : 0, buffered: v.buffered.length ? v.buffered.end(v.buffered.length - 1) : t.buffered }));
-    const onPlaying = () => setPhase("playing");
+    const onPlaying = () => {
+      setStarted(true);
+      setPhase("playing");
+    };
     const onPause = () => !v.ended && setPhase("paused");
     const onWaiting = () => setPhase((p) => (p === "paused" ? p : "buffering"));
     const onEnded = () => setPhase("ended");
@@ -494,6 +516,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
   };
   const changeSpeed = (s: number) => {
     setSpeed(s);
+    writePlayerPrefs({ speed: s });
     if (video.current) video.current.playbackRate = s;
     setOverlays((o) => o.slice(0, -1));
     bump();
@@ -508,6 +531,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
       if (!v) return;
       v.volume = Math.min(1, Math.max(0, value));
       v.muted = value <= 0;
+      writePlayerPrefs({ volume: v.volume });
       bump();
     },
     [bump],
@@ -518,6 +542,14 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
   };
   const pop = useCallback(() => setOverlays((s) => s.slice(0, -1)), []);
   const closeAll = () => setOverlays([]);
+  const answerResume = (resume: boolean) => {
+    const v = video.current;
+    setResumePrompt(null);
+    if (!v) return;
+    if (!resume) v.currentTime = 0;
+    void v.play().catch(() => setPhase("paused"));
+    bump();
+  };
 
   const handleBack = useCallback(() => {
     if (document.fullscreenElement) void document.exitFullscreen();
@@ -528,6 +560,14 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
   const hold = useRef<{ anchor: number; delta: number } | null>(null);
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
+      if (resumePrompt != null) {
+        // only the card's own buttons answer (arrows / Enter move between them); leaving still works
+        if (e.key === "Escape" || e.key === "Backspace") {
+          e.preventDefault();
+          handleBack();
+        }
+        return;
+      }
       if (overlay || error || e.ctrlKey || e.metaKey || e.altKey) return;
       const target = e.target as HTMLElement | null;
       if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return; // the volume slider etc. handle their own keys
@@ -608,7 +648,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
     };
-  }, [overlay, error, controls, phase, toggle, toggleFullscreen, bump, handleBack, setVolumeTo]);
+  }, [overlay, error, resumePrompt, controls, phase, toggle, toggleFullscreen, bump, handleBack, setVolumeTo]);
 
   // ── pointer ─────────────────────────────────────────────────────────────────
   const coarse = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
@@ -622,20 +662,29 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
   const showControls = controls || phase === "paused" || phase === "ended" || !!overlay;
   const pct = time.dur > 0 ? (time.pos / time.dur) * 100 : 0;
   const bufPct = time.dur > 0 ? (time.buffered / time.dur) * 100 : 0;
+  const loadingScreen = (!started || resumePrompt != null) && !error;
+  const offerNext = !!next && !upNext && !error && !overlay && resumePrompt == null && offerNextEpisode(time.pos, time.dur, true);
+  const slowNote =
+    slowStart && !error && (video.current?.readyState ?? 0) === 0 ? (
+      <div className="player__slow player__slow--inline" role="status">
+        <p className="t-title-md" style={{ margin: 0 }}>Still trying to start this source…</p>
+        <p className="t-body-md c-text-2" style={{ margin: 0 }}>{stream.debrid && !stream.debrid.cached ? `This source isn't cached on ${DEBRID_NAMES[stream.debrid.service] ?? stream.debrid.service} yet, so it can take several minutes. Sources marked “Cached” start straight away.` : "Some sources take a while to prepare. You can keep waiting or pick another one."}</p>
+        <MangoButton text="Choose a Different Source" icon={<MdSwapHoriz />} compact borderColor="#fff" onClick={onChangeSource} />
+      </div>
+    ) : null;
   const subtitle = [content.year, content.ageRating, episode && content.seasons.length ? `${content.seasons.length} Season${content.seasons.length === 1 ? "" : "s"}` : content.runtimeMinutes ? `${Math.floor(content.runtimeMinutes / 60)}h ${content.runtimeMinutes % 60}m` : null].filter(Boolean).join("  •  ");
 
   return (
-    <main ref={container} id="main" className="player" data-spatial="off" data-hidden={!showControls && playing} onPointerMove={(e) => e.pointerType !== "touch" && bump()}>
+    <main ref={container} id="main" className="player" data-spatial="off" data-hidden={!showControls && playing} data-loading={loadingScreen} onPointerMove={(e) => e.pointerType !== "touch" && bump()}>
       <video ref={video} className="player__video" playsInline crossOrigin={undefined} onClick={onSurfaceClick} onDoubleClick={() => !coarse && toggleFullscreen()} aria-label={`${content.title} video`} />
 
-      {(phase === "loading" || phase === "buffering") && !error ? <div className="player__spinner"><Spinner white /></div> : null}
-      {(phase === "loading" || phase === "buffering") && slowStart && !error && (video.current?.readyState ?? 0) === 0 ? (
-        <div className="player__slow" role="status">
-          <p className="t-title-md" style={{ margin: 0 }}>Still trying to start this source…</p>
-          <p className="t-body-md c-text-2" style={{ margin: 0 }}>{stream.debrid && !stream.debrid.cached ? `This source isn't cached on ${DEBRID_NAMES[stream.debrid.service] ?? stream.debrid.service} yet, so it can take several minutes. Sources marked “Cached” start straight away.` : "Some sources take a while to prepare. You can keep waiting or pick another one."}</p>
-          <MangoButton text="Choose a Different Source" icon={<MdSwapHoriz />} compact borderColor="#fff" onClick={onChangeSource} />
-        </div>
+      {loadingScreen ? (
+        <PlayerLoading art={content} caption={episode ? `S${episode.seasonNumber} E${episode.episodeNumber} • ${episode.title}` : null} busy={resumePrompt == null && phase !== "paused"}>
+          {slowNote}
+        </PlayerLoading>
       ) : null}
+      {phase === "buffering" && started && !error ? <div className="player__spinner"><Spinner white /></div> : null}
+      {resumePrompt != null && !error ? <ResumeCard positionMs={resumePrompt} onResume={() => answerResume(true)} onStartOver={() => answerResume(false)} /> : null}
       {phase === "paused" && !showControls ? null : null}
       {pill ? <div className="ppill t-title-md" role="status">{pill}</div> : null}
       {flash ? <div className="pflash" aria-hidden="true">{flash === "play" ? <MdPlayArrow /> : <MdPause />}</div> : null}
@@ -661,7 +710,19 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
           <IconButton icon={<MdForward10 />} label="Forward 10 seconds" compact showBackground={false} borderColor="#fff" onClick={() => seekBy(10)} />
           <span className="ptime t-label-md c-text-2" aria-label="Elapsed">{formatTimestamp(time.pos * 1000)}</span>
           <Timeline pct={pct} bufPct={bufPct} duration={time.dur} position={time.pos} onSeek={seekTo} />
-          <span className="ptime t-label-md c-text-2" aria-label="Duration">{formatTimestamp(time.dur * 1000)}</span>
+          <button
+            type="button"
+            className="ptime ptime--btn t-label-md c-text-2"
+            aria-label={showRemaining ? "Time left. Press to show the total length" : "Total length. Press to show the time left"}
+            title={showRemaining ? "Time left (click for total length)" : "Total length (click for time left)"}
+            onClick={() => {
+              setShowRemaining(!showRemaining);
+              writePlayerPrefs({ showRemaining: !showRemaining });
+              bump();
+            }}
+          >
+            {showRemaining ? `\u2212${formatTimestamp(Math.max(0, time.dur - time.pos) * 1000)}` : formatTimestamp(time.dur * 1000)}
+          </button>
           <div className="pvol">
             <IconButton icon={muted || volume === 0 ? <MdVolumeOff /> : <MdVolumeUp />} label={muted ? "Unmute" : "Mute"} compact showBackground={false} borderColor="#fff" onClick={() => { const v = video.current; if (v) v.muted = !v.muted; bump(); }} />
             <input className="range pvol__range" type="range" min={0} max={100} value={Math.round((muted ? 0 : volume) * 100)} style={{ ["--fill" as string]: `${Math.round((muted ? 0 : volume) * 100)}%` }} onChange={(e) => setVolumeTo(Number(e.target.value) / 100)} aria-label="Volume" />
@@ -683,6 +744,12 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
       {overlay === "quality" ? <TrackMenu title="Quality" options={tracks.quality} onClose={pop} onSelect={(id) => { if (id) engine.current?.selectQuality(id); setTracks((t) => ({ ...t, quality: t.quality.map((o) => ({ ...o, selected: o.id === id })) })); pop(); }} /> : null}
       {overlay === "speed" ? <SpeedMenu speed={speed} onSelect={changeSpeed} onClose={pop} /> : null}
 
+      {offerNext && next ? (
+        <div className="pnext">
+          <MangoButton text="Next episode" icon={<MdSkipNext />} variant="light" onClick={() => onNextEpisode(next)} />
+          <div className="pnext__title t-label-md ellipsis">{`S${next.season} E${next.episode} • ${next.title}`}</div>
+        </div>
+      ) : null}
       {upNext ? <UpNext next={upNext} onCancel={() => setUpNext(null)} onGo={() => onNextEpisode(upNext)} /> : null}
       {error ? (
         <PlaybackErrorOverlay
@@ -766,6 +833,19 @@ function UpNext({ next, onCancel, onGo }: { next: { season: number; episode: num
       <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
         <MangoButton text="Play now" icon={<MdFastForward />} variant="light" compact onClick={onGo} dataAttrs={{ autofocus: true }} />
         <MangoButton text="Cancel" icon={<MdArrowBack />} compact onClick={onCancel} />
+      </div>
+    </div>
+  );
+}
+
+/** "Resume from 32:10 / Start over": the video waits at the saved position until one is chosen. */
+function ResumeCard({ positionMs, onResume, onStartOver }: { positionMs: number; onResume(): void; onStartOver(): void }) {
+  return (
+    <div className="presume" role="alertdialog" aria-label="Resume watching" data-spatial-trap="true">
+      <div className="t-title-md">Pick up where you left off?</div>
+      <div className="presume__actions">
+        <MangoButton text={`Resume from ${formatTimestamp(positionMs)}`} icon={<MdPlayArrow />} variant="light" onClick={onResume} dataAttrs={{ autofocus: true }} />
+        <MangoButton text="Start over" icon={<MdReplay />} onClick={onStartOver} />
       </div>
     </div>
   );
