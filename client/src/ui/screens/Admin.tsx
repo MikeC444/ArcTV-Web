@@ -244,26 +244,33 @@ function UserDetail({ detail, newest }: { detail: AdminUserDetail | null; newest
 }
 
 function ExternalPlayerSection({ data }: { data: NonNullable<AdminSummary["externalPlayer"]> }) {
-  const label = (e: ExternalPlayerEvent) =>
-    e.engine === "vlc" ? "VLC engine" : e.outcome === "no_player" ? "No player installed" : "Another app";
+  const how = (e: ExternalPlayerEvent) => (e.engine === "vlc" ? "VLC engine" : e.outcome === "no_player" ? "No player installed" : "Another app");
+  const why = (e: ExternalPlayerEvent) => (e.trigger === "error" ? "After an error" : e.trigger === "button" ? "From the button" : e.trigger ?? "");
   return (
     <section className="admin__external page__pad" aria-label="Other players">
       <h2 className="t-title-md">Other players</h2>
-      <div className="admin__stats">
+      <div className="admin__stats admin__stats--inner">
         <Stat label="Opened another app, 7 days" value={data.opens7d} note={`${data.opensTotal} all time`} />
         <Stat label="VLC engine, 7 days" value={data.vlc7d} />
         <Stat label="People, 7 days" value={data.users7d} />
         <Stat label="After an error, 7 days" value={data.afterError7d} note={`${data.fromButton7d} from the button · ${data.noPlayer7d} with no player`} />
       </div>
+      <h3 className="t-label-md c-text-3 admin__subhead">Most recent hand-offs</h3>
       {data.recent.length > 0 ? (
         <div className="admin__table" role="table" aria-label="Recent hand-offs">
+          <div className="admin__row admin__row--ext admin__row--head t-label-md c-text-3" role="row">
+            <span>Title</span><span>How</span><span>Person</span><span>Version</span><span>When</span>
+          </div>
           {data.recent.map((e, i) => (
-            <div className="admin__row" role="row" key={`${e.createdAt}-${i}`}>
-              <span>{e.title ?? e.releaseTitle ?? "Unknown title"}<br /><span className="t-label-sm c-text-3">{[e.resolution, e.codec].filter(Boolean).join(" · ")}</span></span>
-              <span>{label(e)}<br /><span className="t-label-sm c-text-3">{e.trigger === "error" ? "after an error" : e.trigger === "button" ? "from the button" : e.trigger ?? ""}</span></span>
-              <span>{e.email}</span>
-              <span>{e.errorMessage ?? ""}</span>
-              <span>{e.appVersion ?? ""}</span>
+            <div className="admin__row admin__row--ext admin__row--line" role="row" key={`${e.createdAt}-${i}`}>
+              <span className="admin__who">
+                {e.title ?? e.releaseTitle ?? "Unknown title"}
+                <i>{[e.resolution, e.codec].filter(Boolean).join(" · ") || "—"}</i>
+                {e.errorMessage ? <i className="admin__errtext">{e.errorMessage}</i> : null}
+              </span>
+              <span className="admin__who"><b className="admin__tag" data-kind={e.engine === "vlc" ? "vlc" : e.outcome === "no_player" ? "none" : "app"}>{how(e)}</b><i>{why(e)}</i></span>
+              <span className="admin__ellipsis">{e.email}</span>
+              <span>{e.appVersion ?? "—"}</span>
               <span>{timeAgo(e.createdAt)}</span>
             </div>
           ))}
