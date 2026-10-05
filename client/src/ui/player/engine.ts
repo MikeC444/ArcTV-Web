@@ -286,3 +286,12 @@ export function pickDefaultSubtitle(tracks: TrackOption[], prefs: { subtitlesEna
   }
   return tracks.find((t) => t.isDefault)?.id ?? null;
 }
+
+/** The audio track matching the account's preferred language, or null to leave the stream's own choice (also when it already plays that language). */
+export function pickDefaultAudio(tracks: TrackOption[], prefs: { defaultAudioLanguage: string | null }): string | null {
+  if (!prefs.defaultAudioLanguage || tracks.length < 2) return null;
+  const wanted = prefs.defaultAudioLanguage.toLowerCase();
+  const matches = (t: TrackOption) => (t.language ?? "").toLowerCase().startsWith(wanted);
+  if (tracks.some((t) => t.selected && matches(t))) return null;
+  return tracks.find(matches)?.id ?? null;
+}

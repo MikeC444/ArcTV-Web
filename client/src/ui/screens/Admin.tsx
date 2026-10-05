@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MdClear, MdExpandMore, MdRefresh } from "react-icons/md";
 import { formatElapsed, pluralize, timeAgo } from "../../lib/format";
-import { fetchAdminSummary, fetchAdminUser, fetchAdminUsers, filtersActive, newestVersion, NO_FILTERS, type AdminDevice, type AdminFilters, type AdminSummary, type AdminUserDetail, type AdminUserRow } from "../../state/admin";
+import { fetchAdminSummary, fetchAdminUser, fetchAdminUsers, filtersActive, newestVersion, NO_FILTERS, type AdminDevice, type ExternalPlayerEvent, type AdminFilters, type AdminSummary, type AdminUserDetail, type AdminUserRow } from "../../state/admin";
 import { MangoButton } from "../components/Buttons";
 import { Spinner } from "../components/States";
 
@@ -122,6 +122,8 @@ export function AdminScreen() {
         </section>
       ) : null}
 
+      {summary?.externalPlayer ? <ExternalPlayerSection data={summary.externalPlayer} /> : null}
+
       <section className="admin__users page__pad" aria-label="Users">
         {loading ? <Spinner /> : null}
         <div className="admin__table" role="table" aria-label={`${total} users`}>
@@ -238,5 +240,35 @@ function UserDetail({ detail, newest }: { detail: AdminUserDetail | null; newest
         </div>
       </div>
     </div>
+  );
+}
+
+function ExternalPlayerSection({ data }: { data: NonNullable<AdminSummary["externalPlayer"]> }) {
+  const label = (e: ExternalPlayerEvent) =>
+    e.engine === "vlc" ? "VLC engine" : e.outcome === "no_player" ? "No player installed" : "Another app";
+  return (
+    <section className="admin__external page__pad" aria-label="Other players">
+      <h2 className="t-title-md">Other players</h2>
+      <div className="admin__stats">
+        <Stat label="Opened another app, 7 days" value={data.opens7d} note={`${data.opensTotal} all time`} />
+        <Stat label="VLC engine, 7 days" value={data.vlc7d} />
+        <Stat label="People, 7 days" value={data.users7d} />
+        <Stat label="After an error, 7 days" value={data.afterError7d} note={`${data.fromButton7d} from the button · ${data.noPlayer7d} with no player`} />
+      </div>
+      {data.recent.length > 0 ? (
+        <div className="admin__table" role="table" aria-label="Recent hand-offs">
+          {data.recent.map((e, i) => (
+            <div className="admin__row" role="row" key={`${e.createdAt}-${i}`}>
+              <span>{e.title ?? e.releaseTitle ?? "Unknown title"}<br /><span className="t-label-sm c-text-3">{[e.resolution, e.codec].filter(Boolean).join(" · ")}</span></span>
+              <span>{label(e)}<br /><span className="t-label-sm c-text-3">{e.trigger === "error" ? "after an error" : e.trigger === "button" ? "from the button" : e.trigger ?? ""}</span></span>
+              <span>{e.email}</span>
+              <span>{e.errorMessage ?? ""}</span>
+              <span>{e.appVersion ?? ""}</span>
+              <span>{timeAgo(e.createdAt)}</span>
+            </div>
+          ))}
+        </div>
+      ) : <p className="t-label-md c-text-3">Nothing yet.</p>}
+    </section>
   );
 }

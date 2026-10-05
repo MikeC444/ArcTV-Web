@@ -147,12 +147,15 @@ export interface PlayerPreferences {
   skipIntroEnabled: boolean;
   subtitlesEnabled: boolean;
   defaultSubtitleLanguage: string | null;
+  /** Preferred audio language (ISO 639-1); null = automatic. Synced with the Firestick app. */
+  defaultAudioLanguage: string | null;
 }
 export const DEFAULT_PLAYER_PREFERENCES: PlayerPreferences = {
   autoplayNextEpisode: true,
   skipIntroEnabled: true,
   subtitlesEnabled: true,
   defaultSubtitleLanguage: null,
+  defaultAudioLanguage: null,
 };
 
 export interface HomeRowPreferences {

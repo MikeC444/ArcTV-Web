@@ -5,6 +5,7 @@
 with their app version, profiles, addons (host and debrid service only, never the key), Continue Watching and recent history. It refreshes itself every
 30 seconds, so a device that updates its app shows the new version without a reload.
 
+* **Other players** (below the app versions): from the summary's `externalPlayer`, how often titles were opened in another app or VLC's engine in the last 7 days (and all-time app opens), how many people, how many came after a playback error vs. the button vs. no player installed, and the 50 most recent hand-offs (title, source quality, which engine, trigger, person, error, app version). Hidden on a backend that doesn't send it.
 * The web server proxies three GET paths only (`server/src/routes/admin.ts`: `/api/admin/summary`, `/users`, `/users/:id`) with the sealed-cookie bearer;
   the backend does the admin check and answers everyone else with 404, and the page shows "Page not found" to non-admins.
 * `GET /api/auth/session` now includes `isAdmin`; the web server sends `X-ArcTV-App-Version: web` so web sessions show as "Web" in the panel.

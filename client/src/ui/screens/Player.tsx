@@ -24,7 +24,7 @@ import { MangoLogo } from "../components/Logo";
 import { FullScreenError, Spinner } from "../components/States";
 import { PlayerLoading } from "../player/Loading";
 import { describeAttempt, describeDiagnostics, EVENTS_WORTH_KEEPING, probeSource, snapshotVideo, type TrailEntry } from "../player/diagnostics";
-import { createEngine, mediaErrorToPlaybackError, pickDefaultSubtitle, type EngineTracks, type PlaybackError, type PlayerEngine } from "../player/engine";
+import { createEngine, mediaErrorToPlaybackError, pickDefaultAudio, pickDefaultSubtitle, type EngineTracks, type PlaybackError, type PlayerEngine } from "../player/engine";
 import { AdvancedPanel, AudioInfoPanel, PlaybackErrorOverlay, SettingsPanel, SourceInfoPanel, SpeedMenu, TrackMenu } from "../player/overlays";
 
 type Screen = { kind: "loading" } | { kind: "error"; message: string } | { kind: "ready"; content: Content; episode: Episode | null; stream: Stream };
@@ -304,6 +304,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
     const url = playbackUrl(stream, route);
     let cancelled = false;
     let subtitleChosen = false;
+    let audioChosen = false;
     let triedHls = false;
     /** A relay can fix blocked / refused / header-locked fetches, not a file the device can't decode and not a host that is merely slow. */
     const shouldTryRelay = (e: PlaybackError): boolean => route === "direct" && e.type !== "decode" && ["yes", "unknown"].includes(deviceVerdict(stream).level);
@@ -314,6 +315,14 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
       const created = await createEngine(kind, v, url, {
         onTracks: (t) => {
           if (cancelled) return;
+          if (!audioChosen && t.audio.length > 0) {
+            audioChosen = true;
+            const audioPick = pickDefaultAudio(t.audio, prefsRef.current);
+            if (audioPick) {
+              engine.current?.selectAudio(audioPick);
+              t = { ...t, audio: t.audio.map((o) => ({ ...o, selected: o.id === audioPick })) };
+            }
+          }
           if (!subtitleChosen && t.subtitles.length > 0) {
             subtitleChosen = true;
             const pick = pickDefaultSubtitle(t.subtitles, prefsRef.current);

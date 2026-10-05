@@ -13,6 +13,31 @@ export interface AdminSummary {
   activeLast7Days: number;
   plus: { monthly: number; yearly: number; lifetime: number };
   versions: Array<{ version: string; platform: string; devices: number }>;
+  /** Absent from a backend that predates it. */
+  externalPlayer?: ExternalPlayerSummary;
+}
+export interface ExternalPlayerEvent {
+  title: string | null;
+  releaseTitle: string | null;
+  resolution: string | null;
+  codec: string | null;
+  trigger: string | null;
+  outcome: string;
+  engine: string | null;
+  errorMessage: string | null;
+  appVersion: string | null;
+  createdAt: string;
+  email: string;
+}
+export interface ExternalPlayerSummary {
+  opens7d: number;
+  vlc7d: number;
+  users7d: number;
+  afterError7d: number;
+  fromButton7d: number;
+  noPlayer7d: number;
+  opensTotal: number;
+  recent: ExternalPlayerEvent[];
 }
 export interface AdminUserRow {
   id: string;

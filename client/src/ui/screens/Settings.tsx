@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { MdAccountCircle, MdAdd, MdBlock, MdCancel, MdFavorite, MdWorkspacePremium, MdArrowDownward, MdArrowUpward, MdCheck, MdCloudUpload, MdDelete, MdExtension, MdGridView, MdInfo, MdLogout, MdMusicNote, MdSubtitles, MdSwitchAccount, MdTune, MdVolumeUp } from "react-icons/md";
+import { MdAccountCircle, MdAdd, MdBlock, MdCancel, MdFavorite, MdWorkspacePremium, MdArrowDownward, MdArrowUpward, MdCheck, MdCloudUpload, MdDelete, MdExtension, MdGridView, MdInfo, MdLogout, MdMusicNote, MdSubtitles, MdSwitchAccount, MdTune, MdVolumeUp, MdSpatialAudio } from "react-icons/md";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { PLUS_FREE_NOTE, PLUS_PERKS, PLUS_PLANS, PLUS_PROCEEDS_NOTE } from "../../domain/plus";
 import { applyRowOrder, moveRow } from "../../domain/homeRows";
@@ -23,7 +23,7 @@ import { MangoButton, Pill, Switch } from "../components/Buttons";
 import { Spinner } from "../components/States";
 import { Surface } from "../components/Surface";
 
-type Tab = "account" | "addons" | "home-rows" | "blocked-genres" | "plus" | "sounds" | "subtitles";
+type Tab = "account" | "addons" | "home-rows" | "blocked-genres" | "plus" | "sounds" | "subtitles" | "audio";
 type Category = { id: Tab; icon: ReactNode; title: string; subtitle: string };
 const GROUPS: Array<{ label: string; items: Category[] }> = [
   {
@@ -45,6 +45,7 @@ const GROUPS: Array<{ label: string; items: Category[] }> = [
     label: "Playback & sound",
     items: [
       { id: "subtitles", icon: <MdSubtitles />, title: "Subtitles", subtitle: "Default on/off and preferred language" },
+      { id: "audio", icon: <MdSpatialAudio />, title: "Audio", subtitle: "Preferred audio language" },
       { id: "sounds", icon: <MdMusicNote />, title: "Sounds", subtitle: "Choose your app boot sound" },
     ],
   },
@@ -99,6 +100,7 @@ export function SettingsScreen() {
           {selected === "plus" ? <PlusPane /> : null}
           {selected === "sounds" ? <SoundsPane /> : null}
           {selected === "subtitles" ? <SubtitlesPane /> : null}
+          {selected === "audio" ? <AudioPane /> : null}
         </section>
       </div>
     </div>
@@ -594,6 +596,28 @@ function SubtitlesPane() {
           return (
             <Surface key={option.code ?? "system"} className="settingrow settingrow--lang" scale={1.02} borderColor="var(--text)" role="radio" ariaChecked={selected} onClick={() => setPlayer({ defaultSubtitleLanguage: option.code })}>
               <span className="t-body-lg" style={{ flex: 1 }}>{option.label}</span>
+              {selected ? <MdCheck className="c-accent" aria-hidden="true" /> : null}
+            </Surface>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function AudioPane() {
+  const player = useSettings((s) => s.player);
+  const setPlayer = useSettings((s) => s.setPlayer);
+  return (
+    <div>
+      <h3 className="t-title-md" style={{ margin: "0" }}>Preferred Audio Language</h3>
+      <p className="t-body-sm c-text-2" style={{ margin: "4px 0 8px" }}>Picked automatically when a video has a matching audio track. Shared with your Firestick.</p>
+      <div className="langlist" role="radiogroup" aria-label="Preferred audio language">
+        {SUBTITLE_LANGUAGES.map((option, index) => {
+          const selected = option.code === player.defaultAudioLanguage;
+          return (
+            <Surface key={option.code ?? "auto"} className="settingrow settingrow--lang" scale={1.02} borderColor="var(--text)" role="radio" ariaChecked={selected} onClick={() => setPlayer({ defaultAudioLanguage: option.code })} dataAttrs={index === 0 ? { autofocus: true } : undefined}>
+              <span className="t-body-lg" style={{ flex: 1 }}>{option.code === null ? "Automatic" : option.label}</span>
               {selected ? <MdCheck className="c-accent" aria-hidden="true" /> : null}
             </Surface>
           );

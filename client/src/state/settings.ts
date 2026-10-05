@@ -13,6 +13,8 @@ interface SettingsDto {
   skipIntroEnabled: boolean;
   subtitlesEnabled: boolean;
   defaultSubtitleLanguage: string | null;
+  /** Absent from a backend that predates it. */
+  defaultAudioLanguage?: string | null;
   /** Genres the person never wants to see, kept on the account so every device agrees. Absent from a backend that predates it. */
   blockedGenres?: string[];
   updatedAt: string | null;
@@ -54,6 +56,7 @@ function toDto(state: Pick<SettingsState, "homeRows" | "player" | "blockedGenres
     skipIntroEnabled: state.player.skipIntroEnabled,
     subtitlesEnabled: state.player.subtitlesEnabled,
     defaultSubtitleLanguage: state.player.defaultSubtitleLanguage,
+    defaultAudioLanguage: state.player.defaultAudioLanguage,
     blockedGenres: state.blockedGenres,
     updatedAt,
   };
@@ -73,6 +76,7 @@ export const useSettings = create<SettingsState>((set, get) => {
         skipIntroEnabled: dto.skipIntroEnabled,
         subtitlesEnabled: dto.subtitlesEnabled,
         defaultSubtitleLanguage: dto.defaultSubtitleLanguage,
+        defaultAudioLanguage: dto.defaultAudioLanguage === undefined ? get().player.defaultAudioLanguage : dto.defaultAudioLanguage,
       },
       // a backend that doesn't know the field leaves what is here alone
       blockedGenres: dto.blockedGenres ?? get().blockedGenres,

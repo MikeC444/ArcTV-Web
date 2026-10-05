@@ -222,12 +222,12 @@ describe("Settings sync", () => {
   it("pushes the whole record with a fresh updatedAt on every change", async () => {
     hydrateAll("u1");
     respond = (_path, method, body) => (method === "PUT" ? body : undefined);
-    useSettings.getState().setPlayer({ defaultSubtitleLanguage: "fr" });
+    useSettings.getState().setPlayer({ defaultSubtitleLanguage: "fr", defaultAudioLanguage: "ja" });
     useSettings.getState().setRowHidden("row-1", true);
     await flush();
     const puts = calls.filter((c) => c.method === "PUT");
     expect(puts).toHaveLength(2);
-    expect(puts[1]!.body).toMatchObject({ defaultSubtitleLanguage: "fr", hiddenRowIds: ["row-1"], autoplayNextEpisode: true, subtitlesEnabled: true });
+    expect(puts[1]!.body).toMatchObject({ defaultSubtitleLanguage: "fr", defaultAudioLanguage: "ja", hiddenRowIds: ["row-1"], autoplayNextEpisode: true, subtitlesEnabled: true });
     expect(Date.parse((puts[1]!.body as { updatedAt: string }).updatedAt)).toBeGreaterThan(Date.parse((puts[0]!.body as { updatedAt: string }).updatedAt));
   });
 
@@ -237,7 +237,7 @@ describe("Settings sync", () => {
     const result = await useSettings.getState().pull();
     expect(result).toEqual({ ok: true, empty: false });
     expect(useSettings.getState().homeRows).toEqual({ order: ["b", "a"], hiddenRowIds: ["x"] });
-    expect(useSettings.getState().player).toEqual({ autoplayNextEpisode: false, skipIntroEnabled: false, subtitlesEnabled: false, defaultSubtitleLanguage: "es" });
+    expect(useSettings.getState().player).toEqual({ autoplayNextEpisode: false, skipIntroEnabled: false, subtitlesEnabled: false, defaultSubtitleLanguage: "es", defaultAudioLanguage: null });
   });
 
   it("recognises an account that has never saved settings", async () => {
