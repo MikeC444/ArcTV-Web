@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeStats, formatDuration, watchedMsOf, type HistoryItem } from "./stats";
+import { computeStats, formatDuration, formatShort, heatCells, HEAT_DAYS, watchedMsOf, weekChange, type HistoryItem } from "./stats";
 
 const HOUR = 3600_000;
 const item = (over: Partial<HistoryItem> = {}): HistoryItem => ({
@@ -97,5 +97,56 @@ describe("formatDuration", () => {
     expect(formatDuration(65 * 60_000)).toBe("1 hour 5 minutes");
     expect(formatDuration(2 * HOUR)).toBe("2 hours");
     expect(formatDuration(126 * HOUR + 5 * 60_000)).toBe("126 hours");
+  });
+});
+
+describe("the extra numbers", () => {
+  it("compares weeks, splits movies from shows and fills the daily grid", () => {
+    const stats = computeStats(
+      [
+        item({ contentId: "m1", watchedAt: "2026-10-06T20:00:00" }), // this week, 2 h
+        item({ contentId: "m2", watchedAt: "2026-09-28T20:00:00", positionMs: HOUR, durationMs: HOUR }), // the week before, 1 h
+        item({ contentId: "s1", contentType: "TV_SHOW", episodeNumber: 1, positionMs: HOUR, durationMs: HOUR, watchedAt: "2026-10-07T10:00:00" }),
+      ],
+      NOW,
+    );
+    expect(stats.last7DaysMs).toBe(3 * HOUR);
+    expect(stats.prev7DaysMs).toBe(HOUR);
+    expect(stats.movieMs).toBe(3 * HOUR);
+    expect(stats.showMs).toBe(HOUR);
+    expect(stats.activeDays).toBe(3);
+    expect(stats.avgPerActiveDayMs).toBeCloseTo((4 * HOUR) / 3);
+    expect(stats.dailyMs).toHaveLength(HEAT_DAYS);
+    expect(stats.dailyMs[HEAT_DAYS - 1]).toBe(HOUR); // today
+    expect(stats.dailyMs[HEAT_DAYS - 2]).toBe(2 * HOUR); // yesterday
+  });
+
+  it("says how this week compares", () => {
+    expect(weekChange(3, 2)).toEqual({ direction: "up", percent: 50 });
+    expect(weekChange(1, 2)).toEqual({ direction: "down", percent: 50 });
+    expect(weekChange(2, 2)).toEqual({ direction: "same", percent: 0 });
+    expect(weekChange(5, 0)).toBeNull();
+  });
+
+  it("labels bars compactly", () => {
+    expect(formatShort(0)).toBe("");
+    expect(formatShort(20_000)).toBe("1m");
+    expect(formatShort(45 * 60_000)).toBe("45m");
+    expect(formatShort(2.5 * HOUR)).toBe("2.5h");
+    expect(formatShort(14 * HOUR)).toBe("14h");
+  });
+
+  it("starts the activity grid on a Monday and grades the days", () => {
+    const daily = new Array<number>(HEAT_DAYS).fill(0);
+    daily[HEAT_DAYS - 1] = 4 * HOUR;
+    daily[HEAT_DAYS - 2] = HOUR;
+    const cells = heatCells(daily, NOW);
+    expect(cells.length % 7 === 0 || cells.length > HEAT_DAYS).toBe(true);
+    const pad = cells.findIndex((c) => c.ms !== null);
+    // 2026-07-09 (the first of the 91 days ending 2026-10-07) is a Thursday: three blank cells put it under Thursday.
+    expect(pad).toBe(3);
+    expect(cells.at(-1)).toMatchObject({ ms: 4 * HOUR, level: 4 });
+    expect(cells.at(-2)).toMatchObject({ ms: HOUR, level: 1 });
+    expect(cells[pad]).toMatchObject({ ms: 0, level: 0 });
   });
 });
