@@ -103,7 +103,7 @@ export function StatsBody({ stats, truncated }: { stats: Stats; truncated: boole
             <span className="stats__barbox">
               <span className="stats__barfill" style={{ height: `${Math.max(4, Math.round((stats.byWeekdayMs[i]! / peak) * 100))}%` }} title={`${day}: ${formatDuration(stats.byWeekdayMs[i]!)}`} />
             </span>
-            <span className="t-label-sm c-text-3">{day.slice(0, 3)}</span>
+            <span className="t-label-sm stats__barday">{day.slice(0, 3)}</span>
           </li>
         ))}
       </ul>
