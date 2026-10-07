@@ -226,7 +226,7 @@ function PlusPane() {
           <li key={perk.title} className="plus__perk">
             <div className="plus__perkhead">
               <span className="t-title-md">{perk.title}</span>
-              <span className="plus__soon">{(perk.needs === "profiles" && !profilesSupported ? "soon" : perk.status) === "soon" ? "Coming soon" : plus.paywall ? "Plus" : "Included in early access"}</span>
+              <span className="plus__soon" data-kind={(perk.needs === "profiles" && !profilesSupported ? "soon" : perk.status) === "soon" ? "soon" : "plus"}>{(perk.needs === "profiles" && !profilesSupported ? "soon" : perk.status) === "soon" ? "Coming soon" : plus.paywall ? "Plus" : "Included in early access"}</span>
             </div>
             <p className="t-body-sm c-text-2" style={{ margin: "4px 0 0" }}>{perk.detail}</p>
           </li>
