@@ -32,7 +32,6 @@ export const PLUS_PERKS: PlusPerk[] = [
   { title: "Picked for you", detail: "A Home row chosen from the movies you like, finish and save, with the reason under each poster, plus Like and Not for me on movies.", status: "included" },
   { title: "Profiles", detail: "Up to 5 profiles on one account, each with its own My List, Continue Watching, settings and recommendations. Add kids profiles, and lock any profile with a PIN.", status: "included", needs: "profiles" },
   { title: "Parental controls", detail: "Locks on individual genres and titles, built on kids profiles and Blocked Genres.", status: "soon" },
-  { title: "Bigger stream relay allowance", detail: "More room for sources a browser can't play directly.", status: "soon" },
   { title: "Smart source picking", detail: "Skips Select a Source and starts the best source your device can play, once every addon has answered. Turn it on below.", status: "included" },
   { title: "Your stats", detail: "How much you watch, your busiest day, your streak and your most-watched titles, under Settings → Account.", status: "included" },
 ];
