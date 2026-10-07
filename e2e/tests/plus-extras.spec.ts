@@ -19,7 +19,7 @@ const progress = (contentId: string, title: string, over: Record<string, unknown
 });
 
 test.describe("ArcTV Plus extras", () => {
-  test("Settings → Account shows your stats, counted from the watch history", async ({ page }) => {
+  test("Settings → Your stats shows your stats, counted from the watch history", async ({ page }) => {
     const account = await newAccount("stats");
     for (const body of [
       progress("fxm1", "Fixture Movie One", {}),
@@ -29,7 +29,7 @@ test.describe("ArcTV Plus extras", () => {
     ]) {
       expect((await account.tv.post("/user/watch-progress", body)).status).toBe(200);
     }
-    await openSignedIn(page, account, "/settings/account");
+    await openSignedIn(page, account, "/settings/stats");
     const stats = page.getByRole("region", { name: "Your stats" });
     await expect(stats.getByText("You've watched")).toBeVisible();
     await expect(stats.locator(".stats__big")).toContainText("3 hours 30 minutes");
@@ -37,8 +37,32 @@ test.describe("ArcTV Plus extras", () => {
     await expect(stats.locator(".stats__tile", { hasText: "Movies finished" })).toContainText("1");
     await expect(stats.locator(".stats__tile", { hasText: "Episodes watched" })).toContainText("2");
     await expect(stats.locator(".stats__bar[data-peak=\"true\"]")).toHaveCount(1);
-    await stats.scrollIntoViewIfNeeded();
-    await shot(page, "settings-account-stats");
+    await shot(page, "settings-stats");
+  });
+
+  test("Your stats is its own tab in the You group, and shown but not clickable without Plus", async ({ page }) => {
+    const account = await newAccount("statstab");
+    await openSignedIn(page, account, "/settings/account");
+    const tab = page.getByRole("link", { name: "Your stats" }).or(page.locator(".settings__cat", { hasText: "Your stats" }));
+    await expect(tab).toBeVisible();
+    await expect(page.getByRole("region", { name: "Your stats" })).toHaveCount(0); // no longer under Account
+
+    // the same account when the paywall is on and it has no Plus
+    await page.route("**/user/plus", (route) =>
+      route.request().method() === "GET"
+        ? route.fulfill({ json: { active: false, plan: null, validUntil: null, cancelAtPeriodEnd: false, paywall: true, trialDays: 5 } })
+        : route.continue(),
+    );
+    await page.goto("/settings/account");
+    const locked = page.locator(".settings__cat", { hasText: "Your stats" });
+    await expect(locked).toHaveAttribute("data-locked", "true");
+    await expect(locked).toContainText("Plus");
+    await expect(locked).toBeDisabled();
+    await shot(page, "settings-stats-locked");
+    await locked.click({ force: true });
+    await expect(page).toHaveURL(/\/settings\/account/); // it did not open
+    await page.goto("/settings/stats"); // by address: it says what it is and where to get it
+    await expect(page.getByText("Your stats are only for ArcTV Plus.")).toBeVisible();
   });
 
   test("Smart source picking skips the source list and plays the best source", async ({ page }) => {

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { MdAvTimer, MdBarChart, MdCalendarMonth, MdDateRange, MdLocalFireDepartment, MdLock, MdMovie, MdTrendingDown, MdTrendingFlat, MdTrendingUp, MdTv, MdWorkspacePremium } from "react-icons/md";
+import { MdAvTimer, MdCalendarMonth, MdDateRange, MdLocalFireDepartment, MdLock, MdMovie, MdTrendingDown, MdTrendingFlat, MdTrendingUp, MdTv, MdWorkspacePremium } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import { formatDuration, formatShort, heatCells, WEEKDAYS, weekChange, type WatchStats as Stats } from "../../domain/stats";
 import { pluralize } from "../../lib/format";
@@ -18,13 +18,11 @@ export function WatchStats() {
   const navigate = useNavigate();
   return (
     <section className="stats" aria-label="Your stats">
-      <h3 className="t-title-md stats__title">
-        <MdBarChart aria-hidden="true" /> Your stats
-      </h3>
       {!plus ? (
         <div className="stats__locked">
           <MdLock aria-hidden="true" />
-          <p className="t-body-sm c-text-2" style={{ margin: 0 }}>See how much you watch, your busiest day, your streak and your most-watched titles. Your stats come with ArcTV Plus.</p>
+          <p className="t-body-md" style={{ margin: 0 }}><strong>Your stats are only for ArcTV Plus.</strong></p>
+          <p className="t-body-sm c-text-2" style={{ margin: 0 }}>See how much you watch, how this week compares, your streak, a map of your last 13 weeks and your busiest day.</p>
           <MangoButton text="See ArcTV Plus" icon={<MdWorkspacePremium />} compact onClick={() => navigate(routes.settings("plus"))} />
         </div>
       ) : state.kind === "loading" ? (

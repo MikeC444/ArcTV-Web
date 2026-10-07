@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { MdAccountCircle, MdAdd, MdBlock, MdCancel, MdFavorite, MdWorkspacePremium, MdArrowDownward, MdArrowUpward, MdCheck, MdCloudUpload, MdDelete, MdExtension, MdGridView, MdInfo, MdLogout, MdMusicNote, MdSubtitles, MdSwitchAccount, MdTune, MdVolumeUp, MdSpatialAudio } from "react-icons/md";
+import { MdBarChart, MdLock, MdAccountCircle, MdAdd, MdBlock, MdCancel, MdFavorite, MdWorkspacePremium, MdArrowDownward, MdArrowUpward, MdCheck, MdCloudUpload, MdDelete, MdExtension, MdGridView, MdInfo, MdLogout, MdMusicNote, MdSubtitles, MdSwitchAccount, MdTune, MdVolumeUp, MdSpatialAudio } from "react-icons/md";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { PLUS_FREE_NOTE, PLUS_PERKS, PLUS_PLANS, PLUS_PROCEEDS_NOTE } from "../../domain/plus";
 import { applyRowOrder, moveRow } from "../../domain/homeRows";
@@ -18,6 +18,7 @@ import { activeProfileOf, useProfiles } from "../../state/profiles";
 import { ProfileAvatar } from "../components/ProfileAvatar";
 import { WatchStats } from "../components/WatchStats";
 import { useSmartPicking } from "../../state/smartPicking";
+import { useHasPlus } from "../../state/plusAccess";
 import { useBlockedGenres } from "../../state/blockedGenres";
 import { useSettings } from "../../state/settings";
 import { signOutAndWipe } from "../../state/sync";
@@ -25,14 +26,15 @@ import { MangoButton, Pill, Switch } from "../components/Buttons";
 import { Spinner } from "../components/States";
 import { Surface } from "../components/Surface";
 
-type Tab = "account" | "addons" | "home-rows" | "blocked-genres" | "plus" | "sounds" | "subtitles" | "audio";
-type Category = { id: Tab; icon: ReactNode; title: string; subtitle: string };
+type Tab = "account" | "addons" | "home-rows" | "blocked-genres" | "plus" | "stats" | "sounds" | "subtitles" | "audio";
+type Category = { id: Tab; icon: ReactNode; title: string; subtitle: string; /** Greyed out and not clickable without ArcTV Plus. */ plusOnly?: boolean };
 const GROUPS: Array<{ label: string; items: Category[] }> = [
   {
     label: "You",
     items: [
       { id: "account", icon: <MdAccountCircle />, title: "Account", subtitle: "Manage your ArcTV account" },
       { id: "plus", icon: <MdWorkspacePremium />, title: "ArcTV Plus", subtitle: "Extra features for supporters" },
+      { id: "stats", icon: <MdBarChart />, title: "Your stats", subtitle: "How much you watch, at a glance", plusOnly: true },
     ],
   },
   {
@@ -60,6 +62,7 @@ export function SettingsScreen() {
   const { tab } = useParams<{ tab?: string }>();
   const navigate = useNavigate();
   const selected: Tab = isTab(tab) ? tab : "account";
+  const hasPlus = useHasPlus();
   const category = CATEGORIES.find((c) => c.id === selected)!;
   useEffect(() => {
     document.title = `Settings · ${category.title} · Arc TV`;
@@ -78,12 +81,17 @@ export function SettingsScreen() {
           {GROUPS.map((group) => (
             <div className="settings__group" key={group.label}>
               <div className="settings__grouplabel">{group.label}</div>
-              {group.items.map((c) => (
-                <Surface key={c.id} className="settings__cat" onClick={() => navigate(routes.settings(c.id))} scale={1.02} ariaCurrent={c.id === selected ? "page" : undefined} dataAttrs={{ selected: c.id === selected, autofocus: c.id === selected }}>
-                  <span className="settings__caticon" aria-hidden="true">{c.icon}</span>
-                  <span className="t-title-md">{c.title}</span>
-                </Surface>
-              ))}
+              {group.items.map((c) => {
+                // A Plus-only category stays in the list but can't be opened without Plus, and says so.
+                const locked = c.plusOnly === true && !hasPlus;
+                return (
+                  <Surface key={c.id} className="settings__cat" onClick={() => navigate(routes.settings(c.id))} scale={1.02} disabled={locked} ariaLabel={locked ? `${c.title}, only for ArcTV Plus` : undefined} ariaCurrent={c.id === selected ? "page" : undefined} dataAttrs={{ selected: c.id === selected, locked, autofocus: c.id === selected }}>
+                    <span className="settings__caticon" aria-hidden="true">{locked ? <MdLock /> : c.icon}</span>
+                    <span className="t-title-md">{c.title}</span>
+                    {locked ? <span className="plus__soon settings__plustag" data-kind="plus" aria-hidden="true">Plus</span> : null}
+                  </Surface>
+                );
+              })}
             </div>
           ))}
         </nav>
@@ -100,6 +108,7 @@ export function SettingsScreen() {
           {selected === "home-rows" ? <HomeRowsPane /> : null}
           {selected === "blocked-genres" ? <BlockedGenresPane /> : null}
           {selected === "plus" ? <PlusPane /> : null}
+          {selected === "stats" ? <WatchStats /> : null}
           {selected === "sounds" ? <SoundsPane /> : null}
           {selected === "subtitles" ? <SubtitlesPane /> : null}
           {selected === "audio" ? <AudioPane /> : null}
@@ -311,7 +320,6 @@ function AccountPane() {
       <p className="t-label-sm c-text-3" style={{ marginTop: 18, maxWidth: 520 }}>
         Signing out flushes any unsynced changes, then removes this account's data from this browser. Your library stays safe in your ArcTV account.
       </p>
-      <WatchStats />
     </div>
   );
 }
