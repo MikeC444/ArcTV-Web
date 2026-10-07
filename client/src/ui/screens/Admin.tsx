@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MdClear, MdExpandMore, MdRefresh } from "react-icons/md";
-import { formatElapsed, pluralize, timeAgo } from "../../lib/format";
+import { formatElapsed, formatWatched, pluralize, timeAgo } from "../../lib/format";
 import { fetchAdminSummary, fetchAdminUser, fetchAdminUsers, fetchTorrentIntroAcks, filtersActive, newestVersion, NO_FILTERS, type AdminDevice, type ExternalPlayerEvent, type FeatureIntroAcks, type AdminFilters, type AdminSummary, type AdminUserDetail, type AdminUserRow } from "../../state/admin";
 import { MangoButton } from "../components/Buttons";
 import { Spinner } from "../components/States";
@@ -233,13 +233,13 @@ function UserDetail({ detail, newest }: { detail: AdminUserDetail | null; newest
           <ul className="admin__list">
             {detail.continueWatching.length === 0 ? <li className="c-text-3">Nothing</li> : null}
             {detail.continueWatching.map((c, i) => (
-              <li key={i}><b>{c.title}</b>{sxe(c.seasonNumber, c.episodeNumber)} · {formatElapsed(c.positionMs)} of {formatElapsed(c.durationMs)} · {timeAgo(c.lastWatchedAt)}</li>
+              <li key={i}><b>{c.title}</b>{sxe(c.seasonNumber, c.episodeNumber)} · {formatWatched(c.positionMs)} of {formatElapsed(c.durationMs)} · {timeAgo(c.lastWatchedAt)}</li>
             ))}
           </ul>
           <h3 className="t-title-sm">Recently watched</h3>
           <ul className="admin__list">
             {detail.history.slice(0, 12).map((h, i) => (
-              <li key={i}><b>{h.title}</b>{sxe(h.seasonNumber, h.episodeNumber)} · {h.completed ? "finished" : formatElapsed(h.positionMs)} · {timeAgo(h.watchedAt)}</li>
+              <li key={i}><b>{h.title}</b>{sxe(h.seasonNumber, h.episodeNumber)} · {h.completed ? "finished" : formatWatched(h.positionMs)} · {timeAgo(h.watchedAt)}</li>
             ))}
           </ul>
         </div>

@@ -20,6 +20,12 @@ export function formatElapsed(positionMs: number): string {
   return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
 }
 
+/** The developer panel's "how much was watched": under a minute in seconds ("45s", "0s"), then as [formatElapsed] ("3m", "1h 12m"). */
+export function formatWatched(positionMs: number): string {
+  const ms = Math.max(0, positionMs);
+  return ms < 60_000 ? `${Math.floor(ms / 1000)}s` : formatElapsed(ms);
+}
+
 /** yyyy-MM-dd → "Mar 5, 2024" (DetailHeroSection.formatReleaseDate) */
 export function formatReleaseDate(isoDate: string): string | null {
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(isoDate);

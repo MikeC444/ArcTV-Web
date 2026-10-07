@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { applyRowOrder, dedupeRows, moveRow } from "./homeRows";
 import { assessStream, engineFor } from "./playability";
 import type { HomeSection } from "./types";
-import { formatElapsed, formatReleaseDate, formatRuntime, formatTimestamp, interleave, distinctBy } from "../lib/format";
+import { formatElapsed, formatWatched, formatReleaseDate, formatRuntime, formatTimestamp, interleave, distinctBy } from "../lib/format";
 import { isoMs, monotonicIso, resetMonotonicClock } from "../lib/iso";
 import { decideProgress, nextEpisodeAfter, nextHoldSeekDelta } from "../state/progress";
 import { buildGenreList } from "./genreList";
@@ -104,6 +104,14 @@ describe("formatting", () => {
     expect(formatRuntime(142)).toBe("2h 22m");
     expect(formatElapsed(72 * 60_000)).toBe("1h 12m");
     expect(formatElapsed(20 * 60_000)).toBe("20m");
+    // the developer panel shows seconds under a minute, minutes after
+    expect(formatWatched(0)).toBe("0s");
+    expect(formatWatched(45_900)).toBe("45s");
+    expect(formatWatched(59_999)).toBe("59s");
+    expect(formatWatched(60_000)).toBe("1m");
+    expect(formatWatched(125_000)).toBe("2m");
+    expect(formatWatched(72 * 60_000)).toBe("1h 12m");
+    expect(formatWatched(-5)).toBe("0s");
     expect(formatReleaseDate("2024-03-05")).toBe("Mar 5, 2024");
     expect(formatReleaseDate("nope")).toBeNull();
   });

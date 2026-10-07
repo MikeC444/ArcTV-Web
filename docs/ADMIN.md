@@ -6,6 +6,7 @@ with their app version, profiles, addons (host and debrid service only, never th
 30 seconds, so a device that updates its app shows the new version without a reload.
 
 * **Other players** (below the app versions): from the summary's `externalPlayer`, how often titles were opened in another app or VLC's engine in the last 7 days (and all-time app opens), how many people, how many came after a playback error vs. the button vs. no player installed, and the 50 most recent hand-offs (title, source quality, which engine, trigger, person, error, app version). Hidden on a backend that doesn't send it.
+* Positions in a user's Continue Watching / Recently watched show seconds under a minute ("45s", "0s") and minutes after.
 * **Torrent pop-up**: who has clicked "Got it" on the Firestick's "Addons now support torrents" pop-up (total, and the newest 50 with person, device, app version and when), from `GET /api/admin/feature-intros/torrent_intro`. Hidden on a backend that doesn't have that endpoint.
 * The web server proxies four GET paths only (`server/src/routes/admin.ts`: `/api/admin/summary`, `/users`, `/users/:id`, `/feature-intros/torrent_intro`) with the sealed-cookie bearer;
   the backend does the admin check and answers everyone else with 404, and the page shows "Page not found" to non-admins.
