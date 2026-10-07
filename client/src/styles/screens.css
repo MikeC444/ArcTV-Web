@@ -613,3 +613,4 @@
 .stats__rank { width: 22px; text-align: center; color: var(--accent); font-weight: 700; }
 .stats__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .plus__setting { margin: 18px 0 0; max-width: 640px; }
+.sources--smart { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; min-height: 60vh; }

@@ -43,11 +43,19 @@ test.describe("ArcTV Plus extras", () => {
 
   test("Smart source picking skips the source list and plays the best source", async ({ page }) => {
     const account = await newAccount("smart");
-    await page.addInitScript(() => localStorage.setItem("mtv:v1:playerPrefs", JSON.stringify({ smartSourcePicking: true })));
+    await page.addInitScript(() => {
+      localStorage.setItem("mtv:v1:playerPrefs", JSON.stringify({ smartSourcePicking: true }));
+      // Remember if a source row (or the "Select a Source" heading) is ever on screen: the list must never flash up before the player.
+      const w = window as unknown as { __sawList?: boolean };
+      new MutationObserver(() => {
+        if (document.querySelector(".source, .sources__main")) w.__sawList = true;
+      }).observe(document, { childList: true, subtree: true });
+    });
     await openSignedIn(page, account, "/detail/test.mangotv.fixture/MOVIE/fxm1");
     await page.getByRole("button", { name: /Play/ }).first().click();
     await page.waitForURL(/\/player\/test\.mangotv\.fixture\/MOVIE\/fxm1\//);
     await expect(page.locator("video.player__video")).toBeVisible();
+    expect(await page.evaluate(() => (window as unknown as { __sawList?: boolean }).__sawList ?? false)).toBe(false);
     // the list was replaced by the player, so Back goes to the title, not to a list the person never saw
     await page.goBack();
     await expect(page).toHaveURL(/\/detail\//);

@@ -15,6 +15,9 @@ import { Shimmer } from "../components/Skeletons";
 import { FullScreenError, Spinner } from "../components/States";
 import { Surface } from "../components/Surface";
 
+/** How long Smart source picking waits for slow addons before going with a sure pick it already has. */
+const SMART_PICK_GRACE_MS = 3500;
+
 type SourceFilter = "ALL" | ResolutionTier;
 const FILTERS: Array<{ id: SourceFilter; label: string }> = [
   { id: "ALL", label: "All Sources" },
@@ -86,20 +89,41 @@ export function SourcesScreen() {
   const plus = useHasPlus();
   const smartOn = useSmartPicking((s) => s.enabled);
   const smart = smartPickingApplies({ plus, enabled: smartOn, cameBack, skip: search.get("skip") === "1" });
-  const smartDone = smart && state.kind === "loaded" && !state.searchingMore;
+  // The list is never shown while this is deciding: a plain loading screen stands in for it, so there is no flash of the list before the player.
+  // Once every addon has answered the pick is made; a slow addon is not waited for beyond SMART_PICK_GRACE_MS when a sure pick is already there.
+  const [graceOver, setGraceOver] = useState(false);
+  const searching = state.kind === "loaded" && state.searchingMore;
+  useEffect(() => {
+    if (!smart || !searching) return;
+    const timer = window.setTimeout(() => setGraceOver(true), SMART_PICK_GRACE_MS);
+    return () => window.clearTimeout(timer);
+  }, [smart, searching]);
+  const smartDone = smart && state.kind === "loaded" && (!state.searchingMore || graceOver);
   const smartPick = smartDone && state.kind === "loaded" ? smartPickTarget(state.streams, state.recommendedId) : null;
   useEffect(() => {
     if (smartPick) navigate(routes.player(providerId, type, id, season, episode, smartPick.id), { replace: true });
   }, [smartPick, navigate, providerId, type, id, season, episode]);
-  const smartNote = !smart ? null : smartPick ? "Smart source picking: starting the best source…" : smartDone ? "Smart source picking couldn't find a source that surely plays here, so the choice is yours." : "Smart source picking: choosing the best source for this device…";
+  const smartNote = smart && state.kind === "loaded" && !state.searchingMore && !smartPick ? "Smart source picking couldn't find a source that surely plays here, so the choice is yours." : null;
 
   useEffect(() => {
     document.title = state.kind === "loaded" ? `Select a Source · ${state.content.title}` : "Select a Source · Arc TV";
   }, [state]);
 
   if (state.kind === "error") return <FullScreenError message={state.message} onRetry={reload} />;
-  if (state.kind === "loading" || autoSelect || smartPick) return <SourcesShell loading onBack={goBack} />;
+  // Still loading or searching, or about to play: the stand-in screen, never the list.
+  if (smart && (state.kind === "loading" || (state.kind === "loaded" && (state.searchingMore || smartPick !== null)))) return <SmartPickShell />;
+  if (state.kind === "loading" || autoSelect) return <SourcesShell loading onBack={goBack} />;
   return <SourcesLoaded state={state} smartNote={smartNote} onBack={goBack} onSelect={(s) => goPlay(s.id)} onManage={() => navigate(routes.settings("addons"))} onRetry={reload} />;
+}
+
+/** Shown instead of the list while Smart source picking decides: the same dark page and a spinner, nothing that looks like the source list. */
+function SmartPickShell() {
+  return (
+    <div className="sources sources--smart" aria-busy="true">
+      <Spinner />
+      <p className="t-label-lg c-text-2" role="status">Finding the best source…</p>
+    </div>
+  );
 }
 
 function SourcesShell({ onBack }: { loading?: boolean; onBack: () => void }) {
