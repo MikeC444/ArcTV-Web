@@ -235,7 +235,7 @@ function PlusPane() {
         <>
           <h3 className="t-title-md plus__h">How to subscribe</h3>
           <ol className="plus__steps t-body-md">
-            <li>Pick a plan below: monthly, yearly, or a one-time Lifetime payment.</li>
+            <li>Pick a plan below: monthly, yearly, or a one-time Lifetime payment.{plus.trialDays > 0 ? ` Monthly and yearly start with ${plus.trialDays} days free.` : ""}</li>
             <li>Complete the secure checkout in the page that opens. It is added to your account (you're already signed in here).</li>
             <li>Come back to this tab: Plus switches on by itself within a minute.</li>
           </ol>
@@ -243,17 +243,18 @@ function PlusPane() {
           <div className="plus__plans" role="group" aria-label="Plans">
             {PLUS_PLANS.map((plan) => (
               <div key={plan.id} className="plus__plan" data-featured={plan.note ? "true" : undefined}>
-                {plan.note ? <span className="plus__note">{plan.note}</span> : null}
+                {plan.id !== "lifetime" && plus.trialDays > 0 ? <span className="plus__note">{plus.trialDays} days free</span> : plan.note ? <span className="plus__note">{plan.note}</span> : null}
                 <div className="t-title-md">{plan.label}</div>
                 <div className="plus__price">{plan.price ?? "Price at checkout"}</div>
                 <div className="t-label-sm c-text-3">{plan.per}</div>
                 <p className="t-body-sm c-text-2" style={{ margin: "8px 0 14px" }}>{plan.blurb}</p>
-                <MangoButton text={busy === plan.id ? "Opening…" : plan.id === "lifetime" ? "Get Lifetime" : `Choose ${plan.label}`} icon={<MdWorkspacePremium />} variant="filled" compact disabled={busy !== null} onClick={() => void choose(plan.id)} />
+                <MangoButton text={busy === plan.id ? "Opening…" : plan.id === "lifetime" ? "Get Lifetime" : plus.trialDays > 0 ? `Start ${plus.trialDays}-day free trial` : `Choose ${plan.label}`} icon={<MdWorkspacePremium />} variant="filled" compact disabled={busy !== null} onClick={() => void choose(plan.id)} />
               </div>
             ))}
           </div>
           {waiting ? <p className="t-body-sm c-text-2" style={{ margin: "12px 0 0" }}>Waiting for your payment… this switches on by itself when it goes through.</p> : null}
           {error ? <p className="t-body-sm" role="alert" style={{ margin: "12px 0 0", color: "var(--error)" }}>{error}</p> : null}
+          {plus.trialDays > 0 ? <p className="t-body-sm c-text-3" style={{ margin: "12px 0 0" }}>Your card is taken at checkout, but nothing is charged for the first {plus.trialDays} days. Cancel before then and you pay nothing. The free trial is once per account.</p> : null}
           <p className="t-body-sm c-text-3" style={{ margin: "12px 0 0" }}>Payments are handled by Stripe's secure checkout page; we never see your card.</p>
         </>
       ) : null}

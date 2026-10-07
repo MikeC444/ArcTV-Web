@@ -6,6 +6,7 @@ matters). When the Firestick gets it, **delete the line**: this list only ever h
 
 ## Pending on Firestick
 
+- **5-day free trial for Plus** (web, 2026-10-07). On web, Settings → ArcTV Plus shows "5 days free" on the Monthly and Yearly cards, a "Start 5-day free trial" button and a note that the card is taken but not charged for 5 days, for accounts that have never had Plus. The backend already supports it (`GET /user/plus` carries `trialDays`; checkout adds the trial). The Firestick Plus screen and its QR checkout page should say the same.
 - **Setup guide link on the Sources page when there are no sources** (web, 2026-10-04). The "No sources found" page (under Manage Addons) now ends with "New to this? Step-by-step guide to setting up your sources", linking to `/guides/debrid`. On the Firestick, show the same QR code to https://web.arctv.org/guides/debrid there too.
 - **Debrid note links to a setup guide: add a QR code** (web, 2026-10-04). Settings → Addons on web ends its debrid note with "Arc TV plays links, not torrents: Step-by-step guide to setting one up", a link to a step-by-step page (`/guides/debrid`: get a debrid service, connect it to Torrentio, add Torrentio to Arc TV; the page is otherwise unlinked). The Firestick still shows the old longer note with no link. A TV can't open a web page, so **show a QR code next to the note that people scan with their phone to open https://web.arctv.org/guides/debrid** (Firestick, and a mobile app if there is one).
 

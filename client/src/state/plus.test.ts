@@ -56,6 +56,19 @@ describe("ArcTV Plus status", () => {
     expect(usePlus.getState().plan).toBe("yearly");
   });
 
+  it("knows the free trial on offer, and treats a missing or odd value as none", async () => {
+    hydrateAll("u1");
+    respond = () => status({ trialDays: 5 });
+    await usePlus.getState().pull();
+    expect(usePlus.getState().trialDays).toBe(5);
+    respond = () => status();
+    await usePlus.getState().pull();
+    expect(usePlus.getState().trialDays).toBe(0);
+    respond = () => status({ trialDays: "5" });
+    await usePlus.getState().pull();
+    expect(usePlus.getState().trialDays).toBe(0);
+  });
+
   it("keeps the last known status when it can't be read, and remembers it for the next launch", async () => {
     hydrateAll("u1");
     respond = () => status({ active: true, plan: "monthly", validUntil: "2099-01-01T00:00:00.000Z" });

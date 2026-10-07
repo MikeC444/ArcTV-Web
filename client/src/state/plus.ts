@@ -14,9 +14,11 @@ export interface PlusStatus {
   cancelAtPeriodEnd: boolean;
   /** True once Plus is paid; false while it is free for everyone (early access). */
   paywall: boolean;
+  /** Free days a first monthly or yearly subscription starts with, when this account is offered them; 0 otherwise. */
+  trialDays: number;
 }
 
-const NONE: PlusStatus = { active: false, plan: null, validUntil: null, cancelAtPeriodEnd: false, paywall: false };
+const NONE: PlusStatus = { active: false, plan: null, validUntil: null, cancelAtPeriodEnd: false, paywall: false, trialDays: 0 };
 
 interface PlusState extends PlusStatus {
   userId: string | null;
@@ -51,7 +53,7 @@ export const usePlus = create<PlusState>((set, get) => ({
     try {
       const status = await api<PlusStatus>("/user/plus");
       if (get().userId !== userId) return false; // signed out or switched account while waiting
-      const next: PlusStatus = { active: status.active === true, plan: status.plan ?? null, validUntil: status.validUntil ?? null, cancelAtPeriodEnd: status.cancelAtPeriodEnd === true, paywall: status.paywall === true };
+      const next: PlusStatus = { active: status.active === true, plan: status.plan ?? null, validUntil: status.validUntil ?? null, cancelAtPeriodEnd: status.cancelAtPeriodEnd === true, paywall: status.paywall === true, trialDays: typeof status.trialDays === "number" && status.trialDays > 0 ? Math.floor(status.trialDays) : 0 };
       set(next);
       writeJson(userKey(userId, "plus"), next);
       return true;
@@ -69,7 +71,7 @@ export const usePlus = create<PlusState>((set, get) => ({
     const { userId } = get();
     const status = await api<PlusStatus>("/user/plus/cancel", { method: "POST", body: {} });
     if (!userId || get().userId !== userId) return;
-    const next: PlusStatus = { active: status.active === true, plan: status.plan ?? null, validUntil: status.validUntil ?? null, cancelAtPeriodEnd: status.cancelAtPeriodEnd === true, paywall: status.paywall === true };
+    const next: PlusStatus = { active: status.active === true, plan: status.plan ?? null, validUntil: status.validUntil ?? null, cancelAtPeriodEnd: status.cancelAtPeriodEnd === true, paywall: status.paywall === true, trialDays: typeof status.trialDays === "number" && status.trialDays > 0 ? Math.floor(status.trialDays) : 0 };
     set(next);
     writeJson(userKey(userId, "plus"), next);
   },
