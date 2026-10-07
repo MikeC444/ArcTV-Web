@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MdClear, MdExpandMore, MdRefresh } from "react-icons/md";
 import { formatElapsed, pluralize, timeAgo } from "../../lib/format";
-import { fetchAdminSummary, fetchAdminUser, fetchAdminUsers, filtersActive, newestVersion, NO_FILTERS, type AdminDevice, type ExternalPlayerEvent, type AdminFilters, type AdminSummary, type AdminUserDetail, type AdminUserRow } from "../../state/admin";
+import { fetchAdminSummary, fetchAdminUser, fetchAdminUsers, fetchTorrentIntroAcks, filtersActive, newestVersion, NO_FILTERS, type AdminDevice, type ExternalPlayerEvent, type FeatureIntroAcks, type AdminFilters, type AdminSummary, type AdminUserDetail, type AdminUserRow } from "../../state/admin";
 import { MangoButton } from "../components/Buttons";
 import { Spinner } from "../components/States";
 
@@ -16,6 +16,7 @@ const sxe = (s: number | null, e: number | null) => (s != null && e != null ? ` 
 export function AdminScreen() {
   const [summary, setSummary] = useState<AdminSummary | null>(null);
   const [users, setUsers] = useState<AdminUserRow[]>([]);
+  const [intro, setIntro] = useState<FeatureIntroAcks | null>(null);
   const [total, setTotal] = useState(0);
   const [filters, setFilters] = useState<AdminFilters>(NO_FILTERS);
   const [typed, setTyped] = useState("");
@@ -37,6 +38,8 @@ export function AdminScreen() {
       setSummary(s);
       setUsers(list.users);
       setTotal(list.total);
+      // Optional: a backend that predates the pop-up report has no such list, and the section then stays hidden.
+      setIntro(await fetchTorrentIntroAcks().catch(() => null));
       if (openId) setDetail(await fetchAdminUser(openId));
       setError(null);
       setUpdatedAt(Date.now());
@@ -123,6 +126,8 @@ export function AdminScreen() {
       ) : null}
 
       {summary?.externalPlayer ? <ExternalPlayerSection data={summary.externalPlayer} /> : null}
+
+      {intro ? <TorrentIntroSection data={intro} /> : null}
 
       <section className="admin__users page__pad" aria-label="Users">
         {loading ? <Spinner /> : null}
@@ -276,6 +281,34 @@ function ExternalPlayerSection({ data }: { data: NonNullable<AdminSummary["exter
           ))}
         </div>
       ) : <p className="t-label-md c-text-3">Nothing yet.</p>}
+    </section>
+  );
+}
+
+function TorrentIntroSection({ data }: { data: FeatureIntroAcks }) {
+  return (
+    <section className="admin__external page__pad" aria-label="Torrent pop-up">
+      <h2 className="t-title-md">Torrent pop-up</h2>
+      <div className="admin__stats admin__stats--inner">
+        <Stat label={'Clicked "Got it"'} value={data.total} note="people, all time" />
+      </div>
+      <h3 className="t-label-md c-text-3 admin__subhead">Most recent</h3>
+      {data.users.length > 0 ? (
+        <div className="admin__table" role="table" aria-label="People who clicked Got it">
+          <div className="admin__row admin__row--intro admin__row--head t-label-md c-text-3" role="row">
+            <span>Person</span><span>Device</span><span>Version</span><span>When</span>
+          </div>
+          {data.users.map((u) => (
+            <div className="admin__row admin__row--intro admin__row--line" role="row" key={u.id}>
+              <span className="admin__who">{u.displayName ?? u.email}{u.displayName ? <i>{u.email}</i> : null}</span>
+              <span>{u.platform ? platformName(u.platform) : "—"}</span>
+              <span>{u.appVersion ?? "—"}</span>
+              <span>{timeAgo(u.acknowledgedAt)}</span>
+            </div>
+          ))}
+          {data.total > data.users.length ? <p className="t-label-md c-text-3">Showing the newest {data.users.length} of {data.total}.</p> : null}
+        </div>
+      ) : <p className="t-label-md c-text-3">Nobody yet.</p>}
     </section>
   );
 }
