@@ -16,6 +16,8 @@ import { ApiClientError } from "../../lib/api";
 import { usePlus, watchForPurchase, type PlusPlanId } from "../../state/plus";
 import { activeProfileOf, useProfiles } from "../../state/profiles";
 import { ProfileAvatar } from "../components/ProfileAvatar";
+import { WatchStats } from "../components/WatchStats";
+import { useSmartPicking } from "../../state/smartPicking";
 import { useBlockedGenres } from "../../state/blockedGenres";
 import { useSettings } from "../../state/settings";
 import { signOutAndWipe } from "../../state/sync";
@@ -231,6 +233,8 @@ function PlusPane() {
         ))}
       </ul>
 
+      {plus.active ? <SmartPickingToggle /> : null}
+
       {plus.paywall && !plus.active ? (
         <>
           <h3 className="t-title-md plus__h">How to subscribe</h3>
@@ -307,6 +311,25 @@ function AccountPane() {
       <p className="t-label-sm c-text-3" style={{ marginTop: 18, maxWidth: 520 }}>
         Signing out flushes any unsynced changes, then removes this account's data from this browser. Your library stays safe in your ArcTV account.
       </p>
+      <WatchStats />
+    </div>
+  );
+}
+
+/** Settings → ArcTV Plus: the switch for Smart source picking. Kept on this device (see state/smartPicking.ts). */
+function SmartPickingToggle() {
+  const enabled = useSmartPicking((s) => s.enabled);
+  const setEnabled = useSmartPicking((s) => s.setEnabled);
+  return (
+    <div className="plus__setting">
+      <h3 className="t-title-md plus__h">Your Plus settings</h3>
+      <Surface className="homerow__toggle" scale={1.02} borderColor="var(--text)" onClick={() => setEnabled(!enabled)} role="switch" ariaLabel="Smart source picking" ariaChecked={enabled}>
+        <span style={{ flex: 1, minWidth: 0 }}>
+          <span className="t-body-md" style={{ display: "block", color: enabled ? "var(--text)" : "var(--text-2)" }}>Smart source picking</span>
+          <span className="t-label-sm c-text-3" style={{ display: "block" }}>Skip the source list and start the best source this device can play. If none surely plays, you still get the list.</span>
+        </span>
+        <Switch checked={enabled} white />
+      </Surface>
     </div>
   );
 }

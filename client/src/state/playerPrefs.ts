@@ -11,9 +11,11 @@ export interface PlayerPrefs {
   speed: number;
   /** The right-hand time shows what is left (true) or the total length (false). */
   showRemaining: boolean;
+  /** ArcTV Plus: skip Select a Source and play the best source this device can play (Settings → ArcTV Plus). Off until turned on. */
+  smartSourcePicking: boolean;
 }
 
-export const DEFAULT_PLAYER_PREFS: PlayerPrefs = { volume: 1, speed: 1, showRemaining: true };
+export const DEFAULT_PLAYER_PREFS: PlayerPrefs = { volume: 1, speed: 1, showRemaining: true, smartSourcePicking: false };
 const KEY = globalKey("playerPrefs");
 
 const number = (value: unknown, min: number, max: number, fallback: number): number =>
@@ -25,6 +27,7 @@ export function readPlayerPrefs(): PlayerPrefs {
     volume: number(stored?.volume, 0, 1, DEFAULT_PLAYER_PREFS.volume),
     speed: number(stored?.speed, 0.25, 4, DEFAULT_PLAYER_PREFS.speed),
     showRemaining: typeof stored?.showRemaining === "boolean" ? stored.showRemaining : DEFAULT_PLAYER_PREFS.showRemaining,
+    smartSourcePicking: typeof stored?.smartSourcePicking === "boolean" ? stored.smartSourcePicking : DEFAULT_PLAYER_PREFS.smartSourcePicking,
   };
 }
 

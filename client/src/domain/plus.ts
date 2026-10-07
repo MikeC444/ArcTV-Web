@@ -33,7 +33,8 @@ export const PLUS_PERKS: PlusPerk[] = [
   { title: "Profiles", detail: "Up to 5 profiles on one account, each with its own My List, Continue Watching, settings and recommendations. Add kids profiles, and lock any profile with a PIN.", status: "included", needs: "profiles" },
   { title: "Parental controls", detail: "Locks on individual genres and titles, built on kids profiles and Blocked Genres.", status: "soon" },
   { title: "Bigger stream relay allowance", detail: "More room for sources a browser can't play directly.", status: "soon" },
-  { title: "Smart source picking", detail: "Automatically choose the best playable source for your device.", status: "soon" },
+  { title: "Smart source picking", detail: "Skips Select a Source and starts the best source your device can play, once every addon has answered. Turn it on below.", status: "included" },
+  { title: "Your stats", detail: "How much you watch, your busiest day, your streak and your most-watched titles, under Settings → Account.", status: "included" },
 ];
 
 export const PLUS_FREE_NOTE = "Everything you use today stays free: browsing, playing, My List, Continue Watching, addons and Blocked Genres.";

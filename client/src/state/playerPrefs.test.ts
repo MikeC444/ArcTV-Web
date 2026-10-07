@@ -9,10 +9,11 @@ describe("player preferences", () => {
     writePlayerPrefs({ volume: 0.4 });
     writePlayerPrefs({ speed: 1.5 });
     writePlayerPrefs({ showRemaining: false });
-    expect(readPlayerPrefs()).toEqual({ volume: 0.4, speed: 1.5, showRemaining: false });
+    writePlayerPrefs({ smartSourcePicking: true });
+    expect(readPlayerPrefs()).toEqual({ volume: 0.4, speed: 1.5, showRemaining: false, smartSourcePicking: true });
   });
   it("ignore values that make no sense", () => {
-    localStorage.setItem("mtv:v1:playerPrefs", JSON.stringify({ volume: 7, speed: "fast", showRemaining: "yes" }));
+    localStorage.setItem("mtv:v1:playerPrefs", JSON.stringify({ volume: 7, speed: "fast", showRemaining: "yes", smartSourcePicking: 1 }));
     expect(readPlayerPrefs()).toEqual(DEFAULT_PLAYER_PREFS);
   });
 });

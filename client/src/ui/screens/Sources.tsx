@@ -6,6 +6,9 @@ import { resolutionOrdinal, SOURCE_HEALTH_LABEL, type Content, type ContentType,
 import { formatRuntime } from "../../lib/format";
 import { useGoBack } from "../../lib/navigation";
 import { parseOptionalInt, routes } from "../../lib/routes";
+import { smartPickingApplies, smartPickTarget } from "../../domain/smartPick";
+import { useHasPlus } from "../../state/plusAccess";
+import { useSmartPicking } from "../../state/smartPicking";
 import { useSources, type AddonLookupRow } from "../../state/sourcesData";
 import { IconButton, MangoButton, Pill } from "../components/Buttons";
 import { Shimmer } from "../components/Skeletons";
@@ -78,13 +81,25 @@ export function SourcesScreen() {
     if (pick && playsHere) navigate(routes.player(providerId, type, id, season, episode, pick.id), { replace: true });
   }, [auto, state, navigate, providerId, type, id, season, episode]);
 
+  // ArcTV Plus, Smart source picking (when switched on): once every addon has answered, play the best source this device can play instead of
+  // asking. Not when coming back from the player or from "Choose a different source", and never for a pick that only might play.
+  const plus = useHasPlus();
+  const smartOn = useSmartPicking((s) => s.enabled);
+  const smart = smartPickingApplies({ plus, enabled: smartOn, cameBack, skip: search.get("skip") === "1" });
+  const smartDone = smart && state.kind === "loaded" && !state.searchingMore;
+  const smartPick = smartDone && state.kind === "loaded" ? smartPickTarget(state.streams, state.recommendedId) : null;
+  useEffect(() => {
+    if (smartPick) navigate(routes.player(providerId, type, id, season, episode, smartPick.id), { replace: true });
+  }, [smartPick, navigate, providerId, type, id, season, episode]);
+  const smartNote = !smart ? null : smartPick ? "Smart source picking: starting the best source…" : smartDone ? "Smart source picking couldn't find a source that surely plays here, so the choice is yours." : "Smart source picking: choosing the best source for this device…";
+
   useEffect(() => {
     document.title = state.kind === "loaded" ? `Select a Source · ${state.content.title}` : "Select a Source · Arc TV";
   }, [state]);
 
   if (state.kind === "error") return <FullScreenError message={state.message} onRetry={reload} />;
-  if (state.kind === "loading" || autoSelect) return <SourcesShell loading onBack={goBack} />;
-  return <SourcesLoaded state={state} onBack={goBack} onSelect={(s) => goPlay(s.id)} onManage={() => navigate(routes.settings("addons"))} onRetry={reload} />;
+  if (state.kind === "loading" || autoSelect || smartPick) return <SourcesShell loading onBack={goBack} />;
+  return <SourcesLoaded state={state} smartNote={smartNote} onBack={goBack} onSelect={(s) => goPlay(s.id)} onManage={() => navigate(routes.settings("addons"))} onRetry={reload} />;
 }
 
 function SourcesShell({ onBack }: { loading?: boolean; onBack: () => void }) {
@@ -111,7 +126,7 @@ function SourcesShell({ onBack }: { loading?: boolean; onBack: () => void }) {
   );
 }
 
-function SourcesLoaded({ state, onBack, onSelect, onManage, onRetry }: { state: Extract<ReturnType<typeof useSources>["state"], { kind: "loaded" }>; onBack: () => void; onSelect: (s: Stream) => void; onManage: () => void; onRetry: () => void }) {
+function SourcesLoaded({ state, smartNote, onBack, onSelect, onManage, onRetry }: { state: Extract<ReturnType<typeof useSources>["state"], { kind: "loaded" }>; smartNote: string | null; onBack: () => void; onSelect: (s: Stream) => void; onManage: () => void; onRetry: () => void }) {
   const navigate = useNavigate();
   const [filter, setFilter] = useState<SourceFilter>("ALL");
   const [sort, setSort] = useState<SourceSort>("SIZE"); // biggest file first; "Recommended" still marks the best source this device can play
@@ -149,6 +164,7 @@ function SourcesLoaded({ state, onBack, onSelect, onManage, onRetry }: { state: 
             <MdExpandMore aria-hidden="true" />
           </Surface>
         </div>
+        {smartNote ? <p className="t-label-md c-text-2" role="status" style={{ display: "flex", gap: 6, alignItems: "center", margin: "0 0 10px" }}><MdBolt aria-hidden="true" /> {smartNote}</p> : null}
         <div className="sources__list" role="list" aria-live="polite">
           {sorted.length === 0 && state.searchingMore ? (
             <div className="sources__empty"><Spinner /><h2 className="t-title-lg">Searching for sources…</h2><p className="c-text-2 t-body-md">Checking your installed addons for this title.</p></div>
