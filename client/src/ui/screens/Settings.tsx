@@ -26,7 +26,7 @@ import { MangoButton, Pill, Switch } from "../components/Buttons";
 import { Spinner } from "../components/States";
 import { Surface } from "../components/Surface";
 
-type Tab = "account" | "addons" | "home-rows" | "blocked-genres" | "plus" | "stats" | "sounds" | "subtitles" | "audio";
+type Tab = "account" | "addons" | "home-rows" | "blocked-genres" | "plus" | "plus-settings" | "stats" | "sounds" | "subtitles" | "audio";
 type Category = { id: Tab; icon: ReactNode; title: string; subtitle: string; /** Greyed out and not clickable without ArcTV Plus. */ plusOnly?: boolean };
 const GROUPS: Array<{ label: string; items: Category[] }> = [
   {
@@ -34,6 +34,7 @@ const GROUPS: Array<{ label: string; items: Category[] }> = [
     items: [
       { id: "account", icon: <MdAccountCircle />, title: "Account", subtitle: "Manage your ArcTV account" },
       { id: "plus", icon: <MdWorkspacePremium />, title: "ArcTV Plus", subtitle: "Extra features for supporters" },
+      { id: "plus-settings", icon: <MdTune />, title: "Plus settings", subtitle: "Switches for your Plus features", plusOnly: true },
       { id: "stats", icon: <MdBarChart />, title: "Your stats", subtitle: "How much you watch, at a glance", plusOnly: true },
     ],
   },
@@ -108,6 +109,7 @@ export function SettingsScreen() {
           {selected === "home-rows" ? <HomeRowsPane /> : null}
           {selected === "blocked-genres" ? <BlockedGenresPane /> : null}
           {selected === "plus" ? <PlusPane /> : null}
+          {selected === "plus-settings" ? <PlusSettingsPane /> : null}
           {selected === "stats" ? <WatchStats /> : null}
           {selected === "sounds" ? <SoundsPane /> : null}
           {selected === "subtitles" ? <SubtitlesPane /> : null}
@@ -242,8 +244,6 @@ function PlusPane() {
         ))}
       </ul>
 
-      {plus.active ? <SmartPickingToggle /> : null}
-
       {plus.paywall && !plus.active ? (
         <>
           <h3 className="t-title-md plus__h">How to subscribe</h3>
@@ -324,13 +324,29 @@ function AccountPane() {
   );
 }
 
-/** Settings → ArcTV Plus: the switch for Smart source picking. Kept on this device (see state/smartPicking.ts). */
+/** Settings → Plus settings: the switches for Plus features. Without Plus it says what it is and where to get it. */
+function PlusSettingsPane() {
+  const plus = useHasPlus();
+  const navigate = useNavigate();
+  if (!plus) {
+    return (
+      <div className="stats__locked">
+        <MdLock aria-hidden="true" />
+        <p className="t-body-md" style={{ margin: 0 }}><strong>Plus settings are only for ArcTV Plus.</strong></p>
+        <p className="t-body-sm c-text-2" style={{ margin: 0 }}>Switch Smart source picking and your other Plus features on and off here.</p>
+        <MangoButton text="See ArcTV Plus" icon={<MdWorkspacePremium />} compact onClick={() => navigate(routes.settings("plus"))} />
+      </div>
+    );
+  }
+  return <SmartPickingToggle />;
+}
+
+/** The switch for Smart source picking. Kept on this device (see state/smartPicking.ts). */
 function SmartPickingToggle() {
   const enabled = useSmartPicking((s) => s.enabled);
   const setEnabled = useSmartPicking((s) => s.setEnabled);
   return (
     <div className="plus__setting">
-      <h3 className="t-title-md plus__h">Your Plus settings</h3>
       <Surface className="homerow__toggle" scale={1.02} borderColor="var(--text)" onClick={() => setEnabled(!enabled)} role="switch" ariaLabel="Smart source picking" ariaChecked={enabled}>
         <span style={{ flex: 1, minWidth: 0 }}>
           <span className="t-body-md" style={{ display: "block", color: enabled ? "var(--text)" : "var(--text-2)" }}>Smart source picking</span>

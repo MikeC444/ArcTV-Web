@@ -85,16 +85,16 @@ test.describe("ArcTV Plus extras", () => {
     await expect(page).toHaveURL(/\/detail\//);
   });
 
-  test("with Smart source picking off the list is shown as usual, and the Plus tab has the switch", async ({ page }) => {
+  test("with Smart source picking off the list is shown as usual, and the Plus settings tab has the switch", async ({ page }) => {
     const account = await newAccount("smartoff");
     await openSignedIn(page, account, "/sources/test.mangotv.fixture/MOVIE/fxm1/-1/-1");
     await expect(page.locator(".source").first()).toBeVisible();
     await expect(page).toHaveURL(/\/sources\//);
-    await page.goto("/settings/plus");
+    await page.goto("/settings/plus-settings");
     const toggle = page.getByRole("switch", { name: "Smart source picking" });
     await expect(toggle).toHaveAttribute("aria-checked", "false");
     await toggle.click();
     await expect(toggle).toHaveAttribute("aria-checked", "true");
-    await shot(page, "settings-plus-smart-picking");
+    await shot(page, "settings-plus-settings");
   });
 });
