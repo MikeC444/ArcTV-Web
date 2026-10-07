@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { MdClear, MdExpandMore, MdRefresh } from "react-icons/md";
+import { MdClear, MdClose, MdExpandMore, MdRefresh } from "react-icons/md";
 import { formatElapsed, formatWatched, pluralize, timeAgo } from "../../lib/format";
 import { fetchAdminSummary, fetchAdminUser, fetchAdminUsers, fetchTorrentIntroAcks, filtersActive, newestVersion, NO_FILTERS, type AdminDevice, type ExternalPlayerEvent, type FeatureIntroAcks, type AdminFilters, type AdminSummary, type AdminUserDetail, type AdminUserRow } from "../../state/admin";
 import { MangoButton } from "../components/Buttons";
@@ -248,7 +248,27 @@ function UserDetail({ detail, newest }: { detail: AdminUserDetail | null; newest
   );
 }
 
+const HANDOFFS_HIDDEN_KEY = "arctv.admin.handoffsHidden";
+const readHandoffsHidden = (): boolean => {
+  try {
+    return localStorage.getItem(HANDOFFS_HIDDEN_KEY) === "1";
+  } catch {
+    return false;
+  }
+};
+
 function ExternalPlayerSection({ data }: { data: NonNullable<AdminSummary["externalPlayer"]> }) {
+  // The X hides the hand-off list in this browser only (nothing is deleted); "Show" brings it back.
+  const [hidden, setHidden] = useState(readHandoffsHidden);
+  const setHiddenSaved = (value: boolean) => {
+    setHidden(value);
+    try {
+      if (value) localStorage.setItem(HANDOFFS_HIDDEN_KEY, "1");
+      else localStorage.removeItem(HANDOFFS_HIDDEN_KEY);
+    } catch {
+      // private mode: the choice just lasts until the page is reloaded
+    }
+  };
   const how = (e: ExternalPlayerEvent) => (e.engine === "vlc" ? "VLC engine" : e.outcome === "no_player" ? "No player installed" : "Another app");
   const why = (e: ExternalPlayerEvent) => (e.trigger === "error" ? "After an error" : e.trigger === "button" ? "From the button" : e.trigger ?? "");
   return (
@@ -260,8 +280,15 @@ function ExternalPlayerSection({ data }: { data: NonNullable<AdminSummary["exter
         <Stat label="People, 7 days" value={data.users7d} />
         <Stat label="After an error, 7 days" value={data.afterError7d} note={`${data.fromButton7d} from the button · ${data.noPlayer7d} with no player`} />
       </div>
-      <h3 className="t-label-md c-text-3 admin__subhead">Most recent hand-offs</h3>
-      {data.recent.length > 0 ? (
+      <div className="admin__subhead-row">
+        <h3 className="t-label-md c-text-3 admin__subhead">Most recent hand-offs</h3>
+        {hidden ? (
+          <button type="button" className="admin__x" onClick={() => setHiddenSaved(false)}>Show</button>
+        ) : (
+          <button type="button" className="admin__x" onClick={() => setHiddenSaved(true)} aria-label="Hide the most recent hand-offs" title="Hide the most recent hand-offs"><MdClose /></button>
+        )}
+      </div>
+      {hidden ? null : data.recent.length > 0 ? (
         <div className="admin__table" role="table" aria-label="Recent hand-offs">
           <div className="admin__row admin__row--ext admin__row--head t-label-md c-text-3" role="row">
             <span>Title</span><span>How</span><span>Person</span><span>Version</span><span>When</span>

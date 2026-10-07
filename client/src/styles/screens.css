@@ -552,6 +552,10 @@
 .admin__external h2 { margin: 0; }
 .admin__stats--inner { margin-top: 12px; }
 .admin__subhead { margin: 24px 0 10px; text-transform: uppercase; letter-spacing: 0.06em; }
+.admin__subhead-row { display: flex; align-items: center; gap: 12px; }
+.admin__x { display: inline-flex; align-items: center; margin-top: 14px; padding: 4px 8px; border: 0; border-radius: 8px; background: transparent; color: var(--text-3, #75757e); font: inherit; font-size: 13px; cursor: pointer; }
+.admin__x:hover, .admin__x:focus-visible { background: rgba(255, 255, 255, 0.08); color: var(--text-1, #f6f6f8); }
+.admin__x svg { font-size: 18px; }
 .admin__row--ext { grid-template-columns: minmax(200px, 3fr) minmax(190px, 1.4fr) minmax(180px, 2fr) 80px 90px; }
 .admin__row--intro { grid-template-columns: minmax(220px, 3fr) minmax(110px, 1fr) 90px 100px; }
 .admin__row--line { border-top: 1px solid var(--divider); align-items: start; }
