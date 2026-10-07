@@ -46,7 +46,6 @@ export function StatsBody({ stats, truncated }: { stats: Stats; truncated: boole
   const cells = heatCells(stats.dailyMs);
   const split = stats.movieMs + stats.showMs;
   const moviePct = split > 0 ? Math.round((stats.movieMs / split) * 100) : 0;
-  const topMs = stats.topTitles[0]?.watchedMs ?? 1;
   return (
     <>
       <div className="stats__hero">
@@ -103,33 +102,14 @@ export function StatsBody({ stats, truncated }: { stats: Stats; truncated: boole
         {WEEKDAYS.map((day, i) => (
           <li key={day} className="stats__bar" data-peak={i === stats.busiestWeekday ? "true" : undefined}>
             <span className="t-label-sm stats__barval">{formatShort(stats.byWeekdayMs[i]!)}</span>
-            <span className="stats__barfill" style={{ height: `${Math.max(4, Math.round((stats.byWeekdayMs[i]! / peak) * 100))}%` }} title={`${day}: ${formatDuration(stats.byWeekdayMs[i]!)}`} />
+            <span className="stats__barbox">
+              <span className="stats__barfill" style={{ height: `${Math.max(4, Math.round((stats.byWeekdayMs[i]! / peak) * 100))}%` }} title={`${day}: ${formatDuration(stats.byWeekdayMs[i]!)}`} />
+            </span>
             <span className="t-label-sm c-text-3">{day.slice(0, 3)}</span>
           </li>
         ))}
       </ul>
 
-      {stats.topTitles.length > 0 ? (
-        <>
-          <h4 className="t-label-lg stats__sub">Most watched</h4>
-          <ol className="stats__top">
-            {stats.topTitles.map((t, i) => (
-              <li key={`${t.title}-${i}`} className="stats__toprow">
-                <span className="stats__rank" data-rank={i + 1}>{i + 1}</span>
-                {t.posterUrl ? <img className="stats__poster" src={t.posterUrl} alt="" loading="lazy" /> : <span className="stats__poster stats__poster--none" aria-hidden="true" />}
-                <span className="stats__topmain">
-                  <span className="t-body-md stats__name">{t.title}</span>
-                  <span className="t-label-md c-text-2">
-                    {formatDuration(t.watchedMs)}
-                    {t.type === "TV_SHOW" && t.parts > 1 ? ` · ${pluralize(t.parts, "episode")}` : ""}
-                  </span>
-                  <span className="stats__topbar"><span style={{ width: `${Math.max(6, Math.round((t.watchedMs / topMs) * 100))}%` }} /></span>
-                </span>
-              </li>
-            ))}
-          </ol>
-        </>
-      ) : null}
       <p className="t-label-sm c-text-3" style={{ margin: "14px 0 0" }}>
         Counted from your watch history{truncated ? " (the most recent part of it)" : ""}. A title you watch again counts once, on the day you last watched it.
       </p>

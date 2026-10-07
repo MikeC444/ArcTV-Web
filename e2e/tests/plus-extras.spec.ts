@@ -31,12 +31,12 @@ test.describe("ArcTV Plus extras", () => {
     }
     await openSignedIn(page, account, "/settings/account");
     const stats = page.getByRole("region", { name: "Your stats" });
-    await expect(stats.getByText("Total watched")).toBeVisible();
+    await expect(stats.getByText("You've watched")).toBeVisible();
+    await expect(stats.locator(".stats__big")).toContainText("3 hours 30 minutes");
     await expect(stats.getByText("Movies finished")).toBeVisible();
     await expect(stats.locator(".stats__tile", { hasText: "Movies finished" })).toContainText("1");
     await expect(stats.locator(".stats__tile", { hasText: "Episodes watched" })).toContainText("2");
-    await expect(stats.locator(".stats__toprow").first()).toContainText("Fixture Movie One");
-    await expect(stats.locator(".stats__toprow", { hasText: "Fixture Show" })).toContainText("2 episodes");
+    await expect(stats.locator(".stats__bar[data-peak=\"true\"]")).toHaveCount(1);
     await stats.scrollIntoViewIfNeeded();
     await shot(page, "settings-account-stats");
   });
