@@ -18,7 +18,6 @@ import { activeProfileId } from "./profile";
 export function interactionInputs(list: SavedListItem[], feedback: Record<string, { value: "like" | "dislike"; title: string }>): InteractionInput[] {
   const inputs = new Map<string, InteractionInput>();
   for (const item of list) {
-    if (item.type !== "MOVIE") continue;
     inputs.set(item.id, { id: item.id, title: item.title, completed: item.watched === true, inWatchlist: true });
   }
   for (const [id, entry] of Object.entries(feedback)) {
@@ -89,13 +88,13 @@ export const clearRecommendationCache = (): void => {
   previousShownMemo.clear();
 };
 
-const toCandidate = (c: Content): Candidate => ({ id: c.id, title: c.title, providerId: c.providerId, genres: c.genres.map((g) => g.name), rating: c.rating });
+const toCandidate = (c: Content): Candidate => ({ id: c.id, title: c.title, providerId: c.providerId, genres: c.genres.map((g) => g.name), rating: c.rating, type: c.type });
 
-/** Looks a movie's features up through the addon that listed it (one bounded, cached request). */
+/** Looks a movie's or TV show's features up through the addon that listed it (one bounded, cached request). */
 async function fetchFeatures(ref: MovieRef) {
   const providers = activeProviders();
   const provider = (ref.providerId ? providers.find((p) => p.id === ref.providerId) : undefined) ?? providers.find((p) => typeof p.getFeatures === "function");
-  return provider?.getFeatures ? provider.getFeatures("MOVIE", ref.id) : null;
+  return provider?.getFeatures ? provider.getFeatures(ref.type ?? "MOVIE", ref.id) : null;
 }
 
 export interface PickedForYou {
@@ -118,7 +117,7 @@ export function usePickedForYou(pool: Content[] | undefined): PickedForYou {
   const [result, setResult] = useState<EngineResult | null>(null);
   const generation = useRef(0);
 
-  const movies = useMemo(() => (pool ?? []).filter((c) => c.type === "MOVIE"), [pool]);
+  const movies = useMemo(() => pool ?? [], [pool]); // movies and TV shows alike
   const interactions = useMemo(() => collectInteractions(interactionInputs(list, feedback)), [list, feedback]);
   const signature = useMemo(() => signatureOf(interactions), [interactions]);
   const poolKey = useMemo(() => movies.map((m) => m.id).sort().join(","), [movies]);
@@ -136,7 +135,9 @@ export function usePickedForYou(pool: Content[] | undefined): PickedForYou {
       return;
     }
     const gen = ++generation.current;
-    const refs = new Map<string, MovieRef>(list.map((i) => [i.id, { id: i.id, providerId: i.providerId }]));
+    const refs = new Map<string, MovieRef>();
+    for (const [id, entry] of Object.entries(feedback)) refs.set(id, { id, providerId: entry.providerId, type: entry.contentType });
+    for (const i of list) refs.set(i.id, { id: i.id, providerId: i.providerId, type: i.type });
     void recommend({
       interactions,
       excludeIds,
@@ -153,7 +154,7 @@ export function usePickedForYou(pool: Content[] | undefined): PickedForYou {
         setResult(res);
       })
       .catch(() => gen === generation.current && setResult(null));
-  }, [hasPlus, userId, movies, signature, poolKey, interactions, excludeIds, list]);
+  }, [hasPlus, userId, movies, signature, poolKey, interactions, excludeIds, list, feedback]);
 
   return useMemo<PickedForYou>(() => {
     if (!result || result.items.length === 0) return { section: null, mode: null };

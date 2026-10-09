@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import type { ContentType } from "../domain/types";
 import type { Feedback } from "../domain/recommend/signals";
 import { api, ApiClientError } from "../lib/api";
 import { isoMs, monotonicIso } from "../lib/iso";
@@ -14,6 +15,8 @@ export interface FeedbackEntry {
   /** When this feedback was given (the last-write-wins timestamp). */
   at: string;
   providerId?: string;
+  /** Movie or TV show. Missing (older entries) means a movie. */
+  contentType?: ContentType;
   /** True once the server has acknowledged exactly this entry. Entries without it (older, or given offline) are pushed on the next sync. */
   synced?: boolean;
 }
@@ -32,10 +35,12 @@ interface FeedbackDto {
 
 type Pending = { kind: "set"; dto: FeedbackDto } | { kind: "clear"; dto: FeedbackDto };
 
+/** A movie or TV show being rated. */
 export interface MovieRef {
   id: string;
   title: string;
   providerId?: string | null;
+  type?: ContentType;
 }
 
 interface FeedbackState {
@@ -75,7 +80,7 @@ export const useFeedback = create<FeedbackState>((set, get) => {
     profileId: get().profileId,
     providerId: entry.providerId ?? DEFAULT_PROVIDER_ID,
     contentId: id,
-    contentType: "MOVIE",
+    contentType: entry.contentType ?? "MOVIE",
     title: entry.title,
     feedback: entry.value,
     updatedAt: entry.at,
@@ -86,7 +91,7 @@ export const useFeedback = create<FeedbackState>((set, get) => {
     if (dto.profileId !== get().profileId) return;
     const entries = { ...get().entries };
     if (dto.deletedAt) delete entries[dto.contentId];
-    else entries[dto.contentId] = { value: dto.feedback, title: dto.title, at: dto.updatedAt, providerId: dto.providerId, synced: true };
+    else entries[dto.contentId] = { value: dto.feedback, title: dto.title, at: dto.updatedAt, providerId: dto.providerId, contentType: dto.contentType, synced: true };
     commit(entries);
   }
 
@@ -136,10 +141,10 @@ export const useFeedback = create<FeedbackState>((set, get) => {
         const existing = next[movie.id];
         delete next[movie.id];
         commit(next);
-        if (existing) void pushClear({ profileId, providerId: existing.providerId ?? providerId, contentId: movie.id, contentType: "MOVIE", title: existing.title, feedback: existing.value, updatedAt: at });
+        if (existing) void pushClear({ profileId, providerId: existing.providerId ?? providerId, contentId: movie.id, contentType: existing.contentType ?? "MOVIE", title: existing.title, feedback: existing.value, updatedAt: at });
         return;
       }
-      const entry: FeedbackEntry = { value, title: movie.title, at, providerId, synced: false };
+      const entry: FeedbackEntry = { value, title: movie.title, at, providerId, contentType: movie.type ?? entries[movie.id]?.contentType ?? "MOVIE", synced: false };
       next[movie.id] = entry;
       commit(next);
       void pushSet(toDto(movie.id, entry));
@@ -154,7 +159,7 @@ export const useFeedback = create<FeedbackState>((set, get) => {
       try {
         const { items } = await api<{ items: FeedbackDto[] }>(`/user/feedback?${new URLSearchParams({ profileId })}`);
         const pending = outbox?.all() ?? {};
-        const remote = new Map(items.filter((i) => i.contentType === "MOVIE" && i.profileId === profileId).map((i) => [i.contentId, i]));
+        const remote = new Map(items.filter((i) => i.profileId === profileId).map((i) => [i.contentId, i]));
         const next: Record<string, FeedbackEntry> = {};
         const toPush: Array<[string, FeedbackEntry]> = [];
         for (const [id, local] of Object.entries(get().entries)) {
@@ -174,7 +179,7 @@ export const useFeedback = create<FeedbackState>((set, get) => {
           if (id in next) continue;
           const key = naturalKey(profileId, server.providerId, id);
           if (key in pending) continue;
-          next[id] = { value: server.feedback, title: server.title, at: server.updatedAt, providerId: server.providerId, synced: true };
+          next[id] = { value: server.feedback, title: server.title, at: server.updatedAt, providerId: server.providerId, contentType: server.contentType, synced: true };
         }
         commit(next);
         for (const [id, entry] of toPush) void pushSet(toDto(id, entry));

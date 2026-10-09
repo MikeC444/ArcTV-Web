@@ -177,8 +177,8 @@ export function useHome(): { state: HomeState; reload(): void; ready: boolean } 
       if (titles.length > 0) heroLock = { key: lockKey, titles };
     }
     const hero = (heroLock?.titles ?? []).map((c) => (watchedIds.has(c.id) ? { ...c, watched: true } : c));
-    // every movie the addons listed on Home (hidden rows included) is a candidate for "Picked for you"
-    const recommendationPool = distinctBy(rawSections.flatMap((s) => s.items), (c) => c.id).filter((c) => c.type === "MOVIE");
+    // every movie and TV show the addons listed on Home (hidden rows included) is a candidate for "Picked for you"
+    const recommendationPool = distinctBy(rawSections.flatMap((s) => s.items), (c) => c.id);
     if (hero.length > 0 || sections.length > 0) return { kind: "success", hero, sections, pool: recommendationPool };
     if (failed) return { kind: "error", message: "Couldn't reach your installed addons. Check your connection and try again." };
     return { kind: "empty" };

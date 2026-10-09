@@ -293,3 +293,23 @@ describe("cache signature (invalidation)", () => {
   });
   beforeEach(() => undefined);
 });
+
+describe("movies and TV shows in one row", () => {
+  const SHOWS: Record<string, Features> = { show1: f(["crime", "thriller"], [], ["a", "z"]), show2: f(["romance", "comedy"], [], ["y"]) };
+  const mixed: Candidate[] = [...pool, { id: "show1", title: "show1", genres: SHOWS.show1!.genres, rating: 8, type: "TV_SHOW" }, { id: "show2", title: "show2", genres: SHOWS.show2!.genres, rating: 8, type: "TV_SHOW" }];
+  const asked: Array<{ id: string; type?: string }> = [];
+  const mixedLoader: FeatureLoader = async (refs) => {
+    refs.forEach((r) => asked.push({ id: r.id, type: r.type }));
+    return new Map(refs.map((r) => [r.id, META[r.id] ?? SHOWS[r.id] ?? null]));
+  };
+  it("a show can be picked from a movie taste, and its details are looked up as a show", async () => {
+    const result = await recommend({ interactions: collectInteractions([input("heist1", { feedback: "like" }), input("heist2", { completed: true }), input("space1", { inWatchlist: true })]), excludeIds: new Set(), pool: mixed, interactionRefs: new Map(), loadFeatures: mixedLoader });
+    expect(result.mode).toBe("personal");
+    expect(result.items.map((i) => i.id)).toContain("show1");
+    expect(asked.find((a) => a.id === "show1")?.type).toBe("TV_SHOW");
+  });
+  it("a liked show shapes the taste like a liked movie", async () => {
+    const result = await recommend({ interactions: collectInteractions([input("show1", { feedback: "like" }), input("heist2", { feedback: "like" }), input("heist1", { completed: true })]), excludeIds: new Set(["show1", "heist2", "heist1"]), pool: mixed, interactionRefs: new Map(), loadFeatures: mixedLoader });
+    expect(result.items[0]?.id).toBe("heist3");
+  });
+});

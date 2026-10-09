@@ -10,6 +10,7 @@ Status: ⬜ not done · ✅ done (released or merged) · ➖ not needed there (s
 
 | Date | Change | Firestick | Phone |
 |---|---|---|---|
+| 2026-10-09 | Picked for you now takes TV shows too: shows you like, save or finish shape the row, shows can be picked, and Like / Not for me appear on shows (menu and details page); ratings sync as TV shows (`recommendations.ts`, `feedback.ts`) | ⬜ | ⬜ |
 | 2026-10-09 | Poster menu top: the title's wide backdrop fills the top with the title logo over it (plain title text if there is no logo; small poster and title if there is no backdrop) (`CardActionsMenu.tsx`) | ⬜ | ⬜ |
 | 2026-10-09 | Right-click / long-press poster menu redesigned: small poster with the title beside it, big Play (or Resume), a two-by-two grid of My List / Watched / Like / Not for me (ticks show what is set), then View details and Choose source rows, close button, blurred backdrop (`CardActionsMenu.tsx`) | ⬜ | ⬜ |
 

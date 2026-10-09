@@ -48,11 +48,11 @@ describe("feedback store (per profile)", () => {
 
 describe("stored data → interactions", () => {
   const saved = (id: string, watched: boolean) => ({ id, type: "MOVIE" as const, title: id, posterUrl: null, backdropUrl: null, year: null, rating: null, providerId: "p", watched, updatedAt: "2026-01-01T00:00:00.000Z" });
-  it("keeps watched and watchlist distinct, ignores series, and lets feedback win", () => {
+  it("keeps watched and watchlist distinct, counts TV shows like movies, and lets feedback win", () => {
     const list = [saved("w", true), saved("l", false), { ...saved("s", true), type: "TV_SHOW" as const }, saved("d", true)];
     const out = collectInteractions(interactionInputs(list, { d: { value: "dislike", title: "d" }, x: { value: "like", title: "x" } }));
     const kinds = Object.fromEntries(out.map((i) => [i.id, i.kind]));
-    expect(kinds).toEqual({ w: "completed", l: "watchlist", d: "dislike", x: "like" });
+    expect(kinds).toEqual({ w: "completed", l: "watchlist", s: "completed", d: "dislike", x: "like" });
   });
   it("repeated watched marks do not change the signature (no inflation)", async () => {
     useFeedback.getState().hydrate("u1");
@@ -136,5 +136,15 @@ describe("per-profile result cache", () => {
     storeResult("u1", "a", "sig1", "pool1", result);
     resetAllStores();
     expect(cachedResult("u1", "a", "sig1", "pool1")).toBeNull();
+  });
+});
+
+describe("TV shows take part in feedback", () => {
+  it("a show's rating is stored and synced as a TV_SHOW", () => {
+    useFeedback.getState().hydrate("u-tv");
+    useFeedback.getState().set({ id: "tt-show", title: "A Show", type: "TV_SHOW", providerId: "p" }, "like");
+    expect(useFeedback.getState().entries["tt-show"]?.contentType).toBe("TV_SHOW");
+    useFeedback.getState().set({ id: "tt-show", title: "A Show" }, "dislike"); // a later change keeps the type it already had
+    expect(useFeedback.getState().entries["tt-show"]?.contentType).toBe("TV_SHOW");
   });
 });

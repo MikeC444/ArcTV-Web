@@ -125,7 +125,7 @@ function DetailContent({ content, similar, providerId, trailer, releaseDate }: {
               <div className="detail__extra">
                 <IconButton compact={compact} icon={isWatched ? <MdCheckCircle /> : <MdOutlineCheckCircle />} label={isWatched ? "Remove from Watched" : "Mark as watched"} onClick={() => toggleWatched(withProvider)} />
                 <IconButton compact={compact} icon={inList ? <MdCheck /> : <MdAdd />} label={inList ? "Remove from Watchlist" : "Add to Watchlist"} onClick={() => toggle(withProvider)} />
-                {hasPlus && content.type === "MOVIE" ? (
+                {hasPlus ? (
                   <>
                     <IconButton compact={compact} icon={feedback === "like" ? <MdThumbUp /> : <MdOutlineThumbUp />} label={feedback === "like" ? "Remove like" : "Like"} ariaPressed={feedback === "like"} onClick={() => toggleFeedback(content, "like")} />
                     <IconButton compact={compact} icon={feedback === "dislike" ? <MdThumbDown /> : <MdOutlineThumbDown />} label={feedback === "dislike" ? "Remove “Not for me”" : "Not for me"} ariaPressed={feedback === "dislike"} onClick={() => toggleFeedback(content, "dislike")} />

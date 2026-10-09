@@ -29,7 +29,7 @@ export interface PlusPerk {
 }
 
 export const PLUS_PERKS: PlusPerk[] = [
-  { title: "Picked for you", detail: "A Home row chosen from the movies you like, finish and save, with the reason under each poster, plus Like and Not for me on movies.", status: "included" },
+  { title: "Picked for you", detail: "A Home row chosen from the movies and shows you like, finish and save, with the reason under each poster, plus Like and Not for me on movies and shows.", status: "included" },
   { title: "Profiles", detail: "Up to 5 profiles on one account, each with its own My List, Continue Watching, settings and recommendations. Add kids profiles, and lock any profile with a PIN.", status: "included", needs: "profiles" },
   { title: "Parental controls", detail: "Locks on individual genres and titles, built on kids profiles and Blocked Genres.", status: "soon" },
   { title: "Smart source picking", detail: "Skips Select a Source and starts the best source your device can play, once every addon has answered. Turn it on below.", status: "included" },

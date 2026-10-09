@@ -145,7 +145,7 @@ export function CardActionsMenu() {
             {state.watched ? <MdCheck /> : <MdOutlineCheckCircle />}
             {state.watched ? "Watched" : "Mark as watched"}
           </Surface>
-          {hasPlus && content.type === "MOVIE" ? (
+          {hasPlus ? (
             <>
               <Surface
                 className="cardmenu__secondary"

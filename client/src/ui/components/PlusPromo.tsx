@@ -12,7 +12,7 @@ import { Surface } from "./Surface";
 const SHOW_AFTER_MS = 4000;
 
 const BENEFITS = [
-  { icon: <MdFavorite />, title: "Picked for you", detail: "A Home row chosen from the movies you like, with the reason under each poster." },
+  { icon: <MdFavorite />, title: "Picked for you", detail: "A Home row chosen from the movies and shows you like, with the reason under each poster." },
   { icon: <MdGroups />, title: "Up to 5 profiles", detail: "Their own My List, Continue Watching and recommendations. Add kids profiles and PIN locks." },
   { icon: <MdWorkspacePremium />, title: "And more", detail: "Smart source picking and your watch stats, with parental controls on the way." },
 ];

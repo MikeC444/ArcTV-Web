@@ -1,4 +1,5 @@
 import { CANDIDATE_DETAIL_FETCH_LIMIT, CATEGORY_WEIGHTS, INTERACTION_DETAIL_FETCH_LIMIT, MAX_RESULTS, MIN_INTERACTIONS_FOR_PERSONALISATION, SHORTLIST_BY_SCORE, SHORTLIST_GENRE_BUDGET, SHORTLIST_GENRE_MIN, SHORTLIST_SOURCE_MOVIES } from "./config";
+import type { ContentType } from "../types";
 import { diversify } from "./diversity";
 import { rankSources, reasonFor, type Source } from "./explain";
 import { compose } from "./rotation";
@@ -15,11 +16,15 @@ export interface Candidate {
   providerId?: string | null;
   genres: string[];
   rating?: number | null;
+  /** Movie or TV show, so its details are looked up the right way. Missing means a movie. */
+  type?: ContentType;
 }
 
+/** A title (movie or TV show) whose features are looked up. */
 export interface MovieRef {
   id: string;
   providerId?: string | null;
+  type?: ContentType;
 }
 
 /** Fetches (or reads from cache) the features of up to `limit` movies not yet known. Unknown or failed lookups come back as null. Must never throw. */
@@ -142,7 +147,7 @@ export async function recommend(input: EngineInput): Promise<EngineResult> {
 
   // step 3: full features for the shortlist
   const details = await input.loadFeatures(
-    shortlist.map((c) => ({ id: c.id, providerId: c.providerId })),
+    shortlist.map((c) => ({ id: c.id, providerId: c.providerId, type: c.type })),
     CANDIDATE_DETAIL_FETCH_LIMIT,
   );
 
