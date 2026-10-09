@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { MdArrowForward, MdClose, MdFavorite, MdGroups, MdLiveTv, MdStars, MdVisibilityOff, MdWorkspacePremium } from "react-icons/md";
+import { MdArrowForward, MdClose, MdFavorite, MdBarChart, MdBolt, MdGroups, MdWorkspacePremium } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import { routes } from "../../lib/routes";
 import { useAuth } from "../../state/auth";
 import { usePlus } from "../../state/plus";
 import { activeProfileOf, useProfiles } from "../../state/profiles";
 import { promoDue, usePlusPromo } from "../../state/plusPromo";
-import { usePlusWhatsNew, whatsNewDue } from "../../state/plusWhatsNew";
+import { usePlusWelcome, welcomeDue } from "../../state/plusWelcome";
 import { MangoLogo } from "./Logo";
 import { Surface } from "./Surface";
 
@@ -134,27 +134,28 @@ export function PromoDialog({ onClose, onNever, onGo, content = PLUS_INVITATION 
   );
 }
 
-const WHATS_NEW: PromoContent = {
-  title: "New in ArcTV Plus.",
-  subtitle: "Your picks just got smarter, and you can see why.",
+const PLUS_FEATURES: PromoContent = {
+  title: "Everything in ArcTV Plus.",
+  subtitle: "Here is what your Plus membership gives you.",
   benefits: [
-    { icon: <MdStars />, title: "Your recommendations", detail: "See what you have liked and what shapes your picks. Remove a title or start fresh any time." },
-    { icon: <MdLiveTv />, title: "TV shows in Picked for you", detail: "Shows you like, save or finish now shape your row, and shows can be picked too." },
-    { icon: <MdVisibilityOff />, title: "Remove a pick for 5 days", detail: "It stays away on every device, then it is up to the algorithm whether it comes back." },
+    { icon: <MdFavorite />, title: "Picked for you", detail: "A Home row chosen from the movies and shows you like, with the reason under each poster. Tune it in Settings → Recommendations." },
+    { icon: <MdGroups />, title: "Up to 5 profiles", detail: "Their own My List, Continue Watching and recommendations. Add kids profiles and PIN locks." },
+    { icon: <MdBolt />, title: "Smart source picking", detail: "Skips the source list and starts the best source your device can play." },
+    { icon: <MdBarChart />, title: "Your stats", detail: "How much you watch, your streak and a map of your last 13 weeks." },
   ],
-  goLabel: "See what's new",
-  hint: "Find it in Settings → Recommendations",
+  goLabel: "See my Plus settings",
+  hint: "Parental controls are on the way",
 };
 
 /**
- * A one-time "What's new" note for ArcTV Plus members, a few seconds after landing on Home. Close or "See what's new" both mean it has been
- * seen, and it does not come back (a future announcement gets a new id). Not for kids profiles.
+ * A one-time tour of what ArcTV Plus includes, for members, a few seconds after landing on Home. Close or "See my Plus settings" both
+ * mean it has been seen, and it does not come back (a revised tour gets a new id). Not for kids profiles.
  */
-export function PlusWhatsNew({ enabled }: { enabled: boolean }) {
+export function PlusWelcome({ enabled }: { enabled: boolean }) {
   const signedIn = useAuth((s) => s.status === "signedIn");
   const hasPlus = usePlus((s) => s.active);
   const adult = useProfiles((s) => !(s.plus && activeProfileOf(s)?.kind === "kids"));
-  const ready = usePlusWhatsNew((s) => s.userId !== null && whatsNewDue(s));
+  const ready = usePlusWelcome((s) => s.userId !== null && welcomeDue(s));
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const eligible = enabled && signedIn && hasPlus && adult && ready;
@@ -162,7 +163,7 @@ export function PlusWhatsNew({ enabled }: { enabled: boolean }) {
   useEffect(() => {
     if (!eligible) return undefined;
     const timer = window.setTimeout(() => {
-      usePlusWhatsNew.getState().markShown();
+      usePlusWelcome.getState().markShown();
       setOpen(true);
     }, SHOW_AFTER_MS);
     return () => window.clearTimeout(timer);
@@ -172,11 +173,11 @@ export function PlusWhatsNew({ enabled }: { enabled: boolean }) {
 
   const close = () => {
     setOpen(false);
-    usePlusWhatsNew.getState().markSeen();
+    usePlusWelcome.getState().markSeen();
   };
   const go = () => {
     close();
-    navigate(routes.settings("recommendations"));
+    navigate(routes.settings("plus-settings"));
   };
-  return <PromoDialog onClose={close} onGo={go} content={WHATS_NEW} />;
+  return <PromoDialog onClose={close} onGo={go} content={PLUS_FEATURES} />;
 }

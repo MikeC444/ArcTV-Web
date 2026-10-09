@@ -4,7 +4,7 @@ import { useFeedback } from "./feedback";
 import { usePickedDismissed } from "./pickedDismissed";
 import { usePlus } from "./plus";
 import { usePlusPromo } from "./plusPromo";
-import { usePlusWhatsNew } from "./plusWhatsNew";
+import { usePlusWelcome } from "./plusWelcome";
 import { useContinueWatching } from "./continueWatching";
 import { useMyList } from "./myList";
 import { clearRecommendationCache } from "./recommendations";
@@ -33,7 +33,7 @@ export function hydrateAll(userId: string): void {
   usePickedDismissed.getState().hydrate(userId);
   usePlus.getState().hydrate(userId);
   usePlusPromo.getState().hydrate(userId);
-  usePlusWhatsNew.getState().hydrate(userId);
+  usePlusWelcome.getState().hydrate(userId);
 }
 
 export async function retryPendingAll(): Promise<void> {
@@ -109,7 +109,7 @@ export function resetAllStores(): void {
   usePickedDismissed.getState().reset();
   usePlus.getState().reset();
   usePlusPromo.getState().reset();
-  usePlusWhatsNew.getState().reset();
+  usePlusWelcome.getState().reset();
   useProfiles.getState().reset();
   clearRecommendationCache();
 }

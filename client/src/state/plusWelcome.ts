@@ -1,10 +1,10 @@
 import { create } from "zustand";
 import { readJson, userKey, writeJson } from "./persist";
 
-/** Which "What's new in Plus" announcement this is. A new announcement later gets a new id and so shows once more. */
-export const WHATS_NEW_ID = "2026-10-recommendations";
+/** Which version of the Plus welcome tour this is. A revised tour later gets a new id and so shows once more. */
+export const WELCOME_ID = "2026-10-features";
 
-interface WhatsNewState {
+interface WelcomeState {
   userId: string | null;
   /** The last announcement this account has seen (closed, or followed). */
   seen: string | null;
@@ -13,20 +13,20 @@ interface WhatsNewState {
   hydrate(userId: string): void;
   reset(): void;
   markShown(): void;
-  /** Close or "See what's new": it will not come back. */
+  /** Close or "See my Plus settings": it will not come back. */
   markSeen(): void;
 }
 
 /** Whether the announcement may appear now. Pure, so the rule is testable. */
-export const whatsNewDue = (s: Pick<WhatsNewState, "seen" | "shownThisSession">): boolean => s.seen !== WHATS_NEW_ID && !s.shownThisSession;
+export const welcomeDue = (s: Pick<WelcomeState, "seen" | "shownThisSession">): boolean => s.seen !== WELCOME_ID && !s.shownThisSession;
 
-const keyFor = (userId: string) => userKey(userId, "plus-whatsnew");
+const keyFor = (userId: string) => userKey(userId, "plus-welcome");
 
 /**
- * Remembers, per account in this browser, whether the "What's new in ArcTV Plus" popup has been seen. It shows once. Whether it is
+ * Remembers, per account in this browser, whether the "Everything in ArcTV Plus" welcome popup has been seen. It shows once. Whether it is
  * *eligible* (signed in, has Plus, adult profile, on Home) is decided by the caller.
  */
-export const usePlusWhatsNew = create<WhatsNewState>((set, get) => ({
+export const usePlusWelcome = create<WelcomeState>((set, get) => ({
   userId: null,
   seen: null,
   shownThisSession: false,
@@ -41,7 +41,7 @@ export const usePlusWhatsNew = create<WhatsNewState>((set, get) => ({
   },
   markSeen() {
     const { userId } = get();
-    set({ seen: WHATS_NEW_ID });
-    if (userId) writeJson(keyFor(userId), { seen: WHATS_NEW_ID });
+    set({ seen: WELCOME_ID });
+    if (userId) writeJson(keyFor(userId), { seen: WELCOME_ID });
   },
 }));

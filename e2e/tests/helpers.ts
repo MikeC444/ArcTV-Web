@@ -92,15 +92,15 @@ export async function signIn(context: BrowserContext, email: string, password = 
   expect(response.status(), await response.text()).toBe(200);
 }
 
-/** The id of the current "What's new in ArcTV Plus" popup (client/src/state/plusWhatsNew.ts). */
-export const WHATS_NEW_ID = "2026-10-recommendations";
+/** The id of the current "Everything in ArcTV Plus" welcome popup (client/src/state/plusWelcome.ts). */
+export const WELCOME_ID = "2026-10-features";
 
-/** `whatsNew: true` leaves the one-time "What's new in ArcTV Plus" popup to appear; by default it is marked seen so it never gets in a test's way. */
-export async function openSignedIn(page: Page, account: TestAccount, path = "/", options: { whatsNew?: boolean } = {}) {
+/** `welcome: true` leaves the one-time "Everything in ArcTV Plus" welcome popup to appear; by default it is marked seen so it never gets in a test's way. */
+export async function openSignedIn(page: Page, account: TestAccount, path = "/", options: { welcome?: boolean } = {}) {
   await useClientIp(page.context());
   await signIn(page.context(), account.email);
-  if (!options.whatsNew) {
-    await page.addInitScript(([key, id]) => localStorage.setItem(key!, JSON.stringify({ seen: id })), [`mtv:v1:${account.tv.userId}:plus-whatsnew`, WHATS_NEW_ID]);
+  if (!options.welcome) {
+    await page.addInitScript(([key, id]) => localStorage.setItem(key!, JSON.stringify({ seen: id })), [`mtv:v1:${account.tv.userId}:plus-welcome`, WELCOME_ID]);
   }
   await page.goto(path);
 }

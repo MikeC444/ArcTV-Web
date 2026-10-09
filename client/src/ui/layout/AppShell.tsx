@@ -4,7 +4,7 @@ import { getModality } from "../../lib/modality";
 import { isDetailPath } from "../../lib/routes";
 import { useScrollMemory } from "../../lib/scrollMemory";
 import { CardActionsMenu } from "../components/CardActionsMenu";
-import { PlusPromo, PlusWhatsNew } from "../components/PlusPromo";
+import { PlusPromo, PlusWelcome } from "../components/PlusPromo";
 import { OfflineBanner } from "../components/OfflineBanner";
 import { TopNav } from "../components/TopNav";
 
@@ -39,7 +39,7 @@ export function AppShell() {
       <OfflineBanner />
       <CardActionsMenu />
       <PlusPromo enabled={pathname === "/"} />
-      <PlusWhatsNew enabled={pathname === "/"} />
+      <PlusWelcome enabled={pathname === "/"} />
     </>
   );
 }
