@@ -62,19 +62,6 @@ export interface ExternalPlayerSummary {
   opensTotal: number;
   recent: ExternalPlayerEvent[];
 }
-/** Who has clicked the "Addons now support torrents" pop-up away (GET /api/admin/feature-intros/torrent_intro); absent from a backend that predates it. */
-export interface FeatureIntroAck {
-  id: string;
-  email: string;
-  displayName: string | null;
-  acknowledgedAt: string;
-  appVersion: string | null;
-  platform: string | null;
-}
-export interface FeatureIntroAcks {
-  total: number;
-  users: FeatureIntroAck[];
-}
 export interface AdminUserRow {
   id: string;
   email: string;
@@ -105,8 +92,6 @@ export interface AdminUserDetail {
 }
 
 export const fetchAdminSummary = () => api<AdminSummary>("/admin/summary");
-/** The newest [limit] people who clicked the torrent pop-up away, plus the total. */
-export const fetchTorrentIntroAcks = (limit = 50) => api<FeatureIntroAcks>(`/admin/feature-intros/torrent_intro?limit=${limit}&offset=0`);
 /** The user list filters; an empty value means "no filter". `device` is "<platform>|<app version>". */
 export interface AdminFilters {
   q: string;

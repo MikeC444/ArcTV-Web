@@ -7,7 +7,7 @@ import { backendMessage } from "../backend.js";
  * The developer panel's data, read-only: four GET paths and nothing else. The backend decides who may see it (an account flagged
  * is_admin); anyone else gets its 404. This proxy only adds the sealed-cookie bearer, like /api/user.
  */
-const ALLOWED = [/^\/summary$/, /^\/users$/, /^\/users\/[0-9a-fA-F-]{36}$/, /^\/feature-intros\/torrent_intro$/];
+const ALLOWED = [/^\/summary$/, /^\/users$/, /^\/users\/[0-9a-fA-F-]{36}$/];
 
 export function createAdminRouter(ctx: AppContext): Router {
   const router = Router();

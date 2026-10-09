@@ -32,20 +32,9 @@ describe("/api/admin (developer panel proxy)", () => {
     expect((await client.get(`/api/admin/users/${id}`)).body.user.id).toBe(id);
   });
 
-  it("forwards the list of who clicked the torrent pop-up away", async () => {
-    const { backend, client } = await signedIn();
-    const res = await client.get("/api/admin/feature-intros/torrent_intro?limit=50&offset=0");
-    expect(res.status).toBe(200);
-    expect(res.body).toMatchObject({ feature: "torrent_intro", total: 2 });
-    expect(res.body.users[0].email).toBe("sam@example.com");
-    expect(backend.calls.find((c) => c.path === "/admin/feature-intros/torrent_intro")!.query).toBe("limit=50&offset=0");
-    expect((await client.get("/api/admin/feature-intros/other")).status).toBe(404); // only the one feature is proxied
-    expect((await client.post("/api/admin/feature-intros/torrent_intro").send({})).status).toBe(404);
-  });
-
   it("exposes nothing else, and nothing that changes data", async () => {
     const { client } = await signedIn();
-    for (const path of ["/api/admin", "/api/admin/other", "/api/admin/users/not-an-id", "/api/admin/users/../summary"]) {
+    for (const path of ["/api/admin", "/api/admin/other", "/api/admin/feature-intros/torrent_intro", "/api/admin/users/not-an-id", "/api/admin/users/../summary"]) {
       expect([404, 400]).toContain((await client.get(path)).status);
     }
     expect((await client.post("/api/admin/users").send({})).status).toBe(404);

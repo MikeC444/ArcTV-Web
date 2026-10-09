@@ -156,7 +156,6 @@ export function createMockBackend(options: { accessTtlMs?: number } = {}) {
     if (request.path === "/admin/summary" && request.method === "GET") return json(200, { users: 3, newLast7Days: 1, activeLast7Days: 2, plus: { monthly: 1, yearly: 0, lifetime: 1 }, versions: [{ version: "0.1.7", platform: "fire_tv", devices: 2 }], live: { online: { users: 3, byPlatform: { fire_tv: 2, web: 1 } }, watching: { users: 1, byPlatform: { fire_tv: 1 } }, onlineWindowSeconds: 300, watchingWindowSeconds: 45 } });
     if (request.path === "/admin/users" && request.method === "GET") return json(200, { total: 1, users: [{ id: "u1", email: "sam@example.com", query: request.query ?? "" }] });
     if (/^\/admin\/users\/[0-9a-f-]{36}$/.test(request.path) && request.method === "GET") return json(200, { user: { id: request.path.split("/").pop(), email: "sam@example.com" } });
-    if (request.path === "/admin/feature-intros/torrent_intro" && request.method === "GET") return json(200, { feature: "torrent_intro", total: 2, users: [{ id: "u1", email: "sam@example.com", displayName: "Sam", acknowledgedAt: "2026-10-07T10:00:00.000Z", appVersion: "0.3.0", platform: "fire_tv", query: request.query ?? "" }, { id: "u2", email: "kim@example.com", displayName: null, acknowledgedAt: "2026-10-06T10:00:00.000Z", appVersion: null, platform: "fire_tv" }] });
     if (request.path === "/user/trailer") return json(200, { youtubeVideoId: "abc123" });
     return json(404, { error: "Not found" });
   };
