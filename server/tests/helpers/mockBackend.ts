@@ -140,6 +140,16 @@ export function createMockBackend(options: { accessTtlMs?: number } = {}) {
       data.set(user.id, bucket);
       return json(200, request.body);
     }
+    if (request.path === "/user/picked-dismissals" && request.method === "GET") {
+      const bucket = data.get(user.id) ?? new Map();
+      return json(200, { items: (bucket.get("pickedDismissals") as unknown[] | undefined) ?? [] });
+    }
+    if (request.path === "/user/picked-dismissals" && request.method === "POST") {
+      const bucket = data.get(user.id) ?? new Map<string, unknown>();
+      bucket.set("pickedDismissals", ((bucket.get("pickedDismissals") as unknown[] | undefined) ?? []).concat(request.body));
+      data.set(user.id, bucket);
+      return json(200, request.body);
+    }
     if (request.path === "/user/plus" && request.method === "GET") return json(200, state.plus ? { active: true, plan: "early_access", validUntil: null, paywall: false } : { active: false, plan: null, validUntil: null, paywall: true });
     if (request.path === "/user/plus/checkout" && request.method === "POST") return json(200, { url: `https://checkout.example/${(request.body as { plan?: string })?.plan ?? "none"}` });
     if (request.path === "/user/plus/cancel" && request.method === "POST") return json(200, { active: true, plan: "monthly", validUntil: "2099-01-01T00:00:00.000Z", cancelAtPeriodEnd: true, paywall: true });

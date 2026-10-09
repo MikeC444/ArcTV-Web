@@ -55,6 +55,23 @@ describe("/api/user allow-list proxy", () => {
     expect((await request(app).get("/api/user/feedback")).status).toBe(401);
   });
 
+  it("forwards removed picks, and each account only sees its own", async () => {
+    const backend = createMockBackend();
+    backend.addUser("alice@example.com", "password-1234");
+    backend.addUser("bob@example.com", "password-1234");
+    const app = appWith(backend.fetch);
+    const alice = agentFor(app);
+    const bob = agentFor(app);
+    await alice.post("/api/auth/login").send({ email: "alice@example.com", password: "password-1234" });
+    await bob.post("/api/auth/login").send({ email: "bob@example.com", password: "password-1234" });
+    const item = { profileId: "main", contentId: "tt1", dismissedAt: new Date().toISOString() };
+    expect((await alice.post("/api/user/picked-dismissals").send(item)).status).toBe(200);
+    expect((await alice.get("/api/user/picked-dismissals")).body.items).toHaveLength(1);
+    expect((await bob.get("/api/user/picked-dismissals")).body.items).toEqual([]);
+    expect((await request(app).get("/api/user/picked-dismissals")).status).toBe(401);
+    expect((await alice.delete("/api/user/picked-dismissals")).status).toBe(404); // only what the client uses is forwarded
+  });
+
   it("forwards the ArcTV Plus status and checkout, signed-in only", async () => {
     const { client } = await signedIn();
     expect((await client.get("/api/user/plus")).body).toMatchObject({ active: true, paywall: false });

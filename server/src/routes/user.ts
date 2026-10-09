@@ -18,6 +18,9 @@ const ALLOWED: ReadonlyArray<readonly [method: string, path: RegExp]> = [
   ["GET", /^\/feedback$/],
   ["POST", /^\/feedback$/],
   ["DELETE", /^\/feedback$/],
+  // titles removed from "Picked for you", so a removal follows the account to every device
+  ["GET", /^\/picked-dismissals$/],
+  ["POST", /^\/picked-dismissals$/],
   ["POST", /^\/watch-progress$/],
   ["GET", /^\/continue-watching$/],
   ["GET", /^\/history$/],

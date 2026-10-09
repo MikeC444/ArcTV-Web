@@ -10,7 +10,7 @@ Status: ⬜ not done · ✅ done (released or merged) · ➖ not needed there (s
 
 | Date | Change | Firestick | Phone |
 |---|---|---|---|
-| 2026-10-10 | Remove from Picked for you now hides the title for 5 days; after that it is an ordinary candidate again (kept on that device only, not synced) (`pickedDismissed.ts`) | ⬜ | ⬜ |
+| 2026-10-10 | Remove from Picked for you now hides the title for 5 days, then the algorithm decides again; removals sync across devices through `/user/picked-dismissals` (`pickedDismissed.ts`) | ⬜ | ⬜ |
 | 2026-10-09 | Poster menu stays open when My List, Watched, Like or Not for me is pressed; the pressed button turns teal with a tick and says "In My List" / "Watched" (press again to undo) (`CardActionsMenu.tsx`) | ⬜ | ⬜ |
 | 2026-10-09 | New Plus settings tab "Recommendations": your Liked and Not for me titles (remove one, or reset all), what shapes your picks, why the last Picked for you titles were chosen, and how it works (`RecommendationsPane.tsx`, `lastPicks.ts`) | ⬜ | ⬜ |
 | 2026-10-09 | Picked for you now takes TV shows too: shows you like, save or finish shape the row, shows can be picked, and Like / Not for me appear on shows (menu and details page); ratings sync as TV shows (`recommendations.ts`, `feedback.ts`) | ⬜ | ⬜ |

@@ -40,6 +40,7 @@ export async function retryPendingAll(): Promise<void> {
     useMyList.getState().retryPending(),
     useContinueWatching.getState().retryPending(),
     useFeedback.getState().retryPending(),
+    usePickedDismissed.getState().retryPending(),
     useAddons.getState().retryPending(),
   ]);
 }
@@ -47,6 +48,7 @@ export async function retryPendingAll(): Promise<void> {
 export async function syncAll(): Promise<void> {
   // Taste feedback syncs alongside the rest. A backend that predates /user/feedback just answers 404: it stays on this device and is retried next launch.
   const feedbackPull = useFeedback.getState().pull();
+  const dismissedPull = usePickedDismissed.getState().pull(); // a backend that predates /user/picked-dismissals answers 404: removals stay on this device
   const plusPull = usePlus.getState().pull();
   const [settings, watchlist, continueWatching, addons] = await Promise.all([
     useSettings.getState().pull(),
@@ -55,6 +57,7 @@ export async function syncAll(): Promise<void> {
     useAddons.getState().pull(),
   ]);
   await feedbackPull;
+  await dismissedPull;
   await plusPull;
   await retryPendingAll();
 
