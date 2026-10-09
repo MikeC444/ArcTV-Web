@@ -2,12 +2,10 @@ import { useMemo, useState } from "react";
 import { MdCheck, MdChevronRight, MdClose, MdLock, MdOutlineThumbDown, MdOutlineThumbUp, MdRestartAlt, MdThumbDown, MdThumbUp, MdWorkspacePremium } from "react-icons/md";
 import { Link, useNavigate } from "react-router-dom";
 import { useHasPlus } from "../../state/plusAccess";
+import { SIGNAL_WEIGHTS } from "../../domain/recommend/config";
 import { routes } from "../../lib/routes";
-import { useAuth } from "../../state/auth";
 import { useFeedback, type FeedbackEntry } from "../../state/feedback";
-import { readLastPicks } from "../../state/lastPicks";
 import { useMyList } from "../../state/myList";
-import { activeProfileId } from "../../state/profile";
 import { MangoButton } from "./Buttons";
 import { Surface } from "./Surface";
 
@@ -19,6 +17,9 @@ interface Rated {
   entry: FeedbackEntry;
   poster: string | null;
 }
+
+/** "+20 points", "-15 points", "0 points". */
+const points = (n: number): string => `${n > 0 ? "+" : n < 0 ? "−" : ""}${Math.abs(n)} ${Math.abs(n) === 1 ? "point" : "points"}`;
 
 function Poster({ url, title }: { url: string | null; title: string }) {
   const [failed, setFailed] = useState(false);
@@ -44,7 +45,6 @@ export function RecommendationsPane() {
 }
 
 function RecommendationsContent() {
-  const userId = useAuth((s) => s.user?.id);
   const entries = useFeedback((s) => s.entries);
   const setFeedback = useFeedback((s) => s.set);
   const list = useMyList((s) => s.items);
@@ -56,9 +56,13 @@ function RecommendationsContent() {
     const all: Rated[] = Object.entries(entries).map(([id, entry]) => ({ id, entry, poster: entry.posterUrl ?? posterById.get(id) ?? metahubPoster(id) }));
     return { like: all.filter((r) => r.entry.value === "like").sort((a, b) => b.entry.at.localeCompare(a.entry.at)), dislike: all.filter((r) => r.entry.value === "dislike").sort((a, b) => b.entry.at.localeCompare(a.entry.at)) };
   }, [entries, posterById]);
-  const picks = useMemo(() => (userId ? readLastPicks(userId, activeProfileId(userId)).slice(0, 5) : []), [userId]);
-  const finished = list.filter((i) => i.watched).length;
-  const saved = list.length - finished;
+  // a title you rated counts once, by its rating; finishing or saving only counts for titles you have not rated
+  const unrated = list.filter((i) => !entries[i.id]);
+  const finished = unrated.filter((i) => i.watched).length;
+  const saved = unrated.length - finished;
+  const likePoints = rated.like.length * SIGNAL_WEIGHTS.like;
+  const dislikePoints = rated.dislike.length * SIGNAL_WEIGHTS.dislike;
+  const listPoints = finished * SIGNAL_WEIGHTS.completed + saved * SIGNAL_WEIGHTS.watchlist;
   const shown = rated[tab];
   const total = rated.like.length + rated.dislike.length;
 
@@ -105,33 +109,12 @@ function RecommendationsContent() {
         <section className="recs__card" aria-labelledby="recs-shapes">
           <h3 id="recs-shapes" className="t-title-md recs__h">What shapes your picks</h3>
           <ul className="recs__shapes">
-            <li><span className="recs__icon" aria-hidden="true"><MdOutlineThumbUp /></span><span><strong>Titles you like</strong> ({rated.like.length})<br /><span className="c-text-2">Pull in more with similar genres, directors and cast.</span></span></li>
-            <li><span className="recs__icon" aria-hidden="true"><MdOutlineThumbDown /></span><span><strong>Titles marked Not for me</strong> ({rated.dislike.length})<br /><span className="c-text-2">Push similar titles down, and never come back as picks.</span></span></li>
-            <li><span className="recs__icon" aria-hidden="true"><MdChevronRight /></span><span><strong>Your My List and finished titles</strong> ({finished} finished, {saved} saved)<br /><span className="c-text-2">Finishing counts for a little, saving for a little less.</span></span></li>
+            <li><span className="recs__icon" aria-hidden="true"><MdOutlineThumbUp /></span><span><strong>Titles you like</strong> ({rated.like.length}): <span className="recs__pts" data-sign="plus">{points(likePoints)}</span><br /><span className="c-text-2">{SIGNAL_WEIGHTS.like} points each. Pull in more with similar genres, directors and cast.</span></span></li>
+            <li><span className="recs__icon" aria-hidden="true"><MdOutlineThumbDown /></span><span><strong>Titles marked Not for me</strong> ({rated.dislike.length}): <span className="recs__pts" data-sign="minus">{points(dislikePoints)}</span><br /><span className="c-text-2">{SIGNAL_WEIGHTS.dislike} points each. Push similar titles down, and they never come back as picks.</span></span></li>
+            <li><span className="recs__icon" aria-hidden="true"><MdChevronRight /></span><span><strong>Your My List and finished titles</strong> ({finished} finished, {saved} saved): <span className="recs__pts" data-sign="plus">{points(listPoints)}</span><br /><span className="c-text-2">{SIGNAL_WEIGHTS.completed} points for each finished, {SIGNAL_WEIGHTS.watchlist} for each saved, when you have not rated it.</span></span></li>
           </ul>
         </section>
       </div>
-
-      <section className="recs__card" aria-labelledby="recs-why">
-        <h3 id="recs-why" className="t-title-md recs__h">Why these were picked</h3>
-        {picks.length === 0 ? (
-          <p className="t-body-sm c-text-2 recs__empty">Once you have rated a few titles, open Home and the reason for each pick shows here.</p>
-        ) : (
-          <ul className="recs__why">
-            {picks.map((p) => (
-              <li key={p.id} className="recs__pick">
-                <div className="recs__pickposter"><Poster url={p.posterUrl ?? metahubPoster(p.id)} title={p.title} /></div>
-                <div className="recs__pickbody">
-                  <div className="t-title-md">{p.title}</div>
-                  <div className="t-body-sm c-text-2">{p.reason ?? "A popular pick for you"}</div>
-                  {p.genres.length > 0 ? <div className="recs__chips">{p.genres.slice(0, 3).map((g) => <span key={g} className="recs__chip">{g}</span>)}</div> : null}
-                  {p.providerId ? <Link className="recs__more" to={routes.detail(p.providerId, p.type, p.id, p.title)}>View details <MdChevronRight aria-hidden="true" /></Link> : null}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
 
       <section className="recs__card" aria-labelledby="recs-how">
         <h3 id="recs-how" className="t-title-md recs__h">How it works</h3>

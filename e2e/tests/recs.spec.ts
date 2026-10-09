@@ -19,14 +19,9 @@ test.describe("Settings → Recommendations", () => {
     await expect(page.getByRole("heading", { name: "How it works" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "What shapes your picks" })).toBeVisible();
 
-    // the reason for the last row Home showed (written by Home itself; set directly here so the test does not depend on the fixture catalogue)
-    await page.evaluate(([userId]) => {
-      const pick = { id: "tt3659388", title: "The Martian", type: "MOVIE", providerId: "com.linvo.cinemeta", posterUrl: null, genres: ["Space exploration", "Sci-Fi"], reason: "Because you liked Interstellar" };
-      localStorage.setItem(`mtv:v1:profile:${userId}:main:lastPicks`, JSON.stringify([pick]));
-    }, [account.tv.userId]);
-    await page.reload();
-    await expect(page.getByText("Because you liked Interstellar")).toBeVisible();
-    await expect(page.getByText("Space exploration")).toBeVisible();
+    await expect(page.getByText("+20 points")).toBeVisible(); // 4 likes x 5
+    await expect(page.getByText("−15 points")).toBeVisible(); // 3 Not for me x -5
+    await expect(page.getByRole("heading", { name: "Why these were picked" })).toHaveCount(0); // that is shown on Home
 
     await page.getByRole("tab", { name: "Not for me (3)" }).click();
     await expect(page.getByText("The Conjuring")).toBeVisible();

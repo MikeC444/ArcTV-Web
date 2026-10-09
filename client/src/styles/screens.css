@@ -687,3 +687,6 @@
 .recs__steps strong { color: var(--text); }
 .recs__reset { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .recs__confirm { display: flex; gap: 10px; flex-wrap: wrap; }
+.recs__pts { font-weight: 800; color: var(--text); }
+.recs__pts[data-sign="plus"] { color: var(--cyan); }
+.recs__pts[data-sign="minus"] { color: var(--coral-text); }

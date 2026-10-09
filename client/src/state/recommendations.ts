@@ -10,7 +10,6 @@ import { useContinueWatching } from "./continueWatching";
 import { useFeedback } from "./feedback";
 import { useMyList, type SavedListItem } from "./myList";
 import { usePickedDismissed } from "./pickedDismissed";
-import { rememberLastPicks } from "./lastPicks";
 import { useHasPlus } from "./plusAccess";
 import { readJson, userKey, writeJson } from "./persist";
 import { activeProfileId } from "./profile";
@@ -157,7 +156,7 @@ export function usePickedForYou(pool: Content[] | undefined): PickedForYou {
       .catch(() => gen === generation.current && setResult(null));
   }, [hasPlus, userId, movies, signature, poolKey, interactions, excludeIds, list, feedback]);
 
-  const picked = useMemo<PickedForYou>(() => {
+  return useMemo<PickedForYou>(() => {
     if (!result || result.items.length === 0) return { section: null, mode: null };
     const byId = new Map(movies.map((m) => [m.id, m]));
     const items: Content[] = [];
@@ -169,10 +168,4 @@ export function usePickedForYou(pool: Content[] | undefined): PickedForYou {
     if (items.length === 0) return { section: null, mode: null };
     return { section: { id: PICKED_ROW_ID, title: result.mode === "personal" ? PICKED_ROW_TITLE : POPULAR_ROW_TITLE, style: "STANDARD", items: items.slice(0, MAX_RESULTS) }, mode: result.mode };
   }, [result, movies, feedback, dismissed]);
-
-  // Settings → Recommendations shows why these were picked, so the last personal row is kept
-  useEffect(() => {
-    if (userId && picked.section) rememberLastPicks(userId, activeProfileId(userId), picked.section, picked.mode);
-  }, [userId, picked]);
-  return picked;
 }
