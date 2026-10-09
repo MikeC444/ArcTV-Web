@@ -80,11 +80,25 @@ interface ContinueWatchingState {
   findResumePoint(providerId: string, contentId: string, type: ContentType): ContinueWatchingEntry | undefined;
   /** Optimistic local update + server report (PlaybackProgress reporting and "Remove from Continue Watching" when completed=true). */
   reportProgress(input: Omit<WatchProgressRequest, "watchedAt">, options?: { keepalive?: boolean }): void;
+  /** Takes a title out of Continue Watching WITHOUT marking it watched, and forgets how far in it was, so it starts from the beginning next time. */
+  removeEntry(providerId: string, contentId: string, type: ContentType): void;
   pull(): Promise<boolean>;
   retryPending(): Promise<void>;
 }
 
-let outbox: Outbox<WatchProgressRequest> | null = null;
+/** A removal that has not reached the account yet (see removeEntry). */
+interface PendingRemoval {
+  removal: true;
+  providerId: string;
+  contentId: string;
+  contentType: ContentType;
+  updatedAt: string;
+}
+type Pending = WatchProgressRequest | PendingRemoval;
+const isRemoval = (p: Pending | undefined): p is PendingRemoval => !!p && "removal" in p;
+const removalQuery = (r: PendingRemoval) => new URLSearchParams({ providerId: r.providerId, contentId: r.contentId, contentType: r.contentType, updatedAt: r.updatedAt }).toString();
+
+let outbox: Outbox<Pending> | null = null;
 
 export const useContinueWatching = create<ContinueWatchingState>((set, get) => {
   const commit = (items: ContinueWatchingEntry[]) => {
@@ -108,7 +122,7 @@ export const useContinueWatching = create<ContinueWatchingState>((set, get) => {
     items: [],
 
     hydrate(userId) {
-      outbox = new Outbox<WatchProgressRequest>(userId, libraryName("continueWatching"));
+      outbox = new Outbox<Pending>(userId, libraryName("continueWatching"));
       set({ userId, items: readJson<ContinueWatchingEntry[]>(libraryKey(userId, "continueWatching"), []) });
     },
     reset() {
@@ -152,14 +166,33 @@ export const useContinueWatching = create<ContinueWatchingState>((set, get) => {
       })();
     },
 
+    removeEntry(providerId, contentId, type) {
+      const key = keyOf(providerId, contentId, type);
+      remove(providerId, contentId, type);
+      const removal: PendingRemoval = { removal: true, providerId, contentId, contentType: type, updatedAt: monotonicIso(`cw|${key}`) };
+      void (async () => {
+        try {
+          const response = await api<ContinueWatchingDto | undefined>(`/user/continue-watching?${removalQuery(removal)}`, { method: "DELETE" });
+          reconcile(providerId, contentId, type, response ?? null);
+          outbox?.remove(key);
+        } catch {
+          outbox?.put(key, removal); // sent when the connection (or the server) is back; the title stays hidden here meanwhile
+        }
+      })();
+    },
+
     async pull() {
       try {
         const { items } = await api<{ items: ContinueWatchingDto[] }>("/user/continue-watching");
         const pending = outbox?.all() ?? {};
         const remote = items.map(fromDto).filter((e): e is ContinueWatchingEntry => e !== null);
         // keep local entries whose newer report hasn't landed yet
-        const local = get().items.filter((e) => keyOf(e.providerId, e.contentId, e.contentType) in pending && !pending[keyOf(e.providerId, e.contentId, e.contentType)]?.completed);
-        const merged = [...local, ...remote.filter((r) => !local.some((l) => keyOf(l.providerId, l.contentId, l.contentType) === keyOf(r.providerId, r.contentId, r.contentType)))];
+        const waiting = (e: ContinueWatchingEntry) => pending[keyOf(e.providerId, e.contentId, e.contentType)];
+        const local = get().items.filter((e) => {
+          const p = waiting(e);
+          return p !== undefined && !isRemoval(p) && !p.completed;
+        });
+        const merged = [...local, ...remote.filter((r) => !isRemoval(waiting(r)) && !local.some((l) => keyOf(l.providerId, l.contentId, l.contentType) === keyOf(r.providerId, r.contentId, r.contentType)))]; // a removal on its way keeps the title hidden
         commit(merged.sort((a, b) => isoMs(b.lastWatchedAt) - isoMs(a.lastWatchedAt)));
         return true;
       } catch {
@@ -170,6 +203,12 @@ export const useContinueWatching = create<ContinueWatchingState>((set, get) => {
     async retryPending() {
       for (const [key, request] of Object.entries(outbox?.all() ?? {})) {
         try {
+          if (isRemoval(request)) {
+            const response = await api<ContinueWatchingDto | undefined>(`/user/continue-watching?${removalQuery(request)}`, { method: "DELETE" });
+            reconcile(request.providerId, request.contentId, request.contentType, response ?? null);
+            outbox?.remove(key);
+            continue;
+          }
           const response = await api<{ continueWatching: ContinueWatchingDto | null }>("/user/watch-progress", { method: "POST", body: request });
           reconcile(request.providerId, request.contentId, request.contentType, response.continueWatching);
           outbox?.remove(key);

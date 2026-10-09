@@ -10,6 +10,7 @@ Status: ⬜ not done · ✅ done (released or merged) · ➖ not needed there (s
 
 | Date | Change | Firestick | Phone |
 |---|---|---|---|
+| 2026-10-10 | Remove from Continue Watching no longer marks the title watched: it is taken off and its saved position is forgotten, so playing it again starts from the beginning (needs the new `DELETE /user/continue-watching`; the apps currently send a "finished" report) (`continueWatching.ts`) | ⬜ | ⬜ |
 | 2026-10-10 | Remove from Picked for you now hides the title for 5 days, then the algorithm decides again; removals sync across devices through `/user/picked-dismissals` (`pickedDismissed.ts`) | ⬜ | ⬜ |
 | 2026-10-09 | Poster menu stays open when My List, Watched, Like or Not for me is pressed; the pressed button turns teal with a tick and says "In My List" / "Watched" (press again to undo) (`CardActionsMenu.tsx`) | ⬜ | ⬜ |
 | 2026-10-09 | New Plus settings tab "Recommendations": your Liked and Not for me titles (remove one, or reset all), what shapes your picks, why the last Picked for you titles were chosen, and how it works (`RecommendationsPane.tsx`, `lastPicks.ts`) | ⬜ | ⬜ |

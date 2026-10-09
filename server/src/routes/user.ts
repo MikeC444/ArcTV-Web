@@ -23,6 +23,7 @@ const ALLOWED: ReadonlyArray<readonly [method: string, path: RegExp]> = [
   ["POST", /^\/picked-dismissals$/],
   ["POST", /^\/watch-progress$/],
   ["GET", /^\/continue-watching$/],
+  ["DELETE", /^\/continue-watching$/], // taking a title out of Continue Watching without marking it watched
   ["GET", /^\/history$/],
   ["GET", /^\/addons$/],
   ["POST", /^\/addons$/],

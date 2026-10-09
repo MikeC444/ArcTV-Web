@@ -55,6 +55,16 @@ describe("/api/user allow-list proxy", () => {
     expect((await request(app).get("/api/user/feedback")).status).toBe(401);
   });
 
+  it("forwards removing a title from Continue Watching, and nothing else on that path", async () => {
+    const { backend, client } = await signedIn();
+    const query = "providerId=p&contentId=tt1&contentType=MOVIE&updatedAt=2026-01-02T00:00:00.000Z";
+    const res = await client.delete(`/api/user/continue-watching?${query}`);
+    expect(res.status).toBe(200);
+    expect(res.body.deletedAt).not.toBeNull();
+    expect(backend.calls.find((c) => c.method === "DELETE" && c.path === "/user/continue-watching")!.query).toBe(query);
+    expect((await client.put("/api/user/continue-watching").send({})).status).toBe(404);
+  });
+
   it("forwards removed picks, and each account only sees its own", async () => {
     const backend = createMockBackend();
     backend.addUser("alice@example.com", "password-1234");

@@ -24,7 +24,7 @@ export function CardActionsMenu() {
   const items = useMyList((s) => s.items);
   const toggle = useAccountAction(useMyList((s) => s.toggle));
   const toggleWatched = useAccountAction(useMyList((s) => s.toggleWatched));
-  const reportProgress = useContinueWatching((s) => s.reportProgress);
+  const removeFromContinueWatching = useContinueWatching((s) => s.removeEntry);
   const hasPlus = useHasPlus();
   const feedback = useFeedback((s) => (content ? s.entries[content.id]?.value : undefined));
   const toggleFeedback = useAccountAction(useFeedback((s) => s.toggle));
@@ -73,23 +73,11 @@ export function CardActionsMenu() {
     go(last ? routes.player(providerId, content.type, content.id, season, episode, last) : routes.sources(providerId, content.type, content.id, season, episode));
   };
 
+  // Taking a title out of Continue Watching does not mark it watched: its saved position is forgotten and it starts from the beginning next time.
   const continueWatchingRemoval =
     progress && providerId
       ? () => {
-          reportProgress({
-            providerId,
-            contentId: content.id,
-            contentType: content.type,
-            seasonNumber: progress.seasonNumber ?? null,
-            episodeNumber: progress.episodeNumber ?? null,
-            episodeTitle: progress.episodeTitle ?? null,
-            title: content.title,
-            posterUrl: content.posterUrl,
-            backdropUrl: content.backdropUrl,
-            positionMs: progress.positionMs,
-            durationMs: progress.durationMs,
-            completed: true,
-          });
+          removeFromContinueWatching(providerId, content.id, content.type);
           close();
         }
       : null;
