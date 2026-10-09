@@ -43,7 +43,7 @@ export const routes = {
   search: "/search",
   admin: "/admin",
   myList: "/my-list",
-  settings: (tab?: "account" | "addons" | "home-rows" | "blocked-genres" | "plus" | "plus-settings" | "stats" | "sounds" | "subtitles" | "audio") => (tab ? `/settings/${tab}` : "/settings"),
+  settings: (tab?: "account" | "addons" | "home-rows" | "blocked-genres" | "plus" | "plus-settings" | "recommendations" | "stats" | "sounds" | "subtitles" | "audio") => (tab ? `/settings/${tab}` : "/settings"),
   addAddon: "/settings/addons/add",
   /** Hidden guide: debrid service → Torrentio → Arc TV. Not linked from the app yet. */
   debridGuide: "/guides/debrid",

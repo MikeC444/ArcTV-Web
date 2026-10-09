@@ -17,6 +17,8 @@ export interface FeedbackEntry {
   providerId?: string;
   /** Movie or TV show. Missing (older entries) means a movie. */
   contentType?: ContentType;
+  /** The poster, kept on this device so the Recommendations page can show it. Not synced. */
+  posterUrl?: string | null;
   /** True once the server has acknowledged exactly this entry. Entries without it (older, or given offline) are pushed on the next sync. */
   synced?: boolean;
 }
@@ -41,6 +43,7 @@ export interface MovieRef {
   title: string;
   providerId?: string | null;
   type?: ContentType;
+  posterUrl?: string | null;
 }
 
 interface FeedbackState {
@@ -91,7 +94,7 @@ export const useFeedback = create<FeedbackState>((set, get) => {
     if (dto.profileId !== get().profileId) return;
     const entries = { ...get().entries };
     if (dto.deletedAt) delete entries[dto.contentId];
-    else entries[dto.contentId] = { value: dto.feedback, title: dto.title, at: dto.updatedAt, providerId: dto.providerId, contentType: dto.contentType, synced: true };
+    else entries[dto.contentId] = { value: dto.feedback, title: dto.title, at: dto.updatedAt, providerId: dto.providerId, contentType: dto.contentType, posterUrl: get().entries[dto.contentId]?.posterUrl ?? null, synced: true };
     commit(entries);
   }
 
@@ -144,7 +147,7 @@ export const useFeedback = create<FeedbackState>((set, get) => {
         if (existing) void pushClear({ profileId, providerId: existing.providerId ?? providerId, contentId: movie.id, contentType: existing.contentType ?? "MOVIE", title: existing.title, feedback: existing.value, updatedAt: at });
         return;
       }
-      const entry: FeedbackEntry = { value, title: movie.title, at, providerId, contentType: movie.type ?? entries[movie.id]?.contentType ?? "MOVIE", synced: false };
+      const entry: FeedbackEntry = { value, title: movie.title, at, providerId, contentType: movie.type ?? entries[movie.id]?.contentType ?? "MOVIE", posterUrl: movie.posterUrl ?? entries[movie.id]?.posterUrl ?? null, synced: false };
       next[movie.id] = entry;
       commit(next);
       void pushSet(toDto(movie.id, entry));
@@ -179,7 +182,7 @@ export const useFeedback = create<FeedbackState>((set, get) => {
           if (id in next) continue;
           const key = naturalKey(profileId, server.providerId, id);
           if (key in pending) continue;
-          next[id] = { value: server.feedback, title: server.title, at: server.updatedAt, providerId: server.providerId, contentType: server.contentType, synced: true };
+          next[id] = { value: server.feedback, title: server.title, at: server.updatedAt, providerId: server.providerId, contentType: server.contentType, posterUrl: get().entries[id]?.posterUrl ?? null, synced: true };
         }
         commit(next);
         for (const [id, entry] of toPush) void pushSet(toDto(id, entry));

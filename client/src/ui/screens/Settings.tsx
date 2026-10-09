@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { MdBarChart, MdLock, MdAccountCircle, MdAdd, MdBlock, MdCancel, MdFavorite, MdWorkspacePremium, MdArrowDownward, MdArrowUpward, MdCheck, MdCloudUpload, MdDelete, MdExtension, MdGridView, MdInfo, MdLogout, MdMusicNote, MdSubtitles, MdSwitchAccount, MdTune, MdVolumeUp, MdSpatialAudio } from "react-icons/md";
+import { MdBarChart, MdLock, MdAccountCircle, MdAdd, MdBlock, MdCancel, MdFavorite, MdWorkspacePremium, MdArrowDownward, MdArrowUpward, MdCheck, MdCloudUpload, MdDelete, MdExtension, MdGridView, MdInfo, MdLogout, MdMusicNote, MdSubtitles, MdSwitchAccount, MdTune, MdVolumeUp, MdSpatialAudio, MdStars } from "react-icons/md";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { PLUS_FREE_NOTE, PLUS_PERKS, PLUS_PLANS, PLUS_PROCEEDS_NOTE } from "../../domain/plus";
 import { applyRowOrder, moveRow } from "../../domain/homeRows";
@@ -16,6 +16,7 @@ import { ApiClientError } from "../../lib/api";
 import { usePlus, watchForPurchase, type PlusPlanId } from "../../state/plus";
 import { activeProfileOf, useProfiles } from "../../state/profiles";
 import { ProfileAvatar } from "../components/ProfileAvatar";
+import { RecommendationsPane } from "../components/RecommendationsPane";
 import { WatchStats } from "../components/WatchStats";
 import { useSmartPicking } from "../../state/smartPicking";
 import { useHasPlus } from "../../state/plusAccess";
@@ -26,7 +27,7 @@ import { MangoButton, Pill, Switch } from "../components/Buttons";
 import { Spinner } from "../components/States";
 import { Surface } from "../components/Surface";
 
-type Tab = "account" | "addons" | "home-rows" | "blocked-genres" | "plus" | "plus-settings" | "stats" | "sounds" | "subtitles" | "audio";
+type Tab = "account" | "addons" | "home-rows" | "blocked-genres" | "plus" | "plus-settings" | "recommendations" | "stats" | "sounds" | "subtitles" | "audio";
 type Category = { id: Tab; icon: ReactNode; title: string; subtitle: string; /** Greyed out and not clickable without ArcTV Plus. */ plusOnly?: boolean };
 const GROUPS: Array<{ label: string; items: Category[] }> = [
   {
@@ -35,6 +36,7 @@ const GROUPS: Array<{ label: string; items: Category[] }> = [
       { id: "account", icon: <MdAccountCircle />, title: "Account", subtitle: "Manage your ArcTV account" },
       { id: "plus", icon: <MdWorkspacePremium />, title: "ArcTV Plus", subtitle: "Extra features for supporters" },
       { id: "plus-settings", icon: <MdTune />, title: "Plus settings", subtitle: "Switches for your Plus features", plusOnly: true },
+      { id: "recommendations", icon: <MdStars />, title: "Recommendations", subtitle: "What shapes your Picked for you row", plusOnly: true },
       { id: "stats", icon: <MdBarChart />, title: "Your stats", subtitle: "How much you watch, at a glance", plusOnly: true },
     ],
   },
@@ -110,6 +112,7 @@ export function SettingsScreen() {
           {selected === "blocked-genres" ? <BlockedGenresPane /> : null}
           {selected === "plus" ? <PlusPane /> : null}
           {selected === "plus-settings" ? <PlusSettingsPane /> : null}
+          {selected === "recommendations" ? <RecommendationsPane /> : null}
           {selected === "stats" ? <WatchStats /> : null}
           {selected === "sounds" ? <SoundsPane /> : null}
           {selected === "subtitles" ? <SubtitlesPane /> : null}
