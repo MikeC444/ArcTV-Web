@@ -10,7 +10,7 @@ Status: ⬜ not done · ✅ done (released or merged) · ➖ not needed there (s
 
 | Date | Change | Firestick | Phone |
 |---|---|---|---|
-| 2026-10-10 | The Plus free trial is for new yearly subscribers only: monthly has no trial and its button reads "Choose Monthly"; only the yearly plan shows "5 days free" (`Settings.tsx`; the server now only gives the trial on the yearly plan in `plus.ts`) | ✅ on a branch, not merged | ✅ on a branch, not merged |
+| 2026-10-10 | The Plus free trial is for new yearly subscribers only: monthly has no trial and its button reads "Choose Monthly"; only the yearly plan shows "5 days free" (`Settings.tsx`; the server now only gives the trial on the yearly plan in `plus.ts`) | ✅ merged, not released | ✅ merged, not released |
 | 2026-10-10 | One-time "Everything in ArcTV Plus" popup for Plus members on Home: Picked for you, up to 5 profiles, Smart source picking, Your stats, with parental controls on the way; shown once per account (`PlusPromo.tsx`, `plusWelcome.ts`) | ✅ merged, not released | ⬜ |
 | 2026-10-10 | Remove from Continue Watching no longer marks the title watched: it is taken off and its saved position is forgotten, so playing it again starts from the beginning (needs the new `DELETE /user/continue-watching`; the apps currently send a "finished" report) (`continueWatching.ts`) | ✅ merged, not released | ⬜ |
 | 2026-10-10 | Remove from Picked for you now hides the title for 5 days, then the algorithm decides again; removals sync across devices through `/user/picked-dismissals` (`pickedDismissed.ts`) | ✅ merged, not released | ⬜ |
