@@ -59,5 +59,7 @@ export const FEATURE_CACHE_MAX_ENTRIES = 800;
 export const FEATURE_CACHE_TTL_MS = 30 * 24 * 3600_000;
 
 export const PICKED_ROW_ID = "picked_for_you";
+/** How long a title removed from "Picked for you" stays out of the row; after that the algorithm decides again whether it is still a good pick. */
+export const PICKED_DISMISS_DAYS = 5;
 export const PICKED_ROW_TITLE = "Picked for you · ArcTV Plus";
 export const POPULAR_ROW_TITLE = "Popular movies, not personalised yet · ArcTV Plus";

@@ -137,7 +137,7 @@ function RecommendationsContent() {
         <span className="recs__icon" aria-hidden="true"><MdRestartAlt /></span>
         <div style={{ flex: "1 1 240px", minWidth: 0 }}>
           <h3 id="recs-reset" className="t-title-md recs__h" style={{ margin: 0 }}>Reset preferences</h3>
-          <p className="t-body-sm c-text-2" style={{ margin: "2px 0 0" }}>Clears every Like and Not for me on this profile ({total} now). Your picks still use your My List and finished titles, and titles you removed from the row stay removed.</p>
+          <p className="t-body-sm c-text-2" style={{ margin: "2px 0 0" }}>Clears every Like and Not for me on this profile ({total} now). Your picks still use your My List and finished titles, and a title you removed from the row stays out for 5 days.</p>
         </div>
         {confirming ? (
           <div className="recs__confirm" role="group" aria-label="Confirm reset">
