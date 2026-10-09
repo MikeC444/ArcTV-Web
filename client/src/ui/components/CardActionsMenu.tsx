@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MdAdd, MdCheck, MdChevronRight, MdClose, MdDelete, MdInfo, MdList, MdOutlineCheckCircle, MdPlayArrow, MdThumbDown, MdThumbUp, MdOutlineThumbDown, MdOutlineThumbUp, MdVisibilityOff } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import { formatElapsed } from "../../lib/format";
+import { sharpBackdrop } from "../../lib/imageSize";
 import { routes } from "../../lib/routes";
 import { useAuth } from "../../state/auth";
 import { useCardMenu } from "../../state/cardMenu";
@@ -29,6 +30,7 @@ export function CardActionsMenu() {
   const toggleFeedback = useAccountAction(useFeedback((s) => s.toggle));
   const dismissPick = usePickedDismissed((s) => s.dismiss);
   const first = useRef<HTMLElement>(null);
+  const [logoFailed, setLogoFailed] = useState(false);
 
   useEffect(() => {
     if (!content) return;
@@ -96,10 +98,22 @@ export function CardActionsMenu() {
           <MdClose />
         </Surface>
 
-        <div className="cardmenu__top">
-          <img className="cardmenu__poster" src={content.posterUrl ?? content.backdropUrl ?? undefined} alt="" referrerPolicy="no-referrer" />
-          <div className="cardmenu__title clamp-3">{content.title}</div>
-        </div>
+        {content.backdropUrl ? (
+          <div className="cardmenu__banner">
+            <img className="cardmenu__backdrop" src={sharpBackdrop(content.backdropUrl) ?? content.backdropUrl} alt="" referrerPolicy="no-referrer" />
+            <div className="cardmenu__shade" />
+            {content.logoUrl && !logoFailed ? (
+              <img className="cardmenu__logo" src={content.logoUrl} alt={content.title} referrerPolicy="no-referrer" onError={() => setLogoFailed(true)} />
+            ) : (
+              <div className="cardmenu__bannertitle clamp-2">{content.title}</div>
+            )}
+          </div>
+        ) : (
+          <div className="cardmenu__top">
+            <img className="cardmenu__poster" src={content.posterUrl ?? undefined} alt="" referrerPolicy="no-referrer" />
+            <div className="cardmenu__title clamp-3">{content.title}</div>
+          </div>
+        )}
 
         <Surface ref={first} className="cardmenu__play" radius="12px" onClick={play}>
           <MdPlayArrow />
