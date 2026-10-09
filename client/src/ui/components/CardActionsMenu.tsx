@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
-import { MdAdd, MdCheck, MdCheckCircle, MdChevronRight, MdClose, MdDelete, MdInfo, MdList, MdOutlineCheckBox, MdOutlineCheckCircle, MdPlayArrow, MdThumbDown, MdThumbUp, MdOutlineThumbDown, MdOutlineThumbUp, MdVisibilityOff } from "react-icons/md";
+import { MdAdd, MdCheck, MdChevronRight, MdClose, MdDelete, MdInfo, MdList, MdOutlineCheckCircle, MdPlayArrow, MdThumbDown, MdThumbUp, MdOutlineThumbDown, MdOutlineThumbUp, MdVisibilityOff } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import { formatElapsed } from "../../lib/format";
 import { routes } from "../../lib/routes";
@@ -68,7 +68,6 @@ export function CardActionsMenu() {
     go(last ? routes.player(providerId, content.type, content.id, season, episode, last) : routes.sources(providerId, content.type, content.id, season, episode));
   };
 
-  const typeLabel = content.type === "TV_SHOW" ? "TV show" : "Movie";
   const continueWatchingRemoval =
     progress && providerId
       ? () => {
@@ -99,85 +98,70 @@ export function CardActionsMenu() {
 
         <div className="cardmenu__top">
           <img className="cardmenu__poster" src={content.posterUrl ?? content.backdropUrl ?? undefined} alt="" referrerPolicy="no-referrer" />
-          <div className="cardmenu__main">
-            <div className="cardmenu__eyebrow">{typeLabel}</div>
-            <div className="cardmenu__title clamp-2">{content.title}</div>
-            {state.inList || state.watched ? (
-              <div className="cardmenu__chips">
-                {state.inList ? (
-                  <span className="cardmenu__chip">
-                    <MdCheck /> In My List
-                  </span>
-                ) : null}
-                {state.watched ? (
-                  <span className="cardmenu__chip">
-                    <MdCheck /> Watched
-                  </span>
-                ) : null}
-              </div>
-            ) : null}
-            <Surface ref={first} className="cardmenu__play" radius="12px" onClick={play}>
-              <MdPlayArrow />
-              {progress ? `Resume from ${formatElapsed(progress.positionMs)}` : "Play"}
-            </Surface>
-            <div className="cardmenu__pair">
-              <Surface
-                className="cardmenu__secondary"
-                radius="12px"
-                onClick={() => {
-                  toggle(content);
-                  close();
-                }}
-              >
-                {state.inList ? <MdOutlineCheckBox /> : <MdAdd />}
-                {state.inList ? "Remove from My List" : "Add to My List"}
-              </Surface>
-              <Surface
-                className="cardmenu__secondary"
-                radius="12px"
-                onClick={() => {
-                  toggleWatched(content);
-                  close();
-                }}
-              >
-                {state.watched ? <MdCheckCircle /> : <MdOutlineCheckCircle />}
-                {state.watched ? "Mark as unwatched" : "Mark as watched"}
-              </Surface>
-            </div>
-          </div>
+          <div className="cardmenu__title clamp-3">{content.title}</div>
         </div>
 
-        {hasPlus && content.type === "MOVIE" ? (
-          <div className="cardmenu__rating">
-            <span className="cardmenu__ratinglabel">Your rating</span>
-            <div className="cardmenu__ratingbtns">
+        <Surface ref={first} className="cardmenu__play" radius="12px" onClick={play}>
+          <MdPlayArrow />
+          {progress ? `Resume from ${formatElapsed(progress.positionMs)}` : "Play"}
+        </Surface>
+
+        <div className="cardmenu__grid">
+          <Surface
+            className="cardmenu__secondary"
+            radius="12px"
+            ariaLabel={state.inList ? "Remove from My List" : "Add to My List"}
+            onClick={() => {
+              toggle(content);
+              close();
+            }}
+          >
+            {state.inList ? <MdCheck /> : <MdAdd />}
+            {state.inList ? "My List" : "Add to My List"}
+          </Surface>
+          <Surface
+            className="cardmenu__secondary"
+            radius="12px"
+            ariaLabel={state.watched ? "Mark as unwatched" : "Mark as watched"}
+            onClick={() => {
+              toggleWatched(content);
+              close();
+            }}
+          >
+            {state.watched ? <MdCheck /> : <MdOutlineCheckCircle />}
+            {state.watched ? "Watched" : "Mark as watched"}
+          </Surface>
+          {hasPlus && content.type === "MOVIE" ? (
+            <>
               <Surface
-                className="cardmenu__rate"
+                className="cardmenu__secondary"
                 radius="12px"
                 ariaPressed={feedback === "like"}
+                ariaLabel={feedback === "like" ? "Remove like" : "Like"}
                 onClick={() => {
                   toggleFeedback(content, "like");
                   close();
                 }}
               >
                 {feedback === "like" ? <MdThumbUp /> : <MdOutlineThumbUp />}
-                {feedback === "like" ? "Remove like" : "Like"}
+                Like
               </Surface>
               <Surface
-                className="cardmenu__rate"
+                className="cardmenu__secondary"
                 radius="12px"
                 ariaPressed={feedback === "dislike"}
+                ariaLabel={feedback === "dislike" ? "Remove “Not for me”" : "Not for me"}
                 onClick={() => {
                   toggleFeedback(content, "dislike");
                   close();
                 }}
               >
                 {feedback === "dislike" ? <MdThumbDown /> : <MdOutlineThumbDown />}
-                {feedback === "dislike" ? "Remove “Not for me”" : "Not for me"}
+                Not for me
               </Surface>
-            </div>
-          </div>
-        ) : null}
+            </>
+          ) : null}
+        </div>
 
         <div className="cardmenu__list">
           {hasPlus && content.pickedForYou ? (
