@@ -411,3 +411,49 @@
 .promo__hint { margin: calc(14 * var(--dp)) 0 0; text-align: center; color: var(--text-3); font-size: calc(13 * var(--dp)); }
 .promo__never { display: block; margin: calc(6 * var(--dp)) auto 0; padding: 8px 12px; min-height: 44px; color: var(--text-2); font-weight: 500; font-size: calc(14 * var(--dp)); text-decoration: underline; --tvs-radius: 8px; }
 @media (max-width: 560px) { .promo { padding: 28px 20px 16px; } .promo__title { font-size: 24px; } .promo__actions { flex-direction: column; } }
+
+/* Card actions menu (right-click / long-press on a poster): a large panel with the poster, the title, what you've already done with it, a big Play, the main toggles, your rating and the links. */
+.cardmenu__scrim { --cm: min(var(--dp), calc(92vh / 800)); background: rgba(0, 0, 0, 0.62); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.cardmenu { position: relative; width: min(calc(950 * var(--cm)), 100%); max-height: 92vh; overflow-y: auto; overflow-x: hidden; background: var(--bg-elevated); border: 1px solid var(--divider); border-radius: calc(22 * var(--cm)); padding: calc(24 * var(--cm)); box-shadow: 0 28px 80px rgba(0, 0, 0, 0.65); display: flex; flex-direction: column; gap: calc(16 * var(--cm)); }
+.cardmenu__close { position: absolute; top: calc(22 * var(--cm)); right: calc(22 * var(--cm)); width: calc(48 * var(--cm)); height: calc(48 * var(--cm)); min-width: 40px; min-height: 40px; --tvs-bg: rgba(255, 255, 255, 0.1); display: flex; align-items: center; justify-content: center; z-index: 1; }
+.cardmenu__close svg { width: calc(26 * var(--cm)); height: calc(26 * var(--cm)); min-width: 20px; min-height: 20px; }
+.cardmenu__top { display: flex; gap: calc(26 * var(--cm)); align-items: flex-start; }
+.cardmenu__poster { width: calc(230 * var(--cm)); min-width: 110px; aspect-ratio: 2 / 3; object-fit: cover; border-radius: calc(14 * var(--cm)); flex: none; background: var(--surface-high); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
+.cardmenu__main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: calc(12 * var(--cm)); padding-right: calc(56 * var(--cm)); }
+.cardmenu__eyebrow { color: var(--text-3); font-size: calc(14 * var(--cm)); font-weight: 700; letter-spacing: calc(2.4 * var(--cm)); text-transform: uppercase; }
+.cardmenu__title { font-weight: 800; font-size: calc(38 * var(--cm)); line-height: 1.08; letter-spacing: calc(-0.5 * var(--cm)); margin-bottom: calc(4 * var(--cm)); }
+.cardmenu__chips { display: flex; flex-wrap: wrap; gap: calc(10 * var(--cm)); margin-bottom: calc(6 * var(--cm)); }
+.cardmenu__chip { display: inline-flex; align-items: center; gap: calc(8 * var(--cm)); padding: calc(7 * var(--cm)) calc(16 * var(--cm)); border-radius: 999px; background: color-mix(in srgb, var(--cyan) 14%, transparent); border: 1px solid color-mix(in srgb, var(--cyan) 38%, transparent); color: #bff7ff; font-weight: 600; font-size: calc(15 * var(--cm)); }
+.cardmenu__chip svg { width: calc(18 * var(--cm)); height: calc(18 * var(--cm)); min-width: 14px; min-height: 14px; }
+.cardmenu__play { --tvs-bg: color-mix(in srgb, var(--cyan) 62%, #fff); color: #04161a; display: flex; align-items: center; justify-content: center; gap: calc(12 * var(--cm)); width: 100%; min-height: calc(64 * var(--cm)); font-weight: 800; font-size: calc(22 * var(--cm)); }
+.cardmenu__play svg { width: calc(34 * var(--cm)); height: calc(34 * var(--cm)); min-width: 22px; min-height: 22px; }
+.cardmenu__pair { display: grid; grid-template-columns: 1fr 1fr; gap: calc(14 * var(--cm)); }
+.cardmenu__secondary { --tvs-bg: var(--surface); display: flex; align-items: center; justify-content: center; gap: calc(12 * var(--cm)); min-height: calc(56 * var(--cm)); padding: 0 calc(14 * var(--cm)); font-weight: 600; font-size: calc(17 * var(--cm)); text-align: center; border: 1px solid var(--divider); }
+.cardmenu__secondary svg { width: calc(28 * var(--cm)); height: calc(28 * var(--cm)); min-width: 20px; min-height: 20px; flex: none; }
+.cardmenu__rating { display: flex; align-items: center; justify-content: space-between; gap: calc(20 * var(--cm)); flex-wrap: wrap; border-top: 1px solid var(--divider); border-bottom: 1px solid var(--divider); padding: calc(12 * var(--cm)) 0; }
+.cardmenu__ratinglabel { color: var(--text-3); font-size: calc(18 * var(--cm)); font-weight: 500; }
+.cardmenu__ratingbtns { display: grid; grid-template-columns: 1fr 1fr; gap: calc(14 * var(--cm)); flex: 0 1 calc(520 * var(--cm)); min-width: 260px; }
+.cardmenu__rate { --tvs-bg: transparent; display: flex; align-items: center; justify-content: center; gap: calc(12 * var(--cm)); min-height: calc(52 * var(--cm)); font-weight: 600; font-size: calc(17 * var(--cm)); border: 1px solid var(--divider); }
+.cardmenu__rate[aria-pressed="true"] { border-color: var(--cyan); color: var(--cyan); }
+.cardmenu__rate svg { width: calc(28 * var(--cm)); height: calc(28 * var(--cm)); min-width: 20px; min-height: 20px; flex: none; }
+.cardmenu__list { display: flex; flex-direction: column; }
+.cardmenu__row { --tvs-bg: transparent; display: flex; align-items: center; gap: calc(26 * var(--cm)); width: 100%; min-height: calc(60 * var(--cm)); padding: 0 calc(16 * var(--cm)); font-weight: 500; font-size: calc(19 * var(--cm)); text-align: left; border-bottom: 1px solid var(--divider); }
+.cardmenu__row:last-child { border-bottom: 0; }
+.cardmenu__row svg { width: calc(30 * var(--cm)); height: calc(30 * var(--cm)); min-width: 22px; min-height: 22px; flex: none; }
+.cardmenu__row span { flex: 1; min-width: 0; }
+.cardmenu__row .cardmenu__chevron { flex: none; width: calc(36 * var(--cm)); height: calc(36 * var(--cm)); color: var(--text-2); }
+.cardmenu__row[data-destructive="true"] { color: var(--coral-text); }
+@media (max-width: 720px) {
+  .cardmenu { padding: 20px; gap: 16px; }
+  .cardmenu__top { gap: 16px; }
+  .cardmenu__poster { width: 96px; }
+  .cardmenu__main { padding-right: 0; gap: 8px; }
+  .cardmenu__title { font-size: 24px; margin-bottom: 0; }
+  .cardmenu__close { top: 12px; right: 12px; }
+  .cardmenu__play { min-height: 56px; font-size: 18px; }
+  .cardmenu__pair { grid-template-columns: 1fr; }
+  .cardmenu__secondary { min-height: 52px; font-size: 15px; }
+  .cardmenu__row { min-height: 56px; font-size: 17px; gap: 16px; }
+}
+/* These span (half of) the panel's width: the usual 8% grow on focus would push them past its edge. */
+.cardmenu__play, .cardmenu__secondary, .cardmenu__rate, .cardmenu__row { --tvs-scale: 1.02; }

@@ -10,8 +10,7 @@ Status: ⬜ not done · ✅ done (released or merged) · ➖ not needed there (s
 
 | Date | Change | Firestick | Phone |
 |---|---|---|---|
-
-Nothing is open right now: every web change is on both apps (the phone app's, and the Firestick's from 0.3.1, are merged and waiting for the next release where marked).
+| 2026-10-09 | Right-click / long-press poster menu redesigned: poster, title, In My List / Watched chips, big Play (or Resume), My List and Watched buttons, Like / Not for me rating, View details and Choose source rows, close button, blurred backdrop (`CardActionsMenu.tsx`) | ⬜ | ⬜ |
 
 ## Done on both
 

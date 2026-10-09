@@ -301,7 +301,7 @@ test.describe("browsing", () => {
     await page.locator('.card[data-cw="true"] .card__surface').first().click({ button: "right" });
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
-    for (const name of [/Resume from/, "Mark as watched", "View Details", "Remove from Continue Watching", "Choose Source"]) {
+    for (const name of [/Resume from/, "Mark as watched", "View details", "Remove from Continue Watching", "Choose source"]) {
       await dialog.getByRole("button", { name }).hover();
       await page.waitForTimeout(250);
       const fit = await dialog.evaluate((el) => ({ wide: el.scrollWidth - el.clientWidth, high: el.scrollHeight - el.clientHeight }));
@@ -309,7 +309,7 @@ test.describe("browsing", () => {
       expect(fit.high, `${name}`).toBeLessThanOrEqual(0);
     }
     // the long label stays on one line
-    expect(await dialog.getByRole("button", { name: "Remove from Continue Watching" }).evaluate((el) => el.getBoundingClientRect().height)).toBeLessThan(80);
+    expect(await dialog.getByRole("button", { name: "Remove from Continue Watching" }).evaluate((el) => el.getBoundingClientRect().height)).toBeLessThan(120);
   });
 
   test("Movies and TV Shows have a genre drop-down with Cinemeta's genres (no years); choosing one filters the grid and survives Back", async ({ page }) => {

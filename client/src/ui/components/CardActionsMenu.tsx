@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
-import { MdAdd, MdCheck, MdCheckCircle, MdDelete, MdInfo, MdList, MdOutlineCheckCircle, MdPlayArrow, MdThumbDown, MdThumbUp, MdOutlineThumbDown, MdOutlineThumbUp, MdVisibilityOff } from "react-icons/md";
+import { MdAdd, MdCheck, MdCheckCircle, MdChevronRight, MdClose, MdDelete, MdInfo, MdList, MdOutlineCheckBox, MdOutlineCheckCircle, MdPlayArrow, MdThumbDown, MdThumbUp, MdOutlineThumbDown, MdOutlineThumbUp, MdVisibilityOff } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import { formatElapsed } from "../../lib/format";
 import { routes } from "../../lib/routes";
@@ -68,40 +68,93 @@ export function CardActionsMenu() {
     go(last ? routes.player(providerId, content.type, content.id, season, episode, last) : routes.sources(providerId, content.type, content.id, season, episode));
   };
 
+  const typeLabel = content.type === "TV_SHOW" ? "TV show" : "Movie";
+  const continueWatchingRemoval =
+    progress && providerId
+      ? () => {
+          reportProgress({
+            providerId,
+            contentId: content.id,
+            contentType: content.type,
+            seasonNumber: progress.seasonNumber ?? null,
+            episodeNumber: progress.episodeNumber ?? null,
+            episodeTitle: progress.episodeTitle ?? null,
+            title: content.title,
+            posterUrl: content.posterUrl,
+            backdropUrl: content.backdropUrl,
+            positionMs: progress.positionMs,
+            durationMs: progress.durationMs,
+            completed: true,
+          });
+          close();
+        }
+      : null;
+
   return (
-    <div className="scrim" onMouseDown={(e) => e.target === e.currentTarget && close()} role="presentation">
-      <div className="dialog" role="dialog" aria-modal="true" aria-label={`Actions for ${content.title}`} data-spatial-trap="true">
-        <img className="dialog__poster" src={content.posterUrl ?? content.backdropUrl ?? undefined} alt="" referrerPolicy="no-referrer" />
-        <div className="dialog__body">
-          <div className="dialog__title clamp-2">{content.title}</div>
-          <Surface ref={first} className="actionrow" onClick={play}>
-            <MdPlayArrow />
-            {progress ? `Resume from ${formatElapsed(progress.positionMs)}` : "Play"}
-          </Surface>
-          <Surface
-            className="actionrow"
-            onClick={() => {
-              toggle(content);
-              close();
-            }}
-          >
-            {state.inList ? <MdCheck /> : <MdAdd />}
-            {state.inList ? "Remove from My List" : "Add to My List"}
-          </Surface>
-          <Surface
-            className="actionrow"
-            onClick={() => {
-              toggleWatched(content);
-              close();
-            }}
-          >
-            {state.watched ? <MdCheckCircle /> : <MdOutlineCheckCircle />}
-            {state.watched ? "Remove from Watched" : "Mark as watched"}
-          </Surface>
-          {hasPlus && content.type === "MOVIE" ? (
-            <>
+    <div className="scrim cardmenu__scrim" onMouseDown={(e) => e.target === e.currentTarget && close()} role="presentation">
+      <div className="cardmenu" role="dialog" aria-modal="true" aria-label={`Actions for ${content.title}`} data-spatial-trap="true">
+        <Surface className="cardmenu__close" radius="999px" ariaLabel="Close" onClick={close} clickSound="back">
+          <MdClose />
+        </Surface>
+
+        <div className="cardmenu__top">
+          <img className="cardmenu__poster" src={content.posterUrl ?? content.backdropUrl ?? undefined} alt="" referrerPolicy="no-referrer" />
+          <div className="cardmenu__main">
+            <div className="cardmenu__eyebrow">{typeLabel}</div>
+            <div className="cardmenu__title clamp-2">{content.title}</div>
+            {state.inList || state.watched ? (
+              <div className="cardmenu__chips">
+                {state.inList ? (
+                  <span className="cardmenu__chip">
+                    <MdCheck /> In My List
+                  </span>
+                ) : null}
+                {state.watched ? (
+                  <span className="cardmenu__chip">
+                    <MdCheck /> Watched
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
+            <Surface ref={first} className="cardmenu__play" radius="12px" onClick={play}>
+              <MdPlayArrow />
+              {progress ? `Resume from ${formatElapsed(progress.positionMs)}` : "Play"}
+            </Surface>
+            <div className="cardmenu__pair">
               <Surface
-                className="actionrow"
+                className="cardmenu__secondary"
+                radius="12px"
+                onClick={() => {
+                  toggle(content);
+                  close();
+                }}
+              >
+                {state.inList ? <MdOutlineCheckBox /> : <MdAdd />}
+                {state.inList ? "Remove from My List" : "Add to My List"}
+              </Surface>
+              <Surface
+                className="cardmenu__secondary"
+                radius="12px"
+                onClick={() => {
+                  toggleWatched(content);
+                  close();
+                }}
+              >
+                {state.watched ? <MdCheckCircle /> : <MdOutlineCheckCircle />}
+                {state.watched ? "Mark as unwatched" : "Mark as watched"}
+              </Surface>
+            </div>
+          </div>
+        </div>
+
+        {hasPlus && content.type === "MOVIE" ? (
+          <div className="cardmenu__rating">
+            <span className="cardmenu__ratinglabel">Your rating</span>
+            <div className="cardmenu__ratingbtns">
+              <Surface
+                className="cardmenu__rate"
+                radius="12px"
+                ariaPressed={feedback === "like"}
                 onClick={() => {
                   toggleFeedback(content, "like");
                   close();
@@ -111,7 +164,9 @@ export function CardActionsMenu() {
                 {feedback === "like" ? "Remove like" : "Like"}
               </Surface>
               <Surface
-                className="actionrow"
+                className="cardmenu__rate"
+                radius="12px"
+                ariaPressed={feedback === "dislike"}
                 onClick={() => {
                   toggleFeedback(content, "dislike");
                   close();
@@ -120,56 +175,42 @@ export function CardActionsMenu() {
                 {feedback === "dislike" ? <MdThumbDown /> : <MdOutlineThumbDown />}
                 {feedback === "dislike" ? "Remove “Not for me”" : "Not for me"}
               </Surface>
-            </>
-          ) : null}
+            </div>
+          </div>
+        ) : null}
+
+        <div className="cardmenu__list">
           {hasPlus && content.pickedForYou ? (
             <Surface
-              className="actionrow"
+              className="cardmenu__row"
+              radius="10px"
               onClick={() => {
                 dismissPick(content.id); // out of the row only: not a Like or Not for me, so it does not touch your taste profile
                 close();
               }}
             >
               <MdVisibilityOff />
-              Remove from Picked for you
+              <span>Remove from Picked for you</span>
             </Surface>
           ) : null}
           {providerId ? (
-            <Surface className="actionrow" onClick={() => go(routes.detail(providerId, content.type, content.id, content.title))}>
+            <Surface className="cardmenu__row" radius="10px" onClick={() => go(routes.detail(providerId, content.type, content.id, content.title))}>
               <MdInfo />
-              View Details
+              <span>View details</span>
+              <MdChevronRight className="cardmenu__chevron" />
             </Surface>
           ) : null}
-          {progress && providerId ? (
-            <Surface
-              className="actionrow"
-              dataAttrs={{ destructive: true }}
-              onClick={() => {
-                reportProgress({
-                  providerId,
-                  contentId: content.id,
-                  contentType: content.type,
-                  seasonNumber: progress.seasonNumber ?? null,
-                  episodeNumber: progress.episodeNumber ?? null,
-                  episodeTitle: progress.episodeTitle ?? null,
-                  title: content.title,
-                  posterUrl: content.posterUrl,
-                  backdropUrl: content.backdropUrl,
-                  positionMs: progress.positionMs,
-                  durationMs: progress.durationMs,
-                  completed: true,
-                });
-                close();
-              }}
-            >
+          {continueWatchingRemoval ? (
+            <Surface className="cardmenu__row" radius="10px" dataAttrs={{ destructive: true }} onClick={continueWatchingRemoval}>
               <MdDelete />
-              Remove from Continue Watching
+              <span>Remove from Continue Watching</span>
             </Surface>
           ) : null}
           {providerId ? (
-            <Surface className="actionrow" onClick={() => go(routes.sources(providerId, content.type, content.id, progress?.seasonNumber, progress?.episodeNumber, true))}>
+            <Surface className="cardmenu__row" radius="10px" onClick={() => go(routes.sources(providerId, content.type, content.id, progress?.seasonNumber, progress?.episodeNumber, true))}>
               <MdList />
-              Choose Source
+              <span>Choose source</span>
+              <MdChevronRight className="cardmenu__chevron" />
             </Surface>
           ) : null}
         </div>
