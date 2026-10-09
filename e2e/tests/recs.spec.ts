@@ -22,6 +22,8 @@ test.describe("Settings → Recommendations", () => {
     await expect(page.getByText("+20 points")).toBeVisible(); // 4 likes x 5
     await expect(page.getByText("−15 points")).toBeVisible(); // 3 Not for me x -5
     await expect(page.getByRole("heading", { name: "Why these were picked" })).toHaveCount(0); // that is shown on Home
+    await expect(page.getByText("Points are how much each title counts toward your taste. They are not a score.")).toBeVisible();
+    await expect(page.getByText(/Not enough yet/)).toHaveCount(0); // 7 ratings with likes: picks are on
 
     await page.getByRole("tab", { name: "Not for me (3)" }).click();
     await expect(page.getByText("The Conjuring")).toBeVisible();
@@ -32,6 +34,7 @@ test.describe("Settings → Recommendations", () => {
     await page.getByRole("button", { name: "Reset preferences" }).click();
     await page.getByRole("button", { name: "Yes, reset" }).click();
     await expect(page.getByRole("tab", { name: "Liked (0)" })).toBeVisible();
+    await expect(page.getByText(/Not enough yet/)).toBeVisible(); // nothing left to pick from, and the page says so
     await expect.poll(async () => ((await account.tv.get("/user/feedback?profileId=main")).body?.items ?? []).filter((i: { deletedAt?: string | null }) => !i.deletedAt).length).toBe(0);
   });
 });

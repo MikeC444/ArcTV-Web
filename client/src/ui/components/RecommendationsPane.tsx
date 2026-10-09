@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { MdCheck, MdChevronRight, MdClose, MdLock, MdOutlineThumbDown, MdOutlineThumbUp, MdRestartAlt, MdThumbDown, MdThumbUp, MdWorkspacePremium } from "react-icons/md";
 import { Link, useNavigate } from "react-router-dom";
 import { useHasPlus } from "../../state/plusAccess";
-import { SIGNAL_WEIGHTS } from "../../domain/recommend/config";
+import { INTERACTION_DETAIL_FETCH_LIMIT, MIN_INTERACTIONS_FOR_PERSONALISATION, SIGNAL_WEIGHTS } from "../../domain/recommend/config";
 import { routes } from "../../lib/routes";
 import { useFeedback, type FeedbackEntry } from "../../state/feedback";
 import { useMyList } from "../../state/myList";
@@ -62,6 +62,8 @@ function RecommendationsContent() {
   const saved = unrated.length - finished;
   const likePoints = rated.like.length * SIGNAL_WEIGHTS.like;
   const dislikePoints = rated.dislike.length * SIGNAL_WEIGHTS.dislike;
+  const signals = rated.like.length + rated.dislike.length + unrated.length;
+  const ready = signals >= MIN_INTERACTIONS_FOR_PERSONALISATION && rated.like.length + finished + saved > 0;
   const listPoints = finished * SIGNAL_WEIGHTS.completed + saved * SIGNAL_WEIGHTS.watchlist;
   const shown = rated[tab];
   const total = rated.like.length + rated.dislike.length;
@@ -109,21 +111,24 @@ function RecommendationsContent() {
         <section className="recs__card" aria-labelledby="recs-shapes">
           <h3 id="recs-shapes" className="t-title-md recs__h">What shapes your picks</h3>
           <ul className="recs__shapes">
-            <li><span className="recs__icon" aria-hidden="true"><MdOutlineThumbUp /></span><span><strong>Titles you like</strong> ({rated.like.length}): <span className="recs__pts" data-sign="plus">{points(likePoints)}</span><br /><span className="c-text-2">{SIGNAL_WEIGHTS.like} points each. Pull in more with similar genres, directors and cast.</span></span></li>
-            <li><span className="recs__icon" aria-hidden="true"><MdOutlineThumbDown /></span><span><strong>Titles marked Not for me</strong> ({rated.dislike.length}): <span className="recs__pts" data-sign="minus">{points(dislikePoints)}</span><br /><span className="c-text-2">{SIGNAL_WEIGHTS.dislike} points each. Push similar titles down, and they never come back as picks.</span></span></li>
-            <li><span className="recs__icon" aria-hidden="true"><MdChevronRight /></span><span><strong>Your My List and finished titles</strong> ({finished} finished, {saved} saved): <span className="recs__pts" data-sign="plus">{points(listPoints)}</span><br /><span className="c-text-2">{SIGNAL_WEIGHTS.completed} points for each finished, {SIGNAL_WEIGHTS.watchlist} for each saved, when you have not rated it.</span></span></li>
+            <li><span className="recs__icon" aria-hidden="true"><MdOutlineThumbUp /></span><span><strong>Titles you like</strong> ({rated.like.length}): <span className="recs__pts" data-sign="plus">{points(likePoints)}</span><br /><span className="c-text-2">{SIGNAL_WEIGHTS.like} points each, shared across the title's genres, directors and cast. Pulls in more like it.</span></span></li>
+            <li><span className="recs__icon" aria-hidden="true"><MdOutlineThumbDown /></span><span><strong>Titles marked Not for me</strong> ({rated.dislike.length}): <span className="recs__pts" data-sign="minus">{points(dislikePoints)}</span><br /><span className="c-text-2">{SIGNAL_WEIGHTS.dislike} points each, shared the same way. The title itself is never picked, and similar titles are pushed down.</span></span></li>
+            <li><span className="recs__icon" aria-hidden="true"><MdChevronRight /></span><span><strong>Your My List and finished titles</strong> ({finished} finished, {saved} saved): <span className="recs__pts" data-sign="plus">{points(listPoints)}</span><br /><span className="c-text-2">{SIGNAL_WEIGHTS.completed} points for each finished, {SIGNAL_WEIGHTS.watchlist} for each saved, when you have not rated it. Movies count as finished when you watch them to the end; mark a show as watched yourself.</span></span></li>
           </ul>
+          <p className="t-label-sm c-text-3 recs__note">Points are how much each title counts toward your taste. They are not a score.</p>
+          {signals > INTERACTION_DETAIL_FETCH_LIMIT ? <p className="t-label-sm c-text-3 recs__note">Only your {INTERACTION_DETAIL_FETCH_LIMIT} strongest ratings and saves are used for your picks right now.</p> : null}
+          {!ready ? <p className="t-label-sm c-text-3 recs__note">Not enough yet: your picks start once you have at least {MIN_INTERACTIONS_FOR_PERSONALISATION} titles you like, finished, saved or marked Not for me, and at least one of them liked, finished or saved. Until then Home shows popular titles.</p> : null}
         </section>
       </div>
 
       <section className="recs__card" aria-labelledby="recs-how">
         <h3 id="recs-how" className="t-title-md recs__h">How it works</h3>
         <ol className="recs__steps">
-          <li><strong>It learns your taste.</strong> Every movie or show you like, finish or save counts toward the genres, directors and cast you enjoy. A Like counts most. Not for me counts against.</li>
+          <li><strong>It learns your taste.</strong> Every movie or show you like, finish or save adds points toward the genres, directors and cast you enjoy. A Like counts most, and Not for me counts against.</li>
           <li><strong>It scores what is on offer.</strong> Titles from your Home rows are compared with your taste, mostly on genre, then on director and cast. Titles you have already finished, rated or are watching are left out.</li>
           <li><strong>It shows a spread.</strong> Your strongest matches stay, and the rest of the row follows your mix of tastes, so a smaller taste still gets its share.</li>
           <li><strong>It changes when you refresh.</strong> Most of the row is different next time, and no single title of yours can explain too many picks.</li>
-          <li><strong>It explains itself.</strong> The line under each pick names the title behind it, and nothing is made up: with no real match there is no reason shown.</li>
+          <li><strong>It explains itself.</strong> The line under most picks names the title behind it. A few say "More from directors you enjoy" instead, and with no real match no reason is shown.</li>
         </ol>
         <p className="t-label-sm c-text-3" style={{ margin: "10px 0 0" }}>Shows and movies both count. The ranking is only for ordering your row: it is not a rating or a percentage.</p>
       </section>
@@ -132,7 +137,7 @@ function RecommendationsContent() {
         <span className="recs__icon" aria-hidden="true"><MdRestartAlt /></span>
         <div style={{ flex: "1 1 240px", minWidth: 0 }}>
           <h3 id="recs-reset" className="t-title-md recs__h" style={{ margin: 0 }}>Reset preferences</h3>
-          <p className="t-body-sm c-text-2" style={{ margin: "2px 0 0" }}>Start fresh. Clears every Like and Not for me on this profile ({total} now). My List and watch history stay.</p>
+          <p className="t-body-sm c-text-2" style={{ margin: "2px 0 0" }}>Clears every Like and Not for me on this profile ({total} now). Your picks still use your My List and finished titles, and titles you removed from the row stay removed.</p>
         </div>
         {confirming ? (
           <div className="recs__confirm" role="group" aria-label="Confirm reset">

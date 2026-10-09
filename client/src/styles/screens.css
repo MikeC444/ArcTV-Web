@@ -690,3 +690,4 @@
 .recs__pts { font-weight: 800; color: var(--text); }
 .recs__pts[data-sign="plus"] { color: var(--cyan); }
 .recs__pts[data-sign="minus"] { color: var(--coral-text); }
+.recs__note { margin: 14px 0 0; }
