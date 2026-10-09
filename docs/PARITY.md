@@ -12,7 +12,6 @@ Status: ⬜ not done · ✅ done (released or merged) · ➖ not needed there (s
 |---|---|---|---|
 | 2026-10-09 | **Home rows: Popular, New, Top rated, nine genres, a different page each day, seen titles hidden** (details below) | ⬜ | ⬜ |
 | 2026-10-09 | **Home Rows order:** New and Top rated sit above rows someone already chose, until they place them in Settings > Home Rows | ⬜ | ⬜ |
-| 2026-10-07 | Plus list: the bigger stream relay allowance is removed; the promo names only what is live | ✅ (never had it) | ⬜ check |
 
 ### Notes on the open items
 
@@ -24,6 +23,7 @@ Status: ⬜ not done · ✅ done (released or merged) · ➖ not needed there (s
 
 | Date | Change | Firestick | Phone |
 |---|---|---|---|
+| 2026-10-07 | Plus list: the bigger stream relay allowance is removed; the promo names only what is live | ➖ never had it | ➖ never had it (checked) |
 | 2026-10-07 | Smart source picking (Plus), switch in the Plus settings tab, plain loading screen while it decides | ✅ 0.3.0 | ✅ merged, not released |
 | 2026-10-07 | Your stats (Plus): headline total, week chip, 13-week grid, movies-or-shows split, busiest day; glowing bars | ✅ 0.3.0 | ✅ merged, not released |
 | 2026-10-07 | Plus settings tab and locked Your stats / Plus settings rows with a glowing Plus tag | ✅ 0.3.0 | ✅ merged, not released |
