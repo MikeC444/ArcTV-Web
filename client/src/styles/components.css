@@ -417,9 +417,9 @@
 .cardmenu { position: relative; width: min(calc(600 * var(--cm)), 100%); max-height: 92vh; overflow-y: auto; overflow-x: hidden; background: var(--bg-elevated); border: 1px solid var(--divider); border-radius: calc(28 * var(--cm)); padding: calc(40 * var(--cm)) calc(32 * var(--cm)) calc(24 * var(--cm)); box-shadow: 0 28px 80px rgba(0, 0, 0, 0.65); display: flex; flex-direction: column; gap: calc(18 * var(--cm)); }
 .cardmenu__close { position: absolute; top: calc(18 * var(--cm)); right: calc(18 * var(--cm)); width: calc(44 * var(--cm)); height: calc(44 * var(--cm)); min-width: 40px; min-height: 40px; --tvs-bg: transparent; display: flex; align-items: center; justify-content: center; z-index: 1; }
 .cardmenu__close svg { width: calc(26 * var(--cm)); height: calc(26 * var(--cm)); min-width: 20px; min-height: 20px; }
-.cardmenu__top { display: flex; gap: calc(26 * var(--cm)); align-items: center; padding-right: calc(24 * var(--cm)); }
+.cardmenu__top { display: flex; gap: calc(26 * var(--cm)); align-items: center; justify-content: center; padding: 0 calc(24 * var(--cm)); }
 .cardmenu__poster { width: calc(150 * var(--cm)); min-width: 90px; aspect-ratio: 2 / 3; object-fit: cover; border-radius: calc(12 * var(--cm)); flex: none; background: var(--surface-high); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
-.cardmenu__title { flex: 1; min-width: 0; font-weight: 700; font-size: calc(32 * var(--cm)); line-height: 1.15; }
+.cardmenu__title { flex: 0 1 auto; min-width: 0; font-weight: 700; font-size: calc(32 * var(--cm)); line-height: 1.15; }
 .cardmenu__play { --tvs-bg: color-mix(in srgb, var(--cyan) 62%, #fff); color: #04161a; display: flex; align-items: center; justify-content: center; gap: calc(12 * var(--cm)); width: 100%; min-height: calc(76 * var(--cm)); font-weight: 700; font-size: calc(26 * var(--cm)); }
 .cardmenu__play svg { width: calc(40 * var(--cm)); height: calc(40 * var(--cm)); min-width: 24px; min-height: 24px; }
 .cardmenu__grid { display: grid; grid-template-columns: 1fr 1fr; gap: calc(14 * var(--cm)); }
