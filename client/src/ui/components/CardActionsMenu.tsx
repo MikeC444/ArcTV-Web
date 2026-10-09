@@ -31,6 +31,9 @@ export function CardActionsMenu() {
   const dismissPick = usePickedDismissed((s) => s.dismiss);
   const first = useRef<HTMLElement>(null);
   const [logoFailed, setLogoFailed] = useState(false);
+  const [note, setNote] = useState(""); // what the last button press did, read out to screen readers (the buttons show it too)
+
+  useEffect(() => setNote(""), [content]);
 
   useEffect(() => {
     if (!content) return;
@@ -98,6 +101,8 @@ export function CardActionsMenu() {
           <MdClose />
         </Surface>
 
+        <div className="sr-only" role="status" aria-live="polite">{note}</div>
+
         {content.backdropUrl ? (
           <div className="cardmenu__banner">
             <img className="cardmenu__backdrop" src={sharpBackdrop(content.backdropUrl) ?? content.backdropUrl} alt="" referrerPolicy="no-referrer" />
@@ -125,21 +130,23 @@ export function CardActionsMenu() {
             className="cardmenu__secondary"
             radius="12px"
             ariaLabel={state.inList ? "Remove from My List" : "Add to My List"}
+            dataAttrs={{ on: state.inList }}
             onClick={() => {
               toggle(content);
-              close();
+              setNote(state.inList ? "Removed from My List" : "Added to My List");
             }}
           >
             {state.inList ? <MdCheck /> : <MdAdd />}
-            {state.inList ? "My List" : "Add to My List"}
+            {state.inList ? "In My List" : "Add to My List"}
           </Surface>
           <Surface
             className="cardmenu__secondary"
             radius="12px"
             ariaLabel={state.watched ? "Mark as unwatched" : "Mark as watched"}
+            dataAttrs={{ on: state.watched }}
             onClick={() => {
               toggleWatched(content);
-              close();
+              setNote(state.watched ? "Marked as unwatched" : "Marked as watched");
             }}
           >
             {state.watched ? <MdCheck /> : <MdOutlineCheckCircle />}
@@ -152,9 +159,10 @@ export function CardActionsMenu() {
                 radius="12px"
                 ariaPressed={feedback === "like"}
                 ariaLabel={feedback === "like" ? "Remove like" : "Like"}
+                dataAttrs={{ on: feedback === "like" }}
                 onClick={() => {
                   toggleFeedback(content, "like");
-                  close();
+                  setNote(feedback === "like" ? "Like removed" : "Liked");
                 }}
               >
                 {feedback === "like" ? <MdThumbUp /> : <MdOutlineThumbUp />}
@@ -165,9 +173,10 @@ export function CardActionsMenu() {
                 radius="12px"
                 ariaPressed={feedback === "dislike"}
                 ariaLabel={feedback === "dislike" ? "Remove “Not for me”" : "Not for me"}
+                dataAttrs={{ on: feedback === "dislike" }}
                 onClick={() => {
                   toggleFeedback(content, "dislike");
-                  close();
+                  setNote(feedback === "dislike" ? "Not for me removed" : "Marked Not for me");
                 }}
               >
                 {feedback === "dislike" ? <MdThumbDown /> : <MdOutlineThumbDown />}

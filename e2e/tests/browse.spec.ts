@@ -233,6 +233,10 @@ test.describe("browsing", () => {
     await expect(dialog).toBeVisible();
     await expect(dialog.getByRole("button", { name: /Resume from 25m/ })).toBeVisible();
     await dialog.getByRole("button", { name: "Mark as watched" }).click();
+    await expect(dialog).toBeVisible(); // the menu stays open, and the button shows it was pressed
+    await expect(dialog.getByRole("button", { name: "Mark as unwatched" })).toHaveAttribute("data-on", "true");
+    await expect(dialog.getByRole("button", { name: "Mark as unwatched" })).toContainText("Watched");
+    await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
     await expect(page.locator(".card__watched").first()).toBeVisible();
     await cw.click({ button: "right" });
