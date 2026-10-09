@@ -21,7 +21,7 @@ describe("/api/admin (developer panel proxy)", () => {
 
   it("forwards the three read-only views, with the search and paging", async () => {
     const { backend, client } = await signedIn();
-    expect((await client.get("/api/admin/summary")).body).toMatchObject({ users: 3, versions: [{ version: "0.1.7" }] });
+    expect((await client.get("/api/admin/summary")).body).toMatchObject({ users: 3, versions: [{ version: "0.1.7" }], live: { online: { users: 3 }, watching: { users: 1 } } });
     const list = await client.get("/api/admin/users?q=sam&limit=20&offset=40");
     expect(list.body.total).toBe(1);
     const call = backend.calls.find((c) => c.path === "/admin/users")!;

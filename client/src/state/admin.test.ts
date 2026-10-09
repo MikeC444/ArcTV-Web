@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { timeAgo } from "../lib/format";
-import { adminUsersQuery, filtersActive, newestVersion, NO_FILTERS } from "./admin";
+import { adminUsersQuery, filtersActive, newestVersion, NO_FILTERS, platformSplit, windowLabel } from "./admin";
 
 describe("newestVersion", () => {
   it("compares dotted numbers properly and ignores web / unknown", () => {
@@ -31,5 +31,19 @@ describe("user list filters", () => {
     const f = { ...NO_FILTERS, q: "sam", plan: "free" as const, device: "fire_tv|0.1.7", seen: "7d" as const };
     expect(filtersActive(f)).toBe(true);
     expect(adminUsersQuery(f, 50, 100)).toBe("q=sam&plan=free&device=fire_tv%7C0.1.7&seen=7d&limit=50&offset=100");
+  });
+});
+
+describe("live counts", () => {
+  it("writes a platform split biggest first, and nothing when nobody", () => {
+    const name = (p: string) => (p === "fire_tv" ? "Fire TV" : p === "web" ? "Web" : p);
+    expect(platformSplit({ web: 1, fire_tv: 3 }, name)).toBe("Fire TV 3 · Web 1");
+    expect(platformSplit({ web: 0 }, name)).toBe("");
+    expect(platformSplit({}, name)).toBe("");
+  });
+  it("names the windows plainly", () => {
+    expect(windowLabel(300)).toBe("5 minutes");
+    expect(windowLabel(45)).toBe("45 seconds");
+    expect(windowLabel(60)).toBe("1 minute");
   });
 });

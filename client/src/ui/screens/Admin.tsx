@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MdClear, MdClose, MdExpandMore, MdRefresh } from "react-icons/md";
 import { formatElapsed, formatWatched, pluralize, timeAgo } from "../../lib/format";
-import { fetchAdminSummary, fetchAdminUser, fetchAdminUsers, fetchTorrentIntroAcks, filtersActive, newestVersion, NO_FILTERS, type AdminDevice, type ExternalPlayerEvent, type FeatureIntroAcks, type AdminFilters, type AdminSummary, type AdminUserDetail, type AdminUserRow } from "../../state/admin";
+import { fetchAdminSummary, platformSplit, windowLabel, fetchAdminUser, fetchAdminUsers, fetchTorrentIntroAcks, filtersActive, newestVersion, NO_FILTERS, type AdminDevice, type ExternalPlayerEvent, type FeatureIntroAcks, type AdminFilters, type AdminSummary, type AdminUserDetail, type AdminUserRow } from "../../state/admin";
 import { MangoButton } from "../components/Buttons";
 import { Spinner } from "../components/States";
 
 const PAGE = 50;
 const REFRESH_MS = 30_000;
-const platformName = (p: string) => (p === "fire_tv" ? "Fire TV" : p === "web" ? "Web" : p === "android_tv" ? "Android TV" : p);
+const platformName = (p: string) => (p === "fire_tv" ? "Fire TV" : p === "web" ? "Web" : p === "android_tv" ? "Android TV" : p === "android_mobile" ? "Phone" : p);
 /** "Fire TV 0.1.7", or just "Web" for the web app. */
 const deviceLabel = (d: Pick<AdminDevice, "appVersion" | "platform">) => (d.appVersion === "web" || d.platform === "web" ? "Web" : `${platformName(d.platform)} ${d.appVersion ?? "unknown"}`);
 const sxe = (s: number | null, e: number | null) => (s != null && e != null ? ` S${s} E${e}` : "");
@@ -103,11 +103,23 @@ export function AdminScreen() {
 
       {summary ? (
         <section className="admin__stats page__pad" aria-label="Summary">
+          {summary.live ? (
+            <>
+              <Stat label="Online now" value={summary.live.online.users} note={platformSplit(summary.live.online.byPlatform, platformName) || "Nobody"} live />
+              <Stat label="Watching now" value={summary.live.watching.users} note={platformSplit(summary.live.watching.byPlatform, platformName) || "Nobody"} live />
+            </>
+          ) : null}
           <Stat label="Users" value={summary.users} />
           <Stat label="Active, last 7 days" value={summary.activeLast7Days} />
           <Stat label="New, last 7 days" value={summary.newLast7Days} />
           <Stat label="Plus" value={summary.plus.monthly + summary.plus.yearly + summary.plus.lifetime} note={`${summary.plus.monthly} monthly · ${summary.plus.yearly} yearly · ${summary.plus.lifetime} lifetime`} />
         </section>
+      ) : null}
+
+      {summary?.live ? (
+        <p className="t-label-md c-text-3 page__pad" style={{ margin: "8px 0 0" }}>
+          Online now: used ArcTV in the last {windowLabel(summary.live.onlineWindowSeconds)} (an idle app drops out). Watching now: saved playback progress in the last {windowLabel(summary.live.watchingWindowSeconds)}. People, not devices; counts only.
+        </p>
       ) : null}
 
       {summary && summary.versions.length > 0 ? (
@@ -181,9 +193,9 @@ export function AdminScreen() {
   );
 }
 
-function Stat({ label, value, note }: { label: string; value: number; note?: string }) {
+function Stat({ label, value, note, live }: { label: string; value: number; note?: string; live?: boolean }) {
   return (
-    <div className="admin__stat">
+    <div className="admin__stat" data-live={live ? "true" : undefined}>
       <div className="t-label-md c-text-3">{label}</div>
       <div className="admin__statvalue">{value}</div>
       {note ? <div className="t-label-sm c-text-2">{note}</div> : null}

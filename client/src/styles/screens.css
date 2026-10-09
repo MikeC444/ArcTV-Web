@@ -691,3 +691,5 @@
 .recs__pts[data-sign="plus"] { color: var(--cyan); }
 .recs__pts[data-sign="minus"] { color: var(--coral-text); }
 .recs__note { margin: 14px 0 0; }
+.admin__stat[data-live="true"] { border: 1px solid color-mix(in srgb, var(--cyan) 35%, transparent); }
+.admin__stat[data-live="true"] .admin__statvalue { color: var(--cyan); }

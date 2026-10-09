@@ -7,6 +7,27 @@ export interface AdminDevice {
   appVersion: string | null;
   lastSeenAt: string | null;
 }
+/** People using ArcTV right now: distinct accounts, in total and per platform. */
+export interface LiveCount {
+  users: number;
+  byPlatform: Record<string, number>;
+}
+export interface LiveSummary {
+  online: LiveCount;
+  watching: LiveCount;
+  onlineWindowSeconds: number;
+  watchingWindowSeconds: number;
+}
+/** "Fire TV 2 · Web 1" for a platform split, biggest first; empty when nobody. */
+export const platformSplit = (byPlatform: Record<string, number>, name: (platform: string) => string): string =>
+  Object.entries(byPlatform)
+    .filter(([, n]) => n > 0)
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([platform, n]) => `${name(platform)} ${n}`)
+    .join(" · ");
+/** "5 minutes", "45 seconds". */
+export const windowLabel = (seconds: number): string => (seconds >= 120 && seconds % 60 === 0 ? `${seconds / 60} minutes` : seconds === 60 ? "1 minute" : `${seconds} seconds`);
+
 export interface AdminSummary {
   users: number;
   newLast7Days: number;
@@ -15,6 +36,8 @@ export interface AdminSummary {
   versions: Array<{ version: string; platform: string; devices: number }>;
   /** Absent from a backend that predates it. */
   externalPlayer?: ExternalPlayerSummary;
+  /** Absent from a backend that predates it. */
+  live?: LiveSummary;
 }
 export interface ExternalPlayerEvent {
   title: string | null;
