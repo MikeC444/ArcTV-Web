@@ -92,9 +92,16 @@ export async function signIn(context: BrowserContext, email: string, password = 
   expect(response.status(), await response.text()).toBe(200);
 }
 
-export async function openSignedIn(page: Page, account: TestAccount, path = "/") {
+/** The id of the current "What's new in ArcTV Plus" popup (client/src/state/plusWhatsNew.ts). */
+export const WHATS_NEW_ID = "2026-10-recommendations";
+
+/** `whatsNew: true` leaves the one-time "What's new in ArcTV Plus" popup to appear; by default it is marked seen so it never gets in a test's way. */
+export async function openSignedIn(page: Page, account: TestAccount, path = "/", options: { whatsNew?: boolean } = {}) {
   await useClientIp(page.context());
   await signIn(page.context(), account.email);
+  if (!options.whatsNew) {
+    await page.addInitScript(([key, id]) => localStorage.setItem(key!, JSON.stringify({ seen: id })), [`mtv:v1:${account.tv.userId}:plus-whatsnew`, WHATS_NEW_ID]);
+  }
   await page.goto(path);
 }
 

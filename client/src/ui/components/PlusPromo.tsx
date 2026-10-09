@@ -1,11 +1,12 @@
-import { useEffect, useRef, useState } from "react";
-import { MdArrowForward, MdClose, MdFavorite, MdGroups, MdWorkspacePremium } from "react-icons/md";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { MdArrowForward, MdClose, MdFavorite, MdGroups, MdLiveTv, MdStars, MdVisibilityOff, MdWorkspacePremium } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import { routes } from "../../lib/routes";
 import { useAuth } from "../../state/auth";
 import { usePlus } from "../../state/plus";
 import { activeProfileOf, useProfiles } from "../../state/profiles";
 import { promoDue, usePlusPromo } from "../../state/plusPromo";
+import { usePlusWhatsNew, whatsNewDue } from "../../state/plusWhatsNew";
 import { MangoLogo } from "./Logo";
 import { Surface } from "./Surface";
 
@@ -57,7 +58,24 @@ export function PlusPromo({ enabled }: { enabled: boolean }) {
   return <PromoDialog onClose={close} onNever={never} onGo={go} />;
 }
 
-export function PromoDialog({ onClose, onNever, onGo }: { onClose(): void; onNever(): void; onGo(): void }) {
+export interface PromoContent {
+  title: string;
+  subtitle: string;
+  benefits: Array<{ icon: ReactNode; title: string; detail: string }>;
+  goLabel: string;
+  hint: string;
+}
+
+const PLUS_INVITATION: PromoContent = {
+  title: "Get more from every movie night.",
+  subtitle: "Everything you use today stays free. ArcTV Plus adds extras on top.",
+  benefits: BENEFITS,
+  goLabel: "Take me there",
+  hint: "Explore plans in Settings → ArcTV Plus",
+};
+
+/** The Plus popup's look, with its words passed in. Without `onNever` there is no "Don't show me again" link (a one-time announcement needs none). */
+export function PromoDialog({ onClose, onNever, onGo, content = PLUS_INVITATION }: { onClose(): void; onNever?: () => void; onGo(): void; content?: PromoContent }) {
   const first = useRef<HTMLElement>(null);
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -84,10 +102,10 @@ export function PromoDialog({ onClose, onNever, onGo }: { onClose(): void; onNev
           <MangoLogo size={26} />
           <span className="promo__plus">PLUS</span>
         </div>
-        <h2 id="promo-title" className="promo__title">Get more from every movie night.</h2>
-        <p className="promo__sub">Everything you use today stays free. ArcTV Plus adds extras on top.</p>
+        <h2 id="promo-title" className="promo__title">{content.title}</h2>
+        <p className="promo__sub">{content.subtitle}</p>
         <ul className="promo__list">
-          {BENEFITS.map((b) => (
+          {content.benefits.map((b) => (
             <li key={b.title} className="promo__item">
               <span className="promo__icon" aria-hidden="true">{b.icon}</span>
               <span>
@@ -99,17 +117,66 @@ export function PromoDialog({ onClose, onNever, onGo }: { onClose(): void; onNev
         </ul>
         <div className="promo__actions">
           <Surface ref={first} className="promo__btn promo__btn--go" onClick={onGo}>
-            Take me there <MdArrowForward />
+            {content.goLabel} <MdArrowForward />
           </Surface>
           <Surface className="promo__btn promo__btn--close" onClick={onClose} clickSound="back">
             Close
           </Surface>
         </div>
-        <p className="promo__hint">Explore plans in Settings → ArcTV Plus</p>
-        <Surface className="promo__never" onClick={onNever} clickSound="back">
-          Don't show me again
-        </Surface>
+        <p className="promo__hint">{content.hint}</p>
+        {onNever ? (
+          <Surface className="promo__never" onClick={onNever} clickSound="back">
+            Don't show me again
+          </Surface>
+        ) : null}
       </div>
     </div>
   );
+}
+
+const WHATS_NEW: PromoContent = {
+  title: "New in ArcTV Plus.",
+  subtitle: "Your picks just got smarter, and you can see why.",
+  benefits: [
+    { icon: <MdStars />, title: "Your recommendations", detail: "See what you have liked and what shapes your picks. Remove a title or start fresh any time." },
+    { icon: <MdLiveTv />, title: "TV shows in Picked for you", detail: "Shows you like, save or finish now shape your row, and shows can be picked too." },
+    { icon: <MdVisibilityOff />, title: "Remove a pick for 5 days", detail: "It stays away on every device, then it is up to the algorithm whether it comes back." },
+  ],
+  goLabel: "See what's new",
+  hint: "Find it in Settings → Recommendations",
+};
+
+/**
+ * A one-time "What's new" note for ArcTV Plus members, a few seconds after landing on Home. Close or "See what's new" both mean it has been
+ * seen, and it does not come back (a future announcement gets a new id). Not for kids profiles.
+ */
+export function PlusWhatsNew({ enabled }: { enabled: boolean }) {
+  const signedIn = useAuth((s) => s.status === "signedIn");
+  const hasPlus = usePlus((s) => s.active);
+  const adult = useProfiles((s) => !(s.plus && activeProfileOf(s)?.kind === "kids"));
+  const ready = usePlusWhatsNew((s) => s.userId !== null && whatsNewDue(s));
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const eligible = enabled && signedIn && hasPlus && adult && ready;
+
+  useEffect(() => {
+    if (!eligible) return undefined;
+    const timer = window.setTimeout(() => {
+      usePlusWhatsNew.getState().markShown();
+      setOpen(true);
+    }, SHOW_AFTER_MS);
+    return () => window.clearTimeout(timer);
+  }, [eligible]);
+
+  if (!open || !enabled || !hasPlus) return null;
+
+  const close = () => {
+    setOpen(false);
+    usePlusWhatsNew.getState().markSeen();
+  };
+  const go = () => {
+    close();
+    navigate(routes.settings("recommendations"));
+  };
+  return <PromoDialog onClose={close} onGo={go} content={WHATS_NEW} />;
 }
