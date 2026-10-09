@@ -2,7 +2,7 @@ import type { HomeRowPreferences, HomeSection } from "./types";
 
 /** Rows keep the addon's order unless the user has reordered them; unranked rows sink below these well-known names. */
 const DEFAULT_ROW_PRIORITY = [
-  "featured", "popular", "trending", "trending now", "new releases", "top 10 movies", "top 10 tv shows", "recently added",
+  "popular", "new", "top rated", "featured", "trending", "trending now", "new releases", "top 10 movies", "top 10 tv shows", "recently added",
   "action", "comedy", "horror", "romance", "thriller", "drama", "sci-fi", "science fiction", "fantasy", "mystery", "crime",
   "family", "kids", "children", "anime", "animation", "documentary", "music", "musical", "adventure",
 ];

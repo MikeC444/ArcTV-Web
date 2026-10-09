@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { applyRowOrder, dedupeRows } from "../domain/homeRows";
+import { dayStamp } from "../domain/homeVariety";
 import { useProviders } from "../domain/registry";
-import type { CatalogProvider } from "../domain/provider";
+import { setHomeVarietySeed, type CatalogProvider } from "../domain/provider";
 import { pickHeroTitles } from "../domain/heroPool";
 import type { Content, HomeSection } from "../domain/types";
 import { distinctBy } from "../lib/format";
@@ -9,7 +10,8 @@ import { withoutBlocked } from "../domain/blockedGenres";
 import { useBlockedSet } from "./blockedGenres";
 import { useAuth } from "./auth";
 import { useContinueWatching, type ContinueWatchingEntry } from "./continueWatching";
-import { sectionWithWatched, useAddonsReady, useWatchedIds } from "./hooks";
+import { useFeedback } from "./feedback";
+import { sectionWithWatched, useAddonsReady, useSavedIds, useWatchedIds } from "./hooks";
 import { readJson, writeJson } from "./persist";
 import { libraryKey } from "./profile";
 import { useSettings } from "./settings";
@@ -80,6 +82,8 @@ export function useHome(): { state: HomeState; reload(): void; ready: boolean } 
   const prefs = useSettings((s) => s.homeRows);
   const cw = useContinueWatching((s) => s.items);
   const watchedIds = useWatchedIds();
+  const savedIds = useSavedIds();
+  const feedbackEntries = useFeedback((s) => s.entries);
   const blocked = useBlockedSet();
 
   const [raw, setRaw] = useState<HomeSection[]>([]);
@@ -104,6 +108,8 @@ export function useHome(): { state: HomeState; reload(): void; ready: boolean } 
   useEffect(() => {
     const gen = ++generation.current;
     if (!addonsReady) return;
+    // Today's draw for the catalogue rows: the same all day for this account, different tomorrow (see domain/homeVariety.ts).
+    setHomeVarietySeed(`${userId ?? "guest"}|${dayStamp()}`);
     setComplete(false);
     if (providers.length === 0) {
       if (!cacheOnly) {
@@ -151,7 +157,11 @@ export function useHome(): { state: HomeState; reload(): void; ready: boolean } 
   const state = useMemo<HomeState>(() => {
     if (!fetched || !addonsReady) return { kind: "loading" };
     const rawSections = blocked.size ? raw.map((s) => ({ ...s, items: withoutBlocked(s.items, blocked) })).filter((s) => s.items.length > 0) : raw;
-    const visible = dedupeRows(applyRowOrder(rawSections, prefs).filter((s) => !prefs.hiddenRowIds.includes(s.id))).map((s) => sectionWithWatched(s, watchedIds));
+    // Catalogue rows leave out what the person has already dealt with: watched, saved to My List, or rated (Like / Not for me). They stay in
+    // My List and Continue Watching, and still count for Picked for you.
+    const seen = (id: string) => watchedIds.has(id) || savedIds.has(id) || id in feedbackEntries;
+    const unseen = rawSections.map((s) => ({ ...s, items: s.items.filter((c) => !seen(c.id)) })).filter((s) => s.items.length > 0);
+    const visible = dedupeRows(applyRowOrder(unseen, prefs).filter((s) => !prefs.hiddenRowIds.includes(s.id))).map((s) => sectionWithWatched(s, watchedIds));
     const cwEntries = cw; // everything you have started is listed, even when a catalogue row shows the same title
     const cwSection: HomeSection | null = cwEntries.length ? { id: CONTINUE_WATCHING_ROW_ID, title: "Continue Watching", style: "CONTINUE_WATCHING", items: cwEntries.map(entryToContent).map((c) => (watchedIds.has(c.id) ? { ...c, watched: true } : c)) } : null;
     const sections = [...(cwSection ? [cwSection] : []), ...visible];
@@ -172,7 +182,7 @@ export function useHome(): { state: HomeState; reload(): void; ready: boolean } 
     if (hero.length > 0 || sections.length > 0) return { kind: "success", hero, sections, pool: recommendationPool };
     if (failed) return { kind: "error", message: "Couldn't reach your installed addons. Check your connection and try again." };
     return { kind: "empty" };
-  }, [fetched, addonsReady, raw, prefs, blocked, cw, watchedIds, cacheOnly, failed, complete]);
+  }, [fetched, addonsReady, raw, prefs, blocked, cw, watchedIds, savedIds, feedbackEntries, cacheOnly, failed, complete]);
 
   return { state, reload: () => setReloadTick((t) => t + 1), ready: fetched && !cacheOnly };
 }

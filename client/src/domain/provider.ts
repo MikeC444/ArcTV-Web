@@ -1,3 +1,4 @@
+import { homeGenresFor, pickPage, varyOrder } from "./homeVariety";
 import { featuresFromMeta, type Features } from "./recommend/features";
 import { distinctBy, interleave } from "../lib/format";
 import { AddonHttpError, describeAddonError, fetchCatalog, fetchMeta, fetchStreams } from "./stremio/client";
@@ -41,6 +42,15 @@ export interface CatalogProvider {
   getFeatures?(type: ContentType, id: string): Promise<Features | null>;
 }
 
+/** Set by Home before it fetches (account + day), so the rows draw the same pages and order all day and a different mix tomorrow. */
+let varietySeed = "";
+export const setHomeVarietySeed = (seed: string): void => {
+  varietySeed = seed;
+};
+/** Chance of reading page 1, 2 or 3 (100 titles each) of a ranking today: mostly the top, sometimes deeper. New releases go stale faster, so only two pages. */
+const PAGE_WEIGHTS = [5, 3, 2];
+const NEW_PAGE_WEIGHTS = [6, 4];
+
 const SUPPORTED_CATALOG_TYPES = new Set(["movie", "series"]);
 /** Safety ceiling against a pathological addon declaring hundreds of genres (not a curation mechanism). */
 const MAX_GENRE_ROWS = 30;
@@ -81,7 +91,44 @@ export class StremioAddonProvider implements CatalogProvider {
     this.supported = manifest.catalogs.filter((catalog) => SUPPORTED_CATALOG_TYPES.has(catalog.type));
   }
 
+  /** Cinemeta's shape: a Popular ("top"), a New ("year", filtered by year) and a Top rated ("imdbRating") ranking, for movies and series. */
+  private get isRankedStyle(): boolean {
+    const ids = new Set(this.supported.map((c) => c.id));
+    return ids.has("top") && ids.has("year") && ids.has("imdbRating");
+  }
+
+  /**
+   * Home for a Cinemeta-style addon: Popular, then New, then Top rated (each movies and series together, drawn from a different page each day
+   * and gently reshuffled, see homeVariety.ts), then only the genres with wide appeal. Other addons keep the one-merged-row-plus-every-genre layout.
+   */
+  private async *rankedHomeSections(): AsyncGenerator<HomeSection[], void, void> {
+    const byId = (id: string) => this.supported.filter((c) => c.id === id);
+    const fetches: Array<() => Promise<HomeSection | null>> = [];
+    const top = byId("top");
+    fetches.push(() => this.fetchVariedSection(top, top.map((c) => c.name).find((n): n is string => !!n) ?? "Popular", {}, "base", PAGE_WEIGHTS));
+    const yearCatalogs = byId("year");
+    const years = [...new Set(yearCatalogs.flatMap((c) => genreExtra(c)?.options ?? []).filter(isYear))];
+    const thisYear = String(new Date().getFullYear());
+    const year = years.includes(thisYear) ? thisYear : years[0];
+    if (year) fetches.push(() => this.fetchVariedSection(yearCatalogs, "New", { genre: year }, "new", NEW_PAGE_WEIGHTS));
+    fetches.push(() => this.fetchVariedSection(byId("imdbRating"), "Top rated", {}, "toprated", PAGE_WEIGHTS));
+    const declared = this.declaredGenres(this.supported).filter((g) => !isYear(g));
+    for (const genre of homeGenresFor(declared)) {
+      const catalogs = this.supported.filter((catalog) => (genreExtra(catalog)?.options ?? []).includes(genre));
+      fetches.push(() => this.fetchVariedSection(catalogs, genre, { genre }, genre, PAGE_WEIGHTS));
+    }
+    for (let i = 0; i < fetches.length; i += HOME_BATCH_SIZE) {
+      const batch = await Promise.all(fetches.slice(i, i + HOME_BATCH_SIZE).map((fetchRow) => fetchRow()));
+      const ready = batch.filter((section): section is HomeSection => section !== null);
+      if (ready.length > 0) yield ready;
+    }
+  }
+
   async *getHomeSections(): AsyncGenerator<HomeSection[], void, void> {
+    if (this.isRankedStyle) {
+      yield* this.rankedHomeSections();
+      return;
+    }
     const baseCatalogs = this.supported.filter(isBaseCatalog);
     const fetches: Array<() => Promise<HomeSection | null>> = [];
     if (baseCatalogs.length > 0) {
@@ -235,6 +282,25 @@ export class StremioAddonProvider implements CatalogProvider {
     const paged = { ...extra, skip: String(page * PAGE_SIZE) };
     const perCatalog = await Promise.all(catalogs.map((catalog) => this.safeCatalog(catalog, paged)));
     return interleave(perCatalog);
+  }
+
+  /**
+   * A Home row that reads today's page of its ranking (not always the first) and shuffles gently within it. Falls back to the first page if the
+   * chosen one is empty. Pages are only asked of catalogs that declare "skip".
+   */
+  private async fetchVariedSection(catalogs: AddonCatalogDef[], title: string, extra: Record<string, string>, rowKey: string, weights: readonly number[]): Promise<HomeSection | null> {
+    if (catalogs.length === 0) return null;
+    const read = async (page: number) => {
+      const perCatalog = await Promise.all(
+        catalogs.map((catalog) => this.safeCatalog(catalog, page > 0 && catalog.extra.some((e) => e.name === "skip") ? { ...extra, skip: String(page * PAGE_SIZE) } : extra)),
+      );
+      return distinctBy(interleave(perCatalog), (c) => c.id);
+    };
+    const page = pickPage(varietySeed, `${this.manifest.id}_${rowKey}`, weights);
+    let items = await read(page);
+    if (items.length === 0 && page > 0) items = await read(0);
+    if (items.length === 0) return null;
+    return { id: `${this.manifest.id}_${rowKey}`, title, items: varyOrder(items, varietySeed, `${this.manifest.id}_${rowKey}`), style: "STANDARD" };
   }
 
   /** Fetches every matched catalog in parallel and interleaves (movie[0], series[0], …) so a merged row reads as mixed content. */
