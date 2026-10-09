@@ -10,19 +10,17 @@ Status: ⬜ not done · ✅ done (released or merged) · ➖ not needed there (s
 
 | Date | Change | Firestick | Phone |
 |---|---|---|---|
-| 2026-10-09 | **Home rows: Popular, New, Top rated, nine genres, a different page each day, seen titles hidden** (details below) | ⬜ | ⬜ |
-| 2026-10-09 | **Home Rows order:** New and Top rated sit above rows someone already chose, until they place them in Settings > Home Rows | ⬜ | ⬜ |
 
-### Notes on the open items
-
-- **Fresher, tidier Home rows** (web, 2026-10-09; the phone app does not have it either). For Cinemeta (and any addon shaped like it: catalogues `top`, `year` and `imdbRating`), Home shows **Popular, New, Top rated**, then only nine wide-appeal genres (Action, Comedy, Drama, Thriller, Horror, Sci-Fi, Crime, Animation, Documentary), not every genre. Each ranking is read from a different page (100 titles each; mostly page 1, sometimes 2 or 3; New only 1 or 2) chosen by account + day, and gently reshuffled within it favouring the better ranks, so rows are steady all day and differ tomorrow (`domain/homeVariety.ts`, `provider.ts`). Titles already watched, saved to My List or rated (Like / Not for me) are left out of the catalogue rows (they stay in My List, Continue Watching and still count for Picked for you). One title still shows in only one row. Other genres stay on the Movies / TV Shows pages. On the Firestick, `StremioAddonProvider.buildSectionsFlow` still makes one merged row plus every genre, and `HomeViewModel` does not hide seen titles.
-
-- **Home Rows order** (`domain/homeRows.ts`, `applyRowOrder`): a "lead" row (New, Top rated) the person has not placed goes right after any lead rows they did place, ahead of the rows they chose. Once they move it in Settings it is part of their saved order.
+Nothing is open right now: every web change is on both apps (the phone app's, and the Firestick's from 0.3.1, are merged and waiting for the next release where marked).
 
 ## Done on both
 
+Home rows in one line: for Cinemeta (and any addon with `top`, `year` and `imdbRating` catalogues) Home shows Popular, New (this year), Top rated, then Action, Comedy, Drama, Thriller, Horror, Sci-Fi, Crime, Animation and Documentary only; each ranking reads page 1 (sometimes 2 or 3; New 1 or 2) chosen by account + day and is gently reshuffled; watched / My List / rated titles are left out of those rows; a title shows in one row; New and Top rated go above rows someone already chose until they place them.
+
 | Date | Change | Firestick | Phone |
 |---|---|---|---|
+| 2026-10-09 | Home rows: Popular, New, Top rated, nine genres, a different page each day, seen titles hidden (`homeVariety.ts`; `HomeVariety.kt` on the apps) | ✅ merged, not released | ✅ merged, not released |
+| 2026-10-09 | Home Rows order: New and Top rated sit above rows someone already chose, until they place them in Settings | ✅ merged, not released | ✅ merged, not released |
 | 2026-10-07 | Plus list: the bigger stream relay allowance is removed; the promo names only what is live | ➖ never had it | ➖ never had it (checked) |
 | 2026-10-07 | Smart source picking (Plus), switch in the Plus settings tab, plain loading screen while it decides | ✅ 0.3.0 | ✅ merged, not released |
 | 2026-10-07 | Your stats (Plus): headline total, week chip, 13-week grid, movies-or-shows split, busiest day; glowing bars | ✅ 0.3.0 | ✅ merged, not released |
