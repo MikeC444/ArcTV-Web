@@ -31,7 +31,7 @@ test.describe("settings", () => {
 
     // Home now loads its catalogs through the fallback too
     await page.getByRole("navigation", { name: "Primary" }).getByRole("link", { name: "Home", exact: true }).click();
-    await expect(page.locator(".home__rows .row__title", { hasText: "Popular" })).toBeVisible({ timeout: 20_000 });
+    await expect(page.locator(".home__rows .row__title", { hasText: /^Popular$/ })).toBeVisible({ timeout: 20_000 });
 
     // 2) invalid URL → understandable error
     await page.goto("/settings/addons/add");
@@ -72,7 +72,7 @@ test.describe("settings", () => {
     const saved = (await account.tv.get("/user/settings")).body;
     expect(saved.homeRowOrder.indexOf("test.mangotv.fixture_Comedy")).toBeLessThan(saved.homeRowOrder.indexOf("test.mangotv.fixture_Drama"));
     await page.getByRole("navigation", { name: "Primary" }).getByRole("link", { name: "Home", exact: true }).click();
-    await expect(page.locator(".home__rows .row__title", { hasText: "Popular" })).toBeVisible({ timeout: 20_000 });
+    await expect(page.locator(".home__rows .row__title", { hasText: /^Popular$/ })).toBeVisible({ timeout: 20_000 });
     await expect(page.locator(".home__rows .row__title", { hasText: /^Action$/ })).toHaveCount(0);
   });
 

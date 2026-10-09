@@ -65,3 +65,23 @@ describe("Home rows for Cinemeta", () => {
     expect((await homeRows([])).map((r) => r.items.map((c) => c.id).join())).toEqual(first);
   });
 });
+
+describe("row order when someone already chose their rows", () => {
+  const row = (id: string, title: string): HomeSection => ({ id, title, style: "STANDARD", items: [] });
+  const all = [row("a_base", "Popular"), row("a_Horror", "Horror"), row("a_new", "New"), row("a_toprated", "Top rated"), row("a_Comedy", "Comedy")];
+  const titles = (order: string[]) => applyRowOrder(all, { order, hiddenRowIds: [] }).map((s) => s.title);
+
+  it("puts New and Top rated above the rows they chose, until they move them", () => {
+    expect(titles(["a_base", "a_Horror"])).toEqual(["Popular", "New", "Top rated", "Horror", "Comedy"]);
+    expect(titles(["a_Horror"])).toEqual(["New", "Top rated", "Horror", "Popular", "Comedy"]); // they never placed Popular either: as before, it follows their rows
+  });
+
+  it("keeps a row where the person put it", () => {
+    expect(titles(["a_base", "a_Horror", "a_new"])).toEqual(["Popular", "Top rated", "Horror", "New", "Comedy"]);
+    expect(titles(["a_Horror", "a_new", "a_toprated", "a_base"])).toEqual(["Horror", "New", "Top rated", "Popular", "Comedy"]);
+  });
+
+  it("is unchanged for someone who never customised Home", () => {
+    expect(titles([])).toEqual(["Popular", "New", "Top rated", "Comedy", "Horror"]);
+  });
+});

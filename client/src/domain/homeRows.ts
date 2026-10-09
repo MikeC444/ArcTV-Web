@@ -13,7 +13,16 @@ function defaultRank(section: HomeSection): number {
   return rank >= 0 ? rank : DEFAULT_ROW_PRIORITY.length;
 }
 
-/** HomeRowPreferences.applyOrder: the user's explicit order first, then everything else by default rank (stable). */
+/** The rows Home leads with by default: Popular, New and Top rated (see StremioAddonProvider's ranked layout). */
+const isLeadRow = (section: HomeSection): boolean => /_(base|new|toprated)$/.test(section.id);
+/** The two that arrived later, after people had chosen their rows: they go above those rows unless the person has placed them. */
+const isNewLeadRow = (section: HomeSection): boolean => /_(new|toprated)$/.test(section.id);
+
+/**
+ * HomeRowPreferences.applyOrder: the user's explicit order first, then everything else by default rank (stable). One exception: New or Top rated
+ * when the user has not placed it (they arrive after someone has already chosen their rows) goes at the top, right after any lead rows they
+ * did place, instead of below everything they chose. Once they move it in Settings it is part of their order and stays where they put it.
+ */
 export function applyRowOrder(sections: HomeSection[], preferences: HomeRowPreferences): HomeSection[] {
   const byId = new Map(sections.map((section) => [section.id, section]));
   const ordered = preferences.order.map((id) => byId.get(id)).filter((s): s is HomeSection => !!s);
@@ -23,7 +32,12 @@ export function applyRowOrder(sections: HomeSection[], preferences: HomeRowPrefe
     .map((section, index) => ({ section, index, rank: defaultRank(section) }))
     .sort((a, b) => a.rank - b.rank || a.index - b.index)
     .map((entry) => entry.section);
-  return [...ordered, ...remaining];
+  const leadRows = remaining.filter(isNewLeadRow);
+  if (leadRows.length === 0 || ordered.length === 0) return [...ordered, ...remaining];
+  let at = 0;
+  while (at < ordered.length && isLeadRow(ordered[at]!)) at++;
+  const rest = remaining.filter((section) => !isNewLeadRow(section));
+  return [...ordered.slice(0, at), ...leadRows, ...ordered.slice(at), ...rest];
 }
 
 /**
