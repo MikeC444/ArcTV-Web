@@ -10,7 +10,7 @@ Status: ⬜ not done · ✅ done (released or merged) · ➖ not needed there (s
 
 | Date | Change | Firestick | Phone |
 |---|---|---|---|
-| 2026-10-09 | Right-click / long-press poster menu redesigned: poster, title, In My List / Watched chips, big Play (or Resume), My List and Watched buttons, Like / Not for me rating, View details and Choose source rows, close button, blurred backdrop (`CardActionsMenu.tsx`) | ⬜ | ⬜ |
+| 2026-10-09 | Right-click / long-press poster menu redesigned: small poster with the title beside it, big Play (or Resume), a two-by-two grid of My List / Watched / Like / Not for me (ticks show what is set), then View details and Choose source rows, close button, blurred backdrop (`CardActionsMenu.tsx`) | ⬜ | ⬜ |
 
 ## Done on both
 
