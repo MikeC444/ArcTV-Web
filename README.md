@@ -298,7 +298,7 @@ These appear in the request but **do not exist in the Firestick app or its backe
   can host it (the player already handles HLS), but no source, licensing or UI spec exists.
 * **Payments / subscriptions** — no billing tables or endpoints. If they are added, the web server must call a
   server-side verification endpoint; a client-side "paid" flag must never grant access.
-* **Multiple profiles** — built for ArcTV Plus on the web (up to 5 per account, adult / kids, PINs, a separate library each); see [`docs/PROFILES.md`](docs/PROFILES.md). It needs the backend's profile endpoints, which don't exist yet, so until then the app keeps one library per account. Not on the Firestick yet (`docs/FIRESTICK_PARITY.md`).
+* **Multiple profiles** — built for ArcTV Plus on the web (up to 5 per account, adult / kids, PINs, a separate library each); see [`docs/PROFILES.md`](docs/PROFILES.md). It needs the backend's profile endpoints, which don't exist yet, so until then the app keeps one library per account. Not on the Firestick yet (`docs/PARITY.md`).
 * Copy ported verbatim from the TV (for example the sign-in "Safe & secure" line) is the owner's wording; review it
   for the web context.
 

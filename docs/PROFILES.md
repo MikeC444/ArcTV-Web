@@ -2,7 +2,7 @@
 
 One account can have up to **5 profiles**, in any mix of adult and kids. Each profile has its **own** My List, Continue Watching, watch history, settings (Home Rows, Subtitles, Blocked Genres…), addons and Like / Not for me. Nothing is shared between profiles. Profiles are **ArcTV Plus only**: without Plus an account has just its own profile (`main`) and no picker. Any profile can be locked with a **4-digit PIN**.
 
-This file is the source of truth for the web app's behaviour **and** for what the backend (`ArcTV-AndroidTV`) and the Firestick app have to do. The Firestick has **not** been changed yet (decision of 2 Oct 2026); the matching entries are in `docs/FIRESTICK_PARITY.md` (Pending on Firestick) and `docs/UPDATES.md`.
+This file is the source of truth for the web app's behaviour **and** for what the backend (`ArcTV-AndroidTV`) and the Firestick app have to do. The Firestick has **not** been changed yet (decision of 2 Oct 2026); the matching entries are in `docs/PARITY.md` (Pending on Firestick) and `docs/UPDATES.md`.
 
 ## What the user sees (web)
 
@@ -55,4 +55,4 @@ Security note: the PIN is a household gate. It stops someone using the app from 
 
 **Built** in `MikeC444/ArcTV-AndroidTV` (merged to `main`, Post-Milestone-52, first shipped in release 0.1.5; top-bar picture and name in Post-Milestone-53 and 55; a sync fix in Post-Milestone-54). It differs from the web in how it works: the Firestick talks to the backend directly, so it keeps its own active profile id and sends `X-ArcTV-Profile` through one OkHttp interceptor (nothing for `main` or the account-level calls); a profile switch wipes the local caches and re-pulls that profile's library instead of reloading a page; the PIN is checked with `verify-pin` in the app, so it is a household gate rather than something the backend enforces on every request. Original checklist, for reference:
 
-Tracked in `docs/FIRESTICK_PARITY.md`. In short: a "Who's watching?" screen on launch (D-pad friendly tiles, PIN pad), Manage profiles, the same limits (5, Plus only, 4-digit PIN), the avatar ids mapped to artwork, `X-ArcTV-Profile` on every `/user/*` request, per-profile local caches and outboxes, kids profile behaviour (the same blocked genres, no Settings), a switch-profile entry in the top bar or Settings, and the same fallback when the backend answers 404 for `/user/profiles`.
+Tracked in `docs/PARITY.md`. In short: a "Who's watching?" screen on launch (D-pad friendly tiles, PIN pad), Manage profiles, the same limits (5, Plus only, 4-digit PIN), the avatar ids mapped to artwork, `X-ArcTV-Profile` on every `/user/*` request, per-profile local caches and outboxes, kids profile behaviour (the same blocked genres, no Settings), a switch-profile entry in the top bar or Settings, and the same fallback when the backend answers 404 for `/user/profiles`.
