@@ -304,5 +304,5 @@ p { text-wrap: pretty; }
 /* leave room for the curved edge of the next section, which overlaps the bottom of this one */
 .dark.plus { padding-bottom: calc(var(--arc) + 60px); }
 .dark.arc.play { padding-top: calc(var(--arc) + 20px); padding-bottom: calc(var(--arc) + 80px); }
-.light.feat { padding-bottom: calc(var(--arc) + 50px); }
+.light.feat { padding-bottom: calc(var(--arc) + 120px); }
 .light.faq { padding-bottom: calc(var(--arc) + 60px); }
