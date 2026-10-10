@@ -31,7 +31,7 @@ I searched every Kotlin, TypeScript, SQL, XML and Markdown file (`live tv`, `ipt
 
 These are therefore **not ported** (nothing to preserve, and inventing them
 would mean fabricating product behaviour, IPTV sourcing and payment flows).
-They are listed under "Open product questions" in the README.
+They are listed under "Open product questions" in `DEVELOPMENT.md`.
 
 ## 2. Where user data actually lives
 
