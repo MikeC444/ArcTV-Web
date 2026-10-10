@@ -315,6 +315,7 @@
         <div class="footer__brand"><img src="/arctv-logo.png" alt="Arc TV" /><p>&copy; <span id="year">2026</span> Arc TV</p></div>
         <nav aria-label="Product"><a href="https://web.arctv.org">Web App</a><a href="#download">Downloads</a><a href="#features">Features</a><a href="#plus">Plus</a></nav>
         <nav aria-label="Account"><a href="https://web.arctv.org/auth">Log in</a><a href="https://web.arctv.org/auth">Sign up</a></nav>
+        <nav aria-label="Install guides"><a href="/guides/fire-tv/">Fire TV guide</a><a href="/guides/android-tv/">Android TV guide</a><a href="/guides/android/">Android guide</a></nav>
         <nav aria-label="Help"><a href="#faq">FAQ</a></nav>
       </div>
     </footer>
@@ -337,12 +338,14 @@
             text: "Browse and play on Android with the app. On iPhone and iPad, use the web app in your browser for now.",
             logos: ["android", "apple"],
             items: [{ text: "Download for Android", href: APK, note: "Latest release (APK)" }, { text: "iPhone & iPad" }],
+            guides: [{ text: "Android install guide", href: "/guides/android/" }],
             web: true },
           { id: "tv", label: "TV", tab: "tv", title: "Arc TV for Fire TV and Android TV",
             text: "Built for the remote and the sofa. Sign in with your account, or scan a QR code with your phone.",
             logos: ["firetv", "android", "appletv", "samsung", "lg"],
             items: [{ text: "Get the Fire TV app", href: TVAPP }, { text: "Get the Android TV app", href: TVAPP }, { text: "Apple TV" }, { text: "Samsung & LG" }],
-            code: DLCODE },
+            code: DLCODE,
+            guides: [{ text: "Fire TV install guide", href: "/guides/fire-tv/" }, { text: "Android TV install guide", href: "/guides/android-tv/" }] },
           { id: "web", label: "Web", tab: "desktop", title: "Arc TV on the web",
             text: "Open Arc TV in any modern browser. There\u2019s nothing to install, and you can browse without an account.",
             logos: ["desktop"],
@@ -389,6 +392,11 @@
           });
           if (c.web) { var w = el("a", "btn btn--sm btn--light", "Launch Web App"); w.href = WEB; btns.appendChild(w); }
           act.appendChild(btns);
+          if (c.guides) {
+            var gl = el("p", "dl__guides");
+            c.guides.forEach(function (g) { var a = el("a", "", g.text); a.href = g.href; gl.appendChild(a); });
+            act.appendChild(gl);
+          }
           if (c.code) {
             var dl = el("div", "dl__code");
             dl.appendChild(el("p", "dl__label", "Or install with Downloader"));

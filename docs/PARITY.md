@@ -10,6 +10,7 @@ Status: ⬜ not done · ✅ done (released or merged) · ➖ not needed there (s
 
 | Date | Change | Firestick | Phone |
 |---|---|---|---|
+| 2026-10-10 | Landing page (`landing/`): install guide pages for Fire TV, Android TV and Android (`/guides/...`), linked from the downloads card and footer, and added to the sitemap | ➖ marketing site only, no change needed | ➖ marketing site only, no change needed |
 | 2026-10-10 | Landing page (`landing/`): SEO — clearer title and description, structured data (app and FAQ), robots.txt and sitemap.xml, and the download links visible without JavaScript | ➖ marketing site only, no change needed | ➖ marketing site only, no change needed |
 | 2026-10-10 | Landing page (`landing/`): Picked for you centred between its curves; text at the bottom of the Plus, Playback, Features and FAQ sections no longer cut off by the next curve | ➖ marketing site only, no change needed | ➖ marketing site only, no change needed |
 | 2026-10-10 | Landing page (`landing/`): Web card buttons centred and Sign up visible; Downloader steps reworded (type the code into the URL box and select Go) | ➖ marketing site only, no change needed | ➖ marketing site only, no change needed |
