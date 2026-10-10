@@ -731,3 +731,16 @@
 .admin__growthtable { max-height: 300px; overflow: auto; background: var(--surface); border-radius: var(--card-radius); }
 .admin__growthrow { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; padding: 8px 18px; border-top: 1px solid var(--divider); font-size: 14px; }
 .admin__growthrow--head { position: sticky; top: 0; background: var(--surface); border-top: 0; }
+
+.admin__websys { margin-top: 28px; }
+.admin__syslist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-width: 760px; }
+.admin__sysrow { display: grid; grid-template-columns: minmax(150px, 220px) 1fr 90px; align-items: center; gap: 14px; width: 100%; font: inherit; color: var(--text); text-align: left; background: var(--surface); border: 1px solid transparent; border-radius: 12px; padding: 10px 14px; cursor: pointer; transition: border-color 140ms ease, background 140ms ease; }
+.admin__sysrow:hover { background: var(--surface-high); }
+.admin__sysrow[aria-pressed="true"] { border-color: var(--cyan); background: color-mix(in srgb, var(--cyan) 10%, var(--surface)); box-shadow: 0 0 14px color-mix(in srgb, var(--cyan) 28%, transparent); }
+.admin__sysrow:focus-visible { outline: 2px solid var(--focus-border); outline-offset: 2px; }
+.admin__sysname { font-weight: 600; font-size: 14px; }
+.admin__sysbar { height: 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.07); overflow: hidden; }
+.admin__sysbar i { display: block; height: 100%; border-radius: 999px; background: var(--brand-gradient-wide); }
+.admin__syscount { text-align: right; font-size: 14px; }
+.admin__syscount em { font-style: normal; color: var(--text-3); font-size: 12px; margin-left: 6px; }
+@media (max-width: 560px) { .admin__sysrow { grid-template-columns: 1fr 70px; } .admin__sysbar { grid-column: 1 / -1; order: 3; } }

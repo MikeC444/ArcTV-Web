@@ -1,3 +1,4 @@
+import type { WebSystem } from "../lib/webSystems";
 import { api } from "../lib/api";
 import type { GrowthPoint } from "../lib/growth";
 
@@ -41,6 +42,8 @@ export interface AdminSummary {
   live?: LiveSummary;
   /** One point per day (UTC) for the last 180 days. Absent from a backend that predates it, and then the graph is left out. */
   userGrowth?: GrowthPoint[];
+  /** Web users per operating system. Absent from a backend that predates it, and then the card is left out. */
+  webSystems?: WebSystem[];
 }
 export interface ExternalPlayerEvent {
   title: string | null;
@@ -100,11 +103,13 @@ export interface AdminFilters {
   q: string;
   plan: "" | "free" | "monthly" | "yearly" | "lifetime";
   device: string;
+  /** A system the person uses the website on ("Android", "iOS", "macOS"...). */
+  webSystem: string;
   addons: "" | "with" | "none";
   watching: "" | "with" | "none";
   seen: "" | "1h" | "24h" | "7d" | "30d" | "older" | "never";
 }
-export const NO_FILTERS: AdminFilters = { q: "", plan: "", device: "", addons: "", watching: "", seen: "" };
+export const NO_FILTERS: AdminFilters = { q: "", plan: "", device: "", webSystem: "", addons: "", watching: "", seen: "" };
 export const filtersActive = (f: AdminFilters): boolean => (Object.keys(NO_FILTERS) as Array<keyof AdminFilters>).some((k) => f[k] !== "");
 export const adminUsersQuery = (f: AdminFilters, limit: number, offset: number): string => {
   const params = new URLSearchParams();

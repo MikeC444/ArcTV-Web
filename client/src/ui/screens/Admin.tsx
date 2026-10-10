@@ -3,6 +3,8 @@ import { MdClear, MdExpandLess, MdExpandMore, MdRefresh } from "react-icons/md";
 import { formatElapsed, formatWatched, timeAgo } from "../../lib/format";
 import { fetchAdminSummary, platformSplit, windowLabel, fetchAdminUser, fetchAdminUsers, filtersActive, newestVersion, NO_FILTERS, type AdminDevice, type ExternalPlayerEvent, type AdminFilters, type AdminSummary, type AdminUserDetail, type AdminUserRow } from "../../state/admin";
 import { MangoButton } from "../components/Buttons";
+import { webSystemLabel } from "../../lib/webSystems";
+import { WebSystems } from "../components/WebSystems";
 import { GrowthChart } from "../components/GrowthChart";
 import { Spinner } from "../components/States";
 
@@ -122,6 +124,17 @@ export function AdminScreen() {
 
       {summary?.userGrowth && summary.userGrowth.length > 0 ? <GrowthChart points={summary.userGrowth} /> : null}
 
+      {summary?.webSystems ? (
+        <WebSystems
+          systems={summary.webSystems}
+          selected={filters.webSystem}
+          onSelect={(system) => {
+            setFilter("webSystem", system);
+            if (system) document.querySelector(".admin__users")?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }}
+        />
+      ) : null}
+
       {summary?.externalPlayer ? <ExternalPlayerSection data={summary.externalPlayer} /> : null}
 
       <section className="admin__users page__pad" aria-label="Users">
@@ -167,7 +180,7 @@ export function AdminScreen() {
           {!loading && users.length === 0 ? <p className="c-text-2" style={{ padding: 16 }}>No users match.</p> : null}
         </div>
         <div className="admin__foot t-label-md c-text-2">
-          {filtersActive(filters) ? `${total} of ${summary?.users ?? total} users match` : `${total} users`}
+          {filtersActive(filters) ? `${total} of ${summary?.users ?? total} users match${filters.webSystem ? ` · on the website with ${webSystemLabel(filters.webSystem)}` : ""}` : `${total} users`}
           {filtersActive(filters) ? <MangoButton text="Clear filters" icon={<MdClear />} compact onClick={clearFilters} /> : null}
         </div>
         {users.length < total ? <MangoButton text={`Show more (${users.length} of ${total})`} icon={<MdExpandMore />} compact onClick={() => void loadMore()} /> : null}
