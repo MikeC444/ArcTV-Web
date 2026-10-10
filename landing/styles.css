@@ -144,7 +144,7 @@ p { text-wrap: pretty; }
 
 /* footer */
 .footer { background: var(--bg); border-top: 1px solid var(--line); padding: 40px 0 50px; }
-.footer__in { display: grid; grid-template-columns: 2fr 1fr 1.2fr 1fr 1fr; gap: 24px; }
+.footer__in { display: grid; grid-template-columns: 2fr 1fr 1.2fr 1fr 1fr 1.5fr; gap: 24px; }
 .footer__brand img { height: 28px; width: auto; }
 .footer__brand p { margin-top: 10px; font-size: 13px; color: #6f7882; }
 .footer nav { display: grid; gap: 8px; align-content: start; font-size: 14px; }
