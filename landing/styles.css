@@ -279,7 +279,7 @@ p { text-wrap: pretty; }
 .logo { height: 56px; width: 56px; fill: #fff; flex: none; }
 .logo--windows { fill: #0078d4; }
 .logo--android { fill: #3ddc84; }
-.logo--vr, .logo--other, .logo--desktop { fill: var(--accent); }
+.logo--desktop { fill: var(--accent); }
 .logo--samsung { width: 84px; }
 .dl__btns { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
 .dl__btns .btn--grad, .dl__btns .btn--glass, .dl__btns .btn--light { padding: 12px 22px; font-size: 14px; }
