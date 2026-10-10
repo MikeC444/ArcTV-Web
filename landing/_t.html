@@ -250,7 +250,7 @@
         };
         var BRANDS = ["windows", "apple", "appletv", "linux", "android", "firetv", "samsung", "lg"];
         var tabsEl = document.getElementById("dl-tabs"), mainEl = document.getElementById("dl-main");
-        var cat = 0;
+        var cat = 3;
         function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text) e.textContent = text; return e; }
         function icon(name) {
           var ns = "http://www.w3.org/2000/svg", s = document.createElementNS(ns, "svg"), p = document.createElementNS(ns, "path");
@@ -280,7 +280,7 @@
             var dl = el("div", "dl__code");
             dl.appendChild(el("p", "dl__label", "Or install with Downloader"));
             dl.appendChild(el("p", "dl__digits", c.code));
-            dl.appendChild(el("p", "dl__note", "Open the Downloader app on your Fire TV or Android TV, type this code into the URL box and select Go, then install."));
+            dl.appendChild(el("p", "dl__note", "Open the Downloader app on your Fire TV or Android TV, choose Home, type this code and press Go, then install."));
             act.appendChild(dl);
           }
           mainEl.appendChild(act);

@@ -292,3 +292,11 @@ p { text-wrap: pretty; }
 .dl__tabs button { display: inline-flex; align-items: center; gap: 8px; line-height: 1; }
 @media (max-width: 860px) { .dl__card { grid-template-columns: 1fr; padding: 32px 22px; text-align: center; gap: 28px; } .dl__copy p { margin-inline: auto; } .dl__tabs { justify-content: flex-start; } }
 @media (prefers-reduced-motion: reduce) { .dl__card { animation: none; } }
+
+.dl__card > * { min-width: 0; }
+.dl__act { width: 100%; }
+.dl__btns { max-width: 100%; }
+@media (max-width: 860px) { .dl__card { grid-template-columns: minmax(0, 1fr); } .dl__tabs { justify-content: center; } }
+@media (max-width: 480px) { .dl__tabs button { padding: 11px 12px; gap: 6px; } .dl__tabs { max-width: calc(100vw - 24px); } }
+.light .dl__card .btn--glass { background: rgba(255, 255, 255, .1); border-color: var(--line); color: var(--text); }
+.light .dl__card .btn--glass:hover { background: rgba(255, 255, 255, .16); }
