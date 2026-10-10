@@ -176,7 +176,7 @@ p { text-wrap: pretty; }
 @media (prefers-reduced-motion: reduce) { .panel { animation: none; } .rv { opacity: 1; transform: none; transition: none; } }
 
 /* downloads */
-.dl { padding-top: 40px; }
+.dl { padding-top: 100px; }
 .dl h2 { text-align: center; }
 .dl .lede { text-align: center; margin-inline: auto; }
 .dl__tabs { display: flex; gap: 4px; margin: 36px auto 0; padding: 5px; width: max-content; max-width: 100%; overflow-x: auto; background: #fff; border: 1px solid rgba(15, 21, 25, .08); border-radius: 99px; box-shadow: 0 6px 20px rgba(15, 21, 25, .06); scrollbar-width: none; }
