@@ -10,6 +10,7 @@ Status: ⬜ not done · ✅ done (released or merged) · ➖ not needed there (s
 
 | Date | Change | Firestick | Phone |
 |---|---|---|---|
+| 2026-10-10 | Landing page (`landing/`): the Downloader code is also shown for Android TV | ➖ marketing site only, no change needed | ➖ marketing site only, no change needed |
 | 2026-10-10 | Landing page (`landing/`): "Powered by mpv and VLC" with their logos in the playback section, plus a "What plays the video?" FAQ | ➖ marketing site only, no change needed | ➖ marketing site only, no change needed |
 | 2026-10-10 | Landing page (`landing/`): new Arc TV Plus section, hero highlights, Android download on the Phone tab, extra FAQs (free, add-ons, iPhone), Plus in the nav; wording made clearly legal-use only (Cinemeta preinstalled, extra add-ons third-party and your responsibility, no piracy), "And much more" Plus tile, mobile layout centred, device logos on the downloads card, its category tabs and the device strip, clearer that everything is free and Plus only supports development and servers | ➖ marketing site only, no change needed | ➖ marketing site only, no change needed |
 | 2026-10-10 | Settings → ArcTV Plus "What Plus adds" redesigned as tiles: a gradient icon on each, the status tag at the bottom, a dashed dimmed tile for Coming soon, and a "Web only" tag on Download (`Settings.tsx`, `plus.ts`) | ➖ web layout only, no change needed | ➖ web layout only, no change needed |

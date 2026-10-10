@@ -273,7 +273,7 @@
       (function () {
         var APK = "https://github.com/MikeC444/ArcTV-MobileAPK/releases/latest/download/ArcTV-Mobile.apk";
         var TVAPP = "https://github.com/MikeC444/ArcTV-AndroidTV/releases";
-        var DLCODE = "2368012"; // Downloader (by AFTVnews) code for the latest Fire TV app
+        var DLCODE = "2368012"; // Downloader (by AFTVnews) code for the latest Fire TV / Android TV app
         // Each platform either has a "get" list of buttons, or none (shown as Coming soon).
         var DATA = [
           { id: "desktop", label: "Desktop", logos: ["windows", "apple", "linux"], platforms: [
@@ -283,7 +283,7 @@
             { name: "iPhone & iPad", icon: "apple" } ] },
           { id: "tv", label: "TV", logos: ["firetv", "android", "appletv"], platforms: [
             { name: "Fire TV", icon: "firetv", code: DLCODE, get: [{ text: "Get the Fire TV app", href: TVAPP, note: "Latest release" }] },
-            { name: "Android TV", icon: "android", get: [{ text: "Get the Android TV app", href: TVAPP, note: "Latest release" }] },
+            { name: "Android TV", icon: "android", code: DLCODE, get: [{ text: "Get the Android TV app", href: TVAPP, note: "Latest release" }] },
             { name: "Apple TV", icon: "appletv" }, { name: "Samsung & LG", icon: ["samsung", "lg"] } ] },
           { id: "vr", label: "VR", logos: ["vr"], platforms: [ { name: "VR headsets", icon: "vr" } ] },
           { id: "other", label: "Other devices", logos: ["tv"], platforms: [
@@ -347,7 +347,7 @@
             var dl = el("div", "dl__code");
             dl.appendChild(el("p", "dl__label", "Install with Downloader"));
             dl.appendChild(el("p", "dl__digits", p.code));
-            dl.appendChild(el("p", "dl__note", "Open the Downloader app on your Fire TV, choose Home, type this code and press Go, then install."));
+            dl.appendChild(el("p", "dl__note", "Open the Downloader app on your " + p.name + ", choose Home, type this code and press Go, then install."));
             mainEl.appendChild(dl);
           }
         }
