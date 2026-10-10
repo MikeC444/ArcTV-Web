@@ -276,19 +276,19 @@
         var DLCODE = "2368012"; // Downloader (by AFTVnews) code for the latest Fire TV app
         // Each platform either has a "get" list of buttons, or none (shown as Coming soon).
         var DATA = [
-          { id: "desktop", label: "Desktop", platforms: [
+          { id: "desktop", label: "Desktop", logos: ["windows", "apple", "linux"], platforms: [
             { name: "Windows", icon: "windows" }, { name: "macOS", icon: "apple" }, { name: "Linux", icon: "linux" } ] },
-          { id: "mobile", label: "Mobile", platforms: [
+          { id: "mobile", label: "Mobile", logos: ["android", "apple"], platforms: [
             { name: "Android", icon: "android", note: "Phones and tablets", get: [{ text: "Download for Android", href: APK, note: "Latest release (APK)" }] },
             { name: "iPhone & iPad", icon: "apple" } ] },
-          { id: "tv", label: "TV", platforms: [
+          { id: "tv", label: "TV", logos: ["firetv", "android", "appletv"], platforms: [
             { name: "Fire TV", icon: "firetv", code: DLCODE, get: [{ text: "Get the Fire TV app", href: TVAPP, note: "Latest release" }] },
             { name: "Android TV", icon: "android", get: [{ text: "Get the Android TV app", href: TVAPP, note: "Latest release" }] },
             { name: "Apple TV", icon: "appletv" }, { name: "Samsung & LG", icon: ["samsung", "lg"] } ] },
-          { id: "vr", label: "VR", platforms: [ { name: "VR headsets", icon: "vr" } ] },
-          { id: "other", label: "Other devices", platforms: [
+          { id: "vr", label: "VR", logos: ["vr"], platforms: [ { name: "VR headsets", icon: "vr" } ] },
+          { id: "other", label: "Other devices", logos: ["tv"], platforms: [
             { name: "Game consoles", icon: "tv" }, { name: "Streaming sticks & boxes", icon: "tv" } ] },
-          { id: "web", label: "Web", platforms: [
+          { id: "web", label: "Web", logos: ["desktop"], platforms: [
             { name: "Web app", icon: "desktop", note: "Nothing to install", get: [
               { text: "Launch Web App", href: "https://web.arctv.org", note: "Any modern browser" },
               { text: "Sign up", href: "https://web.arctv.org/auth", ghost: true } ] } ] }
@@ -363,7 +363,7 @@
         function renderTabs() {
           tabsEl.textContent = "";
           DATA.forEach(function (c, i) {
-            var b = el("button", "", c.label); b.type = "button"; b.setAttribute("role", "tab"); b.setAttribute("aria-selected", i === cat); b.tabIndex = i === cat ? 0 : -1;
+            var b = el("button"); b.type = "button"; b.appendChild(icons(c.logos)); b.appendChild(el("span", "", c.label)); b.setAttribute("role", "tab"); b.setAttribute("aria-selected", i === cat); b.tabIndex = i === cat ? 0 : -1;
             b.addEventListener("click", function () { cat = i; plat = 0; renderTabs(); renderList(); renderMain(); });
             b.addEventListener("keydown", function (e) {
               var n = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;

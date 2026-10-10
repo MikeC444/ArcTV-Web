@@ -265,3 +265,7 @@ p { text-wrap: pretty; }
 .powered__item { display: inline-flex; align-items: center; gap: 10px; padding: 9px 16px 9px 12px; border-radius: 99px; background: rgba(255, 255, 255, .06); border: 1px solid var(--line); font-weight: 600; font-size: 15px; }
 .powered__item svg { width: 22px; height: 22px; fill: currentColor; }
 @media (max-width: 860px) { .powered { justify-content: center; } }
+
+.dl__tabs button { display: inline-flex; align-items: center; gap: 10px; }
+.dl__tabs .dl__logos { gap: 5px; }
+.dl__tabs .dl__logos svg { width: 18px; height: 18px; }
