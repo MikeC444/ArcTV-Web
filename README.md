@@ -46,6 +46,8 @@ Same account, same list, same addons on every device:
 
 **Is it free?** Yes. Browsing, playing, My List, Continue Watching and addons are free. ArcTV Plus adds extras on top.
 
+**Is Arc TV affiliated with Stremio?** No. Arc TV is an independent app that supports the Stremio addon format, so addons made for Stremio work in it. It is not affiliated with or endorsed by Stremio.
+
 ## 🛠️ For developers
 
 The web app is a React + TypeScript single-page app with a small Node server that keeps your session private and talks to the same backend as the other Arc TV apps. Setup, configuration, tests, security notes and deployment are in the **[developer guide](docs/DEVELOPMENT.md)**.

@@ -147,6 +147,7 @@ p { text-wrap: pretty; }
 .footer__in { display: grid; grid-template-columns: 2fr 1fr 1.2fr 1fr 1fr 1.5fr; gap: 24px; }
 .footer__brand img { height: 28px; width: auto; }
 .footer__brand p { margin-top: 10px; font-size: 13px; color: #6f7882; }
+.footer__brand .footer__note { margin-top: 6px; font-size: 12px; max-width: 28em; }
 .footer nav { display: grid; gap: 8px; align-content: start; font-size: 14px; }
 .footer nav a { color: var(--text-2); text-decoration: none; }
 .footer nav a:hover { color: var(--text); }
