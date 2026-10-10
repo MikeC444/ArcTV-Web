@@ -254,7 +254,7 @@ function PlusPane() {
               <p className="t-body-sm c-text-2 plus__perkdetail">{perk.detail}</p>
               <div className="plus__perktags">
                 <span className="plus__soon" data-kind={soon ? "soon" : "plus"}>{soon ? "Coming soon" : plus.paywall ? "Plus" : "Included in early access"}</span>
-                {perk.webOnly ? <span className="plus__web"><MdLanguage aria-hidden="true" /> Web only</span> : null}
+                {perk.webOnly ? <span className="plus__web"><MdLanguage aria-hidden="true" /> Web and Mac only</span> : null}
               </div>
             </li>
           );

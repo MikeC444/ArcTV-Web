@@ -26,7 +26,7 @@ export interface PlusPerk {
   status: "soon" | "included";
   /** Shown as "Coming soon" until the backend has it (the answer of GET /profiles says whether it does). */
   needs?: "profiles";
-  /** Only the website has it for now (the Fire TV and phone apps do not), shown as a "Web only" tag. */
+  /** Only the website and the Mac app have it for now (the Fire TV and phone apps do not), shown as a "Web and Mac only" tag. */
   webOnly?: boolean;
 }
 
