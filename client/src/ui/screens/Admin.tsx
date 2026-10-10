@@ -3,6 +3,7 @@ import { MdClear, MdClose, MdExpandMore, MdRefresh } from "react-icons/md";
 import { formatElapsed, formatWatched, pluralize, timeAgo } from "../../lib/format";
 import { fetchAdminSummary, platformSplit, windowLabel, fetchAdminUser, fetchAdminUsers, filtersActive, newestVersion, NO_FILTERS, type AdminDevice, type ExternalPlayerEvent, type AdminFilters, type AdminSummary, type AdminUserDetail, type AdminUserRow } from "../../state/admin";
 import { MangoButton } from "../components/Buttons";
+import { GrowthChart } from "../components/GrowthChart";
 import { Spinner } from "../components/States";
 
 const PAGE = 50;
@@ -118,6 +119,8 @@ export function AdminScreen() {
           Online now: used ArcTV in the last {windowLabel(summary.live.onlineWindowSeconds)} (an idle app drops out). Watching now: saved playback progress in the last {windowLabel(summary.live.watchingWindowSeconds)}. People, not devices; counts only.
         </p>
       ) : null}
+
+      {summary?.userGrowth && summary.userGrowth.length > 0 ? <GrowthChart points={summary.userGrowth} /> : null}
 
       {summary && summary.versions.length > 0 ? (
         <section className="admin__versions page__pad" aria-label="App versions">

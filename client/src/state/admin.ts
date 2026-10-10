@@ -1,4 +1,5 @@
 import { api } from "../lib/api";
+import type { GrowthPoint } from "../lib/growth";
 
 /** What the developer panel reads (GET /api/admin/*, read-only; the backend only answers accounts flagged is_admin). */
 export interface AdminDevice {
@@ -38,6 +39,8 @@ export interface AdminSummary {
   externalPlayer?: ExternalPlayerSummary;
   /** Absent from a backend that predates it. */
   live?: LiveSummary;
+  /** One point per day (UTC) for the last 180 days. Absent from a backend that predates it, and then the graph is left out. */
+  userGrowth?: GrowthPoint[];
 }
 export interface ExternalPlayerEvent {
   title: string | null;
