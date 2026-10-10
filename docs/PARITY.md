@@ -10,6 +10,7 @@ Status: ⬜ not done · ✅ done (released or merged) · ➖ not needed there (s
 
 | Date | Change | Firestick | Phone |
 |---|---|---|---|
+| 2026-10-10 | Download button on a title's details page for Plus members (and developers): a popup of the debrid file links, best quality then smallest first; listed in the Plus perks as "Download (web only)" (`Detail.tsx`, `DownloadPanel.tsx`, `plus.ts`) | ➖ web only for now, by choice | ➖ web only for now, by choice |
 | 2026-10-10 | The Plus free trial is for new yearly subscribers only: monthly has no trial and its button reads "Choose Monthly"; only the yearly plan shows "5 days free" (`Settings.tsx`; the server now only gives the trial on the yearly plan in `plus.ts`) | ✅ merged, not released | ✅ merged, not released |
 | 2026-10-10 | One-time "Everything in ArcTV Plus" popup for Plus members on Home: Picked for you, up to 5 profiles, Smart source picking, Your stats, with parental controls on the way; shown once per account (`PlusPromo.tsx`, `plusWelcome.ts`) | ✅ merged, not released | ✅ merged, not released |
 | 2026-10-10 | Remove from Continue Watching no longer marks the title watched: it is taken off and its saved position is forgotten, so playing it again starts from the beginning (needs the new `DELETE /user/continue-watching`; the apps currently send a "finished" report) (`continueWatching.ts`) | ✅ merged, not released | ✅ merged, not released |

@@ -34,6 +34,7 @@ export const PLUS_PERKS: PlusPerk[] = [
   { title: "Parental controls", detail: "Locks on individual genres and titles, built on kids profiles and Blocked Genres.", status: "soon" },
   { title: "Smart source picking", detail: "Skips Select a Source and starts the best source your device can play, once every addon has answered. Turn it on below.", status: "included" },
   { title: "Your stats", detail: "How much you watch, how this week compares, your streak, a map of your last 13 weeks and your busiest day, under Settings → Your stats.", status: "included" },
+  { title: "Download (web only)", detail: "A Download button on the details page of a movie or episode on the web app lists the files from your debrid service, best quality at the smallest size first, to save to your computer.", status: "included" },
 ];
 
 export const PLUS_FREE_NOTE = "Everything you use today stays free: browsing, playing, My List, Continue Watching, addons and Blocked Genres.";

@@ -76,6 +76,7 @@ function DetailContent({ content, similar, providerId, trailer, releaseDate }: {
   const resumeEpisode = resume?.seasonNumber != null && resume.episodeNumber != null ? content.seasons.find((s) => s.seasonNumber === resume.seasonNumber)?.episodes.find((e) => e.episodeNumber === resume.episodeNumber) : undefined;
   const firstEpisode: Episode | undefined = content.type === "TV_SHOW" ? resumeEpisode ?? content.seasons[0]?.episodes[0] : undefined;
   const isAdmin = useAuth((s) => s.user?.isAdmin === true);
+  const canDownload = hasPlus || isAdmin;
   const [downloading, setDownloading] = useState(false);
   const actionLabel = resume ? "Resume" : "Play";
   const playLabel = content.type === "TV_SHOW" && firstEpisode ? `${actionLabel} S${firstEpisode.seasonNumber}E${firstEpisode.episodeNumber}` : actionLabel;
@@ -124,8 +125,8 @@ function DetailContent({ content, similar, providerId, trailer, releaseDate }: {
               title={signedIn && trailer.kind === "notFound" ? "No trailer found for this title" : undefined}
               onClick={() => openTrailer(trailer.kind === "found" ? trailer.value : null)}
             />
-            {/* Developer accounts only for now: lists the files that can be saved (for a show, the episode the Play button would play). */}
-            {isAdmin ? (
+            {/* Plus members and developer accounts (web only for now): lists the files that can be saved (for a show, the episode the Play button would play). */}
+            {canDownload ? (
               <MangoButton text={content.type === "TV_SHOW" && firstEpisode ? `Download S${firstEpisode.seasonNumber}E${firstEpisode.episodeNumber}` : "Download"} icon={<MdDownload />} compact={compact} onClick={() => setDownloading(true)} />
             ) : null}
             {expanded ? (
@@ -167,7 +168,7 @@ function DetailContent({ content, similar, providerId, trailer, releaseDate }: {
         </div>
       )}
       <div style={{ height: compact ? "calc(16 * var(--dp))" : "calc(48 * var(--dp))" }} />
-      {isAdmin && downloading ? (
+      {canDownload && downloading ? (
         <DownloadPanel
           target={{ type: content.type, id: content.id, season: firstEpisode?.seasonNumber ?? null, episode: firstEpisode?.episodeNumber ?? null }}
           title={content.type === "TV_SHOW" && firstEpisode ? `${content.title} S${firstEpisode.seasonNumber}E${firstEpisode.episodeNumber}` : content.title}
