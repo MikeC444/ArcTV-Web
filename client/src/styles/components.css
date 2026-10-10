@@ -456,3 +456,23 @@
 }
 /* These span (half of) the panel's width: the usual 8% grow on focus would push them past its edge. */
 .cardmenu__play, .cardmenu__secondary, .cardmenu__row { --tvs-scale: 1.02; }
+
+/* The Download panel (developer accounts): the files that can be saved for one movie or episode */
+.dlpanel__scrim { background: rgba(0, 0, 0, 0.62); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.dlpanel { position: relative; width: min(640px, 100%); max-height: 86vh; overflow-y: auto; background: var(--bg-elevated); border: 1px solid var(--divider); border-radius: 22px; padding: 28px 24px 20px; box-shadow: 0 28px 80px rgba(0, 0, 0, 0.65); }
+.dlpanel__close { position: absolute; top: 14px; right: 14px; width: 40px; height: 40px; --tvs-bg: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; }
+.dlpanel__close svg { width: 22px; height: 22px; }
+.dlpanel h2, .dlpanel > p { padding-right: 48px; }
+.dlpanel__state { display: flex; align-items: center; gap: 10px; margin: 8px 0 12px; }
+.dlpanel__list { display: flex; flex-direction: column; gap: 8px; }
+.dlrow { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: var(--surface-high); border: 1px solid transparent; border-radius: 12px; color: var(--text); text-decoration: none; }
+.dlrow:hover { background: var(--surface); }
+.dlrow:focus-visible { outline: 2px solid var(--focus-border); outline-offset: 2px; border-color: var(--accent); }
+.dlrow__badge { flex: none; min-width: 52px; text-align: center; border: 1px solid var(--divider); border-radius: 6px; background: var(--bg); padding: 5px 8px; color: var(--accent); }
+.dlrow__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.dlrow__facts { display: flex; flex-wrap: wrap; gap: 3px 12px; align-items: center; }
+.dlrow__cache { display: inline-flex; align-items: center; gap: 3px; font-weight: 700; }
+.dlrow__cache[data-cached="true"] { color: var(--teal); }
+.dlrow__cache[data-cached="false"] { color: var(--warn); }
+.dlrow__cache svg { width: 13px; height: 13px; }
+.dlrow__icon { flex: none; width: 24px; height: 24px; color: var(--text-2); }

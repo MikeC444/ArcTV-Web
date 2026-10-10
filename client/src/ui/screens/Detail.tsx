@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { MdAdd, MdCheck, MdCheckCircle, MdMoreVert, MdOutlineCheckCircle, MdPerson, MdPlayArrow, MdStar, MdTheaters, MdThumbDown, MdThumbUp, MdOutlineThumbDown, MdOutlineThumbUp } from "react-icons/md";
+import { MdAdd, MdCheck, MdCheckCircle, MdDownload, MdMoreVert, MdOutlineCheckCircle, MdPerson, MdPlayArrow, MdStar, MdTheaters, MdThumbDown, MdThumbUp, MdOutlineThumbDown, MdOutlineThumbUp } from "react-icons/md";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import type { Content, ContentType, Episode, Season } from "../../domain/types";
 import type { LookupState } from "../../state/detailData";
@@ -15,6 +15,7 @@ import { stashDetailPreview } from "../../state/pendingDetail";
 import { IconButton, MangoButton } from "../components/Buttons";
 import { BackButton } from "../components/BackButton";
 import { ContentRow } from "../components/ContentRow";
+import { DownloadPanel } from "../components/DownloadPanel";
 import { HomeSkeleton } from "../components/Skeletons";
 import { FullScreenError } from "../components/States";
 import { ScrollRow } from "../components/ScrollRow";
@@ -74,6 +75,8 @@ function DetailContent({ content, similar, providerId, trailer, releaseDate }: {
 
   const resumeEpisode = resume?.seasonNumber != null && resume.episodeNumber != null ? content.seasons.find((s) => s.seasonNumber === resume.seasonNumber)?.episodes.find((e) => e.episodeNumber === resume.episodeNumber) : undefined;
   const firstEpisode: Episode | undefined = content.type === "TV_SHOW" ? resumeEpisode ?? content.seasons[0]?.episodes[0] : undefined;
+  const isAdmin = useAuth((s) => s.user?.isAdmin === true);
+  const [downloading, setDownloading] = useState(false);
   const actionLabel = resume ? "Resume" : "Play";
   const playLabel = content.type === "TV_SHOW" && firstEpisode ? `${actionLabel} S${firstEpisode.seasonNumber}E${firstEpisode.episodeNumber}` : actionLabel;
 
@@ -121,6 +124,10 @@ function DetailContent({ content, similar, providerId, trailer, releaseDate }: {
               title={signedIn && trailer.kind === "notFound" ? "No trailer found for this title" : undefined}
               onClick={() => openTrailer(trailer.kind === "found" ? trailer.value : null)}
             />
+            {/* Developer accounts only for now: lists the files that can be saved (for a show, the episode the Play button would play). */}
+            {isAdmin ? (
+              <MangoButton text={content.type === "TV_SHOW" && firstEpisode ? `Download S${firstEpisode.seasonNumber}E${firstEpisode.episodeNumber}` : "Download"} icon={<MdDownload />} compact={compact} onClick={() => setDownloading(true)} />
+            ) : null}
             {expanded ? (
               <div className="detail__extra">
                 <IconButton compact={compact} icon={isWatched ? <MdCheckCircle /> : <MdOutlineCheckCircle />} label={isWatched ? "Remove from Watched" : "Mark as watched"} onClick={() => toggleWatched(withProvider)} />
@@ -160,6 +167,13 @@ function DetailContent({ content, similar, providerId, trailer, releaseDate }: {
         </div>
       )}
       <div style={{ height: compact ? "calc(16 * var(--dp))" : "calc(48 * var(--dp))" }} />
+      {isAdmin && downloading ? (
+        <DownloadPanel
+          target={{ type: content.type, id: content.id, season: firstEpisode?.seasonNumber ?? null, episode: firstEpisode?.episodeNumber ?? null }}
+          title={content.type === "TV_SHOW" && firstEpisode ? `${content.title} S${firstEpisode.seasonNumber}E${firstEpisode.episodeNumber}` : content.title}
+          onClose={() => setDownloading(false)}
+        />
+      ) : null}
     </div>
   );
 }
