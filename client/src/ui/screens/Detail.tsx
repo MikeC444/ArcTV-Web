@@ -12,7 +12,7 @@ import { useAccountAction, useWatchedIds } from "../../state/hooks";
 import { findLastStreamId } from "../../state/lastSource";
 import { useMyList } from "../../state/myList";
 import { stashDetailPreview } from "../../state/pendingDetail";
-import { IconButton, MangoButton } from "../components/Buttons";
+import { IconButton, ArcButton } from "../components/Buttons";
 import { BackButton } from "../components/BackButton";
 import { ContentRow } from "../components/ContentRow";
 import { DownloadPanel } from "../components/DownloadPanel";
@@ -115,9 +115,9 @@ function DetailContent({ content, similar, providerId, trailer, releaseDate }: {
           {compact ? <div className="detail__spacer" /> : null}
           {content.description ? <p className={`detail__desc hero-shadow ${compact ? "clamp-2" : "clamp-4"}`}>{content.description}</p> : null}
           <div className="detail__actions">
-            <MangoButton text={playLabel} icon={<MdPlayArrow />} variant="light" compact={compact} dataAttrs={{ autofocus: true }} onClick={() => goPlay(firstEpisode?.seasonNumber ?? null, firstEpisode?.episodeNumber ?? null)} />
+            <ArcButton text={playLabel} icon={<MdPlayArrow />} variant="light" compact={compact} dataAttrs={{ autofocus: true }} onClick={() => goPlay(firstEpisode?.seasonNumber ?? null, firstEpisode?.episodeNumber ?? null)} />
             {/* Always there from the first paint (it used to appear once the lookup finished): dimmed while the lookup runs or when there is none. Trailers come from the account's service, so visitors are taken to sign in. */}
-            <MangoButton
+            <ArcButton
               text="Trailer"
               icon={<MdTheaters />}
               compact={compact}
@@ -127,7 +127,7 @@ function DetailContent({ content, similar, providerId, trailer, releaseDate }: {
             />
             {/* Plus members and developer accounts (web only for now): lists the files that can be saved (for a show, the episode the Play button would play). */}
             {canDownload ? (
-              <MangoButton text={content.type === "TV_SHOW" && firstEpisode ? `Download S${firstEpisode.seasonNumber}E${firstEpisode.episodeNumber}` : "Download"} icon={<MdDownload />} compact={compact} onClick={() => setDownloading(true)} />
+              <ArcButton text={content.type === "TV_SHOW" && firstEpisode ? `Download S${firstEpisode.seasonNumber}E${firstEpisode.episodeNumber}` : "Download"} icon={<MdDownload />} compact={compact} onClick={() => setDownloading(true)} />
             ) : null}
             {expanded ? (
               <div className="detail__extra">

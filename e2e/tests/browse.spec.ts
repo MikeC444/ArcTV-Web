@@ -46,7 +46,7 @@ test.describe("browsing", () => {
     await expect(first).toBeVisible();
     const label = (await first.getAttribute("aria-label")) ?? "";
     await first.click();
-    await expect(page).toHaveURL(/\/detail\/test\.mangotv\.fixture\/MOVIE\//);
+    await expect(page).toHaveURL(/\/detail\/test\.arctv\.fixture\/MOVIE\//);
     const title = label.replace(/\s*\(\d{4}\).*$/, "");
     await expect(page.getByRole("heading", { level: 1 })).toContainText(title.split(" ")[0]!);
     await expect(page.getByRole("button", { name: "Play" })).toBeVisible();
@@ -54,7 +54,7 @@ test.describe("browsing", () => {
     await expect(page.locator(".cast__member").first()).toBeVisible();
     await shot(page, "detail-movie");
 
-    await page.goto("/detail/test.mangotv.fixture/TV_SHOW/fxs1");
+    await page.goto("/detail/test.arctv.fixture/TV_SHOW/fxs1");
     await expect(page.getByRole("heading", { name: "Seasons" })).toBeVisible();
     await expect(page.getByRole("button", { name: /Play episode 1: Chapter 1/ })).toBeVisible();
     await page.getByRole("button", { name: "Season 2" }).click();
@@ -200,11 +200,11 @@ test.describe("browsing", () => {
 
   test("My List: add from Detail, appears newest-first, Watched filter, syncs to the account (and the TV)", async ({ page }) => {
     const account = await newAccount("mylist");
-    await openSignedIn(page, account, "/detail/test.mangotv.fixture/MOVIE/fxm2");
+    await openSignedIn(page, account, "/detail/test.arctv.fixture/MOVIE/fxm2");
     await expect(page.getByRole("button", { name: "More options" })).toBeVisible();
     await page.getByRole("button", { name: "More options" }).click();
     await page.getByRole("button", { name: "Add to Watchlist" }).click();
-    await page.goto("/detail/test.mangotv.fixture/MOVIE/fxm5");
+    await page.goto("/detail/test.arctv.fixture/MOVIE/fxm5");
     await page.getByRole("button", { name: "More options" }).click();
     await page.getByRole("button", { name: "Add to Watchlist" }).click();
     await page.getByRole("button", { name: "Mark as watched" }).click();
@@ -378,7 +378,7 @@ test.describe("browsing", () => {
       await lookup; // hold the answer back to look at the page in between
       await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ youtubeVideoId: "abc123" }) });
     });
-    await openSignedIn(page, account, "/detail/test.mangotv.fixture/MOVIE/fxm1");
+    await openSignedIn(page, account, "/detail/test.arctv.fixture/MOVIE/fxm1");
     const trailer = page.getByRole("button", { name: "Trailer" });
     await expect(page.getByRole("button", { name: /Play/ }).first()).toBeVisible({ timeout: 20_000 });
     await expect(trailer).toBeVisible(); // there with the Play button, not a second later
@@ -394,7 +394,7 @@ test.describe("browsing", () => {
   test("with no trailer on file the button stays, dimmed, and says so; visitors without an account are taken to sign in", async ({ page }) => {
     const account = await newAccount("notrailer");
     await page.route("**/api/user/trailer**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ youtubeVideoId: null }) }));
-    await openSignedIn(page, account, "/detail/test.mangotv.fixture/MOVIE/fxm1");
+    await openSignedIn(page, account, "/detail/test.arctv.fixture/MOVIE/fxm1");
     const trailer = page.getByRole("button", { name: "Trailer" });
     await expect(trailer).toBeVisible({ timeout: 20_000 });
     await expect(trailer).toBeDisabled();

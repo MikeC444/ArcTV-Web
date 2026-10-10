@@ -6,8 +6,8 @@ import heroImage from "../../assets/img/auth_hero_living_room.webp";
 import { api, ApiClientError } from "../../lib/api";
 import { routes } from "../../lib/routes";
 import { useAuth, validateCredentials, type SessionUser } from "../../state/auth";
-import { MangoButton } from "../components/Buttons";
-import { MangoLogo } from "../components/Logo";
+import { ArcButton } from "../components/Buttons";
+import { ArcLogo } from "../components/Logo";
 import { FullScreenError, Spinner } from "../components/States";
 
 /** Where to go once signed in: the deep link the person was heading to, else Home. */
@@ -31,7 +31,7 @@ export function AuthLayout() {
         <img className="authstart__hero" src={heroImage} alt="" />
         <div className="authstart__scrim" />
         <div className="authstart__col">
-          <MangoLogo size={32} />
+          <ArcLogo size={32} />
           <Outlet />
         </div>
       </main>
@@ -43,7 +43,7 @@ export function AuthLayout() {
 function BackButton() {
   const navigate = useNavigate();
   const location = useLocation();
-  return <MangoButton text="Back" icon={<MdArrowBack />} compact onClick={() => navigate(routes.auth, { state: location.state })} />;
+  return <ArcButton text="Back" icon={<MdArrowBack />} compact onClick={() => navigate(routes.auth, { state: location.state })} />;
 }
 
 /** AuthStartScreen.kt — "Your Entertainment, Your Way", Log In / Sign Up (the hero photo is drawn by AuthLayout). */
@@ -69,8 +69,8 @@ export function AuthStartScreen() {
       </h1>
       <p className="t-body-lg c-text-2">Stream the latest movies, TV shows and more. Create an account to get the full experience.</p>
       <div className="authstart__buttons">
-        <MangoButton text="Log In" icon={<MdPerson />} trailingChevron variant="filled" fullWidth dataAttrs={{ autofocus: true }} onClick={() => { clearNotice(); navigate(routes.authMethod("login"), { state: location.state }); }} />
-        <MangoButton text="Sign Up" icon={<MdAdd />} trailingChevron fullWidth onClick={() => { clearNotice(); navigate(routes.authMethod("register"), { state: location.state }); }} />
+        <ArcButton text="Log In" icon={<MdPerson />} trailingChevron variant="filled" fullWidth dataAttrs={{ autofocus: true }} onClick={() => { clearNotice(); navigate(routes.authMethod("login"), { state: location.state }); }} />
+        <ArcButton text="Sign Up" icon={<MdAdd />} trailingChevron fullWidth onClick={() => { clearNotice(); navigate(routes.authMethod("register"), { state: location.state }); }} />
       </div>
       <p className="authstart__qr t-label-md c-text-3">
         <MdQrCode2 aria-hidden="true" /> Scan a QR code to create an account from your phone
@@ -90,8 +90,8 @@ export function AuthMethodScreen() {
       <div className="authcenter__col">
         <h1 className="t-headline-sm" style={{ margin: 0 }}>{intent === "register" ? "How would you like to create your account?" : "How would you like to sign in?"}</h1>
         <div className="authcenter__buttons">
-          <MangoButton text="Use Email & Password" icon={<MdEdit />} variant="filled" fullWidth dataAttrs={{ autofocus: true }} onClick={() => navigate(routes.authPassword(intent), { state: location.state })} />
-          <MangoButton text="Scan a QR Code" icon={<MdQrCode2 />} fullWidth onClick={() => navigate(routes.authQr(intent), { state: location.state })} />
+          <ArcButton text="Use Email & Password" icon={<MdEdit />} variant="filled" fullWidth dataAttrs={{ autofocus: true }} onClick={() => navigate(routes.authPassword(intent), { state: location.state })} />
+          <ArcButton text="Scan a QR Code" icon={<MdQrCode2 />} fullWidth onClick={() => navigate(routes.authQr(intent), { state: location.state })} />
         </div>
         <div><BackButton /></div>
       </div>
@@ -170,7 +170,7 @@ export function PasswordSignInScreen() {
         <label className="sr-only" htmlFor="password">Password</label>
         <input id="password" className="mfield" aria-invalid={error ? true : undefined} aria-describedby={error ? "auth-error" : undefined} type={visible ? "text" : "password"} autoComplete={isRegister ? "new-password" : "current-password"} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
         <div>
-          <MangoButton text={visible ? "Hide Password" : "Show Password"} icon={visible ? <MdVisibilityOff /> : <MdVisibility />} compact onClick={() => setVisible((v) => !v)} />
+          <ArcButton text={visible ? "Hide Password" : "Show Password"} icon={visible ? <MdVisibilityOff /> : <MdVisibility />} compact onClick={() => setVisible((v) => !v)} />
         </div>
         {error ? <p id="auth-error" className="c-coral t-body-md" role="alert" style={{ margin: 0, textAlign: "center" }}>{error}</p> : null}
         {waitLeft > 0 ? (
@@ -178,9 +178,9 @@ export function PasswordSignInScreen() {
             Too many sign-in attempts right now — ArcTV only accepts a few a minute, shared by everyone using this site. You can try again in {waitLeft} s.
           </p>
         ) : null}
-        <MangoButton text={waitLeft > 0 ? `Try again in ${waitLeft} s` : isRegister ? "Create Account" : "Log In"} icon={isRegister ? <MdAdd /> : <MdPerson />} variant="filled" fullWidth type="submit" disabled={busy || waitLeft > 0} />
+        <ArcButton text={waitLeft > 0 ? `Try again in ${waitLeft} s` : isRegister ? "Create Account" : "Log In"} icon={isRegister ? <MdAdd /> : <MdPerson />} variant="filled" fullWidth type="submit" disabled={busy || waitLeft > 0} />
         {busy ? <div style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "center" }}><Spinner small /><span className="c-text-2 t-body-md">{isRegister ? "Creating account…" : "Signing in…"}</span></div> : null}
-        <MangoButton text={isRegister ? "Already have an account? Log in" : "New here? Create an account"} icon={<MdChevronRight />} compact onClick={() => { setMode(isRegister ? "login" : "register"); setError(null); }} />
+        <ArcButton text={isRegister ? "Already have an account? Log in" : "New here? Create an account"} icon={<MdChevronRight />} compact onClick={() => { setMode(isRegister ? "login" : "register"); setError(null); }} />
         <div><BackButton /></div>
       </form>
     </div>
@@ -274,14 +274,14 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   if (status === "signedOut") return <Navigate to={routes.auth} replace state={{ from: location.pathname + location.search }} />;
   if (status === "offline") return <FullScreenError title="You're offline" message="ArcTV can't reach its servers and there's no saved session on this browser yet. Check your connection and try again." onRetry={() => void init()} />;
-  if (status === "unknown") return <div className="gate" aria-busy="true"><MangoLogo size={32} /></div>;
+  if (status === "unknown") return <div className="gate" aria-busy="true"><ArcLogo size={32} /></div>;
   return <>{children}</>;
 }
 
 /** Browsing is open to everyone: only the first paint waits (to learn whether a session exists). Play, My List and Settings use RequireAuth. */
 export function AllowGuests({ children }: { children: React.ReactNode }) {
   const status = useAuth((s) => s.status);
-  if (status === "unknown") return <div className="gate" aria-busy="true"><MangoLogo size={32} /></div>;
+  if (status === "unknown") return <div className="gate" aria-busy="true"><ArcLogo size={32} /></div>;
   return <>{children}</>;
 }
 
@@ -289,6 +289,6 @@ export function AllowGuests({ children }: { children: React.ReactNode }) {
 export function RedirectIfAuthed({ children }: { children: React.ReactNode }) {
   const status = useAuth((s) => s.status);
   if (status === "signedIn") return <Navigate to="/" replace />;
-  if (status === "unknown") return <div className="gate" aria-busy="true"><MangoLogo size={32} /></div>;
+  if (status === "unknown") return <div className="gate" aria-busy="true"><ArcLogo size={32} /></div>;
   return <>{children}</>;
 }

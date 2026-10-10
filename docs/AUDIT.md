@@ -1,7 +1,7 @@
-# Phase 1 audit — Firestick app → MangoTV Web
+# Phase 1 audit — Firestick app → Arc TV Web
 
 Source of truth: `MikeC444/ArcTV-AndroidTV` (read-only, inspected at commit `924d366`).
-Target: `MikeC444/ArcTV-Web` (named MangotvWebb when this audit was written; was empty — no commits, no config to preserve).
+Target: `MikeC444/ArcTV-Web` (named differently when this audit was written; was empty — no commits, no config to preserve).
 
 Nothing in the source repository was modified, and nothing in this repository
 touches a database directly.
@@ -58,10 +58,10 @@ Removal is a soft delete (`deleted_at`).
 
 | Local store | Synced to cloud? | Web equivalent |
 |---|---|---|
-| `mango_my_list`, `mango_continue_watching`, `mango_addons`, `mango_home_row_prefs`, `mango_player_preferences` | **Yes** — these are caches of the cloud domains above | Browser cache of the same domains (per-user, cleared on sign-out) |
-| `mango_sound_preferences` (navigation volume) | **No** | Browser-local setting |
-| `mango_last_source` (last stream chosen per title/episode) | **No** | Browser-local setting (per user) |
-| `mango_home_cache`, first-sync flag, watched-backfill flag, update prefs, device UUID, encrypted session | No (cache / bookkeeping) | Not needed / regenerated |
+| The saved My List, Continue Watching, addons, Home row preferences and player preferences | **Yes** — these are caches of the cloud domains above | Browser cache of the same domains (per-user, cleared on sign-out) |
+| Sound preferences (navigation volume) | **No** | Browser-local setting |
+| The last stream chosen per title/episode | **No** | Browser-local setting (per user) |
+| The Home cache, first-sync flag, watched-backfill flag, update prefs, device UUID, encrypted session | No (cache / bookkeeping) | Not needed / regenerated |
 | `PendingChangeStore` outboxes | No — but they drain to the cloud when the TV next runs | See §4 |
 
 **Conclusion:** everything users care about (account, My List, Continue Watching,
@@ -74,7 +74,7 @@ migrated from a device the browser has no access to. Nothing needs to be
 ## 3. Architecture decision
 
 ```
-Browser (React SPA)  ──same-origin──▶  MangoTV Web server (this repo, Node)  ──HTTPS + Bearer──▶  existing MangoTV API  ──▶ Neon
+Browser (React SPA)  ──same-origin──▶  Arc TV Web server (this repo, Node)  ──HTTPS + Bearer──▶  existing Arc TV API  ──▶ Neon
    no tokens in JS                      • sealed httpOnly session cookie
                                         • allow-listed reverse proxy
                                         • SSRF-hardened addon fetch fallback

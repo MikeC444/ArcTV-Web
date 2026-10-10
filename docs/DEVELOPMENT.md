@@ -51,7 +51,7 @@ cannot read or change each other's data, including natural-key and far-future-ti
 ## Architecture
 
 ```
-Browser (React SPA)  ──same origin──▶  MangoTV Web server (this repo, Node)  ──HTTPS + Bearer──▶  existing MangoTV API ──▶ Neon
+Browser (React SPA)  ──same origin──▶  Arc TV Web server (this repo, Node)  ──HTTPS + Bearer──▶  existing Arc TV API ──▶ Neon
    no tokens in JS                      • sealed httpOnly session cookie
                                         • allow-listed reverse proxy (/api/user/*)
                                         • SSRF-hardened addon fetch fallback (/api/addon-proxy)
@@ -115,7 +115,7 @@ npm run dev                   # web server on :8080 (reads .env)
 npm run dev:client            # in a second terminal: Vite on http://localhost:5173, proxying /api to :8080
 ```
 
-Open <http://localhost:5173> and sign in with an account from your MangoTV backend.
+Open <http://localhost:5173> and sign in with an account from your Arc TV backend.
 
 Production build and run:
 
@@ -134,7 +134,7 @@ Set on the **server only**. Nothing here is exposed to the browser and nothing h
 
 | Variable | Required | Meaning |
 |---|---|---|
-| `MANGOTV_API_URL` | yes | Base URL of the existing MangoTV API (the value the Fire TV build uses as `API_BASE_URL`), no trailing slash. Must be `https://` in production. |
+| `MANGOTV_API_URL` | yes | Base URL of the existing Arc TV API (the value the Fire TV build uses as `API_BASE_URL`), no trailing slash. Must be `https://` in production. |
 | `SESSION_SECRET` | production | ≥ 16 chars, seals the session cookie: `openssl rand -base64 48`. Rotating it signs everyone out (no data is lost). |
 | `NODE_ENV` | no | `production` enables `Secure` cookies and HSTS. |
 | `PORT` | no | Default `8080`. |
@@ -180,7 +180,7 @@ MANGOTV_API_URL=https://your-backend.example VERIFY_EMAIL=you@example.com VERIFY
 Uses only public API calls: health → login → `/user/me`, settings, watchlist, continue-watching, history, addons
 (prints counts only) → logout → checks the old token is revoked. It never prints tokens, refuses plain `http://` to
 non-local hosts and writes no user data. Its only side effects: one session that it revokes, and one device entry named
-"MangoTV web verification" per account.
+"Arc TV web verification" per account.
 
 ## Supported browsers and playback
 
@@ -225,7 +225,7 @@ fail; that case is reported by the player's start-up watchdog. Logic and tests: 
 ### The stream relay (Stremio's `/proxy/`, built into this server)
 
 Stremio Web gets around hosts a browser can't use by sending the stream through its streaming server. A website has no
-local server, so MangoTV's own web server does that job: `/api/relay/d=<origin>&h=<header>&r=<header>/<path>` fetches the
+local server, so Arc TV's own web server does that job: `/api/relay/d=<origin>&h=<header>&r=<header>/<path>` fetches the
 stream like a native player would (no browser headers, plus the addon's `proxyHeaders`), and streams it back with `Range`
 support. It is for signed-in users' own streams only — same-origin, media content types only, private/loopback/metadata
 addresses refused at connect time, every redirect re-validated, no cookies or `Referer` forwarded, a per-user

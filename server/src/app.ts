@@ -117,7 +117,7 @@ export function createApp(config: AppConfig, options: CreateAppOptions = {}): Ex
   // ── API ──────────────────────────────────────────────────────────────────────
   const api = express.Router();
   api.use(noStore);
-  // `GET /api/health` answers for this server alone. `GET /api/health?deep=1` also asks the MangoTV service (which in turn wakes its database),
+  // `GET /api/health` answers for this server alone. `GET /api/health?deep=1` also asks the Arc TV service (which in turn wakes its database),
   // so ONE uptime monitor pinging it keeps a free-tier backend awake as well. It always answers 200 (this server is up); the body says how the
   // backend is. The backend is asked at most once a minute however often this is called, so it can't be used to hammer it.
   let backendCheck: { at: number; state: "up" | "down" } | null = null;

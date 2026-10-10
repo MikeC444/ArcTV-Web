@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { MdClear, MdExpandLess, MdExpandMore, MdRefresh } from "react-icons/md";
 import { formatElapsed, formatWatched, timeAgo } from "../../lib/format";
 import { fetchAdminSummary, platformSplit, windowLabel, fetchAdminUser, fetchAdminUsers, filtersActive, newestVersion, NO_FILTERS, type AdminDevice, type ExternalPlayerEvent, type AdminFilters, type AdminSummary, type AdminUserDetail, type AdminUserRow } from "../../state/admin";
-import { MangoButton } from "../components/Buttons";
+import { ArcButton } from "../components/Buttons";
 import { webSystemLabel } from "../../lib/webSystems";
 import { WebSystems } from "../components/WebSystems";
 import { GrowthChart } from "../components/GrowthChart";
@@ -96,7 +96,7 @@ export function AdminScreen() {
         <h1 className="t-display-md" style={{ margin: 0 }}>Developer panel</h1>
         <div className="admin__refresh t-label-md c-text-2">
           {updatedAt ? `Updated ${timeAgo(new Date(updatedAt).toISOString())} · refreshes every 30 s` : "Loading…"}
-          <MangoButton text="Refresh" icon={<MdRefresh />} compact onClick={() => void refresh()} />
+          <ArcButton text="Refresh" icon={<MdRefresh />} compact onClick={() => void refresh()} />
         </div>
       </div>
       {error ? <p className="admin__error page__pad" role="alert">{error}</p> : null}
@@ -181,9 +181,9 @@ export function AdminScreen() {
         </div>
         <div className="admin__foot t-label-md c-text-2">
           {filtersActive(filters) ? `${total} of ${summary?.users ?? total} users match${filters.webSystem ? ` · on the website with ${webSystemLabel(filters.webSystem)}` : ""}` : `${total} users`}
-          {filtersActive(filters) ? <MangoButton text="Clear filters" icon={<MdClear />} compact onClick={clearFilters} /> : null}
+          {filtersActive(filters) ? <ArcButton text="Clear filters" icon={<MdClear />} compact onClick={clearFilters} /> : null}
         </div>
-        {users.length < total ? <MangoButton text={`Show more (${users.length} of ${total})`} icon={<MdExpandMore />} compact onClick={() => void loadMore()} /> : null}
+        {users.length < total ? <ArcButton text={`Show more (${users.length} of ${total})`} icon={<MdExpandMore />} compact onClick={() => void loadMore()} /> : null}
       </section>
     </div>
   );

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Shared helpers: provision a THROWAWAY Postgres database + run the real, unmodified MangoTV backend against it.
+# Shared helpers: provision a THROWAWAY Postgres database + run the real, unmodified Arc TV backend against it.
 # Sourced by run-backend-integration.sh and run-e2e.sh. Never touches a real database or the source repository.
 #
 #   MANGOTV_BACKEND_DIR   path to a checkout of ArcTV-AndroidTV (default: clone it into .backend-under-test)
@@ -7,7 +7,7 @@
 #   MANGOTV_BACKEND_REF   git ref to test against    (default: 924d366 — the commit this port was built against)
 #   TEST_DATABASE_URL     a DISPOSABLE database; its name must contain "test" or end in "_it".
 #                         Default (Debian/Ubuntu boxes / this sandbox, when run as root): the local Postgres cluster is started and a
-#                         throwaway role + database (mangotv_web_it) is created with a random per-run password.
+#                         throwaway role + database (arctv_web_it) is created with a random per-run password.
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 WORK="$ROOT/.backend-under-test"
 REPO="${MANGOTV_BACKEND_REPO:-https://github.com/MikeC444/ArcTV-AndroidTV}"
@@ -24,11 +24,11 @@ provision_database() {
       local pw
       pw="$(head -c 24 /dev/urandom | base64 | tr -dc 'A-Za-z0-9')"
       su postgres -c "psql -q -v ON_ERROR_STOP=1" <<SQL
-DO \$\$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'mangotv_test') THEN CREATE ROLE mangotv_test LOGIN; END IF; END \$\$;
-ALTER ROLE mangotv_test PASSWORD '$pw';
+DO \$\$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'arctv_test') THEN CREATE ROLE arctv_test LOGIN; END IF; END \$\$;
+ALTER ROLE arctv_test PASSWORD '$pw';
 SQL
-      su postgres -c "psql -tc \"SELECT 1 FROM pg_database WHERE datname='mangotv_web_it'\" | grep -q 1 || createdb -O mangotv_test mangotv_web_it"
-      export TEST_DATABASE_URL="postgresql://mangotv_test:$pw@localhost:5432/mangotv_web_it"
+      su postgres -c "psql -tc \"SELECT 1 FROM pg_database WHERE datname='arctv_web_it'\" | grep -q 1 || createdb -O arctv_test arctv_web_it"
+      export TEST_DATABASE_URL="postgresql://arctv_test:$pw@localhost:5432/arctv_web_it"
     else
       echo "Set TEST_DATABASE_URL to a disposable Postgres database (name containing 'test' or ending in '_it')." >&2
       return 2

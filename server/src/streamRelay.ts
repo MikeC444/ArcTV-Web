@@ -33,7 +33,7 @@ const MAX_REDIRECTS = 6;
 const MAX_TARGET_LENGTH = 4096;
 const MAX_CUSTOM_HEADERS = 16;
 const MAX_CONCURRENT_PER_USER = 6;
-const USER_AGENT = "MangoTV-Web/0.1 (stream relay)";
+const USER_AGENT = "ArcTV-Web/0.1 (stream relay)";
 
 const TOKEN = /^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/;
 const FORBIDDEN_REQUEST_HEADERS = new Set([

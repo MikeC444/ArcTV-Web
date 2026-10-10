@@ -19,8 +19,8 @@ import { peekPlayerArt } from "../../state/playerArt";
 import { readPlayerPrefs, writePlayerPrefs } from "../../state/playerPrefs";
 import { decideProgress, nextEpisodeAfter, nextHoldSeekDelta, offerNextEpisode, shouldOfferResume } from "../../state/progress";
 import { useSettings } from "../../state/settings";
-import { IconButton, MangoButton } from "../components/Buttons";
-import { MangoLogo } from "../components/Logo";
+import { IconButton, ArcButton } from "../components/Buttons";
+import { ArcLogo } from "../components/Logo";
 import { FullScreenError, Spinner } from "../components/States";
 import { PlayerLoading } from "../player/Loading";
 import { describeAttempt, describeDiagnostics, EVENTS_WORTH_KEEPING, probeSource, snapshotVideo, type TrailEntry } from "../player/diagnostics";
@@ -671,7 +671,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
       <div className="player__slow player__slow--inline" role="status">
         <p className="t-title-md" style={{ margin: 0 }}>Still trying to start this source…</p>
         <p className="t-body-md c-text-2" style={{ margin: 0 }}>{stream.debrid && !stream.debrid.cached ? `This source isn't cached on ${DEBRID_NAMES[stream.debrid.service] ?? stream.debrid.service} yet, so it can take several minutes. Sources marked “Cached” start straight away.` : "Some sources take a while to prepare. You can keep waiting or pick another one."}</p>
-        <MangoButton text="Choose a Different Source" icon={<MdSwapHoriz />} compact borderColor="#fff" onClick={onChangeSource} />
+        <ArcButton text="Choose a Different Source" icon={<MdSwapHoriz />} compact borderColor="#fff" onClick={onChangeSource} />
       </div>
     ) : null;
   const subtitle = [content.year, content.ageRating, episode && content.seasons.length ? `${content.seasons.length} Season${content.seasons.length === 1 ? "" : "s"}` : content.runtimeMinutes ? `${Math.floor(content.runtimeMinutes / 60)}h ${content.runtimeMinutes % 60}m` : null].filter(Boolean).join("  •  ");
@@ -702,7 +702,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
             {subtitle ? <div className="t-label-md c-text-2 ellipsis">{subtitle}</div> : null}
             {episode ? <div className="t-label-md c-text-2 ellipsis" style={{ fontWeight: 700 }}>{`S${episode.seasonNumber} E${episode.episodeNumber} • ${episode.title}`}</div> : null}
           </div>
-          <MangoLogo size={16} />
+          <ArcLogo size={16} />
         </div>
 
         <div className="pbottom">
@@ -748,7 +748,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
 
       {offerNext && next ? (
         <div className="pnext">
-          <MangoButton text="Next episode" icon={<MdSkipNext />} variant="light" onClick={() => onNextEpisode(next)} />
+          <ArcButton text="Next episode" icon={<MdSkipNext />} variant="light" onClick={() => onNextEpisode(next)} />
           <div className="pnext__title t-label-md ellipsis">{`S${next.season} E${next.episode} • ${next.title}`}</div>
         </div>
       ) : null}
@@ -833,8 +833,8 @@ function UpNext({ next, onCancel, onGo }: { next: { season: number; episode: num
       <div className="t-label-md c-text-2">Up next in {left}s</div>
       <div className="t-title-md ellipsis">{`S${next.season} E${next.episode} • ${next.title}`}</div>
       <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
-        <MangoButton text="Play now" icon={<MdFastForward />} variant="light" compact onClick={onGo} dataAttrs={{ autofocus: true }} />
-        <MangoButton text="Cancel" icon={<MdArrowBack />} compact onClick={onCancel} />
+        <ArcButton text="Play now" icon={<MdFastForward />} variant="light" compact onClick={onGo} dataAttrs={{ autofocus: true }} />
+        <ArcButton text="Cancel" icon={<MdArrowBack />} compact onClick={onCancel} />
       </div>
     </div>
   );

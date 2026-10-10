@@ -1,11 +1,11 @@
-# Deploying MangoTV Web
+# Deploying Arc TV Web
 
-MangoTV Web is **one Node service**: it serves the built single-page app and the small `/api` layer from the same
-origin. It has no database of its own and needs no migration — it uses the MangoTV API that your Fire TV app already
+Arc TV Web is **one Node service**: it serves the built single-page app and the small `/api` layer from the same
+origin. It has no database of its own and needs no migration — it uses the Arc TV API that your Fire TV app already
 uses, so every existing account works on day one.
 
 ```
-users ──HTTPS──▶  MangoTV Web (this repo)  ──HTTPS──▶  your existing MangoTV API  ──▶  Neon
+users ──HTTPS──▶  Arc TV Web (this repo)  ──HTTPS──▶  your existing Arc TV API  ──▶  Neon
 ```
 
 > The instructions below have been checked locally (`npm run build && npm start`, health check, deep links, security
@@ -14,7 +14,7 @@ users ──HTTPS──▶  MangoTV Web (this repo)  ──HTTPS──▶  your 
 
 ## 1. Prerequisites
 
-* The public **HTTPS base URL of your existing MangoTV API** — the same value your Fire TV build uses as
+* The public **HTTPS base URL of your existing Arc TV API** — the same value your Fire TV build uses as
   `API_BASE_URL` (a GitHub secret / `local.properties` in the Firestick repository). It is not stored in either repository.
 * A host that runs **Node 22.9+** and can keep one process running (Render, Railway, Fly.io, a VPS, a container platform…).
 * A domain name with HTTPS (every provider above supplies TLS). The session cookie is `Secure` in production, so plain
@@ -27,7 +27,7 @@ You do **not** need the database URL, and the web service must never be given it
 | Variable | Value |
 |---|---|
 | `NODE_ENV` | `production` |
-| `MANGOTV_API_URL` | `https://<your MangoTV API>` (no trailing slash; `https://` is enforced in production) |
+| `MANGOTV_API_URL` | `https://<your Arc TV API>` (no trailing slash; `https://` is enforced in production) |
 | `SESSION_SECRET` | a long random string: `openssl rand -base64 48`. Store it as a secret, not in the repo. |
 | `TRUST_PROXY` | How many reverse proxies are in front: `0` (none — Node is exposed directly), `1` (a single proxy — many hosts), `2`/`3`. **Render and other platforms that put a CDN in front of their own proxy send two addresses**, so `1` would take the CDN's address for the visitor; the start-up log says which value fits (see below). |
 | `PORT` | whatever the platform injects (default `8080`) |
@@ -92,7 +92,7 @@ use up each other's sign-in allowance — set `TRUST_PROXY` to the number it nam
 in front: a visitor could then fake their address and dodge the limits.
 
 **Where a "too many attempts" came from.** The log has one `[auth]` line (at most one per 30 s, never an address or account) saying
-whether *this server's* limit was reached (10 attempts a minute from one visitor address) or *the MangoTV service* answered 429
+whether *this server's* limit was reached (10 attempts a minute from one visitor address) or *the Arc TV service* answered 429
 (its `/auth/*` limit, shared by everyone using this site — see below). That tells you which of the two to chase.
 
 **"Too many requests right now" when signing in.** That wording is the *backend's* limiter answering (the web service's own
@@ -137,12 +137,12 @@ viewer's. Set `STREAM_RELAY=0` to switch the relay off; the player then only eve
 ### Keeping a free Render service awake
 
 A free Render web service goes to sleep after about 15 minutes without a request, and the first visit afterwards waits for it to
-wake (up to a minute). If the MangoTV backend is also on a free plan it sleeps separately, and its database (Neon) suspends after
+wake (up to a minute). If the Arc TV backend is also on a free plan it sleeps separately, and its database (Neon) suspends after
 a few idle minutes too. One free uptime monitor can keep all of that warm:
 
 1. Create a monitor (UptimeRobot's free plan works; any "HTTP(s)" monitor does) for
    `https://<your-web-service>/api/health?deep=1` with an interval of **5–10 minutes** (anything under 15).
-2. `?deep=1` makes this server ask the MangoTV backend's `/health` as well (which touches its database), so this single address
+2. `?deep=1` makes this server ask the Arc TV backend's `/health` as well (which touches its database), so this single address
    keeps the web service, the backend and the database awake. The backend is asked at most once a minute however often the
    address is called. The answer is always HTTP 200 when this server is up, with `{"status":"ok","backend":"up"}` — or
    `"backend":"down"` when the backend isn't answering; use a **keyword** monitor for `"backend":"up"` if you want to be told about that.
@@ -164,7 +164,7 @@ request logging or uptime probe on `/api/health` as needed.
 * Never commit `.env`; `.gitignore` already excludes `.env*` except `.env.example`.
 * Never add `DATABASE_URL`, Neon credentials or the API's own signing/secret values to this service or to any
   `VITE_*`/public variable. They are not needed here and the client bundle contains no configuration at all.
-* Payment verification (if payments are ever added to MangoTV) must run in the trusted backend; the web client must
+* Payment verification (if payments are ever added to Arc TV) must run in the trusted backend; the web client must
   never decide that someone has paid.
 
 ## 6. Two domains: arctv.org (marketing) and web.arctv.org (the app)

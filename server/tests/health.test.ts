@@ -82,7 +82,7 @@ describe("telling visitors apart behind proxies (TRUST_PROXY)", () => {
 });
 
 describe("sign-in 429s say in the log where they came from", () => {
-  it("tells this server's own limit apart from the MangoTV service's, one line each per 30 s, with no address or account in it", async () => {
+  it("tells this server's own limit apart from the Arc TV service's, one line each per 30 s, with no address or account in it", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(Date.now() + 10 * 60_000); // past anything an earlier test noted
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);

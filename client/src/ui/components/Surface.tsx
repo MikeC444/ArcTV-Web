@@ -20,7 +20,7 @@ export interface SurfaceProps {
   background?: string;
   backgroundImage?: string;
   borderColor?: string;
-  /** Focus/hover scale, default 1.08 (MangoMotion.FocusScale). */
+  /** Focus/hover scale, default 1.08 (the Fire TV app's focus scale). */
   scale?: number;
   alwaysBorder?: boolean;
   instantBorder?: boolean;

@@ -64,7 +64,7 @@ test.describe("back buttons", () => {
 
     await page.goto(detail); // opened directly: a fresh history entry with nothing behind it
     await page.evaluate(() => history.replaceState(null, "", location.href));
-    await page.goto("/detail/test.mangotv.fixture/MOVIE/fxm2");
+    await page.goto("/detail/test.arctv.fixture/MOVIE/fxm2");
     await page.getByRole("button", { name: "Back" }).click();
     await expect(page).toHaveURL(/\/$/);
   });

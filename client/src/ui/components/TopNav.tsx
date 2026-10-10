@@ -5,7 +5,7 @@ import { isDetailPath, NAV_ITEMS, routes } from "../../lib/routes";
 import { useAuth } from "../../state/auth";
 import { activeProfileOf, useProfiles } from "../../state/profiles";
 import { ProfileAvatar } from "./ProfileAvatar";
-import { MangoLogo } from "./Logo";
+import { ArcLogo } from "./Logo";
 import { Surface } from "./Surface";
 
 /** Which nav item a path belongs to (Detail counts as Home, like the TV app). */
@@ -60,7 +60,7 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
   return (
     <header className="topnav" data-transparent={transparent} data-scrolled={scrolled} role="banner">
       <Link to="/" className="topnav__logo tvs" aria-label="Arc TV — Home" style={{ ["--tvs-radius" as string]: "6px", ["--tvs-border" as string]: "var(--text)" }}>
-        <MangoLogo size="1em" />
+        <ArcLogo size="1em" />
       </Link>
       <nav className="topnav__items hide-scroll" aria-label="Primary">
         {items.map((item, index) => (

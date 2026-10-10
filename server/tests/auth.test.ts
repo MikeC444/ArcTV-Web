@@ -118,7 +118,7 @@ describe("CSRF protection", () => {
       .post("/api/auth/login")
       .set("X-MangoTV-Client", "web")
       .set("Origin", "https://evil.example")
-      .set("Host", "mangotv.example")
+      .set("Host", "arctv.example")
       .send({ email: "a@example.com", password: "password-1234" });
     expect(res.status).toBe(403);
     const site = await request(app).post("/api/auth/login").set("X-MangoTV-Client", "web").set("Sec-Fetch-Site", "cross-site").send({});

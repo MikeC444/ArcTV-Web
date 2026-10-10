@@ -8,10 +8,10 @@ The sorting is Claude's recommendation for a D-pad TV app (own player, QR sign-i
 - [ ] (this change) — ArcTV Plus paywall: the Settings → ArcTV Plus tab sells Monthly / Yearly / Lifetime through Stripe Checkout, and Plus features (Picked for you, Like / Not for me) need an account with Plus; the backend (`GET /user/plus`, Stripe webhook) decides, and is off by default (everyone has Plus as early access). The Firestick shows the checkout as a QR code.
 - [ ] (this change) — ArcTV Plus is in early access: the Plus tab, "Picked for you" (labelled "· ArcTV Plus") and Like / Not for me are on for everyone, free for now; the `?plusPreview=1` flag is removed. The Firestick shows the same labels.
 - [ ] (this change) — Blocked Genres is now saved to the account's settings (new `blockedGenres` field, shared with the Firestick app) instead of only this browser; a new account adopts the list blocked in the browser before signing in.
-- [ ] bc1a55c, 53757a8 — Mango TV renamed to Arc TV in all visible text and the wordmark (logo images, colours, storage keys and env vars unchanged; the Firestick app needs the same rename and new artwork).
+- [ ] bc1a55c, 53757a8 — Renamed to Arc TV in all visible text and the wordmark (logo images, colours, storage keys and env vars unchanged; the Firestick app needs the same rename and new artwork).
 - [ ] 590b5d8, 6c818e6 — Arc TV favicon, home-screen icons, install manifest and link-preview image added (transparent artwork; the nav shows the full logo image) (the Firestick needs its own launcher icon and banner).
 - [ ] 6c51e99 — Top-left of the site now shows the Arc TV mark plus "ArcTV" instead of plain text.
-- [ ] 08bc73a — Whole UI recoloured to the Arc TV logo palette (cyan, blue, violet) instead of the old orange/mango colours.
+- [ ] 08bc73a — Whole UI recoloured to the Arc TV logo palette (cyan, blue, violet) instead of the old orange colours.
 - [ ] 800068e — My List has a "Sort by" row: Recently Added, A–Z, Highest Rated, Newest.
 - [ ] b7566d5 — Each title shows in only one Home row.
 - [ ] c0c9f2f — The hero's ten titles come from the enabled Home rows.

@@ -23,7 +23,7 @@ export interface FeedbackEntry {
   synced?: boolean;
 }
 
-/** Wire DTO of GET/POST/DELETE /user/feedback (the MangoTV backend's movie_feedback table). */
+/** Wire DTO of GET/POST/DELETE /user/feedback (the Arc TV backend's movie_feedback table). */
 interface FeedbackDto {
   profileId: string;
   providerId: string;

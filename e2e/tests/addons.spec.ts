@@ -17,7 +17,7 @@ test.describe("addons are asked for streams", () => {
     await account.tv.installAddon(`${ADDON}/nostreams/manifest.json`, 3);
     await clearRequests();
     await openSignedIn(page, account);
-    await page.goto("/sources/test.mangotv.fixture/MOVIE/fxm1/-1/-1");
+    await page.goto("/sources/test.arctv.fixture/MOVIE/fxm1/-1/-1");
     await expect(page.getByRole("heading", { name: "Select a Source" })).toBeVisible();
 
     // catalog addon's own 6 + 2 from each stream-only addon
@@ -51,7 +51,7 @@ test.describe("addons are asked for streams", () => {
     await account.tv.installAddon(`${ADDON}/empty/manifest.json`, 2);
     await clearRequests();
     await openSignedIn(page, account);
-    await page.goto("/sources/test.mangotv.nostreams/MOVIE/fxm1/-1/-1");
+    await page.goto("/sources/test.arctv.nostreams/MOVIE/fxm1/-1/-1");
 
     await expect(page.getByRole("heading", { name: "No sources found" })).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText("Some of your addons didn't answer")).toBeVisible();
@@ -77,7 +77,7 @@ test.describe("addons are asked for streams", () => {
     const account = await newAccount("nostreamaddon", { addon: false });
     await account.tv.installAddon(`${ADDON}/nostreams/manifest.json`, 0);
     await openSignedIn(page, account);
-    await page.goto("/sources/test.mangotv.nostreams/MOVIE/fxm1/-1/-1");
+    await page.goto("/sources/test.arctv.nostreams/MOVIE/fxm1/-1/-1");
     await expect(page.getByRole("heading", { name: "No sources found" })).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText("None of your installed addons provide streams")).toBeVisible();
     await page.getByRole("button", { name: "Manage Addons" }).click();
@@ -89,7 +89,7 @@ test.describe("addons are asked for streams", () => {
     await account.tv.installAddon(`${ADDON}/stall/manifest.json`, 1);
     await page.clock.install(); // lets the test jump past the watchdog timers instead of waiting a minute
     await openSignedIn(page, account);
-    await page.goto("/sources/test.mangotv.fixture/MOVIE/fxm1/-1/-1");
+    await page.goto("/sources/test.arctv.fixture/MOVIE/fxm1/-1/-1");
     await page.locator(".source", { hasText: "Stream stall" }).locator(".source__surface").click();
     await expect(page).toHaveURL(/\/player\//);
 
@@ -136,7 +136,7 @@ test.describe("addons are asked for streams", () => {
     await account.tv.installAddon(`${ADDON}/slowdebrid/manifest.json`, 1);
     await page.clock.install();
     await openSignedIn(page, account);
-    await page.goto("/sources/test.mangotv.fixture/MOVIE/fxm1/-1/-1");
+    await page.goto("/sources/test.arctv.fixture/MOVIE/fxm1/-1/-1");
     await page.locator(".source", { hasText: "Debrid.slow" }).locator(".source__surface").click();
     await expect(page.locator("video.player__video")).toBeAttached();
     await page.clock.fastForward(46_000);
@@ -152,7 +152,7 @@ test.describe("addons are asked for streams", () => {
     await account.tv.installAddon(`${ADDON}/debrid/manifest.json`, 1);
     await page.clock.install();
     await openSignedIn(page, account);
-    await page.goto("/sources/test.mangotv.fixture/MOVIE/fxm1/-1/-1");
+    await page.goto("/sources/test.arctv.fixture/MOVIE/fxm1/-1/-1");
     const cached = page.locator(".source", { hasText: "Debrid.cached.1080p" });
     const uncached = page.locator(".source", { hasText: "Debrid.uncached.2160p" });
     await expect(cached).toContainText("Cached on Real-Debrid");

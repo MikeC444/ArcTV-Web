@@ -49,7 +49,7 @@ const SERIES = Array.from({ length: 70 }, (_, i) => makeItem("series", i + 1));
 const all = { movie: MOVIES, series: SERIES };
 
 const manifest = {
-  id: "test.mangotv.fixture",
+  id: "test.arctv.fixture",
   version: "1.0.0",
   name: "Fixture Catalog",
   description: "Local Stremio-protocol test addon (synthetic titles, no real content).",
@@ -131,7 +131,7 @@ function handleExtraAddon(p, res, cors) {
   let m = /^\/streamonly\/([^/]+)\/manifest\.json$/.exec(p);
   if (m) {
     const config = decodeURIComponent(m[1]);
-    return json(res, extraManifest(`test.mangotv.streamonly.${config.replace(/\W/g, "")}`, `Fixture Streams ${config.split(/[=|,]/)[0]}`, ["stream"]), cors), true;
+    return json(res, extraManifest(`test.arctv.streamonly.${config.replace(/\W/g, "")}`, `Fixture Streams ${config.split(/[=|,]/)[0]}`, ["stream"]), cors), true;
   }
   m = /^\/streamonly\/([^/]+)\/stream\/(movie|series)\/([^/]+)\.json$/.exec(p);
   if (m) {
@@ -142,27 +142,27 @@ function handleExtraAddon(p, res, cors) {
       { name: `Stream ${tag} 720p`, title: `${title}.720p.WEB-DL.VP9\n👤 120 💾 1.1 GB`, url: `${BASE}/media/sample.webm?via=${tag}-2` },
     ] }, cors), true;
   }
-  if (p === "/relay/manifest.json") return json(res, extraManifest("test.mangotv.relay", "Fixture Relay", ["stream"]), cors), true;
+  if (p === "/relay/manifest.json") return json(res, extraManifest("test.arctv.relay", "Fixture Relay", ["stream"]), cors), true;
   if (/^\/relay\/stream\//.test(p)) return json(res, { streams: [
     { name: "Stream hostile 1080p", title: "Relay.hostile.1080p.WEB-DL.VP9\n👤 400 💾 2 GB", url: `${BASE}/media/browser-hostile.webm` },
     { name: "Stream headers 1080p", title: "Relay.headers.1080p.WEB-DL.VP9\n👤 300 💾 2 GB", url: `${BASE}/media/needs-headers.webm`, behaviorHints: { proxyHeaders: { request: { "X-Required": "let-me-in" } } } },
     { name: "Stream dead 1080p", title: "Relay.dead.1080p.WEB-DL.VP9\n👤 200 💾 2 GB", url: `${BASE}/media/dead.webm` },
     { name: "Stream resolver 1080p", title: "Relay.resolver.1080p.WEB-DL.VP9\n👤 100 💾 2 GB", url: `${BASE}/media/resolve/movie` },
   ] }, cors), true;
-  if (p === "/debrid/manifest.json") return json(res, extraManifest("test.mangotv.debrid", "Fixture Debrid", ["stream"]), cors), true;
+  if (p === "/debrid/manifest.json") return json(res, extraManifest("test.arctv.debrid", "Fixture Debrid", ["stream"]), cors), true;
   if (/^\/debrid\/stream\//.test(p)) return json(res, { streams: [
     { name: "[RD+] Fixture Debrid", title: "Debrid.cached.1080p.WEB-DL.VP9\n👤 50 💾 2 GB", url: `${BASE}/media/sample.webm?via=debrid-cached` },
     { name: "[RD download] Fixture Debrid", title: "Debrid.uncached.2160p.WEB-DL.VP9\n👤 900 💾 9 GB", url: `${BASE}/media/stall.webm?via=debrid-uncached` },
   ] }, cors), true;
-  if (p === "/stall/manifest.json") return json(res, extraManifest("test.mangotv.stall", "Fixture Stall", ["stream"]), cors), true;
+  if (p === "/stall/manifest.json") return json(res, extraManifest("test.arctv.stall", "Fixture Stall", ["stream"]), cors), true;
   if (/^\/stall\/stream\//.test(p)) return json(res, { streams: [{ name: "Stream stall 1080p", title: "Extra.stall.1080p.WEB-DL.VP9\n👤 99 💾 1 GB", url: `${BASE}/media/stall.webm?apikey=SECRET-KEY-123` }] }, cors), true;
-  if (p === "/slowdebrid/manifest.json") return json(res, extraManifest("test.mangotv.slowdebrid", "Fixture Slow Debrid", ["stream"]), cors), true;
+  if (p === "/slowdebrid/manifest.json") return json(res, extraManifest("test.arctv.slowdebrid", "Fixture Slow Debrid", ["stream"]), cors), true;
   if (/^\/slowdebrid\/stream\//.test(p)) return json(res, { streams: [{ name: "[RD+] Fixture Slow", title: "Debrid.slow.1080p.WEB-DL.VP9\n👤 2 💾 2 GB", url: `${BASE}/media/stall.webm?via=debrid-slow` }] }, cors), true; // "cached", but the host never delivers
-  if (p === "/broken/manifest.json") return json(res, extraManifest("test.mangotv.broken", "Fixture Broken", ["stream"]), cors), true;
+  if (p === "/broken/manifest.json") return json(res, extraManifest("test.arctv.broken", "Fixture Broken", ["stream"]), cors), true;
   if (/^\/broken\/stream\//.test(p)) return res.writeHead(500, cors ? CORS : {}), res.end("boom"), true;
-  if (p === "/empty/manifest.json") return json(res, extraManifest("test.mangotv.empty", "Fixture Empty", ["stream"]), cors), true;
+  if (p === "/empty/manifest.json") return json(res, extraManifest("test.arctv.empty", "Fixture Empty", ["stream"]), cors), true;
   if (/^\/empty\/stream\//.test(p)) return json(res, { streams: [] }, cors), true;
-  if (p === "/nostreams/manifest.json") return json(res, extraManifest("test.mangotv.nostreams", "Fixture Catalog Only", ["catalog", "meta"]), cors), true;
+  if (p === "/nostreams/manifest.json") return json(res, extraManifest("test.arctv.nostreams", "Fixture Catalog Only", ["catalog", "meta"]), cors), true;
   if (/^\/nostreams\/stream\//.test(p)) return res.writeHead(404, cors ? CORS : {}), res.end("no such resource"), true;
   m = /^\/nostreams\/meta\/(movie|series)\/([^/]+)\.json$/.exec(p);
   if (m) return json(res, { meta: metaFor(m[1], decodeURIComponent(m[2])) }, cors), true;

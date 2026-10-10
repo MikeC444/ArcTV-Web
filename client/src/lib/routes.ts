@@ -1,6 +1,6 @@
 import type { ContentType } from "../domain/types";
 
-/** navigation/MangoRoutes.kt for the browser. IDs are percent-encoded (Stremio ids can contain ":" or "/"). */
+/** The Fire TV app's navigation routes, for the browser. IDs are percent-encoded (Stremio ids can contain ":" or "/"). */
 const enc = encodeURIComponent;
 
 /** The addon the readable title addresses belong to (Stremio's Cinemeta), and the id shape they end with. */

@@ -23,7 +23,7 @@ import { useHasPlus } from "../../state/plusAccess";
 import { useBlockedGenres } from "../../state/blockedGenres";
 import { useSettings } from "../../state/settings";
 import { signOutAndWipe } from "../../state/sync";
-import { MangoButton, Pill, Switch } from "../components/Buttons";
+import { ArcButton, Pill, Switch } from "../components/Buttons";
 import { Spinner } from "../components/States";
 import { Surface } from "../components/Surface";
 
@@ -150,7 +150,7 @@ function BlockedGenresPane() {
       <p className="t-body-sm c-text-2" style={{ margin: 0 }}>Titles in these genres are hidden from Home, Movies, TV Shows, Search and Genres. Titles an addon doesn't give genres for can't be filtered. When you're signed in it is saved to your account, so it applies on every device.</p>
       <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "14px 0" }}>
         <span className="t-title-md">{blocked.length === 0 ? "Nothing blocked" : `${blocked.length} blocked`}</span>
-        {blocked.length > 0 ? <MangoButton text="Clear all" icon={<MdDelete />} compact onClick={clear} /> : null}
+        {blocked.length > 0 ? <ArcButton text="Clear all" icon={<MdDelete />} compact onClick={clear} /> : null}
       </div>
       {!ready || (available === null && blocked.length === 0) ? (
         <Spinner />
@@ -278,7 +278,7 @@ function PlusPane() {
                 <div className="plus__price">{plan.price ?? "Price at checkout"}</div>
                 <div className="t-label-sm c-text-3">{plan.per}</div>
                 <p className="t-body-sm c-text-2" style={{ margin: "8px 0 14px" }}>{plan.blurb}</p>
-                <MangoButton text={busy === plan.id ? "Opening…" : plan.id === "lifetime" ? "Get Lifetime" : plan.id === "yearly" && plus.trialDays > 0 ? `Start ${plus.trialDays}-day free trial` : `Choose ${plan.label}`} icon={<MdWorkspacePremium />} variant="filled" compact disabled={busy !== null} onClick={() => void choose(plan.id)} />
+                <ArcButton text={busy === plan.id ? "Opening…" : plan.id === "lifetime" ? "Get Lifetime" : plan.id === "yearly" && plus.trialDays > 0 ? `Start ${plus.trialDays}-day free trial` : `Choose ${plan.label}`} icon={<MdWorkspacePremium />} variant="filled" compact disabled={busy !== null} onClick={() => void choose(plan.id)} />
               </div>
             ))}
           </div>
@@ -308,7 +308,7 @@ function AccountPane() {
             <div className="t-label-sm c-text-3">Watching as</div>
             <div className="t-title-md">{profile.name}</div>
           </div>
-          <MangoButton text="Switch or manage profiles" icon={<MdSwitchAccount />} compact onClick={() => navigate(routes.profiles, { state: { from: routes.settings() } })} />
+          <ArcButton text="Switch or manage profiles" icon={<MdSwitchAccount />} compact onClick={() => navigate(routes.profiles, { state: { from: routes.settings() } })} />
         </div>
       ) : null}
       {user ? (
@@ -319,11 +319,11 @@ function AccountPane() {
       ) : null}
       {user?.isAdmin ? (
         <div style={{ marginTop: 16 }}>
-          <MangoButton text="Developer panel" icon={<MdTune />} compact onClick={() => navigate(routes.admin)} />
+          <ArcButton text="Developer panel" icon={<MdTune />} compact onClick={() => navigate(routes.admin)} />
         </div>
       ) : null}
       <div style={{ marginTop: 16 }}>
-        <MangoButton
+        <ArcButton
           text={busy ? "Signing Out…" : "Sign Out"}
           icon={<MdLogout />}
           compact
@@ -351,7 +351,7 @@ function PlusSettingsPane() {
         <MdLock aria-hidden="true" />
         <p className="t-body-md" style={{ margin: 0 }}><strong>Plus settings are only for ArcTV Plus.</strong></p>
         <p className="t-body-sm c-text-2" style={{ margin: 0 }}>Switch Smart source picking and your other Plus features on and off here.</p>
-        <MangoButton text="See ArcTV Plus" icon={<MdWorkspacePremium />} compact onClick={() => navigate(routes.settings("plus"))} />
+        <ArcButton text="See ArcTV Plus" icon={<MdWorkspacePremium />} compact onClick={() => navigate(routes.settings("plus"))} />
       </div>
     );
   }
@@ -417,7 +417,7 @@ function PlusSubscription() {
           {plus.cancelAtPeriodEnd ? `Your subscription won't renew.${until ? ` You keep Plus until ${until}.` : ""}` : until ? `Renews on ${until}.` : "Active."}
         </div>
       </div>
-      {plus.cancelAtPeriodEnd ? null : <MangoButton text="Cancel subscription" icon={<MdCancel />} compact onClick={() => { setError(null); setConfirming(true); }} />}
+      {plus.cancelAtPeriodEnd ? null : <ArcButton text="Cancel subscription" icon={<MdCancel />} compact onClick={() => { setError(null); setConfirming(true); }} />}
       {confirming ? (
         <div className="scrim" onMouseDown={(e) => e.target === e.currentTarget && !busy && setConfirming(false)}>
           <div className="dialog" role="alertdialog" aria-modal="true" aria-label={`Cancel your ${planLabel.toLowerCase()} subscription?`} data-spatial-trap="true" style={{ flexDirection: "column", width: "min(480px, 100%)" }}>
@@ -425,8 +425,8 @@ function PlusSubscription() {
             <p className="c-text-2 t-body-md">{until ? `You keep ArcTV Plus until ${until}. After that it won't renew and you won't be charged again.` : "You keep ArcTV Plus until the end of the period you've paid for. After that it won't renew and you won't be charged again."}</p>
             {error ? <p className="t-body-sm" role="alert" style={{ margin: 0, color: "var(--coral)" }}>{error}</p> : null}
             <div className="dialog__actions">
-              <MangoButton text="Keep Plus" icon={<MdCheck />} variant="filled" disabled={busy} onClick={() => setConfirming(false)} dataAttrs={{ autofocus: true }} />
-              <MangoButton text={busy ? "Cancelling…" : "Cancel subscription"} icon={<MdCancel />} disabled={busy} onClick={() => void cancel()} />
+              <ArcButton text="Keep Plus" icon={<MdCheck />} variant="filled" disabled={busy} onClick={() => setConfirming(false)} dataAttrs={{ autofocus: true }} />
+              <ArcButton text={busy ? "Cancelling…" : "Cancel subscription"} icon={<MdCancel />} disabled={busy} onClick={() => void cancel()} />
             </div>
           </div>
         </div>
@@ -446,7 +446,7 @@ function AddonsPane() {
     <div className="addons">
       <div className="addons__head">
         <p className="t-body-sm c-text-2" style={{ margin: 0, flex: 1 }}>Stremio-compatible addons contribute their catalogs directly into Home.</p>
-        <MangoButton text="Add Addon" icon={<MdAdd />} variant="filled" compact onClick={() => navigate(routes.addAddon)} />
+        <ArcButton text="Add Addon" icon={<MdAdd />} variant="filled" compact onClick={() => navigate(routes.addAddon)} />
       </div>
       <p className="addons__notice t-body-sm" role="note">
         <MdInfo aria-hidden="true" />
@@ -488,8 +488,8 @@ function AddonsPane() {
             <h2 className="t-title-lg" style={{ margin: 0 }}>Remove {target.manifest.name}?</h2>
             <p className="c-text-2 t-body-md">Its catalogs will disappear from Home on every device signed in to this account.</p>
             <div style={{ display: "flex", gap: 12 }}>
-              <MangoButton text="Cancel" icon={<MdCheck />} onClick={() => setConfirming(null)} dataAttrs={{ autofocus: true }} />
-              <MangoButton
+              <ArcButton text="Cancel" icon={<MdCheck />} onClick={() => setConfirming(null)} dataAttrs={{ autofocus: true }} />
+              <ArcButton
                 text="Remove"
                 icon={<MdDelete />}
                 variant="filled"
@@ -544,7 +544,7 @@ export function AddAddonScreen() {
         <label className="sr-only" htmlFor="addon-url">Addon manifest URL</label>
         <input id="addon-url" className="mfield" type="url" inputMode="url" placeholder="https://example.com/manifest.json" value={url} onChange={(e) => setUrl(e.target.value)} autoComplete="off" spellCheck={false} data-autofocus="true" />
         <div style={{ marginTop: 18 }}>
-          <MangoButton text="Install" icon={<MdCloudUpload />} variant="filled" type="submit" disabled={state.kind === "installing"} />
+          <ArcButton text="Install" icon={<MdCloudUpload />} variant="filled" type="submit" disabled={state.kind === "installing"} />
         </div>
         <div style={{ marginTop: 24 }} aria-live="polite">
           {state.kind === "installing" ? <div style={{ display: "flex", gap: 10, alignItems: "center" }}><Spinner small /><span className="c-text-2 t-body-md">Installing…</span></div> : null}
@@ -553,7 +553,7 @@ export function AddAddonScreen() {
         </div>
         <div className="addaddon__suggest">
           <p className="t-label-md c-text-2" style={{ margin: "0 0 8px" }}>Official</p>
-          <MangoButton text="Add Cinemeta (default catalogs)" icon={<MdExtension />} compact onClick={() => { setUrl(CINEMETA_MANIFEST_URL); void submit(CINEMETA_MANIFEST_URL); }} />
+          <ArcButton text="Add Cinemeta (default catalogs)" icon={<MdExtension />} compact onClick={() => { setUrl(CINEMETA_MANIFEST_URL); void submit(CINEMETA_MANIFEST_URL); }} />
         </div>
       </form>
     </div>

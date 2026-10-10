@@ -168,7 +168,7 @@ describe("stream relay", () => {
     expect(sent.origin).toBeUndefined();
     expect(sent.cookie).toBeUndefined(); // our session cookie is never passed on
     expect(sent["accept-encoding"]).toBe("identity");
-    expect(String(sent["user-agent"])).toContain("MangoTV-Web");
+    expect(String(sent["user-agent"])).toContain("ArcTV-Web");
   });
 
   it("sends the addon's proxyHeaders to the stream host, and lets it override the content type", async () => {

@@ -7,7 +7,7 @@ import { usePlus } from "../../state/plus";
 import { activeProfileOf, useProfiles } from "../../state/profiles";
 import { promoDue, usePlusPromo } from "../../state/plusPromo";
 import { usePlusWelcome, welcomeDue } from "../../state/plusWelcome";
-import { MangoLogo } from "./Logo";
+import { ArcLogo } from "./Logo";
 import { Surface } from "./Surface";
 
 const SHOW_AFTER_MS = 4000;
@@ -100,7 +100,7 @@ export function PromoDialog({ onClose, onNever, onGo, content = PLUS_INVITATION 
           <MdClose />
         </Surface>
         <div className="promo__brand">
-          <MangoLogo size={26} />
+          <ArcLogo size={26} />
           <span className="promo__plus">PLUS</span>
         </div>
         <h2 id="promo-title" className="promo__title">{content.title}</h2>

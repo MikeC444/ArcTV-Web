@@ -25,7 +25,7 @@ test.describe("Fire TV layout parity @ 1920×1080 (1dp = 2px)", () => {
         tokens: Object.fromEntries(["--bg", "--bg-elevated", "--surface", "--surface-high", "--cyan", "--blue", "--violet", "--warn", "--coral", "--azure", "--teal", "--text", "--text-2", "--text-3", "--focus-border", "--watched"].map((k) => [k, css.getPropertyValue(k).trim().toLowerCase()])),
       };
     });
-    expect(t.bg).toBe("rgb(8, 8, 10)"); // MangoBackground 0xFF08080A
+    expect(t.bg).toBe("rgb(8, 8, 10)"); // app background 0xFF08080A
     expect(t.tokens).toEqual({
       "--bg": "#08080a", "--bg-elevated": "#141417", "--surface": "#1c1c20", "--surface-high": "#26262b", "--cyan": "#19e6ff", "--blue": "#2f80ff", "--violet": "#9b5cff", "--warn": "#ffb020", "--coral": "#ff3d68",
       "--azure": "#3d8bff", "--teal": "#2dd9a8", "--text": "#f6f6f8", "--text-2": "#afafb8", "--text-3": "#92929c" /* the TV's #75757e is 4.4:1 — lightened to pass WCAG AA */, "--focus-border": "#8cf3ff", "--watched": "#2ecc71",
@@ -34,12 +34,12 @@ test.describe("Fire TV layout parity @ 1920×1080 (1dp = 2px)", () => {
     near(dpPx, DP, 0.01);
   });
 
-  test("top navigation bar and logo (TopNavBar.kt, MangoLogo.kt)", async ({ page }) => {
+  test("top navigation bar and logo (TopNavBar.kt, the logo)", async ({ page }) => {
     const account = await newAccount("parity-nav");
     await openSignedIn(page, account);
     const logo = page.locator(".topnav .logo");
     await expect(logo).toBeVisible();
-    near(await logo.evaluate((el) => parseFloat(getComputedStyle(el).fontSize)), 32 * DP); // MangoLogo: 24.sp on the TV, larger on a desktop window
+    near(await logo.evaluate((el) => parseFloat(getComputedStyle(el).fontSize)), 32 * DP); // the logo: 24.sp on the TV, larger on a desktop window
     expect(await logo.evaluate((el) => getComputedStyle(el).fontWeight)).toBe("900"); // FontWeight.Black
     near(await page.locator(".topnav").evaluate((el) => parseFloat(getComputedStyle(el).paddingLeft)), 56 * DP); // ScreenPaddingHorizontal
     const items = await page.locator(".navitem").allTextContents();
@@ -55,7 +55,7 @@ test.describe("Fire TV layout parity @ 1920×1080 (1dp = 2px)", () => {
     await expect(page.locator(".hero")).toBeVisible();
     near(await page.locator(".hero").evaluate((el) => el.getBoundingClientRect().height), 0.74 * 1080, 2); // the TV uses screenHeight × 0.82; shorter here so Continue Watching shows above the fold
     const play = page.locator(".hero__actions .mbtn").first();
-    near(await play.evaluate((el) => el.getBoundingClientRect().height), 52 * 1.2 * DP); // MangoButton height × the desktop hero button scale
+    near(await play.evaluate((el) => el.getBoundingClientRect().height), 52 * 1.2 * DP); // button height × the desktop hero button scale
     near(await page.locator(".hero__actions .ibtn").first().evaluate((el) => el.getBoundingClientRect().width), 52 * 1.2 * DP);
     // the logo / title, details and buttons sit in the vertical middle of the hero photo, left-aligned
     const contentBox = (await page.locator(".hero__content").boundingBox())!;
@@ -114,7 +114,7 @@ test.describe("Fire TV layout parity @ 1920×1080 (1dp = 2px)", () => {
       round: await page.locator(".hero__actions .ibtn").first().evaluate((el) => el.getBoundingClientRect().height),
       height: await page.locator(".hero").evaluate((el) => el.getBoundingClientRect().height),
     };
-    for (const path of ["/detail/test.mangotv.fixture/MOVIE/fxm1", "/detail/test.mangotv.fixture/TV_SHOW/fxs1"]) {
+    for (const path of ["/detail/test.arctv.fixture/MOVIE/fxm1", "/detail/test.arctv.fixture/TV_SHOW/fxs1"]) {
       await page.goto(path);
       await expect(page.locator(".detail__col h1")).toBeVisible();
       near(await size(".detail__col h1"), home.title, 0.6);
@@ -132,7 +132,7 @@ test.describe("Fire TV layout parity @ 1920×1080 (1dp = 2px)", () => {
 
   test("Sources: 35 / 65 split, 76dp-ish rows; Settings: side navigation + wider pane (SourcesScreen.kt; the web settings use a sticky side nav)", async ({ page }) => {
     const account = await newAccount("parity-panes");
-    await openSignedIn(page, account, "/sources/test.mangotv.fixture/MOVIE/fxm1/-1/-1");
+    await openSignedIn(page, account, "/sources/test.arctv.fixture/MOVIE/fxm1/-1/-1");
     await expect(page.locator(".source").first()).toBeVisible();
     const info = (await page.locator(".sources__info").boundingBox())!;
     near(info.width / 1920, 0.35, 0.005);
@@ -150,7 +150,7 @@ test.describe("Fire TV layout parity @ 1920×1080 (1dp = 2px)", () => {
 
   test("Player: control sizes and 360dp menu panel (PlayerScreen.kt, MenuOverlayScaffold.kt)", async ({ page }) => {
     const account = await newAccount("parity-player");
-    await openSignedIn(page, account, "/sources/test.mangotv.fixture/MOVIE/fxm1/-1/-1");
+    await openSignedIn(page, account, "/sources/test.arctv.fixture/MOVIE/fxm1/-1/-1");
     await page.locator(".source", { hasText: "Fixture HLS" }).locator(".source__surface").click();
     await expect(page.locator("video.player__video")).toBeVisible();
     await page.mouse.move(300, 300);

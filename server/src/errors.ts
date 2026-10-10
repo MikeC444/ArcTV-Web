@@ -35,7 +35,7 @@ export function sendError(res: Response, error: ApiError): void {
   res.status(error.status).json({ error: { code: error.code, message: error.message } });
 }
 
-/** Maps a status returned by the existing MangoTV API onto our error shape, preserving its message. */
+/** Maps a status returned by the existing Arc TV API onto our error shape, preserving its message. */
 export function fromBackendStatus(status: number, message: string | undefined, retryAfter?: string | null): ApiError {
   const text = message && message.length < 300 ? message : undefined;
   const retry = retryAfter ? Math.max(1, Math.min(3600, Number(retryAfter) || 60)) : undefined;

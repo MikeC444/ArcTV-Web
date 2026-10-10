@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Smoke-checks a REAL MangoTV deployment with a REAL account, using only the public API — the same calls the web
+// Smoke-checks a REAL Arc TV deployment with a REAL account, using only the public API — the same calls the web
 // server makes on someone's behalf. It never prints tokens or passwords and never writes user data.
 //
 //   MANGOTV_API_URL=https://your-backend.example \
@@ -8,7 +8,7 @@
 //
 // What it does: GET /health → log in → GET /user/me, /settings, /watchlist, /continue-watching, /history, /addons
 // (prints counts only) → log out → confirm the old token no longer works.
-// Side effects, exactly: one session row is created and then revoked, and a device entry named "MangoTV web
+// Side effects, exactly: one session row is created and then revoked, and a device entry named "Arc TV web
 // verification" appears (one per account — its id is derived from the email, so re-runs reuse it).
 import { createHash } from "node:crypto";
 
@@ -35,7 +35,7 @@ const bad = (name, detail) => {
 async function call(method, path, { bearer, body } = {}) {
   const response = await fetch(`${apiUrl}${path}`, {
     method,
-    headers: { Accept: "application/json", "User-Agent": "MangoTV-Web-verify/0.1", ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}), ...(body ? { "Content-Type": "application/json" } : {}) },
+    headers: { Accept: "application/json", "User-Agent": "ArcTV-Web-verify/0.1", ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}), ...(body ? { "Content-Type": "application/json" } : {}) },
     body: body ? JSON.stringify(body) : undefined,
     redirect: "error",
     signal: AbortSignal.timeout(20_000),
@@ -51,7 +51,7 @@ async function call(method, path, { bearer, body } = {}) {
 }
 
 // A stable UUID-shaped device id per account, so repeated runs don't pile up device rows.
-const digest = createHash("sha256").update(`mangotv-web-verify:${email.toLowerCase()}`).digest("hex");
+const digest = createHash("sha256").update(`arctv-web-verify:${email.toLowerCase()}`).digest("hex");
 const deviceId = `${digest.slice(0, 8)}-${digest.slice(8, 12)}-4${digest.slice(13, 16)}-8${digest.slice(17, 20)}-${digest.slice(20, 32)}`;
 
 console.log(`Verifying ${new URL(apiUrl).origin} …`);
@@ -60,7 +60,7 @@ try {
   const health = await call("GET", "/health");
   health.status === 200 ? ok("GET /health", `status ${health.json?.status ?? "n/a"}`) : bad("GET /health", `HTTP ${health.status}`);
 
-  const login = await call("POST", "/auth/login", { body: { email, password, deviceId, deviceName: "MangoTV web verification", platform: "web" } });
+  const login = await call("POST", "/auth/login", { body: { email, password, deviceId, deviceName: "Arc TV web verification", platform: "web" } });
   if (login.status === 429) throw new Error("rate limited by the backend (10 auth requests / minute / IP) — wait a minute and retry");
   if (login.status !== 200) throw new Error(`login failed with HTTP ${login.status} (${login.json?.error?.code ?? login.json?.error ?? "no detail"})`);
   accessToken = login.json?.accessToken ?? login.json?.tokens?.accessToken ?? "";

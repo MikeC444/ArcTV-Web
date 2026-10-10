@@ -7,7 +7,7 @@ import { deriveKey, unseal } from "../../src/seal.js";
 import type { SessionData } from "../../src/session.js";
 
 /**
- * Integration tests run the REAL, unmodified MangoTV backend (from the Firestick
+ * Integration tests run the REAL, unmodified Arc TV backend (from the Firestick
  * repository) against a throwaway Postgres with all 14 real migrations applied.
  * They are skipped unless MANGOTV_BACKEND_URL is set (see scripts/run-backend-integration.sh)
  * and refuse to touch any database that doesn't look disposable.

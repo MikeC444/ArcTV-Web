@@ -4,7 +4,7 @@ import { ADDON, newAccount, openSignedIn, shot, type TestAccount } from "./helpe
 /**
  * Sources a browser can't fetch itself: hosts that refuse a browser-style request (hotlink protection) but serve everyone else, and
  * sources whose addon asks for request headers a page can't send (`behaviorHints.proxyHeaders`). Stremio's answer is its streaming
- * server's /proxy/; MangoTV's is the stream relay on its own web server — used at once for header-locked / plain-http sources, and
+ * server's /proxy/; Arc TV's is the stream relay on its own web server — used at once for header-locked / plain-http sources, and
  * once after the browser's own request FAILED outright. (A source that is merely slow is not sent to the relay: see addons.spec.)
  * The fixture host ("hostile") serves every client EXCEPT ones carrying Sec-Fetch-* headers, i.e. browsers.
  */
@@ -17,7 +17,7 @@ async function openFixtureSources(page: Page, account: TestAccount) {
   await account.tv.installAddon(`${ADDON}/relay/manifest.json`, 1);
   await clearLog();
   await openSignedIn(page, account);
-  await page.goto("/sources/test.mangotv.fixture/MOVIE/fxm1/-1/-1");
+  await page.goto("/sources/test.arctv.fixture/MOVIE/fxm1/-1/-1");
   await expect(page.getByRole("heading", { name: "Select a Source" })).toBeVisible();
 }
 const pick = (page: Page, release: string) => page.locator(".source", { hasText: release }).locator(".source__surface").click();
@@ -38,7 +38,7 @@ test.describe("stream relay (Stremio-style proxy) — sources a browser can't fe
     expect(requests.some((r) => r.method === "HEAD"), "an address that names a media file is played, not probed first").toBe(false);
     const viaRelay = requests.find((r) => r.path === "/media/browser-hostile.webm" && !r.browser);
     expect(viaRelay, "the relay's own request reached the host").toBeTruthy();
-    expect(viaRelay!.userAgent).toContain("MangoTV-Web");
+    expect(viaRelay!.userAgent).toContain("ArcTV-Web");
     expect(viaRelay!.referer).toBeNull(); // nothing identifying the app's own address
     await shot(page, "player-relay-fallback");
   });

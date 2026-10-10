@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Runs the web server's integration tests against the REAL, UNMODIFIED MangoTV backend (from the Firestick repository)
+# Runs the web server's integration tests against the REAL, UNMODIFIED Arc TV backend (from the Firestick repository)
 # on a THROWAWAY Postgres database with all of the backend's real migrations applied. See scripts/lib/test-backend.sh.
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib/test-backend.sh"

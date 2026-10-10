@@ -4,7 +4,7 @@ import { newAccount, openSignedIn, shot } from "./helpers";
 const video = (page: Page) => page.locator("video.player__video");
 const time = (page: Page) => video(page).evaluate((v: HTMLVideoElement) => v.currentTime);
 
-async function openSources(page: Page, path = "/sources/test.mangotv.fixture/MOVIE/fxm1/-1/-1") {
+async function openSources(page: Page, path = "/sources/test.arctv.fixture/MOVIE/fxm1/-1/-1") {
   await page.goto(path);
   await expect(page.getByRole("heading", { name: "Select a Source" })).toBeVisible();
   await expect(page.locator(".source").first()).toBeVisible();
@@ -91,7 +91,7 @@ test.describe("sources and playback", () => {
   test("a progressive WebM source plays, reports progress to the account, and Resume restarts where you left off", async ({ page }) => {
     const account = await newAccount("play");
     await openSignedIn(page, account);
-    await openSources(page, "/sources/test.mangotv.fixture/TV_SHOW/fxs2/1/1");
+    await openSources(page, "/sources/test.arctv.fixture/TV_SHOW/fxs2/1/1");
     await row(page, "Fixture Direct").locator(".source__surface").click();
     await expect(page).toHaveURL(/\/player\//);
     await expect(video(page)).toBeVisible();
@@ -113,7 +113,7 @@ test.describe("sources and playback", () => {
     expect(cw.positionMs).toBeGreaterThan(10_000);
 
     // leave; Detail now says Resume, and Resume goes straight back into the remembered source at that position
-    await page.goto("/detail/test.mangotv.fixture/TV_SHOW/fxs2");
+    await page.goto("/detail/test.arctv.fixture/TV_SHOW/fxs2");
     await expect(page.getByRole("button", { name: "Resume S1E1" })).toBeVisible();
     await page.getByRole("button", { name: "Resume S1E1" }).click();
     await expect(page).toHaveURL(/\/player\//, { timeout: 15_000 });
@@ -123,7 +123,7 @@ test.describe("sources and playback", () => {
   test("finishing a movie past 85 % marks it watched and clears it from Continue Watching", async ({ page }) => {
     const account = await newAccount("finish");
     await openSignedIn(page, account);
-    await openSources(page, "/sources/test.mangotv.fixture/MOVIE/fxm6/-1/-1");
+    await openSources(page, "/sources/test.arctv.fixture/MOVIE/fxm6/-1/-1");
     await row(page, "Fixture Direct").locator(".source__surface").click();
     await expect.poll(() => time(page), { timeout: 15_000 }).toBeGreaterThan(0.5);
     await video(page).evaluate((v: HTMLVideoElement) => { v.currentTime = 11; });
@@ -209,7 +209,7 @@ test.describe("sources and playback", () => {
   test("autoplay next episode: at the end of an episode an Up-next countdown opens the next one", async ({ page }) => {
     const account = await newAccount("next");
     await openSignedIn(page, account);
-    await openSources(page, "/sources/test.mangotv.fixture/TV_SHOW/fxs3/1/1");
+    await openSources(page, "/sources/test.arctv.fixture/TV_SHOW/fxs3/1/1");
     await row(page, "Fixture Direct").locator(".source__surface").click();
     await expect.poll(() => time(page), { timeout: 15_000 }).toBeGreaterThan(0.5);
     await video(page).evaluate((v: HTMLVideoElement) => { v.currentTime = 11.2; });

@@ -6,8 +6,8 @@ import { ApiClientError } from "../../lib/api";
 import { routes } from "../../lib/routes";
 import { useProfiles } from "../../state/profiles";
 import { signOutAndWipe } from "../../state/sync";
-import { MangoButton, Switch } from "../components/Buttons";
-import { MangoLogo } from "../components/Logo";
+import { ArcButton, Switch } from "../components/Buttons";
+import { ArcLogo } from "../components/Logo";
 import { ProfileAvatar } from "../components/ProfileAvatar";
 import { Surface } from "../components/Surface";
 
@@ -94,7 +94,7 @@ export function ProfilesScreen() {
   return (
     <main className="profiles" id="main" aria-busy={!ready}>
       <header className="profiles__top">
-        <MangoLogo size={32} />
+        <ArcLogo size={32} />
         <button type="button" className="profiles__switch" onClick={() => void signOutAndWipe()}>
           Switch account
         </button>
@@ -152,7 +152,7 @@ export function ProfilesScreen() {
 
         {supported && plus ? (
           <div className="profiles__actions">
-            <MangoButton text={managing ? "Done" : "Manage profiles"} icon={managing ? <MdCheck /> : <MdEdit />} compact onClick={() => setManaging((m) => !m)} />
+            <ArcButton text={managing ? "Done" : "Manage profiles"} icon={managing ? <MdCheck /> : <MdEdit />} compact onClick={() => setManaging((m) => !m)} />
             {profiles.length >= limit ? <p className="t-label-sm c-text-3">An account can have up to {limit} profiles.</p> : null}
           </div>
         ) : null}
@@ -247,8 +247,8 @@ function PinDialog({ profile, onCancel, onSubmit }: { profile: Profile; onCancel
           {error}
         </p>
         <div className="profilepin__buttons">
-          <MangoButton text="Cancel" icon={<MdClose />} onClick={onCancel} />
-          <MangoButton text="Open" icon={<MdLock />} variant="filled" type="submit" disabled={busy || !isValidPin(pin)} />
+          <ArcButton text="Cancel" icon={<MdClose />} onClick={onCancel} />
+          <ArcButton text="Open" icon={<MdLock />} variant="filled" type="submit" disabled={busy || !isValidPin(pin)} />
         </div>
       </form>
     </div>
@@ -392,16 +392,16 @@ function ProfileEditor({ profile, onClose }: { profile: Profile | null; onClose:
               Remove {profile.name}? Its My List, Continue Watching, settings and recommendations are deleted for good.
             </p>
             <div className="profilepin__buttons">
-              <MangoButton text="Keep it" icon={<MdCheck />} onClick={() => setConfirmRemove(false)} dataAttrs={{ autofocus: true }} />
-              <MangoButton text="Remove" icon={<MdDelete />} variant="filled" disabled={busy} onClick={() => void doRemove()} />
+              <ArcButton text="Keep it" icon={<MdCheck />} onClick={() => setConfirmRemove(false)} dataAttrs={{ autofocus: true }} />
+              <ArcButton text="Remove" icon={<MdDelete />} variant="filled" disabled={busy} onClick={() => void doRemove()} />
             </div>
           </div>
         ) : (
           <div className="profilepin__buttons">
-            {editing && !profile.isDefault ? <MangoButton text="Remove" icon={<MdDelete />} onClick={() => setConfirmRemove(true)} disabled={busy} /> : null}
+            {editing && !profile.isDefault ? <ArcButton text="Remove" icon={<MdDelete />} onClick={() => setConfirmRemove(true)} disabled={busy} /> : null}
             <span style={{ flex: 1 }} />
-            <MangoButton text="Cancel" icon={<MdClose />} onClick={onClose} disabled={busy} />
-            <MangoButton text={editing ? "Save" : "Create"} icon={<MdCheck />} variant="filled" type="submit" disabled={busy} />
+            <ArcButton text="Cancel" icon={<MdClose />} onClick={onClose} disabled={busy} />
+            <ArcButton text={editing ? "Save" : "Create"} icon={<MdCheck />} variant="filled" type="submit" disabled={busy} />
           </div>
         )}
       </form>

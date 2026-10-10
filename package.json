@@ -1,8 +1,8 @@
 {
-  "name": "mangotv-web",
+  "name": "arctv-web",
   "version": "0.1.0",
   "private": true,
-  "description": "MangoTV for the web — a faithful browser port of the MangoTV Fire TV app, backed by the existing MangoTV API.",
+  "description": "Arc TV for the web — a faithful browser port of the Arc TV Fire TV app, backed by the existing Arc TV API.",
   "type": "module",
   "engines": {
     "node": ">=22.9"

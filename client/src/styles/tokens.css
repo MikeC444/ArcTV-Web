@@ -56,7 +56,7 @@
   --button-radius: calc(8 * var(--dp));
   --row-spacing: calc(16 * var(--dp));
   --card-spacing: calc(18 * var(--dp));
-  /* room a focused (scaled) card needs inside a scrolling row — MangoMotion.CardEdgeSafeBufferDp */
+  /* room a focused (scaled) card needs inside a scrolling row — the Fire TV app's card edge buffer */
   --edge-safe: calc(20 * var(--dp));
 
   /* Motion.kt */

@@ -6,7 +6,7 @@ import { INTERACTION_DETAIL_FETCH_LIMIT, MIN_INTERACTIONS_FOR_PERSONALISATION, S
 import { routes } from "../../lib/routes";
 import { useFeedback, type FeedbackEntry } from "../../state/feedback";
 import { useMyList } from "../../state/myList";
-import { MangoButton } from "./Buttons";
+import { ArcButton } from "./Buttons";
 import { Surface } from "./Surface";
 
 /** Cinemeta ids are IMDb ids, whose posters live at Metahub: a fallback for ratings made before the poster was kept. */
@@ -37,7 +37,7 @@ export function RecommendationsPane() {
         <MdLock aria-hidden="true" />
         <p className="t-body-md" style={{ margin: 0 }}><strong>Recommendations are only for ArcTV Plus.</strong></p>
         <p className="t-body-sm c-text-2" style={{ margin: 0 }}>See what shapes your Picked for you row and fine-tune it here.</p>
-        <MangoButton text="See ArcTV Plus" icon={<MdWorkspacePremium />} compact onClick={() => navigate(routes.settings("plus"))} />
+        <ArcButton text="See ArcTV Plus" icon={<MdWorkspacePremium />} compact onClick={() => navigate(routes.settings("plus"))} />
       </div>
     );
   }
@@ -141,11 +141,11 @@ function RecommendationsContent() {
         </div>
         {confirming ? (
           <div className="recs__confirm" role="group" aria-label="Confirm reset">
-            <MangoButton text="Yes, reset" icon={<MdCheck />} variant="filled" compact onClick={reset} />
-            <MangoButton text="Cancel" icon={<MdClose />} compact onClick={() => setConfirming(false)} />
+            <ArcButton text="Yes, reset" icon={<MdCheck />} variant="filled" compact onClick={reset} />
+            <ArcButton text="Cancel" icon={<MdClose />} compact onClick={() => setConfirming(false)} />
           </div>
         ) : (
-          <MangoButton text="Reset preferences" icon={<MdRestartAlt />} compact disabled={total === 0} onClick={() => setConfirming(true)} />
+          <ArcButton text="Reset preferences" icon={<MdRestartAlt />} compact disabled={total === 0} onClick={() => setConfirming(true)} />
         )}
       </section>
     </div>

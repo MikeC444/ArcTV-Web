@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Full-stack browser tests: real MangoTV backend (throwaway Postgres) + the web server serving the built SPA +
+# Full-stack browser tests: real Arc TV backend (throwaway Postgres) + the web server serving the built SPA +
 # a local Stremio-protocol fixture addon, driven by Playwright/Chromium.
 #   bash scripts/run-e2e.sh                      # all projects
 #   bash scripts/run-e2e.sh --project=desktop-1920 auth.spec

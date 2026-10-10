@@ -11,7 +11,7 @@ describe("static SPA hosting", () => {
   beforeAll(() => {
     dir = fs.mkdtempSync(path.join(os.tmpdir(), "mtv-static-"));
     fs.mkdirSync(path.join(dir, "assets"));
-    fs.writeFileSync(path.join(dir, "index.html"), "<!doctype html><title>MangoTV</title>");
+    fs.writeFileSync(path.join(dir, "index.html"), "<!doctype html><title>Arc TV</title>");
     fs.writeFileSync(path.join(dir, "assets", "app-abc123.js"), "console.log(1)");
   });
   afterAll(() => fs.rmSync(dir, { recursive: true, force: true }));
@@ -21,7 +21,7 @@ describe("static SPA hosting", () => {
     for (const route of ["/", "/movies", "/detail/x/MOVIE/tt1", "/player/a/b/c/-1/-1/s", "/movies/inception-tt1375666", "/tv-shows/prison-break-tt0455275", "/player/com.linvo.cinemeta/MOVIE/tt0068646/-1/-1/com.stremio.torrentio.addon%3A-945807928"]) {
       const res = await request(app()).get(route).set("Accept", "text/html");
       expect(res.status, route).toBe(200);
-      expect(res.text).toContain("<title>MangoTV</title>");
+      expect(res.text).toContain("<title>Arc TV</title>");
       expect(res.headers["cache-control"]).toBe("no-cache");
     }
   });
@@ -32,7 +32,7 @@ describe("static SPA hosting", () => {
     expect(ok.headers["cache-control"]).toMatch(/immutable/);
     const missing = await request(app()).get("/assets/app-gone.js").set("Accept", "*/*");
     expect(missing.status).toBe(404);
-    expect(missing.text).not.toContain("MangoTV"); // not the app shell
+    expect(missing.text).not.toContain("Arc TV"); // not the app shell
     expect((await request(app()).get("/favicon.ico").set("Accept", "*/*")).status).toBe(404);
   });
 

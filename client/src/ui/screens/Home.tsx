@@ -13,7 +13,7 @@ import { useTrailer } from "../../state/trailer";
 import { useAccountAction, useSavedIds } from "../../state/hooks";
 import { useMyList } from "../../state/myList";
 import { stashDetailPreview } from "../../state/pendingDetail";
-import { MangoButton, IconButton } from "../components/Buttons";
+import { ArcButton, IconButton } from "../components/Buttons";
 import { LazyRow } from "../components/LazyRow";
 import { HomeSkeleton } from "../components/Skeletons";
 import { FullScreenError, HomeEmptyState } from "../components/States";
@@ -96,8 +96,8 @@ function Hero({ items }: { items: Content[] }) {
           {item.genres.length ? <p className="hero__genres hero-shadow">{item.genres.map((g) => g.name).join("  ·  ")}</p> : null}
           {item.description ? <p className="hero__desc hero-shadow clamp-3">{item.description}</p> : null}
           <div className="hero__actions">
-            <MangoButton text="Play" icon={<MdPlayArrow />} variant="light" dataAttrs={isCurrent ? { autofocus: true } : undefined} onClick={() => providerId && navigate(routes.sources(providerId, item.type, item.id))} />
-            <MangoButton
+            <ArcButton text="Play" icon={<MdPlayArrow />} variant="light" dataAttrs={isCurrent ? { autofocus: true } : undefined} onClick={() => providerId && navigate(routes.sources(providerId, item.type, item.id))} />
+            <ArcButton
               text="Trailer"
               icon={<MdTheaters />}
               className="hero__trailer"

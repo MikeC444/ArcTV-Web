@@ -1,7 +1,7 @@
 import { ApiError } from "./errors.js";
 
 /**
- * Thin HTTP client for the EXISTING MangoTV API. It carries the caller's bearer
+ * Thin HTTP client for the EXISTING Arc TV API. It carries the caller's bearer
  * token (never a database credential) and the real client IP so that the
  * backend's per-IP rate limiter can tell web clients apart where it is able to.
  */
@@ -31,7 +31,7 @@ export function createBackendClient(baseUrl: string, fetchImpl: typeof fetch = f
     const url = `${baseUrl}${request.path}${request.query ? `?${request.query}` : ""}`;
     const headers: Record<string, string> = {
       Accept: "application/json",
-      "User-Agent": "MangoTV-Web/0.1",
+      "User-Agent": "ArcTV-Web/0.1",
     };
     if (request.bearer) headers.Authorization = `Bearer ${request.bearer}`;
     if (request.clientIp) headers["X-Forwarded-For"] = request.clientIp;
@@ -61,7 +61,7 @@ export function createBackendClient(baseUrl: string, fetchImpl: typeof fetch = f
       }
       return { status: response.status, json, retryAfter: response.headers.get("retry-after") };
     } catch {
-      throw new ApiError(502, "backend_unavailable", "Can't reach the MangoTV service right now.");
+      throw new ApiError(502, "backend_unavailable", "Can't reach the Arc TV service right now.");
     }
   };
 }

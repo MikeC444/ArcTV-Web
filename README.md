@@ -54,4 +54,4 @@ Other docs: [`docs/AUDIT.md`](docs/AUDIT.md) (what was inspected and decided), [
 
 Ideas, bug reports and pull requests are welcome: open an issue to say hi or to tell us what you'd love to see next.
 
-*Arc TV was formerly called Mango TV.*
+*Arc TV was formerly called Arc TV.*

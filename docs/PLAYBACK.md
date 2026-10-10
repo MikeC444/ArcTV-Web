@@ -1,11 +1,11 @@
 # Playback: what happens when a source won't start
 
 This page records what was learned chasing "I pick a source and the player sits at `0:00` with a spinner", what was wrong in
-the first diagnosis, what MangoTV does now, and what has and has not been verified.
+the first diagnosis, what Arc TV does now, and what has and has not been verified.
 
 ## Status
 
-* **The reported Torrentio `.mkv` stream does not play in MangoTV, and the player cannot fix that.** A network capture of the
+* **The reported Torrentio `.mkv` stream does not play in Arc TV, and the player cannot fix that.** A network capture of the
   failing request shows the stream host *is* answering the browser — but sending the file at a trickle (see below). The
   relay cannot help: that host's Cloudflare front refuses this site's server.
 * What the player does about it now: it keeps waiting on the direct request (no longer abandoning it), tells the viewer the
@@ -25,7 +25,7 @@ the first diagnosis, what MangoTV does now, and what has and has not been verifi
    Cloudflare's block page on Torrentio's own address: a hosting provider's server is not a person's browser, and it is
    refused. That is the host's access control; the relay does not try to get around it (no pretending to be a browser).
 3. **Referer and content-type probe, tried for real.** Stremio Web sends a Referer and asks the server what a stream is
-   before playing it. MangoTV did neither, so both were added on a hypothesis that Torrentio answers browsers differently.
+   before playing it. Arc TV did neither, so both were added on a hypothesis that Torrentio answers browsers differently.
    The direct request still did not start. The HEAD probe could not even read the answer (the redirect doesn't allow web
    pages to), which is exactly what Stremio Web would see too. The Referer change was **reverted** (no effect, small privacy
    cost); the content-type probe stays, but only for addresses with no media-file extension (see the table below).
@@ -64,11 +64,11 @@ find.
 
 Read from the source of `@stremio/stremio-video` (MIT) and Stremio Web (GPL-2.0, **not copied**):
 
-| Stremio | MangoTV |
+| Stremio | Arc TV |
 |---|---|
 | `video.src = url` on a native `<video>`; `crossOrigin` deliberately not set | same |
 | `getContentType()`: a HEAD request before playing; an HLS answer behind a file-like address is played with hls.js | adapted in `client/src/domain/contentType.ts` — only for addresses that don't name a media file (an `.mkv` link is just played: asking first costs the host a request, and for a debrid link a second "generate a download link" call, and the browser's cross-origin rules usually refuse to show the answer anyway — the red "CORS error" row in DevTools); wait capped at 4 s; unreadable → the address decides, like Stremio |
-| Streams with `proxyHeaders` (and mixed-content `http://`) go through the streaming server's `/proxy/<origin>&h=…&r=…/<path>` | same address shape, served by MangoTV's own web server: the stream relay (`client/src/domain/relay.ts`, adapted from `buildProxyUrl.js`, MIT — see `THIRD_PARTY_NOTICES.md`) |
+| Streams with `proxyHeaders` (and mixed-content `http://`) go through the streaming server's `/proxy/<origin>&h=…&r=…/<path>` | same address shape, served by Arc TV's own web server: the stream relay (`client/src/domain/relay.ts`, adapted from `buildProxyUrl.js`, MIT — see `THIRD_PARTY_NOTICES.md`) |
 | Everything else the streaming server does (transcoding, torrents) | not available to a hosted website |
 
 ## The stream relay

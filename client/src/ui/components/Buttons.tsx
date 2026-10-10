@@ -2,12 +2,12 @@ import type { ReactNode } from "react";
 import { MdChevronRight } from "react-icons/md";
 import { Surface, type SurfaceProps } from "./Surface";
 
-export type MangoButtonStyle = "filled" | "glass" | "light" | "white";
+export type ArcButtonStyle = "filled" | "glass" | "light" | "white";
 
-interface MangoButtonProps extends Omit<SurfaceProps, "children" | "radius" | "background" | "backgroundImage"> {
+interface ArcButtonProps extends Omit<SurfaceProps, "children" | "radius" | "background" | "backgroundImage"> {
   text: string;
   icon: ReactNode;
-  variant?: MangoButtonStyle;
+  variant?: ArcButtonStyle;
   compact?: boolean;
   /** Full-width list-item style with a trailing chevron (auth start screen). */
   trailingChevron?: boolean;
@@ -16,8 +16,8 @@ interface MangoButtonProps extends Omit<SurfaceProps, "children" | "radius" | "b
   loading?: boolean;
 }
 
-/** MangoButton.kt — FILLED (brand gradient), GLASS (white 12 %), LIGHT (white pill), plus a plain white variant (Search). */
-export function MangoButton({ text, icon, variant = "glass", compact, trailingChevron, fullWidth, className, ...rest }: MangoButtonProps) {
+/** The Fire TV app's button — FILLED (brand gradient), GLASS (white 12 %), LIGHT (white pill), plus a plain white variant (Search). */
+export function ArcButton({ text, icon, variant = "glass", compact, trailingChevron, fullWidth, className, ...rest }: ArcButtonProps) {
   return (
     <Surface
       {...rest}

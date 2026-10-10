@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { ADDON, newAccount, openSignedIn, shot } from "./helpers";
 
 const progress = (contentId: string, title: string, over: Record<string, unknown>) => ({
-  providerId: "test.mangotv.fixture",
+  providerId: "test.arctv.fixture",
   contentId,
   contentType: "MOVIE",
   seasonNumber: null,
@@ -75,9 +75,9 @@ test.describe("ArcTV Plus extras", () => {
         if (document.querySelector(".source, .sources__main")) w.__sawList = true;
       }).observe(document, { childList: true, subtree: true });
     });
-    await openSignedIn(page, account, "/detail/test.mangotv.fixture/MOVIE/fxm1");
+    await openSignedIn(page, account, "/detail/test.arctv.fixture/MOVIE/fxm1");
     await page.getByRole("button", { name: /Play/ }).first().click();
-    await page.waitForURL(/\/player\/test\.mangotv\.fixture\/MOVIE\/fxm1\//);
+    await page.waitForURL(/\/player\/test\.arctv\.fixture\/MOVIE\/fxm1\//);
     await expect(page.locator("video.player__video")).toBeVisible();
     expect(await page.evaluate(() => (window as unknown as { __sawList?: boolean }).__sawList ?? false)).toBe(false);
     // the list was replaced by the player, so Back goes to the title, not to a list the person never saw
@@ -87,7 +87,7 @@ test.describe("ArcTV Plus extras", () => {
 
   test("with Smart source picking off the list is shown as usual, and the Plus settings tab has the switch", async ({ page }) => {
     const account = await newAccount("smartoff");
-    await openSignedIn(page, account, "/sources/test.mangotv.fixture/MOVIE/fxm1/-1/-1");
+    await openSignedIn(page, account, "/sources/test.arctv.fixture/MOVIE/fxm1/-1/-1");
     await expect(page.locator(".source").first()).toBeVisible();
     await expect(page).toHaveURL(/\/sources\//);
     await page.goto("/settings/plus-settings");

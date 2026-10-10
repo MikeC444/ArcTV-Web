@@ -49,7 +49,7 @@ export function createAddonFetcher(config: Pick<AppConfig, "allowPrivateAddonHos
           method: "GET",
           redirect: "manual",
           dispatcher: agent,
-          headers: { Accept: "application/json", "User-Agent": "MangoTV-Web/0.1" },
+          headers: { Accept: "application/json", "User-Agent": "ArcTV-Web/0.1" },
           signal: AbortSignal.timeout(15_000),
         });
       } catch {

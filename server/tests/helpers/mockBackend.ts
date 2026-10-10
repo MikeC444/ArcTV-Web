@@ -3,7 +3,7 @@ import type { BackendFetch, BackendRequest, BackendResponse } from "../../src/ba
 import { ApiError } from "../../src/errors.js";
 
 /**
- * An in-memory stand-in for the existing MangoTV API that implements just the
+ * An in-memory stand-in for the existing Arc TV API that implements just the
  * contract the web server relies on (opaque tokens, rotation on refresh, a
  * `requireAuth`-style bearer lookup, per-user data). It exists so the web
  * server's session/proxy logic can be unit-tested fast; the real backend is

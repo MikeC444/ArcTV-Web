@@ -68,9 +68,9 @@ test.describe("settings", () => {
     await expect(action).toHaveAttribute("aria-checked", "false");
     // move "Comedy" up once
     await page.getByRole("button", { name: "Move Comedy up" }).click();
-    await expect.poll(async () => (await account.tv.get("/user/settings")).body.hiddenRowIds).toEqual(["test.mangotv.fixture_Action"]);
+    await expect.poll(async () => (await account.tv.get("/user/settings")).body.hiddenRowIds).toEqual(["test.arctv.fixture_Action"]);
     const saved = (await account.tv.get("/user/settings")).body;
-    expect(saved.homeRowOrder.indexOf("test.mangotv.fixture_Comedy")).toBeLessThan(saved.homeRowOrder.indexOf("test.mangotv.fixture_Drama"));
+    expect(saved.homeRowOrder.indexOf("test.arctv.fixture_Comedy")).toBeLessThan(saved.homeRowOrder.indexOf("test.arctv.fixture_Drama"));
     await page.getByRole("navigation", { name: "Primary" }).getByRole("link", { name: "Home", exact: true }).click();
     await expect(page.locator(".home__rows .row__title", { hasText: /^Popular$/ })).toBeVisible({ timeout: 20_000 });
     await expect(page.locator(".home__rows .row__title", { hasText: /^Action$/ })).toHaveCount(0);
@@ -96,7 +96,7 @@ test.describe("settings", () => {
     const account = await newAccount("tvsync");
     await openSignedIn(page, account, "/my-list");
     await expect(page.getByText("Your list is empty.")).toBeVisible();
-    await account.tv.post("/user/watchlist", { providerId: "test.mangotv.fixture", contentId: "fxm8", contentType: "MOVIE", title: "Added On TV", posterUrl: `${ADDON}/img/poster/fxm8.svg`, backdropUrl: null, year: 2022, rating: 8.1, watched: false, updatedAt: new Date().toISOString() });
+    await account.tv.post("/user/watchlist", { providerId: "test.arctv.fixture", contentId: "fxm8", contentType: "MOVIE", title: "Added On TV", posterUrl: `${ADDON}/img/poster/fxm8.svg`, backdropUrl: null, year: 2022, rating: 8.1, watched: false, updatedAt: new Date().toISOString() });
     await page.reload();
     await expect(page.locator(".card__title", { hasText: "Added On TV" })).toBeVisible();
   });

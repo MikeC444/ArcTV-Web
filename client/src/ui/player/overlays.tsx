@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { MdArrowBack, MdChevronRight, MdFastForward, MdGraphicEq, MdHighQuality, MdInfo, MdPlayCircle, MdRefresh, MdSettings, MdSpeed, MdSubtitles, MdSwapHoriz, MdTune, MdCheck, MdOpenInNew } from "react-icons/md";
 import type { Stream } from "../../domain/types";
 import { formatSpeed } from "../../lib/format";
-import { MangoButton, Switch } from "../components/Buttons";
+import { ArcButton, Switch } from "../components/Buttons";
 import { Surface } from "../components/Surface";
 import type { EngineTracks, TrackOption } from "./engine";
 
@@ -227,10 +227,10 @@ export function PlaybackErrorOverlay({ message, details, onProbe, ytId, onTryAga
         </details>
       ) : null}
       <div className="perror__actions">
-        <MangoButton text="Change Source" icon={<MdSwapHoriz />} borderColor="#fff" dataAttrs={{ autofocus: true }} onClick={onChangeSource} />
-        <MangoButton text="Try Again" icon={<MdRefresh />} borderColor="#fff" onClick={onTryAgain} />
-        {ytId ? <MangoButton text="Watch on YouTube" icon={<MdOpenInNew />} borderColor="#fff" onClick={() => window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(ytId)}`, "_blank", "noopener,noreferrer")} /> : null}
-        <MangoButton text="Back" icon={<MdArrowBack />} borderColor="#fff" clickSound="back" onClick={onBack} />
+        <ArcButton text="Change Source" icon={<MdSwapHoriz />} borderColor="#fff" dataAttrs={{ autofocus: true }} onClick={onChangeSource} />
+        <ArcButton text="Try Again" icon={<MdRefresh />} borderColor="#fff" onClick={onTryAgain} />
+        {ytId ? <ArcButton text="Watch on YouTube" icon={<MdOpenInNew />} borderColor="#fff" onClick={() => window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(ytId)}`, "_blank", "noopener,noreferrer")} /> : null}
+        <ArcButton text="Back" icon={<MdArrowBack />} borderColor="#fff" clickSound="back" onClick={onBack} />
       </div>
     </div>
   );

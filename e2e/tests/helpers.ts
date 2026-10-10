@@ -58,13 +58,13 @@ export class Tv {
   }
   async seedContinueWatching(item: { contentId: string; type?: "MOVIE" | "TV_SHOW"; title: string; season?: number; episode?: number; positionMs?: number; durationMs?: number }) {
     const r = await this.post("/user/watch-progress", {
-      providerId: "test.mangotv.fixture", contentId: item.contentId, contentType: item.type ?? "MOVIE", seasonNumber: item.season ?? null, episodeNumber: item.episode ?? null, episodeTitle: item.episode ? `Chapter ${item.episode}` : null,
+      providerId: "test.arctv.fixture", contentId: item.contentId, contentType: item.type ?? "MOVIE", seasonNumber: item.season ?? null, episodeNumber: item.episode ?? null, episodeTitle: item.episode ? `Chapter ${item.episode}` : null,
       title: item.title, posterUrl: `${ADDON}/img/poster/${item.contentId}.svg`, backdropUrl: `${ADDON}/img/bg/${item.contentId}.svg`, positionMs: item.positionMs ?? 1_500_000, durationMs: item.durationMs ?? 6_000_000, completed: false, watchedAt: new Date(Date.now() - 30_000).toISOString(),
     });
     expect(r.status).toBe(200);
   }
   async seedWatched(item: { contentId: string; title: string }) {
-    const r = await this.post("/user/watchlist", { providerId: "test.mangotv.fixture", contentId: item.contentId, contentType: "MOVIE", title: item.title, posterUrl: `${ADDON}/img/poster/${item.contentId}.svg`, backdropUrl: null, year: 2020, rating: 7.1, watched: true, updatedAt: new Date(Date.now() - 45_000).toISOString() });
+    const r = await this.post("/user/watchlist", { providerId: "test.arctv.fixture", contentId: item.contentId, contentType: "MOVIE", title: item.title, posterUrl: `${ADDON}/img/poster/${item.contentId}.svg`, backdropUrl: null, year: 2020, rating: 7.1, watched: true, updatedAt: new Date(Date.now() - 45_000).toISOString() });
     expect(r.status).toBe(200);
   }
 }

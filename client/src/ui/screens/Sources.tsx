@@ -10,7 +10,7 @@ import { smartPickingApplies, smartPickTarget } from "../../domain/smartPick";
 import { useHasPlus } from "../../state/plusAccess";
 import { useSmartPicking } from "../../state/smartPicking";
 import { useSources, type AddonLookupRow } from "../../state/sourcesData";
-import { IconButton, MangoButton, Pill } from "../components/Buttons";
+import { IconButton, ArcButton, Pill } from "../components/Buttons";
 import { Shimmer } from "../components/Skeletons";
 import { FullScreenError, Spinner } from "../components/States";
 import { Surface } from "../components/Surface";
@@ -193,7 +193,7 @@ function SourcesLoaded({ state, smartNote, onBack, onSelect, onManage, onRetry }
           {sorted.length === 0 && state.searchingMore ? (
             <div className="sources__empty"><Spinner /><h2 className="t-title-lg">Searching for sources…</h2><p className="c-text-2 t-body-md">Checking your installed addons for this title.</p></div>
           ) : sorted.length === 0 && state.streams.length > 0 ? (
-            <div className="sources__empty"><MdSearchOff size={40} className="c-text-3" aria-hidden="true" /><h2 className="t-title-lg">{playableOnly ? "Nothing here plays on this device" : mp4Only ? "No MP4 sources here" : "No sources in this quality"}</h2><p className="c-text-2 t-body-md">{playableOnly ? `None of the ${state.streams.length} sources found looks playable in ${caps.browser} on this device. Turn the filter off to see them all and why.` : mp4Only ? "None of these sources looks like an MP4 or another web format with sound this browser can play. Turn the filter off to see every source — some may not play in a browser." : "Choose “All Sources” to see everything your addons found."}</p><MangoButton text="Show All Sources" icon={<MdCheckCircle />} onClick={() => { setFilter("ALL"); setPlayableOnly(false); setMp4Only(false); }} /></div>
+            <div className="sources__empty"><MdSearchOff size={40} className="c-text-3" aria-hidden="true" /><h2 className="t-title-lg">{playableOnly ? "Nothing here plays on this device" : mp4Only ? "No MP4 sources here" : "No sources in this quality"}</h2><p className="c-text-2 t-body-md">{playableOnly ? `None of the ${state.streams.length} sources found looks playable in ${caps.browser} on this device. Turn the filter off to see them all and why.` : mp4Only ? "None of these sources looks like an MP4 or another web format with sound this browser can play. Turn the filter off to see every source — some may not play in a browser." : "Choose “All Sources” to see everything your addons found."}</p><ArcButton text="Show All Sources" icon={<MdCheckCircle />} onClick={() => { setFilter("ALL"); setPlayableOnly(false); setMp4Only(false); }} /></div>
           ) : sorted.length === 0 ? (
             <div className="sources__empty">
               <MdSearchOff size={40} className="c-text-3" aria-hidden="true" />
@@ -201,11 +201,11 @@ function SourcesLoaded({ state, smartNote, onBack, onSelect, onManage, onRetry }
               <p className="c-text-2 t-body-md">{noSourcesHint(state.addons)}</p>
               <AddonResults rows={state.addons} open />
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center", marginTop: 8 }}>
-                {state.addons.some((a) => a.lookup.kind === "failed") ? <MangoButton text="Try Again" icon={<MdRefresh />} onClick={onRetry} /> : null}
-                <MangoButton text="Manage Addons" icon={<MdExtension />} onClick={onManage} />
+                {state.addons.some((a) => a.lookup.kind === "failed") ? <ArcButton text="Try Again" icon={<MdRefresh />} onClick={onRetry} /> : null}
+                <ArcButton text="Manage Addons" icon={<MdExtension />} onClick={onManage} />
               </div>
               <p className="t-title-md" style={{ margin: "28px 0 0" }}>New to this?</p>
-              <MangoButton text="Step-by-step guide to setting up your sources" icon={<MdMenuBook />} variant="filled" onClick={() => navigate(routes.debridGuide)} />
+              <ArcButton text="Step-by-step guide to setting up your sources" icon={<MdMenuBook />} variant="filled" onClick={() => navigate(routes.debridGuide)} />
             </div>
           ) : (
             <>
@@ -225,7 +225,7 @@ function SourcesLoaded({ state, smartNote, onBack, onSelect, onManage, onRetry }
           <div style={{ marginTop: "calc(8 * var(--dp))" }}>
             <AddonResults rows={state.addons} open={state.addons.some((a) => a.lookup.kind === "failed")} />
             <DeviceSupport caps={caps} streams={state.streams} />
-            {state.addons.some((a) => a.lookup.kind === "failed") && !state.searchingMore ? <MangoButton text="Try Again" icon={<MdRefresh />} compact onClick={onRetry} /> : null}
+            {state.addons.some((a) => a.lookup.kind === "failed") && !state.searchingMore ? <ArcButton text="Try Again" icon={<MdRefresh />} compact onClick={onRetry} /> : null}
           </div>
         ) : null}
         <div className="safety">
@@ -236,7 +236,7 @@ function SourcesLoaded({ state, smartNote, onBack, onSelect, onManage, onRetry }
               <div className="t-label-md">Safe & secure</div>
               <div className="t-label-sm c-text-2">All sources are scanned for your safety</div>
             </div>
-            <MangoButton text="How it works" icon={<MdInfo />} compact onClick={() => setShowHelp(true)} />
+            <ArcButton text="How it works" icon={<MdInfo />} compact onClick={() => setShowHelp(true)} />
           </div>
         </div>
       </div>
@@ -257,7 +257,7 @@ function SourcesHelp({ onClose }: { onClose: () => void }) {
         <h2 className="t-title-lg" style={{ margin: 0 }}>How sources work</h2>
         <p className="c-text-2 t-body-md">Each installed addon can offer its own streams for a title. Pick one — the recommended source is the highest quality one your browser can play.</p>
         <p className="c-text-2 t-body-md">In a web browser, torrent and YouTube sources, plain-HTTP links, and links that need special headers can't be played. They are marked so you can choose a different source, or use the ArcTV app for those.</p>
-        <MangoButton text="Got it" icon={<MdCheckCircle />} variant="filled" onClick={onClose} dataAttrs={{ autofocus: true }} />
+        <ArcButton text="Got it" icon={<MdCheckCircle />} variant="filled" onClick={onClose} dataAttrs={{ autofocus: true }} />
       </div>
     </div>
   );

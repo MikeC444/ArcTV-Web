@@ -7,7 +7,7 @@ import { routes } from "../../lib/routes";
 import { useHasPlus } from "../../state/plusAccess";
 import { activeProfileOf, useProfiles } from "../../state/profiles";
 import { useWatchStats } from "../../state/watchStats";
-import { MangoButton } from "./Buttons";
+import { ArcButton } from "./Buttons";
 import { Spinner } from "./States";
 
 /** Settings → Account → Your stats: an ArcTV Plus feature, read from the watch history of the profile in use. Others see what it is and where to get it. */
@@ -23,7 +23,7 @@ export function WatchStats() {
           <MdLock aria-hidden="true" />
           <p className="t-body-md" style={{ margin: 0 }}><strong>Your stats are only for ArcTV Plus.</strong></p>
           <p className="t-body-sm c-text-2" style={{ margin: 0 }}>See how much you watch, how this week compares, your streak, a map of your last 13 weeks and your busiest day.</p>
-          <MangoButton text="See ArcTV Plus" icon={<MdWorkspacePremium />} compact onClick={() => navigate(routes.settings("plus"))} />
+          <ArcButton text="See ArcTV Plus" icon={<MdWorkspacePremium />} compact onClick={() => navigate(routes.settings("plus"))} />
         </div>
       ) : state.kind === "loading" ? (
         <Spinner />

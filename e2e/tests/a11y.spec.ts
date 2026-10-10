@@ -20,9 +20,9 @@ const SIGNED_IN = [
   ["tv-shows", "/tv"],
   ["search", "/search"],
   ["my-list", "/my-list"],
-  ["detail-movie", "/detail/test.mangotv.fixture/MOVIE/fxm1"],
-  ["detail-series", "/detail/test.mangotv.fixture/TV_SHOW/fxs1"],
-  ["sources", "/sources/test.mangotv.fixture/MOVIE/fxm1/-1/-1"],
+  ["detail-movie", "/detail/test.arctv.fixture/MOVIE/fxm1"],
+  ["detail-series", "/detail/test.arctv.fixture/TV_SHOW/fxs1"],
+  ["sources", "/sources/test.arctv.fixture/MOVIE/fxm1/-1/-1"],
   ["settings-account", "/settings"],
   ["settings-addons", "/settings/addons"],
   ["settings-home-rows", "/settings/home-rows"],
@@ -87,7 +87,7 @@ test.describe("accessibility", () => {
     all.push(...(await problems(page, "card-menu", phone)));
     await page.keyboard.press("Escape");
 
-    await page.goto("/sources/test.mangotv.fixture/TV_SHOW/fxs2/1/1");
+    await page.goto("/sources/test.arctv.fixture/TV_SHOW/fxs2/1/1");
     await page.locator(".source", { hasText: "Fixture Direct" }).locator(".source__surface").click();
     await expect(page).toHaveURL(/\/player\//);
     await expect(page.locator("video.player__video")).toBeVisible();

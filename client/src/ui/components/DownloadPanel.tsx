@@ -5,7 +5,7 @@ import type { ContentType } from "../../domain/types";
 import { hdrLabel, sourceLabel } from "../../lib/downloadLabels";
 import { sharpBackdrop } from "../../lib/imageSize";
 import { findDownloadOptions, type DownloadOption } from "../../state/downloadSources";
-import { MangoLogo } from "./Logo";
+import { ArcLogo } from "./Logo";
 import { Spinner } from "./States";
 import { Surface } from "./Surface";
 
@@ -48,7 +48,7 @@ export function DownloadPanel({ target, title, subtitle, backdropUrl, logoUrl, o
   return (
     <div className="scrim dlpanel__scrim" onMouseDown={(e) => e.target === e.currentTarget && onClose()} role="presentation">
       <div className="dlpanel__wrap" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-        <div className="dlpanel__brand"><MangoLogo size={22} /></div>
+        <div className="dlpanel__brand"><ArcLogo size={22} /></div>
         <div className="dlpanel" role="dialog" aria-modal="true" aria-label={`Download ${title}`} data-spatial-trap="true">
           {/* Like the right-click menu: the title's backdrop picture fills the top, with its logo (or its name) over it. */}
           <div className="dlpanel__banner" data-plain={backdropUrl ? undefined : "true"}>

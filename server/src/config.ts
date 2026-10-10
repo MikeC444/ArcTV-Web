@@ -4,7 +4,7 @@ import { z } from "zod";
 /**
  * All runtime configuration comes from environment variables. Nothing here is
  * a database credential: this server never talks to Postgres — it only talks
- * to the existing MangoTV API (MANGOTV_API_URL), which is the only component
+ * to the existing Arc TV API (MANGOTV_API_URL), which is the only component
  * that holds DATABASE_URL.
  */
 const schema = z.object({

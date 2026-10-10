@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { MdCloudOff, MdExtension, MdList, MdRefresh } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
-import { MangoButton } from "./Buttons";
+import { ArcButton } from "./Buttons";
 
 /** StateViews.kt */
 export function FullScreenError({ message, onRetry, secondaryLabel, onSecondary, title = "Something went wrong" }: { message: string; onRetry?: () => void; secondaryLabel?: string; onSecondary?: () => void; title?: string }) {
@@ -11,8 +11,8 @@ export function FullScreenError({ message, onRetry, secondaryLabel, onSecondary,
       <h2 className="state__title">{title}</h2>
       <p className="state__msg">{message}</p>
       <div className="state__actions">
-        {onRetry ? <MangoButton text="Retry" icon={<MdRefresh />} onClick={onRetry} variant="filled" dataAttrs={{ autofocus: true }} /> : null}
-        {secondaryLabel && onSecondary ? <MangoButton text={secondaryLabel} icon={<MdList />} onClick={onSecondary} variant="glass" /> : null}
+        {onRetry ? <ArcButton text="Retry" icon={<MdRefresh />} onClick={onRetry} variant="filled" dataAttrs={{ autofocus: true }} /> : null}
+        {secondaryLabel && onSecondary ? <ArcButton text={secondaryLabel} icon={<MdList />} onClick={onSecondary} variant="glass" /> : null}
       </div>
     </div>
   );
@@ -28,7 +28,7 @@ export function EmptyState({ icon, title, message, actionLabel, actionIcon, onAc
       <p className="state__msg">{message}</p>
       {actionLabel && onAction ? (
         <div className="state__actions">
-          <MangoButton text={actionLabel} icon={actionIcon ?? <MdRefresh />} onClick={onAction} variant="filled" dataAttrs={{ autofocus: true }} />
+          <ArcButton text={actionLabel} icon={actionIcon ?? <MdRefresh />} onClick={onAction} variant="filled" dataAttrs={{ autofocus: true }} />
         </div>
       ) : null}
     </div>
