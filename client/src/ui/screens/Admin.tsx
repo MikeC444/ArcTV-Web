@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { MdClear, MdClose, MdExpandMore, MdRefresh } from "react-icons/md";
-import { formatElapsed, formatWatched, pluralize, timeAgo } from "../../lib/format";
+import { MdClear, MdExpandLess, MdExpandMore, MdRefresh } from "react-icons/md";
+import { formatElapsed, formatWatched, timeAgo } from "../../lib/format";
 import { fetchAdminSummary, platformSplit, windowLabel, fetchAdminUser, fetchAdminUsers, filtersActive, newestVersion, NO_FILTERS, type AdminDevice, type ExternalPlayerEvent, type AdminFilters, type AdminSummary, type AdminUserDetail, type AdminUserRow } from "../../state/admin";
 import { MangoButton } from "../components/Buttons";
 import { GrowthChart } from "../components/GrowthChart";
@@ -121,21 +121,6 @@ export function AdminScreen() {
       ) : null}
 
       {summary?.userGrowth && summary.userGrowth.length > 0 ? <GrowthChart points={summary.userGrowth} /> : null}
-
-      {summary && summary.versions.length > 0 ? (
-        <section className="admin__versions page__pad" aria-label="App versions">
-          <h2 className="t-title-md">App versions in use</h2>
-          <div className="admin__chips">
-            {summary.versions.map((v) => (
-              <span className="admin__chip" key={`${v.platform}-${v.version}`} data-old={newest != null && v.version !== newest && /^\d/.test(v.version) ? "true" : undefined}>
-                {platformName(v.platform)} {v.version === "web" ? "" : v.version}
-                <b>{pluralize(v.devices, "device")}</b>
-              </span>
-            ))}
-          </div>
-          {newest ? <p className="t-label-md c-text-3" style={{ margin: "8px 0 0" }}>Newest seen: {newest}. Devices on an older version are marked.</p> : null}
-        </section>
-      ) : null}
 
       {summary?.externalPlayer ? <ExternalPlayerSection data={summary.externalPlayer} /> : null}
 
@@ -258,23 +243,23 @@ function UserDetail({ detail, newest }: { detail: AdminUserDetail | null; newest
   );
 }
 
-const HANDOFFS_HIDDEN_KEY = "arctv.admin.handoffsHidden";
-const readHandoffsHidden = (): boolean => {
+const OTHER_PLAYERS_COLLAPSED_KEY = "arctv.admin.otherPlayersCollapsed";
+const readCollapsed = (): boolean => {
   try {
-    return localStorage.getItem(HANDOFFS_HIDDEN_KEY) === "1";
+    return localStorage.getItem(OTHER_PLAYERS_COLLAPSED_KEY) === "1";
   } catch {
     return false;
   }
 };
 
-function ExternalPlayerSection({ data }: { data: NonNullable<AdminSummary["externalPlayer"]> }) {
-  // The X hides the hand-off list in this browser only (nothing is deleted); "Show" brings it back.
-  const [hidden, setHidden] = useState(readHandoffsHidden);
-  const setHiddenSaved = (value: boolean) => {
-    setHidden(value);
+/** The Other players numbers and the most recent hand-offs under them; one button minimises both (remembered in this browser only, nothing is deleted). */
+export function ExternalPlayerSection({ data }: { data: NonNullable<AdminSummary["externalPlayer"]> }) {
+  const [collapsed, setCollapsed] = useState(readCollapsed);
+  const setCollapsedSaved = (value: boolean) => {
+    setCollapsed(value);
     try {
-      if (value) localStorage.setItem(HANDOFFS_HIDDEN_KEY, "1");
-      else localStorage.removeItem(HANDOFFS_HIDDEN_KEY);
+      if (value) localStorage.setItem(OTHER_PLAYERS_COLLAPSED_KEY, "1");
+      else localStorage.removeItem(OTHER_PLAYERS_COLLAPSED_KEY);
     } catch {
       // private mode: the choice just lasts until the page is reloaded
     }
@@ -283,41 +268,44 @@ function ExternalPlayerSection({ data }: { data: NonNullable<AdminSummary["exter
   const why = (e: ExternalPlayerEvent) => (e.trigger === "error" ? "After an error" : e.trigger === "button" ? "From the button" : e.trigger ?? "");
   return (
     <section className="admin__external page__pad" aria-label="Other players">
-      <h2 className="t-title-md">Other players</h2>
-      <div className="admin__stats admin__stats--inner">
-        <Stat label="Opened another app, 7 days" value={data.opens7d} note={`${data.opensTotal} all time`} />
-        <Stat label="VLC engine, 7 days" value={data.vlc7d} />
-        <Stat label="People, 7 days" value={data.users7d} />
-        <Stat label="After an error, 7 days" value={data.afterError7d} note={`${data.fromButton7d} from the button · ${data.noPlayer7d} with no player`} />
+      <div className="admin__externalhead">
+        <h2 className="t-title-md">Other players</h2>
+        <button type="button" className="admin__collapse" onClick={() => setCollapsedSaved(!collapsed)} aria-expanded={!collapsed} aria-controls="admin-other-players">
+          {collapsed ? <MdExpandMore aria-hidden="true" /> : <MdExpandLess aria-hidden="true" />}
+          {collapsed ? "Expand" : "Minimise"}
+        </button>
       </div>
-      <div className="admin__subhead-row">
-        <h3 className="t-label-md c-text-3 admin__subhead">Most recent hand-offs</h3>
-        {hidden ? (
-          <button type="button" className="admin__x" onClick={() => setHiddenSaved(false)}>Show</button>
-        ) : (
-          <button type="button" className="admin__x" onClick={() => setHiddenSaved(true)} aria-label="Hide the most recent hand-offs" title="Hide the most recent hand-offs"><MdClose /></button>
-        )}
-      </div>
-      {hidden ? null : data.recent.length > 0 ? (
-        <div className="admin__table" role="table" aria-label="Recent hand-offs">
-          <div className="admin__row admin__row--ext admin__row--head t-label-md c-text-3" role="row">
-            <span>Title</span><span>How</span><span>Person</span><span>Version</span><span>When</span>
+      {collapsed ? null : (
+        <div id="admin-other-players">
+          <div className="admin__stats admin__stats--inner">
+            <Stat label="Opened another app, 7 days" value={data.opens7d} note={`${data.opensTotal} all time`} />
+            <Stat label="VLC engine, 7 days" value={data.vlc7d} />
+            <Stat label="People, 7 days" value={data.users7d} />
+            <Stat label="After an error, 7 days" value={data.afterError7d} note={`${data.fromButton7d} from the button · ${data.noPlayer7d} with no player`} />
           </div>
-          {data.recent.map((e, i) => (
-            <div className="admin__row admin__row--ext admin__row--line" role="row" key={`${e.createdAt}-${i}`}>
-              <span className="admin__who">
-                {e.title ?? e.releaseTitle ?? "Unknown title"}
-                <i>{[e.resolution, e.codec].filter(Boolean).join(" · ") || "—"}</i>
-                {e.errorMessage ? <i className="admin__errtext">{e.errorMessage}</i> : null}
-              </span>
-              <span className="admin__who"><b className="admin__tag" data-kind={e.engine === "vlc" ? "vlc" : e.outcome === "no_player" ? "none" : "app"}>{how(e)}</b><i>{why(e)}</i></span>
-              <span className="admin__ellipsis">{e.email}</span>
-              <span>{e.appVersion ?? "—"}</span>
-              <span>{timeAgo(e.createdAt)}</span>
+          <h3 className="t-label-md c-text-3 admin__subhead">Most recent hand-offs</h3>
+          {data.recent.length > 0 ? (
+            <div className="admin__table" role="table" aria-label="Recent hand-offs">
+              <div className="admin__row admin__row--ext admin__row--head t-label-md c-text-3" role="row">
+                <span>Title</span><span>How</span><span>Person</span><span>Version</span><span>When</span>
+              </div>
+              {data.recent.map((e, i) => (
+                <div className="admin__row admin__row--ext admin__row--line" role="row" key={`${e.createdAt}-${i}`}>
+                  <span className="admin__who">
+                    {e.title ?? e.releaseTitle ?? "Unknown title"}
+                    <i>{[e.resolution, e.codec].filter(Boolean).join(" · ") || "—"}</i>
+                    {e.errorMessage ? <i className="admin__errtext">{e.errorMessage}</i> : null}
+                  </span>
+                  <span className="admin__who"><b className="admin__tag" data-kind={e.engine === "vlc" ? "vlc" : e.outcome === "no_player" ? "none" : "app"}>{how(e)}</b><i>{why(e)}</i></span>
+                  <span className="admin__ellipsis">{e.email}</span>
+                  <span>{e.appVersion ?? "—"}</span>
+                  <span>{timeAgo(e.createdAt)}</span>
+                </div>
+              ))}
             </div>
-          ))}
+          ) : <p className="t-label-md c-text-3">Nothing yet.</p>}
         </div>
-      ) : <p className="t-label-md c-text-3">Nothing yet.</p>}
+      )}
     </section>
   );
 }
