@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { MdBarChart, MdLock, MdAccountCircle, MdAdd, MdBlock, MdCancel, MdFavorite, MdWorkspacePremium, MdArrowDownward, MdArrowUpward, MdCheck, MdCloudUpload, MdDelete, MdExtension, MdGridView, MdInfo, MdLogout, MdMusicNote, MdSubtitles, MdSwitchAccount, MdTune, MdVolumeUp, MdSpatialAudio, MdStars } from "react-icons/md";
+import { MdBarChart, MdBolt, MdDownload, MdGroups, MdLanguage, MdLock, MdAccountCircle, MdAdd, MdBlock, MdCancel, MdFavorite, MdWorkspacePremium, MdArrowDownward, MdArrowUpward, MdCheck, MdCloudUpload, MdDelete, MdExtension, MdGridView, MdInfo, MdLogout, MdMusicNote, MdSubtitles, MdSwitchAccount, MdTune, MdVolumeUp, MdSpatialAudio, MdStars } from "react-icons/md";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { PLUS_FREE_NOTE, PLUS_PERKS, PLUS_PLANS, PLUS_PROCEEDS_NOTE } from "../../domain/plus";
 import { applyRowOrder, moveRow } from "../../domain/homeRows";
@@ -168,6 +168,15 @@ function BlockedGenresPane() {
 }
 
 /** ArcTV Plus: what it adds, whether you have it, and how to subscribe. Nothing here changes what the free app does. */
+const PERK_ICONS: Record<string, ReactNode> = {
+  "Picked for you": <MdFavorite />,
+  Profiles: <MdGroups />,
+  "Parental controls": <MdLock />,
+  "Smart source picking": <MdBolt />,
+  "Your stats": <MdBarChart />,
+  Download: <MdDownload />,
+};
+
 function PlusPane() {
   const plus = usePlus();
   const profilesSupported = useProfiles((s) => s.supported);
@@ -236,15 +245,20 @@ function PlusPane() {
 
       <h3 className="t-title-md plus__h">What Plus adds</h3>
       <ul className="plus__perks">
-        {PLUS_PERKS.map((perk) => (
-          <li key={perk.title} className="plus__perk">
-            <div className="plus__perkhead">
-              <span className="t-title-md">{perk.title}</span>
-              <span className="plus__soon" data-kind={(perk.needs === "profiles" && !profilesSupported ? "soon" : perk.status) === "soon" ? "soon" : "plus"}>{(perk.needs === "profiles" && !profilesSupported ? "soon" : perk.status) === "soon" ? "Coming soon" : plus.paywall ? "Plus" : "Included in early access"}</span>
-            </div>
-            <p className="t-body-sm c-text-2" style={{ margin: "4px 0 0" }}>{perk.detail}</p>
-          </li>
-        ))}
+        {PLUS_PERKS.map((perk) => {
+          const soon = (perk.needs === "profiles" && !profilesSupported ? "soon" : perk.status) === "soon";
+          return (
+            <li key={perk.title} className="plus__perk" data-soon={soon ? "true" : undefined}>
+              <span className="plus__perkicon" aria-hidden="true">{PERK_ICONS[perk.title] ?? <MdWorkspacePremium />}</span>
+              <span className="t-title-md plus__perktitle">{perk.title}</span>
+              <p className="t-body-sm c-text-2 plus__perkdetail">{perk.detail}</p>
+              <div className="plus__perktags">
+                <span className="plus__soon" data-kind={soon ? "soon" : "plus"}>{soon ? "Coming soon" : plus.paywall ? "Plus" : "Included in early access"}</span>
+                {perk.webOnly ? <span className="plus__web"><MdLanguage aria-hidden="true" /> Web only</span> : null}
+              </div>
+            </li>
+          );
+        })}
       </ul>
 
       {plus.paywall && !plus.active ? (
