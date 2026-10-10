@@ -22,15 +22,25 @@ describe("DownloadPanel", () => {
   });
 
   it("shows the title, the count and the automatic order, with no sort or filter controls", async () => {
-    render(<DownloadPanel target={target} title="Movie" subtitle="2013 • Movie" posterUrl="https://img.example.com/p.jpg" onClose={() => {}} load={async () => downloadOptions([stream])} />);
+    render(<DownloadPanel target={target} title="Movie" subtitle="2013 • Movie" backdropUrl="https://img.example.com/b.jpg" logoUrl="https://img.example.com/l.png" onClose={() => {}} load={async () => downloadOptions([stream])} />);
     expect(await screen.findByText("1 source")).toBeInTheDocument();
     expect(screen.getByText("Best quality first, then smallest")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Downloads" })).toBeInTheDocument();
     expect(screen.getByText("2013 • Movie")).toBeInTheDocument();
     expect(screen.getByText("WEB-DL")).toBeInTheDocument();
     expect(screen.getByText("Cached on TorBox")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Movie" })).toHaveAttribute("src", "https://img.example.com/l.png"); // the title's logo over the backdrop
+    expect(document.querySelector(".dlpanel__backdrop")).not.toBeNull();
+    expect(document.querySelector(".dlpanel__poster")).toBeNull(); // no poster any more
     expect(screen.queryByRole("combobox")).toBeNull();
     expect(screen.queryByRole("button", { name: /sort|filter/i })).toBeNull();
+  });
+
+  it("shows the title's name over the banner when there is no logo, and still works with no backdrop", async () => {
+    render(<DownloadPanel target={target} title="Movie" subtitle="2013 • Movie" onClose={() => {}} load={async () => []} />);
+    expect(screen.getByRole("heading", { name: "Movie" })).toBeInTheDocument();
+    expect(document.querySelector(".dlpanel__backdrop")).toBeNull();
+    await screen.findByText(/No downloadable files found/);
   });
 
   it("the back arrow and the X both close it", () => {

@@ -172,7 +172,8 @@ function DetailContent({ content, similar, providerId, trailer, releaseDate }: {
           target={{ type: content.type, id: content.id, season: firstEpisode?.seasonNumber ?? null, episode: firstEpisode?.episodeNumber ?? null }}
           title={content.type === "TV_SHOW" && firstEpisode ? `${content.title} S${firstEpisode.seasonNumber}E${firstEpisode.episodeNumber}` : content.title}
           subtitle={[content.year, content.type === "TV_SHOW" ? (firstEpisode ? `Show · S${firstEpisode.seasonNumber}E${firstEpisode.episodeNumber}` : "Show") : "Movie"].filter(Boolean).join(" • ")}
-          posterUrl={content.posterUrl}
+          backdropUrl={content.backdropUrl}
+          logoUrl={content.logoUrl}
           onClose={() => setDownloading(false)}
         />
       ) : null}

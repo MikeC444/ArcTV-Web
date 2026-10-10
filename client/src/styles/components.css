@@ -458,22 +458,27 @@
 .cardmenu__play, .cardmenu__secondary, .cardmenu__row { --tvs-scale: 1.02; }
 
 /* The Download popup (developer accounts): the files that can be saved for one movie or episode */
-.dlpanel__scrim { align-items: flex-start; overflow-y: auto; background: rgba(0, 0, 0, 0.72); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); padding: 0; }
-.dlpanel__wrap { width: 100%; min-height: 100%; display: flex; flex-direction: column; align-items: center; padding: 18px 16px 32px; }
-.dlpanel__brand { margin-bottom: 14px; }
-.dlpanel { width: min(760px, 100%); background: var(--bg-elevated); border: 1px solid var(--divider); border-radius: 24px; padding: 0 24px 22px; box-shadow: 0 28px 80px rgba(0, 0, 0, 0.6); }
-.dlpanel__head { display: flex; align-items: center; gap: 14px; padding: 18px 0 16px; border-bottom: 1px solid var(--divider); margin: 0 -24px 20px; padding-left: 24px; padding-right: 24px; }
-.dlpanel__heading { flex: 1; margin: 0; font-size: 28px; font-weight: 700; line-height: 1.1; }
-.dlpanel__iconbtn { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; flex: none; --tvs-bg: transparent; }
-.dlpanel__iconbtn--ring { border: 1px solid var(--divider); }
+.dlpanel__scrim { align-items: flex-start; background: rgba(0, 0, 0, 0.72); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); padding: 0; }
+.dlpanel__wrap { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; padding: 14px 16px 20px; box-sizing: border-box; }
+.dlpanel__brand { flex: none; margin-bottom: 12px; }
+/* The popup never grows past the window: the banner stays put and only the list scrolls. */
+.dlpanel { width: min(760px, 100%); flex: 0 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-elevated); border: 1px solid var(--divider); border-radius: 24px; box-shadow: 0 28px 80px rgba(0, 0, 0, 0.6); }
+.dlpanel__banner { position: relative; flex: none; height: 230px; overflow: hidden; background: var(--surface-high); display: flex; flex-direction: column; justify-content: space-between; padding: 14px 16px 18px; }
+.dlpanel__banner[data-plain="true"] { height: 150px; }
+.dlpanel__backdrop { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 25%; }
+.dlpanel__shade { position: absolute; inset: 0; background: linear-gradient(to top, var(--bg-elevated) 0%, rgba(20, 20, 23, 0.55) 40%, rgba(20, 20, 23, 0) 70%), linear-gradient(to bottom, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0) 38%); }
+.dlpanel__bannertop { position: relative; display: flex; align-items: center; gap: 12px; }
+.dlpanel__heading { flex: 1; margin: 0; font-size: 24px; font-weight: 700; line-height: 1.1; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8); }
+.dlpanel__iconbtn { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; flex: none; --tvs-bg: rgba(0, 0, 0, 0.45); }
+.dlpanel__iconbtn--ring { border: 1px solid rgba(255, 255, 255, 0.18); }
 .dlpanel__iconbtn svg { width: 26px; height: 26px; }
-.dlpanel__title { display: flex; gap: 18px; align-items: flex-start; margin-bottom: 18px; }
-.dlpanel__poster { width: 112px; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 10px; flex: none; background: var(--surface-high); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); }
-.dlpanel__titletext { flex: 1; min-width: 0; }
-.dlpanel__name { margin: 2px 0 4px; font-size: 26px; font-weight: 700; line-height: 1.15; }
-.dlpanel__sub { margin: 0; color: var(--text-2); font-size: 16px; }
-.dlpanel__state { display: flex; align-items: center; gap: 10px; margin: 10px 0 14px; }
-.dlpanel__count { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 4px 0 10px; color: var(--text-2); font-size: 14px; }
+.dlpanel__bannerbottom { position: relative; }
+.dlpanel__logo { display: block; max-width: 70%; max-height: 96px; min-height: 36px; object-fit: contain; object-position: left bottom; filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.7)); }
+.dlpanel__name { margin: 0; font-size: 32px; font-weight: 800; line-height: 1.1; text-shadow: 0 2px 14px rgba(0, 0, 0, 0.8); }
+.dlpanel__sub { margin: 6px 0 0; color: var(--text-2); font-size: 15px; text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8); }
+.dlpanel__body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 4px 24px 22px; overscroll-behavior: contain; }
+.dlpanel__state { display: flex; align-items: center; gap: 10px; margin: 14px 0; }
+.dlpanel__count { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 10px 0; color: var(--text-2); font-size: 14px; }
 .dlpanel__order { color: var(--text-3); font-size: 13px; }
 .dlpanel__list { display: flex; flex-direction: column; gap: 10px; }
 .dlrow { display: flex; align-items: center; gap: 14px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--divider); border-radius: 14px; color: var(--text); text-decoration: none; }
@@ -493,4 +498,5 @@
 .dlrow__go { flex: none; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; border: 1px solid color-mix(in srgb, var(--cyan) 35%, transparent); border-radius: 12px; background: color-mix(in srgb, var(--cyan) 8%, transparent); color: var(--cyan); }
 .dlrow__go svg { width: 26px; height: 26px; }
 .dlpanel__foot { margin: 16px 0 0; text-align: center; color: var(--text-3); font-size: 13px; }
-@media (max-width: 560px) { .dlpanel { padding: 0 16px 18px; } .dlpanel__head { margin: 0 -16px 16px; padding-left: 16px; padding-right: 16px; } .dlpanel__poster { width: 92px; } .dlpanel__name { font-size: 22px; } .dlrow__badge { width: 68px; font-size: 17px; } }
+@media (max-height: 720px) { .dlpanel__banner { height: 170px; } .dlpanel__banner[data-plain="true"] { height: 120px; } .dlpanel__logo { max-height: 64px; } .dlpanel__name { font-size: 26px; } }
+@media (max-width: 560px) { .dlpanel__banner { height: 190px; padding: 12px 12px 14px; } .dlpanel__body { padding: 4px 14px 18px; } .dlpanel__name { font-size: 26px; } .dlrow__badge { width: 68px; font-size: 17px; } }

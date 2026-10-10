@@ -3,6 +3,7 @@ import { MdArrowBack, MdCheckCircle, MdClose, MdDownload, MdHourglassTop } from 
 import { DEBRID_NAMES } from "../../domain/deviceSupport";
 import type { ContentType } from "../../domain/types";
 import { hdrLabel, sourceLabel } from "../../lib/downloadLabels";
+import { sharpBackdrop } from "../../lib/imageSize";
 import { findDownloadOptions, type DownloadOption } from "../../state/downloadSources";
 import { MangoLogo } from "./Logo";
 import { Spinner } from "./States";
@@ -21,8 +22,9 @@ export interface DownloadTarget {
  * link has to be clicked by the person (a download started after waiting for the lookup would be blocked as a pop-up). The order is
  * automatic (see downloadOptions), so there is no sort or filter control.
  */
-export function DownloadPanel({ target, title, subtitle, posterUrl, onClose, load = findDownloadOptions }: { target: DownloadTarget; title: string; subtitle?: string; posterUrl?: string | null; onClose: () => void; load?: typeof findDownloadOptions }) {
+export function DownloadPanel({ target, title, subtitle, backdropUrl, logoUrl, onClose, load = findDownloadOptions }: { target: DownloadTarget; title: string; subtitle?: string; backdropUrl?: string | null; logoUrl?: string | null; onClose: () => void; load?: typeof findDownloadOptions }) {
   const [options, setOptions] = useState<DownloadOption[] | null>(null);
+  const [logoFailed, setLogoFailed] = useState(false);
   const first = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
@@ -48,20 +50,30 @@ export function DownloadPanel({ target, title, subtitle, posterUrl, onClose, loa
       <div className="dlpanel__wrap" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
         <div className="dlpanel__brand"><MangoLogo size={22} /></div>
         <div className="dlpanel" role="dialog" aria-modal="true" aria-label={`Download ${title}`} data-spatial-trap="true">
-          <div className="dlpanel__head">
-            <Surface className="dlpanel__iconbtn" radius="999px" ariaLabel="Back" onClick={onClose} clickSound="back"><MdArrowBack /></Surface>
-            <h2 className="dlpanel__heading">Downloads</h2>
-            <Surface className="dlpanel__iconbtn dlpanel__iconbtn--ring" radius="999px" ariaLabel="Close" onClick={onClose} clickSound="back"><MdClose /></Surface>
-          </div>
-
-          <div className="dlpanel__title">
-            {posterUrl ? <img className="dlpanel__poster" src={posterUrl} alt="" referrerPolicy="no-referrer" /> : null}
-            <div className="dlpanel__titletext">
-              <h3 className="dlpanel__name clamp-2">{title}</h3>
+          {/* Like the right-click menu: the title's backdrop picture fills the top, with its logo (or its name) over it. */}
+          <div className="dlpanel__banner" data-plain={backdropUrl ? undefined : "true"}>
+            {backdropUrl ? (
+              <>
+                <img className="dlpanel__backdrop" src={sharpBackdrop(backdropUrl) ?? backdropUrl} alt="" referrerPolicy="no-referrer" onError={(e) => { if (e.currentTarget.src !== backdropUrl) e.currentTarget.src = backdropUrl; }} />
+                <div className="dlpanel__shade" />
+              </>
+            ) : null}
+            <div className="dlpanel__bannertop">
+              <Surface className="dlpanel__iconbtn" radius="999px" ariaLabel="Back" onClick={onClose} clickSound="back"><MdArrowBack /></Surface>
+              <h2 className="dlpanel__heading">Downloads</h2>
+              <Surface className="dlpanel__iconbtn dlpanel__iconbtn--ring" radius="999px" ariaLabel="Close" onClick={onClose} clickSound="back"><MdClose /></Surface>
+            </div>
+            <div className="dlpanel__bannerbottom">
+              {logoUrl && !logoFailed ? (
+                <img className="dlpanel__logo" src={logoUrl} alt={title} referrerPolicy="no-referrer" onError={() => setLogoFailed(true)} />
+              ) : (
+                <h3 className="dlpanel__name clamp-2">{title}</h3>
+              )}
               {subtitle ? <p className="dlpanel__sub">{subtitle}</p> : null}
             </div>
           </div>
 
+          <div className="dlpanel__body">
           {options === null ? (
             <div className="dlpanel__state"><Spinner small /> <span className="t-label-md c-text-2">Finding files…</span></div>
           ) : options.length === 0 ? (
@@ -111,6 +123,7 @@ export function DownloadPanel({ target, title, subtitle, posterUrl, onClose, loa
               <p className="dlpanel__foot">Choose a source to download the file.</p>
             </>
           )}
+          </div>
         </div>
       </div>
     </div>
