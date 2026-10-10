@@ -249,3 +249,12 @@ p { text-wrap: pretty; }
   .faq summary { text-align: left; }
 }
 @media (max-width: 480px) { .footer__in { grid-template-columns: 1fr; } }
+
+/* device logos */
+.dl__logos { display: inline-flex; align-items: center; gap: 8px; flex: none; }
+.dl__logos svg { width: 22px; height: 22px; fill: currentColor; }
+.dl__plat { justify-content: flex-start; gap: 12px; }
+.dl__plat small { margin-left: auto; }
+.dl__head .dl__logos svg { width: 34px; height: 34px; fill: var(--ink); }
+.dl__head svg.brand { fill: var(--ink); }
+@media (max-width: 860px) { .dl__plat { justify-content: center; } .dl__plat small { margin-left: 0; } }
