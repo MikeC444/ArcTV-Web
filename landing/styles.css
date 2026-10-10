@@ -224,3 +224,28 @@ p { text-wrap: pretty; }
 .plus__fine { margin-top: 28px; font-size: 14px; color: var(--text-2); }
 @media (max-width: 860px) { .plus__grid { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 520px) { .plus__grid { grid-template-columns: 1fr; } }
+.plus__grid .is-more { background: linear-gradient(160deg, rgba(25, 230, 255, .12), rgba(155, 92, 255, .12)); border-color: rgba(25, 230, 255, .3); }
+
+/* centre everything on phones */
+@media (max-width: 860px) {
+  .screens .wrap, .dl__main, .dl__side { text-align: center; }
+  .screens .lede { margin-inline: auto; }
+  .panel p, .panel__code { margin-inline: auto; }
+  .row { text-align: center; }
+  .row p, .row .ticks { margin-inline: auto; }
+  .ticks { justify-items: center; }
+  .ticks li { padding-left: 0; }
+  .ticks li::before { position: static; display: inline-block; vertical-align: .15em; margin-right: 12px; }
+  .row__art--phone img { margin-inline: auto; }
+  .plus__grid li { text-align: center; }
+  .dl__tabs { justify-content: flex-start; margin-inline: auto; }
+  .dl__head, .dl__get, .dl__item { justify-content: center; justify-items: center; }
+  .dl__code { justify-items: center; }
+  .dl__plat { justify-content: center; text-align: center; }
+  .not { text-align: center; }
+  .footer__in { text-align: center; }
+  .footer__brand img { margin-inline: auto; }
+  .footer nav { justify-items: center; }
+  .faq summary { text-align: left; }
+}
+@media (max-width: 480px) { .footer__in { grid-template-columns: 1fr; } }
