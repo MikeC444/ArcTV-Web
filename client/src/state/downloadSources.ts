@@ -8,9 +8,14 @@ export interface DownloadOption {
   download: DownloadInfo;
 }
 
+/** A camera or telesync recording: tiny and poor, so it would otherwise win "smallest file" within its resolution. */
+const isRecording = (s: Stream): boolean => /^(cam|hdcam|ts|hdts|telesync)$/i.test(s.sourceTag ?? "");
+
 /**
- * The sources among [streams] that the browser can download (see downloadInfo), best first: ones that start at once before ones a debrid
- * service still has to fetch, then the sharpest, then the biggest file. The same file offered twice (the same link) is listed once.
+ * The sources among [streams] that the browser can download (see downloadInfo), in the order the panel shows them, with no sort control:
+ * the highest quality first and, within the same quality, the smallest file first (a file with no size listed comes last in its group).
+ * Two things sit above quality: ones a debrid service has already stored come before ones it still has to fetch (those can take minutes to
+ * start), and camera recordings go to the bottom. The same file offered twice (the same link) is listed once.
  */
 export function downloadOptions(streams: Stream[]): DownloadOption[] {
   const seen = new Set<string>();
@@ -22,11 +27,13 @@ export function downloadOptions(streams: Stream[]): DownloadOption[] {
     options.push({ stream, download });
   }
   const notCached = (s: Stream) => (s.debrid && !s.debrid.cached ? 1 : 0);
+  const size = (s: Stream) => s.sizeBytes ?? Number.POSITIVE_INFINITY;
   return options.sort(
     (a, b) =>
       notCached(a.stream) - notCached(b.stream) ||
+      Number(isRecording(a.stream)) - Number(isRecording(b.stream)) ||
       resolutionOrdinal(a.stream.resolutionTier) - resolutionOrdinal(b.stream.resolutionTier) ||
-      (b.stream.sizeBytes ?? -1) - (a.stream.sizeBytes ?? -1),
+      (size(a.stream) === size(b.stream) ? 0 : size(a.stream) < size(b.stream) ? -1 : 1),
   );
 }
 

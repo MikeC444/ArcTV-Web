@@ -48,7 +48,7 @@ export function DownloadPanel({ target, title, onClose, load = findDownloadOptio
         </Surface>
         <h2 className="t-title-lg" style={{ margin: 0 }}>Download</h2>
         <p className="t-label-md c-text-2 ellipsis" style={{ margin: "2px 0 0" }}>{title}</p>
-        <p className="t-label-sm c-text-3" style={{ margin: "6px 0 14px" }}>Files save straight from your debrid service. The link has your key in it, so don't share it.</p>
+        <p className="t-label-sm c-text-3" style={{ margin: "6px 0 14px" }}>Best quality first, smallest file first within each quality. Files save straight from your debrid service. The link has your key in it, so don't share it.</p>
 
         {options === null ? (
           <div className="dlpanel__state"><Spinner small /> <span className="t-label-md c-text-2">Finding files…</span></div>

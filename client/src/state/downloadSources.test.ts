@@ -14,14 +14,36 @@ describe("downloadOptions", () => {
     expect(options[0]!.download.filename).toBe("Release a.mkv");
   });
 
-  it("orders cached before not cached, then the sharpest, then the biggest", () => {
+  it("puts the highest quality first and, within a quality, the smallest file first", () => {
+    const options = downloadOptions([
+      stream("big1080", { sizeBytes: 9_000 }),
+      stream("4kBig", { resolutionTier: "UHD_4K", qualityBadge: "4K", sizeBytes: 30_000 }),
+      stream("small1080", { sizeBytes: 1_000 }),
+      stream("4kSmall", { resolutionTier: "UHD_4K", qualityBadge: "4K", sizeBytes: 12_000 }),
+      stream("mid720", { resolutionTier: "HD_720P", qualityBadge: "720p", sizeBytes: 500 }),
+    ]);
+    expect(options.map((o) => o.stream.id)).toEqual(["4kSmall", "4kBig", "small1080", "big1080", "mid720"]);
+  });
+
+  it("puts a file with no listed size last in its quality", () => {
+    const options = downloadOptions([stream("unknown", { sizeBytes: null }), stream("known", { sizeBytes: 5_000 })]);
+    expect(options.map((o) => o.stream.id)).toEqual(["known", "unknown"]);
+  });
+
+  it("keeps files that are already stored at the debrid service above ones it still has to fetch, whatever the quality", () => {
     const options = downloadOptions([
       stream("slow4k", { resolutionTier: "UHD_4K", qualityBadge: "4K", debrid: { service: "TB", cached: false } }),
-      stream("small1080", { sizeBytes: 1_000 }),
-      stream("big1080", { sizeBytes: 9_000 }),
-      stream("cached4k", { resolutionTier: "UHD_4K", qualityBadge: "4K" }),
+      stream("cached1080", { sizeBytes: 3_000 }),
     ]);
-    expect(options.map((o) => o.stream.id)).toEqual(["cached4k", "big1080", "small1080", "slow4k"]);
+    expect(options.map((o) => o.stream.id)).toEqual(["cached1080", "slow4k"]);
+  });
+
+  it("sends camera recordings to the bottom instead of letting their tiny size win", () => {
+    const options = downloadOptions([
+      stream("cam", { sourceTag: "CAM", sizeBytes: 100 }),
+      stream("web", { sourceTag: "WEB-DL", sizeBytes: 4_000 }),
+    ]);
+    expect(options.map((o) => o.stream.id)).toEqual(["web", "cam"]);
   });
 
   it("lists the same link once", () => {
