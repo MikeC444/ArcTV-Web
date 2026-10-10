@@ -457,22 +457,43 @@
 /* These span (half of) the panel's width: the usual 8% grow on focus would push them past its edge. */
 .cardmenu__play, .cardmenu__secondary, .cardmenu__row { --tvs-scale: 1.02; }
 
-/* The Download panel (developer accounts): the files that can be saved for one movie or episode */
-.dlpanel__scrim { background: rgba(0, 0, 0, 0.62); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
-.dlpanel { position: relative; width: min(640px, 100%); max-height: 86vh; overflow-y: auto; background: var(--bg-elevated); border: 1px solid var(--divider); border-radius: 22px; padding: 28px 24px 20px; box-shadow: 0 28px 80px rgba(0, 0, 0, 0.65); }
-.dlpanel__close { position: absolute; top: 14px; right: 14px; width: 40px; height: 40px; --tvs-bg: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; }
-.dlpanel__close svg { width: 22px; height: 22px; }
-.dlpanel h2, .dlpanel > p { padding-right: 48px; }
-.dlpanel__state { display: flex; align-items: center; gap: 10px; margin: 8px 0 12px; }
-.dlpanel__list { display: flex; flex-direction: column; gap: 8px; }
-.dlrow { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: var(--surface-high); border: 1px solid transparent; border-radius: 12px; color: var(--text); text-decoration: none; }
-.dlrow:hover { background: var(--surface); }
+/* The Download popup (developer accounts): the files that can be saved for one movie or episode */
+.dlpanel__scrim { align-items: flex-start; overflow-y: auto; background: rgba(0, 0, 0, 0.72); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); padding: 0; }
+.dlpanel__wrap { width: 100%; min-height: 100%; display: flex; flex-direction: column; align-items: center; padding: 18px 16px 32px; }
+.dlpanel__brand { margin-bottom: 14px; }
+.dlpanel { width: min(760px, 100%); background: var(--bg-elevated); border: 1px solid var(--divider); border-radius: 24px; padding: 0 24px 22px; box-shadow: 0 28px 80px rgba(0, 0, 0, 0.6); }
+.dlpanel__head { display: flex; align-items: center; gap: 14px; padding: 18px 0 16px; border-bottom: 1px solid var(--divider); margin: 0 -24px 20px; padding-left: 24px; padding-right: 24px; }
+.dlpanel__heading { flex: 1; margin: 0; font-size: 28px; font-weight: 700; line-height: 1.1; }
+.dlpanel__iconbtn { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; flex: none; --tvs-bg: transparent; }
+.dlpanel__iconbtn--ring { border: 1px solid var(--divider); }
+.dlpanel__iconbtn svg { width: 26px; height: 26px; }
+.dlpanel__title { display: flex; gap: 18px; align-items: flex-start; margin-bottom: 18px; }
+.dlpanel__poster { width: 112px; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 10px; flex: none; background: var(--surface-high); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); }
+.dlpanel__titletext { flex: 1; min-width: 0; }
+.dlpanel__name { margin: 2px 0 4px; font-size: 26px; font-weight: 700; line-height: 1.15; }
+.dlpanel__sub { margin: 0 0 12px; color: var(--text-2); font-size: 16px; }
+.dlpanel__note { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--divider); border-radius: 12px; color: var(--text-2); font-size: 13px; line-height: 1.35; }
+.dlpanel__lock { flex: none; width: 36px; height: 36px; border-radius: 10px; background: var(--surface-high); display: flex; align-items: center; justify-content: center; color: var(--text); }
+.dlpanel__lock svg { width: 20px; height: 20px; }
+.dlpanel__state { display: flex; align-items: center; gap: 10px; margin: 10px 0 14px; }
+.dlpanel__count { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 4px 0 10px; color: var(--text-2); font-size: 14px; }
+.dlpanel__order { color: var(--text-3); font-size: 13px; }
+.dlpanel__list { display: flex; flex-direction: column; gap: 10px; }
+.dlrow { display: flex; align-items: center; gap: 14px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--divider); border-radius: 14px; color: var(--text); text-decoration: none; }
+.dlrow:hover { background: var(--surface-high); }
 .dlrow:focus-visible { outline: 2px solid var(--focus-border); outline-offset: 2px; border-color: var(--accent); }
-.dlrow__badge { flex: none; min-width: 52px; text-align: center; border: 1px solid var(--divider); border-radius: 6px; background: var(--bg); padding: 5px 8px; color: var(--accent); }
+.dlrow__badge { flex: none; width: 80px; text-align: center; box-sizing: border-box; border: 1px solid var(--divider); border-radius: 10px; background: var(--bg); padding: 12px 8px; color: var(--accent); font-size: 20px; font-weight: 800; }
 .dlrow__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.dlrow__facts { display: flex; flex-wrap: wrap; gap: 3px 12px; align-items: center; }
-.dlrow__cache { display: inline-flex; align-items: center; gap: 3px; font-weight: 700; }
+.dlrow__label { font-size: 17px; font-weight: 700; }
+.dlrow__file { color: var(--text-3); font-size: 13px; }
+.dlrow__facts { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; color: var(--text-2); font-size: 14px; }
+.dlrow__size { color: var(--text); font-weight: 500; }
+.dlrow__chip { padding: 1px 8px; border: 1px solid var(--divider); border-radius: 6px; background: var(--surface-high); color: var(--text); font-size: 12px; font-weight: 700; }
+.dlrow__cache { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; }
 .dlrow__cache[data-cached="true"] { color: var(--teal); }
 .dlrow__cache[data-cached="false"] { color: var(--warn); }
-.dlrow__cache svg { width: 13px; height: 13px; }
-.dlrow__icon { flex: none; width: 24px; height: 24px; color: var(--text-2); }
+.dlrow__cache svg { width: 16px; height: 16px; }
+.dlrow__go { flex: none; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; border: 1px solid color-mix(in srgb, var(--cyan) 35%, transparent); border-radius: 12px; background: color-mix(in srgb, var(--cyan) 8%, transparent); color: var(--cyan); }
+.dlrow__go svg { width: 26px; height: 26px; }
+.dlpanel__foot { margin: 16px 0 0; text-align: center; color: var(--text-3); font-size: 13px; }
+@media (max-width: 560px) { .dlpanel { padding: 0 16px 18px; } .dlpanel__head { margin: 0 -16px 16px; padding-left: 16px; padding-right: 16px; } .dlpanel__poster { width: 92px; } .dlpanel__name { font-size: 22px; } .dlrow__badge { width: 68px; font-size: 17px; } }
