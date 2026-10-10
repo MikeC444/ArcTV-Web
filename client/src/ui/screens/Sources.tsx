@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import { MdArrowBack, MdBolt, MdExpandMore, MdHourglassTop, MdRefresh, MdExtension, MdInfo, MdPerson, MdSearchOff, MdSecurity, MdStar, MdSurroundSound, MdCheckCircle, MdOutlineCheckCircle, MdWifi, MdPlayArrow, MdWarningAmber, MdMenuBook } from "react-icons/md";
+import { MdArrowBack, MdBolt, MdExpandMore, MdHourglassTop, MdRefresh, MdExtension, MdInfo, MdPerson, MdSearchOff, MdSecurity, MdStar, MdSurroundSound, MdCheckCircle, MdOutlineCheckCircle, MdWifi, MdPlayArrow, MdWarningAmber, MdMenuBook, MdDownload } from "react-icons/md";
 import { useNavigate, useNavigationType, useParams, useSearchParams } from "react-router-dom";
 import { DEBRID_NAMES, describeCaps, deviceVerdict, getDeviceCaps, hasSoundHere, isWebFormat, startRank, type DeviceCaps } from "../../domain/deviceSupport";
 import { resolutionOrdinal, SOURCE_HEALTH_LABEL, type Content, type ContentType, type ResolutionTier, type Stream } from "../../domain/types";
+import { downloadInfo } from "../../lib/download";
 import { formatRuntime } from "../../lib/format";
 import { useGoBack } from "../../lib/navigation";
 import { parseOptionalInt, routes } from "../../lib/routes";
 import { smartPickingApplies, smartPickTarget } from "../../domain/smartPick";
+import { useAuth } from "../../state/auth";
 import { useHasPlus } from "../../state/plusAccess";
 import { useSmartPicking } from "../../state/smartPicking";
 import { useSources, type AddonLookupRow } from "../../state/sourcesData";
@@ -151,6 +153,8 @@ function SourcesShell({ onBack }: { loading?: boolean; onBack: () => void }) {
 }
 
 function SourcesLoaded({ state, smartNote, onBack, onSelect, onManage, onRetry }: { state: Extract<ReturnType<typeof useSources>["state"], { kind: "loaded" }>; smartNote: string | null; onBack: () => void; onSelect: (s: Stream) => void; onManage: () => void; onRetry: () => void }) {
+  // Download is for developer (admin) accounts only for now.
+  const canDownload = useAuth((s) => s.user?.isAdmin === true);
   const navigate = useNavigate();
   const [filter, setFilter] = useState<SourceFilter>("ALL");
   const [sort, setSort] = useState<SourceSort>("SIZE"); // biggest file first; "Recommended" still marks the best source this device can play
@@ -211,7 +215,7 @@ function SourcesLoaded({ state, smartNote, onBack, onSelect, onManage, onRetry }
             <>
               {state.searchingMore ? <div className="sources__more"><Spinner small /> <span className="t-label-md c-text-2">Looking for more sources…</span></div> : null}
               {sorted.map((stream, index) => (
-                <SourceRow key={stream.id} stream={stream} recommended={stream.id === state.recommendedId} onClick={() => onSelect(stream)} autoFocus={index === 0} />
+                <SourceRow key={stream.id} stream={stream} recommended={stream.id === state.recommendedId} onClick={() => onSelect(stream)} autoFocus={index === 0} canDownload={canDownload} />
               ))}
               {rest.length === 0 && state.streams.length > 1 ? (
                 <p className="sources__note t-label-md c-text-2">
@@ -365,12 +369,13 @@ function DeviceSupport({ caps, streams }: { caps: DeviceCaps; streams: Stream[] 
 
 const VERDICT_TONE = { yes: "ok", unknown: "muted", audio: "warn", no: "bad" } as const;
 
-function SourceRow({ stream, recommended, onClick, autoFocus }: { stream: Stream; recommended: boolean; onClick: () => void; autoFocus?: boolean }) {
+export function SourceRow({ stream, recommended, onClick, autoFocus, canDownload }: { stream: Stream; recommended: boolean; onClick: () => void; autoFocus?: boolean; canDownload?: boolean }) {
   const play = deviceVerdict(stream);
+  const download = canDownload ? downloadInfo(stream) : null;
   const subtitle = [stream.codec, stream.sourceTag].filter(Boolean).join("  •  ");
   const color = TIER_COLOR[stream.resolutionTier];
   return (
-    <div className="source" role="listitem" data-unplayable={play.level === "no" || undefined} data-device={play.level}>
+    <div className="source" role="listitem" data-unplayable={play.level === "no" || undefined} data-device={play.level} data-download={canDownload ? "true" : undefined}>
       <Surface className="source__surface" background="var(--surface-high)" alwaysBorder={recommended} borderColor={recommended ? "var(--accent)" : undefined} onClick={onClick} dataAttrs={{ autofocus: autoFocus }} ariaLabel={`${stream.qualityBadge} ${stream.releaseTitle}, ${stream.providerLabel}${recommended ? ", recommended" : ""}. ${play.label}${play.detail ? `: ${play.detail}` : ""}${stream.debrid ? (stream.debrid.cached ? ". Cached" : ". Not cached, may take minutes to start") : ""}`}>
         <span className="source__badge" style={{ borderColor: color, color }}>
           <span className="t-label-lg">{stream.qualityBadge}</span>
@@ -401,6 +406,14 @@ function SourceRow({ stream, recommended, onClick, autoFocus }: { stream: Stream
         </span>
         <GlowPlay size={28} glow={38} icon={13} />
       </Surface>
+      {download ? (
+        <a className="source__download" href={download.url} download={download.filename} target="_blank" rel="noopener noreferrer" referrerPolicy="no-referrer" aria-label={`Download ${stream.releaseTitle}`} title={stream.debrid && !stream.debrid.cached ? "Download this file (not cached yet: the debrid service may take a while to start)" : "Download this file"}>
+          <MdDownload aria-hidden="true" />
+        </a>
+      ) : canDownload ? (
+        // nothing to download here (a stream, not a file): keep the space so every row ends in the same place
+        <span className="source__download source__download--none" aria-hidden="true" />
+      ) : null}
       {recommended ? <span className="source__reco"><MdStar aria-hidden="true" /> Recommended</span> : null}
     </div>
   );
