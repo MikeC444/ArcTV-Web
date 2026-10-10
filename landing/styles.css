@@ -303,6 +303,6 @@ p { text-wrap: pretty; }
 .light.arc.picked { padding-top: 100px; padding-bottom: calc(var(--arc) + 90px); }
 /* leave room for the curved edge of the next section, which overlaps the bottom of this one */
 .dark.plus { padding-bottom: calc(var(--arc) + 60px); }
-.dark.play { padding-bottom: calc(var(--arc) + 30px); }
+.dark.arc.play { padding-top: calc(var(--arc) + 20px); padding-bottom: calc(var(--arc) + 80px); }
 .light.feat { padding-bottom: calc(var(--arc) + 50px); }
 .light.faq { padding-bottom: calc(var(--arc) + 60px); }
