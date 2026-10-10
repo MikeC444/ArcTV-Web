@@ -93,7 +93,7 @@ export async function signIn(context: BrowserContext, email: string, password = 
 }
 
 /** The id of the current "Everything in ArcTV Plus" welcome popup (client/src/state/plusWelcome.ts). */
-export const WELCOME_ID = "2026-10-features";
+export const WELCOME_ID = "2026-10-features-downloads";
 
 /** `welcome: true` leaves the one-time "Everything in ArcTV Plus" welcome popup to appear; by default it is marked seen so it never gets in a test's way. */
 export async function openSignedIn(page: Page, account: TestAccount, path = "/", options: { welcome?: boolean } = {}) {

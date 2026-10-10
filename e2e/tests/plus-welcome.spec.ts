@@ -9,7 +9,7 @@ test.describe("Plus welcome popup", () => {
     await openSignedIn(page, account, "/", { welcome: true });
     const dialog = page.getByRole("dialog", { name: "Everything in ArcTV Plus." });
     await expect(dialog).toBeVisible({ timeout: 15_000 });
-    for (const feature of ["Picked for you", "Up to 5 profiles", "Smart source picking", "Your stats"]) await expect(dialog.getByText(feature, { exact: true })).toBeVisible();
+    for (const feature of ["Picked for you", "Up to 5 profiles", "Smart source picking", "Your stats", "Downloads (web only)"]) await expect(dialog.getByText(feature, { exact: true })).toBeVisible();
     await expect(dialog.getByRole("button", { name: "Don't show me again" })).toHaveCount(0); // a one-time note needs no such link
     await dialog.getByRole("button", { name: "Close" }).last().click();
     await expect(dialog).toBeHidden();

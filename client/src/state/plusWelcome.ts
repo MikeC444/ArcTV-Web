@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { readJson, userKey, writeJson } from "./persist";
 
 /** Which version of the Plus welcome tour this is. A revised tour later gets a new id and so shows once more. */
-export const WELCOME_ID = "2026-10-features";
+export const WELCOME_ID = "2026-10-features-downloads";
 
 interface WelcomeState {
   userId: string | null;

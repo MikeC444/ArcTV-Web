@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { MdArrowForward, MdClose, MdFavorite, MdBarChart, MdBolt, MdGroups, MdWorkspacePremium } from "react-icons/md";
+import { MdArrowForward, MdClose, MdFavorite, MdBarChart, MdBolt, MdDownload, MdGroups, MdWorkspacePremium } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import { routes } from "../../lib/routes";
 import { useAuth } from "../../state/auth";
@@ -15,6 +15,7 @@ const SHOW_AFTER_MS = 4000;
 const BENEFITS = [
   { icon: <MdFavorite />, title: "Picked for you", detail: "A Home row chosen from the movies and shows you like, with the reason under each poster." },
   { icon: <MdGroups />, title: "Up to 5 profiles", detail: "Their own My List, Continue Watching and recommendations. Add kids profiles and PIN locks." },
+  { icon: <MdDownload />, title: "Downloads on the web", detail: "Save movies and episodes to your computer from the web app, best quality at the smallest size first." },
   { icon: <MdWorkspacePremium />, title: "And more", detail: "Smart source picking and your watch stats, with parental controls on the way." },
 ];
 
@@ -134,7 +135,7 @@ export function PromoDialog({ onClose, onNever, onGo, content = PLUS_INVITATION 
   );
 }
 
-const PLUS_FEATURES: PromoContent = {
+export const PLUS_FEATURES: PromoContent = {
   title: "Everything in ArcTV Plus.",
   subtitle: "Here is what your Plus membership gives you.",
   benefits: [
@@ -142,6 +143,7 @@ const PLUS_FEATURES: PromoContent = {
     { icon: <MdGroups />, title: "Up to 5 profiles", detail: "Their own My List, Continue Watching and recommendations. Add kids profiles and PIN locks." },
     { icon: <MdBolt />, title: "Smart source picking", detail: "Skips the source list and starts the best source your device can play." },
     { icon: <MdBarChart />, title: "Your stats", detail: "How much you watch, your streak and a map of your last 13 weeks." },
+    { icon: <MdDownload />, title: "Downloads (web only)", detail: "Save movies and episodes to your computer from the Download button on a details page." },
   ],
   goLabel: "See my Plus settings",
   hint: "Parental controls are on the way",
