@@ -17,11 +17,16 @@
     <meta property="og:site_name" content="Arc TV" />
     <meta property="og:title" content="Arc TV — Entertainment, With Ownership" />
     <meta property="og:description" content="Your list, your progress and your add-ons on every screen." />
+    <meta property="og:image:alt" content="Arc TV on a laptop and a phone" />
     <meta property="og:url" content="https://arctv.org/" />
     <meta property="og:image" content="https://arctv.org/og-image.png?v=2" />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Arc TV — Entertainment, With Ownership" />
+    <meta name="twitter:description" content="Your list, your progress and your add-ons on every screen." />
+    <meta name="twitter:image" content="https://arctv.org/og-image.png?v=2" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preload" as="image" href="/img/app-laptop.webp" type="image/webp" fetchpriority="high" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
     <link rel="stylesheet" href="/styles.css" />
     <script src="/redirect.js"></script>
@@ -36,6 +41,7 @@
         <a href="#screens">Screens</a>
         <a href="#download">Downloads</a>
         <a href="#features">Features</a>
+        <a href="#plus">Plus</a>
         <a href="#faq">FAQ</a>
       </nav>
       <a class="btn btn--light btn--sm" href="https://web.arctv.org">Launch Web App</a>
@@ -45,12 +51,13 @@
       <!-- HERO -->
       <section id="top" class="hero">
         <h1>Entertainment,<br /><span class="grad">With Ownership.</span></h1>
-        <p class="hero__sub">A modern home for your movies and TV shows. Bring your own add-ons, choose a source and press play, with your list and your place saved on every screen.</p>
+        <p class="hero__sub">A modern home for your movies and TV shows. Connect the add-ons and services you already use, find something to watch and press play, with your list and your place saved on every screen.</p>
         <div class="hero__cta">
           <a class="btn btn--grad" href="https://web.arctv.org">Launch Web App</a>
-          <a class="btn btn--glass" href="#screens">Get the Fire TV app</a>
+          <a class="btn btn--glass" href="#download">Download the apps</a>
         </div>
-        <p class="hero__fine">Arc TV doesn&rsquo;t host, store or provide any media.</p>
+        <ul class="hero__points" aria-label="Highlights"><li>Browse without an account</li><li>100% free to use on every screen</li><li>Your list syncs everywhere</li></ul>
+        <p class="hero__fine">Arc TV doesn&rsquo;t host, store or provide any media. Use it only with content you have the right to access.</p>
 
         <div class="stage">
           <img class="stage__laptop" src="/img/app-laptop.webp" alt="The Arc TV web app on a laptop" width="1600" height="1100" fetchpriority="high" />
@@ -61,9 +68,10 @@
       <!-- DEVICE STRIP -->
       <div class="strip" aria-label="Where Arc TV runs">
         <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1h-7v2h3v2H7v-2h3v-2H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm1 2v9h16V6H4z"/></svg>Web</span>
-        <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-6l1 2h2v2H6v-2h2l1-2H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1 2v8h16V7H4z"/></svg>Fire TV</span>
-        <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-6l1 2h2v2H6v-2h2l1-2H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1 2v8h16V7H4z"/></svg>Android TV</span>
-        <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 2h8a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 2v14h8V4H8zm4 15.2a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/></svg>Phone &amp; tablet browsers</span>
+        <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.196 15.12c.265.337-.294 1.73-.542 2.353-.077.19.085.266.257.123 1.106-.926 1.39-2.867 1.166-3.149-.226-.277-2.16-.516-3.341.314-.183.127-.151.304.05.279.665-.08 2.147-.257 2.41.08m-.858.981c-2.064 1.523-5.056 2.333-7.632 2.333-3.611 0-6.862-1.334-9.322-3.555-.194-.176-.02-.414.21-.28 2.655 1.545 5.939 2.477 9.328 2.477 2.287 0 4.803-.476 7.115-1.458.348-.147.642.231.3.483m2.034-3.155a.388.388 0 0 1-.201-.04c-.041-.026-.087-.1-.133-.225l-1.734-4.355a1.79 1.79 0 0 0-.046-.117.266.266 0 0 1-.023-.108c0-.084.049-.128.146-.128h.58c.098 0 .165.014.205.04.04.026.082.102.127.226l1.344 3.823 1.343-3.823c.046-.124.089-.2.128-.226a.402.402 0 0 1 .205-.04h.54c.1 0 .148.044.148.128a.3.3 0 0 1-.025.108c-.016.04-.032.078-.044.117l-1.727 4.355c-.045.124-.09.199-.132.225a.388.388 0 0 1-.201.04zm-3.644.068c-.929 0-1.392-.463-1.392-1.392V8.739h-.706c-.13 0-.197-.066-.197-.196v-.246a.22.22 0 0 1 .045-.147c.03-.031.086-.055.171-.067l.717-.09.127-1.215c.013-.13.082-.196.207-.196h.41c.13 0 .196.066.196.196v1.196h1.276c.13 0 .195.065.195.197v.372c0 .13-.064.196-.195.196h-1.276v2.834c0 .243.055.411.162.51.108.098.293.147.555.147.124 0 .277-.016.46-.049.099-.02.164-.03.197-.03.052 0 .088.014.108.044.02.03.029.077.029.142v.266a.366.366 0 0 1-.04.19c-.026.043-.078.078-.157.103a3.018 3.018 0 0 1-.892.118m-4.665-2.976c.006-.052.011-.137.011-.255 0-.399-.094-.698-.28-.901-.186-.204-.46-.306-.818-.306-.412 0-.732.123-.962.369-.228.245-.36.61-.392 1.093zm-.942 3.07c-.803 0-1.411-.222-1.824-.667-.412-.444-.616-1.102-.616-1.972 0-.83.204-1.475.616-1.937.413-.46.988-.691 1.728-.691.62 0 1.098.176 1.432.524.332.351.5.846.5 1.487 0 .21-.017.422-.05.638-.014.077-.034.13-.064.156-.029.027-.077.04-.142.04h-3.08c.013.563.154.977.418 1.245.265.268.674.403 1.23.403.196 0 .385-.014.564-.04a5.04 5.04 0 0 0 .682-.166l.117-.035a.284.284 0 0 1 .09-.016c.085 0 .125.06.125.177v.276c0 .085-.012.144-.037.18a.441.441 0 0 1-.167.114 3.38 3.38 0 0 1-.701.205 4.236 4.236 0 0 1-.82.079m-5.424-.147c-.13 0-.195-.066-.195-.197v-4.58c0-.13.064-.195.195-.195h.432c.064 0 .116.012.153.039.036.025.06.076.072.146l.07.55c.176-.19.343-.34.499-.452a1.725 1.725 0 0 1 1.02-.323c.079 0 .158.003.235.01.112.014.168.072.168.176v.53c0 .117-.058.177-.178.177-.058 0-.114-.004-.17-.01a1.638 1.638 0 0 0-.18-.01c-.524 0-.973.157-1.346.47v3.472c0 .131-.066.197-.195.197zm-2.249 0c-.13 0-.196-.066-.196-.197v-4.58c0-.13.066-.195.196-.195h.579c.13 0 .195.064.195.195v4.58c0 .131-.065.197-.195.197zm.295-5.856c-.19 0-.339-.054-.447-.16a.581.581 0 0 1-.161-.428c0-.176.054-.318.16-.426.11-.109.257-.163.448-.163.189 0 .337.054.446.163.107.108.16.25.16.426a.581.581 0 0 1-.16.427.608.608 0 0 1-.446.161m-3.625 5.856c-.132 0-.197-.066-.197-.197v-4.01H.195c-.13 0-.195-.066-.195-.197v-.245c0-.065.014-.114.043-.147.03-.033.088-.055.173-.07l.705-.087v-.804c0-1.091.523-1.638 1.57-1.638.248 0 .51.036.784.109.072.019.122.047.152.088.029.038.044.107.044.205v.255c0 .124-.048.186-.148.186-.058 0-.14-.01-.248-.029-.11-.02-.23-.03-.369-.03-.3 0-.51.057-.633.172-.121.115-.181.303-.181.564v.903h1.324c.131 0 .197.064.197.195v.373c0 .13-.066.197-.197.197H1.892v4.01c0 .131-.065.197-.196.197Z"/></svg>Fire TV</span>
+        <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.4395 5.5586c-.675 1.1664-1.352 2.3318-2.0274 3.498-.0366-.0155-.0742-.0286-.1113-.043-1.8249-.6957-3.484-.8-4.42-.787-1.8551.0185-3.3544.4643-4.2597.8203-.084-.1494-1.7526-3.021-2.0215-3.4864a1.1451 1.1451 0 0 0-.1406-.1914c-.3312-.364-.9054-.4859-1.379-.203-.475.282-.7136.9361-.3886 1.5019 1.9466 3.3696-.0966-.2158 1.9473 3.3593.0172.031-.4946.2642-1.3926 1.0177C2.8987 12.176.452 14.772 0 18.9902h24c-.119-1.1108-.3686-2.099-.7461-3.0683-.7438-1.9118-1.8435-3.2928-2.7402-4.1836a12.1048 12.1048 0 0 0-2.1309-1.6875c.6594-1.122 1.312-2.2559 1.9649-3.3848.2077-.3615.1886-.7956-.0079-1.1191a1.1001 1.1001 0 0 0-.8515-.5332c-.5225-.0536-.9392.3128-1.0488.5449zm-.0391 8.461c.3944.5926.324 1.3306-.1563 1.6503-.4799.3197-1.188.0985-1.582-.4941-.3944-.5927-.324-1.3307.1563-1.6504.4727-.315 1.1812-.1086 1.582.4941zM7.207 13.5273c.4803.3197.5506 1.0577.1563 1.6504-.394.5926-1.1038.8138-1.584.4941-.48-.3197-.5503-1.0577-.1563-1.6504.4008-.6021 1.1087-.8106 1.584-.4941z"/></svg>Android TV</span>
+        <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.4395 5.5586c-.675 1.1664-1.352 2.3318-2.0274 3.498-.0366-.0155-.0742-.0286-.1113-.043-1.8249-.6957-3.484-.8-4.42-.787-1.8551.0185-3.3544.4643-4.2597.8203-.084-.1494-1.7526-3.021-2.0215-3.4864a1.1451 1.1451 0 0 0-.1406-.1914c-.3312-.364-.9054-.4859-1.379-.203-.475.282-.7136.9361-.3886 1.5019 1.9466 3.3696-.0966-.2158 1.9473 3.3593.0172.031-.4946.2642-1.3926 1.0177C2.8987 12.176.452 14.772 0 18.9902h24c-.119-1.1108-.3686-2.099-.7461-3.0683-.7438-1.9118-1.8435-3.2928-2.7402-4.1836a12.1048 12.1048 0 0 0-2.1309-1.6875c.6594-1.122 1.312-2.2559 1.9649-3.3848.2077-.3615.1886-.7956-.0079-1.1191a1.1001 1.1001 0 0 0-.8515-.5332c-.5225-.0536-.9392.3128-1.0488.5449zm-.0391 8.461c.3944.5926.324 1.3306-.1563 1.6503-.4799.3197-1.188.0985-1.582-.4941-.3944-.5927-.324-1.3307.1563-1.6504.4727-.315 1.1812-.1086 1.582.4941zM7.207 13.5273c.4803.3197.5506 1.0577.1563 1.6504-.394.5926-1.1038.8138-1.584.4941-.48-.3197-.5503-1.0577-.1563-1.6504.4008-.6021 1.1087-.8106 1.584-.4941z"/></svg>Android</span>
+        <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>iPhone &amp; iPad browsers</span>
       </div>
 
       <!-- PICK YOUR SCREEN -->
@@ -94,10 +102,10 @@
             </div>
           </div>
           <div class="panel" role="tabpanel" id="p-phone" aria-labelledby="t-phone" hidden>
-            <div class="panel__copy"><h3>Arc TV on your phone or tablet</h3><p>The web app fits small screens too. Open it in your phone&rsquo;s browser and sign in to pick up where you left off.</p></div>
+            <div class="panel__copy"><h3>Arc TV on your phone or tablet</h3><p>Get the Android app, or open the web app in any phone or tablet browser (iPhone and iPad included). Sign in to pick up where you left off.</p></div>
             <div class="panel__act">
               <svg class="panel__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 2h8a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 2v14h8V4H8zm4 15.2a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/></svg>
-              <div class="panel__btns"><a class="btn btn--light btn--sm" href="https://web.arctv.org">Open in browser</a></div>
+              <div class="panel__btns"><a class="btn btn--light btn--sm" href="https://github.com/MikeC444/ArcTV-MobileAPK/releases/latest/download/ArcTV-Mobile.apk" rel="noopener">Download for Android</a><a class="btn btn--glass btn--sm" href="https://web.arctv.org">Open in browser</a></div>
             </div>
           </div>
         </div>
@@ -133,7 +141,7 @@
       <section id="features" class="light feat">
         <div class="wrap">
           <h2>What it&rsquo;s like to use.</h2>
-          <p class="lede">Arc TV doesn&rsquo;t hand you a catalogue. You bring the sources, and it adds everything around them: the browsing, the choosing and the memory of where you stopped.</p>
+          <p class="lede">Arc TV comes with Cinemeta built in, so there&rsquo;s plenty to browse from the first minute. Add-ons connect the services and libraries you&rsquo;re entitled to use, and Arc TV adds everything around them: the browsing, the choosing and the memory of where you stopped.</p>
 
           <article class="row">
             <div class="row__art row__art--phone"><img src="/img/app-phone.webp" alt="Arc TV on a phone" width="540" height="1059" loading="lazy" /></div>
@@ -145,10 +153,10 @@
           </article>
 
           <article class="row row--flip">
-            <div class="row__art"><div class="addons" aria-hidden="true"><b>Add-ons</b><ul><li><i></i>Catalogue add-on<em>On</em></li><li><i></i>Movies &amp; shows<em>On</em></li><li><i></i>Streams add-on<em>On</em></li></ul></div></div>
+            <div class="row__art"><div class="addons" aria-hidden="true"><b>Add-ons</b><ul><li><i></i>Catalogue add-on<em>On</em></li><li><i></i>Movies &amp; shows<em>On</em></li><li><i></i>Library add-on<em>On</em></li></ul></div></div>
             <div class="row__copy">
-              <h3>Bring your own add-ons</h3>
-              <p>Install add-ons by URL to bring in catalogues and sources. Choose which rows appear on Home and put them in the order you like.</p>
+              <h3>Add-ons make it yours</h3>
+              <p>Cinemeta comes preinstalled for catalogues and details. Add more third-party add-ons by URL for the services and libraries you use, and you&rsquo;re responsible for what you add. Pick which rows appear on Home and put them in the order you like.</p>
             </div>
           </article>
         </div>
@@ -159,7 +167,7 @@
         <div class="wrap row">
           <div class="row__copy">
             <h3>Playback that gets<br />out of the way</h3>
-            <p>Pick a source with its quality, size and health shown up front and a recommended choice on top. Then just watch.</p>
+            <p>When a title has more than one version available, see its quality and size up front with a recommended choice on top. Then just watch.</p>
             <ul class="ticks ticks--dark"><li>Real audio and subtitle tracks, plus quality and speed menus</li><li>Autoplay the next episode, with a 5-second countdown</li><li>Progress saved to your account as you go</li></ul>
           </div>
           <div class="row__art"><img src="/img/tv-app.webp" alt="Arc TV on a TV with a remote" width="1100" height="685" loading="lazy" /></div>
@@ -172,19 +180,40 @@
           <div class="row__art"><img src="/img/hero-posters.webp" alt="Posters in an Arc TV row" width="1600" height="709" loading="lazy" /></div>
           <div class="row__copy">
             <h3>Picked for you</h3>
-            <p>Genre-based suggestions drawn from what you like. Titles you&rsquo;ve already liked are left out, and you can remove anything that isn&rsquo;t for you.</p>
+            <p>Suggestions for movies and shows, drawn from what you like. Titles you&rsquo;ve already liked are left out, and you can remove anything that isn&rsquo;t for you.</p>
           </div>
         </div>
       </section>
 
+      <!-- ARC TV PLUS -->
+      <section id="plus" class="dark arc plus">
+        <div class="wrap center">
+          <span class="plus__tag">Arc TV Plus</span>
+          <h2>Everything is free. Plus keeps it going.</h2>
+          <p class="lede lede--dark">Arc TV is completely free to use: browsing, playing, your list, progress and sync on every screen. Plus is an optional way to support development and cover the servers, and thank you with a few extras.</p>
+          <ul class="plus__grid">
+            <li><b>Picked for you</b><span>A row of movies and shows chosen from what you like, with a reason for each pick.</span></li>
+            <li><b>Up to 5 profiles</b><span>Separate lists, progress and picks for everyone in the house.</span></li>
+            <li><b>Smart source picking</b><span>When there are several versions to choose from, Arc TV picks a good one so you can press Play and go.</span></li>
+            <li><b>Your stats</b><span>See how much you watch, week by week, and which day is your busiest.</span></li>
+            <li class="is-soon"><b>Parental controls</b><span>On the way. Coming soon.</span></li>
+            <li class="is-more"><b>And much more</b><span>Plus keeps growing, and new perks land here first.</span></li>
+          </ul>
+          <p class="plus__fine">Everything you need to watch stays free. New yearly subscribers get 5 days free, and you can find Plus in Settings in the app.</p>
+        </div>
+      </section>
+
       <!-- FAQ -->
-      <section id="faq" class="light faq">
+      <section id="faq" class="light arc faq">
         <div class="wrap faq__in">
           <h2>Common questions.</h2>
-          <details open><summary>What is Arc TV?</summary><p>Arc TV is a modern media centre for movies and TV shows. It runs on the web, Fire TV and Android TV, all with the same account.</p></details>
+          <details open><summary>What is Arc TV?</summary><p>Arc TV is a modern media centre for movies and TV shows. It runs on the web, Fire TV, Android TV and Android, all with the same account.</p></details>
           <details><summary>How does it work?</summary><p>Open the web app and start browsing. Create an account when you press Play or save a title, then install the add-ons you want. After that, explore Movies, TV Shows and Search.</p></details>
           <details><summary>Do I need an account?</summary><p>Not to browse. You need one to play, to keep My List and Continue Watching, and to sync between devices.</p></details>
-          <details><summary>Can I add my own content?</summary><p>Arc TV doesn&rsquo;t provide content itself. Install add-ons to bring in catalogues and sources: the more you add, the more you can find.</p></details>
+          <details><summary>Can I add my own content?</summary><p>Arc TV doesn&rsquo;t provide, host or recommend any content. You can connect add-ons for services and libraries you have the right to use, such as your own collection or subscriptions. You&rsquo;re responsible for what you add and for following the law and the terms of those services.</p></details>
+          <details><summary>Is Arc TV free?</summary><p>Yes. Arc TV is free to use, including browsing, playing, My List, Continue Watching and sync. Arc TV Plus is optional and only there to support development and the servers, with a few extras such as Picked for you, extra profiles and Your stats as a thank you.</p></details>
+          <details><summary>What is an add-on?</summary><p>Add-ons supply catalogues and sources. Arc TV comes with Cinemeta preinstalled for browsing, and you can install more third-party add-ons by URL. Arc TV doesn&rsquo;t make or endorse them, so you choose what to add and you&rsquo;re responsible for it.</p></details>
+          <details><summary>Is Arc TV on iPhone or Apple TV?</summary><p>Not as an app yet. On iPhone and iPad you can use the web app in your browser, which fits small screens.</p></details>
           <details><summary>Is my data the same on web and TV?</summary><p>Yes. The web app is just another device on your account, so My List, Continue Watching, add-ons and settings are shared.</p></details>
         </div>
       </section>
@@ -199,7 +228,7 @@
         <div class="wrap not">
           <h3>What Arc TV is not.</h3>
           <div>
-            <p>Arc TV is a client-side interface. It browses metadata and plays media supplied by add-ons you install or sources you provide, and is intended for content you own or are otherwise authorised to access. It does not host, store or distribute media.</p>
+            <p>Arc TV is a client-side interface. It browses metadata and plays media supplied by add-ons you install or sources you provide, and is intended only for content you own or are otherwise authorised to access. Arc TV does not condone piracy or copyright infringement, and you are responsible for what you connect and how you use it. It does not host, store or distribute media.</p>
             <p>Arc TV is not affiliated with any third-party add-on, catalogue, source or content provider. Film and show artwork on this page is for illustration only.</p>
           </div>
         </div>
@@ -209,7 +238,7 @@
     <footer class="footer">
       <div class="wrap footer__in">
         <div class="footer__brand"><img src="/arctv-logo.png" alt="Arc TV" /><p>&copy; <span id="year">2026</span> Arc TV</p></div>
-        <nav aria-label="Product"><a href="https://web.arctv.org">Web App</a><a href="#download">Downloads</a><a href="#features">Features</a></nav>
+        <nav aria-label="Product"><a href="https://web.arctv.org">Web App</a><a href="#download">Downloads</a><a href="#features">Features</a><a href="#plus">Plus</a></nav>
         <nav aria-label="Account"><a href="https://web.arctv.org/auth">Log in</a><a href="https://web.arctv.org/auth">Sign up</a></nav>
         <nav aria-label="Help"><a href="#faq">FAQ</a></nav>
       </div>
@@ -242,14 +271,14 @@
         // Each platform either has a "get" list of buttons, or none (shown as Coming soon).
         var DATA = [
           { id: "desktop", label: "Desktop", platforms: [
-            { name: "Windows", icon: "desktop" }, { name: "macOS", icon: "desktop" }, { name: "Linux", icon: "desktop" } ] },
+            { name: "Windows", icon: "windows" }, { name: "macOS", icon: "apple" }, { name: "Linux", icon: "linux" } ] },
           { id: "mobile", label: "Mobile", platforms: [
-            { name: "Android", icon: "phone", note: "Phones and tablets", get: [{ text: "Download for Android", href: APK, note: "Latest release (APK)" }] },
-            { name: "iPhone & iPad", icon: "phone" } ] },
+            { name: "Android", icon: "android", note: "Phones and tablets", get: [{ text: "Download for Android", href: APK, note: "Latest release (APK)" }] },
+            { name: "iPhone & iPad", icon: "apple" } ] },
           { id: "tv", label: "TV", platforms: [
-            { name: "Fire TV", icon: "tv", code: DLCODE, get: [{ text: "Get the Fire TV app", href: TVAPP, note: "Latest release" }] },
-            { name: "Android TV", icon: "tv", get: [{ text: "Get the Android TV app", href: TVAPP, note: "Latest release" }] },
-            { name: "Apple TV", icon: "tv" }, { name: "Samsung & LG", icon: "tv" } ] },
+            { name: "Fire TV", icon: "firetv", code: DLCODE, get: [{ text: "Get the Fire TV app", href: TVAPP, note: "Latest release" }] },
+            { name: "Android TV", icon: "android", get: [{ text: "Get the Android TV app", href: TVAPP, note: "Latest release" }] },
+            { name: "Apple TV", icon: "appletv" }, { name: "Samsung & LG", icon: ["samsung", "lg"] } ] },
           { id: "vr", label: "VR", platforms: [ { name: "VR headsets", icon: "vr" } ] },
           { id: "other", label: "Other devices", platforms: [
             { name: "Game consoles", icon: "tv" }, { name: "Streaming sticks & boxes", icon: "tv" } ] },
@@ -262,20 +291,35 @@
           desktop: "M3 4h18a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1h-7v2h3v2H7v-2h3v-2H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm1 2v9h16V6H4z",
           phone: "M8 2h8a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 2v14h8V4H8zm4 15.2a1 1 0 1 0 0 2 1 1 0 0 0 0-2z",
           tv: "M3 5h18a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-6l1 2h2v2H6v-2h2l1-2H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1 2v8h16V7H4z",
+          apple: "M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701",
+          appletv: "M20.57 17.735h-1.815l-3.34-9.203h1.633l2.02 5.987c.075.231.273.9.586 2.012l.297-.997.33-1.006 2.094-6.004H24zm-5.344-.066a5.76 5.76 0 0 1-1.55.207c-1.23 0-1.84-.693-1.84-2.087V9.646h-1.063V8.532h1.121V7.081l1.476-.602v2.062h1.707v1.113H13.38v5.805c0 .446.074.75.214.932.14.182.396.264.75.264.207 0 .495-.041.883-.115zm-7.29-5.343c.017 1.764 1.55 2.358 1.567 2.366-.017.042-.248.842-.808 1.658-.487.71-.99 1.418-1.79 1.435-.783.016-1.03-.462-1.93-.462-.89 0-1.17.445-1.913.478-.758.025-1.344-.775-1.838-1.484-.998-1.451-1.765-4.098-.734-5.88.51-.89 1.426-1.451 2.416-1.46.75-.016 1.468.512 1.93.512.461 0 1.327-.627 2.234-.536.38.016 1.452.157 2.136 1.154-.058.033-1.278.743-1.27 2.219M6.468 7.988c.404-.495.685-1.18.61-1.864-.585.025-1.294.388-1.723.883-.38.437-.71 1.138-.619 1.806.652.05 1.328-.338 1.732-.825Z",
+          linux: "M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489a.424.424 0 00-.11.135c-.26.268-.45.6-.663.839-.199.199-.485.267-.797.4-.313.136-.658.269-.864.68-.09.189-.136.394-.132.602 0 .199.027.4.055.536.058.399.116.728.04.97-.249.68-.28 1.145-.106 1.484.174.334.535.47.94.601.81.2 1.91.135 2.774.6.926.466 1.866.67 2.616.47.526-.116.97-.464 1.208-.946.587-.003 1.23-.269 2.26-.334.699-.058 1.574.267 2.577.2.025.134.063.198.114.333l.003.003c.391.778 1.113 1.132 1.884 1.071.771-.06 1.592-.536 2.257-1.306.631-.765 1.683-1.084 2.378-1.503.348-.199.629-.469.649-.853.023-.4-.2-.811-.714-1.376v-.097l-.003-.003c-.17-.2-.25-.535-.338-.926-.085-.401-.182-.786-.492-1.046h-.003c-.059-.054-.123-.067-.188-.135a.357.357 0 00-.19-.064c.431-1.278.264-2.55-.173-3.694-.533-1.41-1.465-2.638-2.175-3.483-.796-1.005-1.576-1.957-1.56-3.368.026-2.152.236-6.133-3.544-6.139zm.529 3.405h.013c.213 0 .396.062.584.198.19.135.33.332.438.533.105.259.158.459.166.724 0-.02.006-.04.006-.06v.105a.086.086 0 01-.004-.021l-.004-.024a1.807 1.807 0 01-.15.706.953.953 0 01-.213.335.71.71 0 00-.088-.042c-.104-.045-.198-.064-.284-.133a1.312 1.312 0 00-.22-.066c.05-.06.146-.133.183-.198.053-.128.082-.264.088-.402v-.02a1.21 1.21 0 00-.061-.4c-.045-.134-.101-.2-.183-.333-.084-.066-.167-.132-.267-.132h-.016c-.093 0-.176.03-.262.132a.8.8 0 00-.205.334 1.18 1.18 0 00-.09.4v.019c.002.089.008.179.02.267-.193-.067-.438-.135-.607-.202a1.635 1.635 0 01-.018-.2v-.02a1.772 1.772 0 01.15-.768c.082-.22.232-.406.43-.533a.985.985 0 01.594-.2zm-2.962.059h.036c.142 0 .27.048.399.135.146.129.264.288.344.465.09.199.14.4.153.667v.004c.007.134.006.2-.002.266v.08c-.03.007-.056.018-.083.024-.152.055-.274.135-.393.2.012-.09.013-.18.003-.267v-.015c-.012-.133-.04-.2-.082-.333a.613.613 0 00-.166-.267.248.248 0 00-.183-.064h-.021c-.071.006-.13.04-.186.132a.552.552 0 00-.12.27.944.944 0 00-.023.33v.015c.012.135.037.2.08.334.046.134.098.2.166.268.01.009.02.018.034.024-.07.057-.117.07-.176.136a.304.304 0 01-.131.068 2.62 2.62 0 01-.275-.402 1.772 1.772 0 01-.155-.667 1.759 1.759 0 01.08-.668 1.43 1.43 0 01.283-.535c.128-.133.26-.2.418-.2zm1.37 1.706c.332 0 .733.065 1.216.399.293.2.523.269 1.052.468h.003c.255.136.405.266.478.399v-.131a.571.571 0 01.016.47c-.123.31-.516.643-1.063.842v.002c-.268.135-.501.333-.775.465-.276.135-.588.292-1.012.267a1.139 1.139 0 01-.448-.067 3.566 3.566 0 01-.322-.198c-.195-.135-.363-.332-.612-.465v-.005h-.005c-.4-.246-.616-.512-.686-.71-.07-.268-.005-.47.193-.6.224-.135.38-.271.483-.336.104-.074.143-.102.176-.131h.002v-.003c.169-.202.436-.47.839-.601.139-.036.294-.065.466-.065zm2.8 2.142c.358 1.417 1.196 3.475 1.735 4.473.286.534.855 1.659 1.102 3.024.156-.005.33.018.513.064.646-1.671-.546-3.467-1.089-3.966-.22-.2-.232-.335-.123-.335.59.534 1.365 1.572 1.646 2.757.13.535.16 1.104.021 1.67.067.028.135.06.205.067 1.032.534 1.413.938 1.23 1.537v-.043c-.06-.003-.12 0-.18 0h-.016c.151-.467-.182-.825-1.065-1.224-.915-.4-1.646-.336-1.77.465-.008.043-.013.066-.018.135-.068.023-.139.053-.209.064-.43.268-.662.669-.793 1.187-.13.533-.17 1.156-.205 1.869v.003c-.02.334-.17.838-.319 1.35-1.5 1.072-3.58 1.538-5.348.334a2.645 2.645 0 00-.402-.533 1.45 1.45 0 00-.275-.333c.182 0 .338-.03.465-.067a.615.615 0 00.314-.334c.108-.267 0-.697-.345-1.163-.345-.467-.931-.995-1.788-1.521-.63-.4-.986-.87-1.15-1.396-.165-.534-.143-1.085-.015-1.645.245-1.07.873-2.11 1.274-2.763.107-.065.037.135-.408.974-.396.751-1.14 2.497-.122 3.854a8.123 8.123 0 01.647-2.876c.564-1.278 1.743-3.504 1.836-5.268.048.036.217.135.289.202.218.133.38.333.59.465.21.201.477.335.876.335.039.003.075.006.11.006.412 0 .73-.134.997-.268.29-.134.52-.334.74-.4h.005c.467-.135.835-.402 1.044-.7zm2.185 8.958c.037.6.343 1.245.882 1.377.588.134 1.434-.333 1.791-.765l.211-.01c.315-.007.577.01.847.268l.003.003c.208.199.305.53.391.876.085.4.154.78.409 1.066.486.527.645.906.636 1.14l.003-.007v.018l-.003-.012c-.015.262-.185.396-.498.595-.63.401-1.746.712-2.457 1.57-.618.737-1.37 1.14-2.036 1.191-.664.053-1.237-.2-1.574-.898l-.005-.003c-.21-.4-.12-1.025.056-1.69.176-.668.428-1.344.463-1.897.037-.714.076-1.335.195-1.814.12-.465.308-.797.641-.984l.045-.022zm-10.814.049h.01c.053 0 .105.005.157.014.376.055.706.333 1.023.752l.91 1.664.003.003c.243.533.754 1.064 1.189 1.637.434.598.77 1.131.729 1.57v.006c-.057.744-.48 1.148-1.125 1.294-.645.135-1.52.002-2.395-.464-.968-.536-2.118-.469-2.857-.602-.369-.066-.61-.2-.723-.4-.11-.2-.113-.602.123-1.23v-.004l.002-.003c.117-.334.03-.752-.027-1.118-.055-.401-.083-.71.043-.94.16-.334.396-.4.69-.533.294-.135.64-.202.915-.47h.002v-.002c.256-.268.445-.601.668-.838.19-.201.38-.336.663-.336zm7.159-9.074c-.435.201-.945.535-1.488.535-.542 0-.97-.267-1.28-.466-.154-.134-.28-.268-.373-.335-.164-.134-.144-.333-.074-.333.109.016.129.134.199.2.096.066.215.2.36.333.292.2.68.467 1.167.467.485 0 1.053-.267 1.398-.466.195-.135.445-.334.648-.467.156-.136.149-.267.279-.267.128.016.034.134-.147.332a8.097 8.097 0 01-.69.468zm-1.082-1.583V5.64c-.006-.02.013-.042.029-.05.074-.043.18-.027.26.004.063 0 .16.067.15.135-.006.049-.085.066-.135.066-.055 0-.092-.043-.141-.068-.052-.018-.146-.008-.163-.065zm-.551 0c-.02.058-.113.049-.166.066-.047.025-.086.068-.14.068-.05 0-.13-.02-.136-.068-.01-.066.088-.133.15-.133.08-.031.184-.047.259-.005.019.009.036.03.03.05v.02h.003z",
+          android: "M18.4395 5.5586c-.675 1.1664-1.352 2.3318-2.0274 3.498-.0366-.0155-.0742-.0286-.1113-.043-1.8249-.6957-3.484-.8-4.42-.787-1.8551.0185-3.3544.4643-4.2597.8203-.084-.1494-1.7526-3.021-2.0215-3.4864a1.1451 1.1451 0 0 0-.1406-.1914c-.3312-.364-.9054-.4859-1.379-.203-.475.282-.7136.9361-.3886 1.5019 1.9466 3.3696-.0966-.2158 1.9473 3.3593.0172.031-.4946.2642-1.3926 1.0177C2.8987 12.176.452 14.772 0 18.9902h24c-.119-1.1108-.3686-2.099-.7461-3.0683-.7438-1.9118-1.8435-3.2928-2.7402-4.1836a12.1048 12.1048 0 0 0-2.1309-1.6875c.6594-1.122 1.312-2.2559 1.9649-3.3848.2077-.3615.1886-.7956-.0079-1.1191a1.1001 1.1001 0 0 0-.8515-.5332c-.5225-.0536-.9392.3128-1.0488.5449zm-.0391 8.461c.3944.5926.324 1.3306-.1563 1.6503-.4799.3197-1.188.0985-1.582-.4941-.3944-.5927-.324-1.3307.1563-1.6504.4727-.315 1.1812-.1086 1.582.4941zM7.207 13.5273c.4803.3197.5506 1.0577.1563 1.6504-.394.5926-1.1038.8138-1.584.4941-.48-.3197-.5503-1.0577-.1563-1.6504.4008-.6021 1.1087-.8106 1.584-.4941z",
+          firetv: "M20.196 15.12c.265.337-.294 1.73-.542 2.353-.077.19.085.266.257.123 1.106-.926 1.39-2.867 1.166-3.149-.226-.277-2.16-.516-3.341.314-.183.127-.151.304.05.279.665-.08 2.147-.257 2.41.08m-.858.981c-2.064 1.523-5.056 2.333-7.632 2.333-3.611 0-6.862-1.334-9.322-3.555-.194-.176-.02-.414.21-.28 2.655 1.545 5.939 2.477 9.328 2.477 2.287 0 4.803-.476 7.115-1.458.348-.147.642.231.3.483m2.034-3.155a.388.388 0 0 1-.201-.04c-.041-.026-.087-.1-.133-.225l-1.734-4.355a1.79 1.79 0 0 0-.046-.117.266.266 0 0 1-.023-.108c0-.084.049-.128.146-.128h.58c.098 0 .165.014.205.04.04.026.082.102.127.226l1.344 3.823 1.343-3.823c.046-.124.089-.2.128-.226a.402.402 0 0 1 .205-.04h.54c.1 0 .148.044.148.128a.3.3 0 0 1-.025.108c-.016.04-.032.078-.044.117l-1.727 4.355c-.045.124-.09.199-.132.225a.388.388 0 0 1-.201.04zm-3.644.068c-.929 0-1.392-.463-1.392-1.392V8.739h-.706c-.13 0-.197-.066-.197-.196v-.246a.22.22 0 0 1 .045-.147c.03-.031.086-.055.171-.067l.717-.09.127-1.215c.013-.13.082-.196.207-.196h.41c.13 0 .196.066.196.196v1.196h1.276c.13 0 .195.065.195.197v.372c0 .13-.064.196-.195.196h-1.276v2.834c0 .243.055.411.162.51.108.098.293.147.555.147.124 0 .277-.016.46-.049.099-.02.164-.03.197-.03.052 0 .088.014.108.044.02.03.029.077.029.142v.266a.366.366 0 0 1-.04.19c-.026.043-.078.078-.157.103a3.018 3.018 0 0 1-.892.118m-4.665-2.976c.006-.052.011-.137.011-.255 0-.399-.094-.698-.28-.901-.186-.204-.46-.306-.818-.306-.412 0-.732.123-.962.369-.228.245-.36.61-.392 1.093zm-.942 3.07c-.803 0-1.411-.222-1.824-.667-.412-.444-.616-1.102-.616-1.972 0-.83.204-1.475.616-1.937.413-.46.988-.691 1.728-.691.62 0 1.098.176 1.432.524.332.351.5.846.5 1.487 0 .21-.017.422-.05.638-.014.077-.034.13-.064.156-.029.027-.077.04-.142.04h-3.08c.013.563.154.977.418 1.245.265.268.674.403 1.23.403.196 0 .385-.014.564-.04a5.04 5.04 0 0 0 .682-.166l.117-.035a.284.284 0 0 1 .09-.016c.085 0 .125.06.125.177v.276c0 .085-.012.144-.037.18a.441.441 0 0 1-.167.114 3.38 3.38 0 0 1-.701.205 4.236 4.236 0 0 1-.82.079m-5.424-.147c-.13 0-.195-.066-.195-.197v-4.58c0-.13.064-.195.195-.195h.432c.064 0 .116.012.153.039.036.025.06.076.072.146l.07.55c.176-.19.343-.34.499-.452a1.725 1.725 0 0 1 1.02-.323c.079 0 .158.003.235.01.112.014.168.072.168.176v.53c0 .117-.058.177-.178.177-.058 0-.114-.004-.17-.01a1.638 1.638 0 0 0-.18-.01c-.524 0-.973.157-1.346.47v3.472c0 .131-.066.197-.195.197zm-2.249 0c-.13 0-.196-.066-.196-.197v-4.58c0-.13.066-.195.196-.195h.579c.13 0 .195.064.195.195v4.58c0 .131-.065.197-.195.197zm.295-5.856c-.19 0-.339-.054-.447-.16a.581.581 0 0 1-.161-.428c0-.176.054-.318.16-.426.11-.109.257-.163.448-.163.189 0 .337.054.446.163.107.108.16.25.16.426a.581.581 0 0 1-.16.427.608.608 0 0 1-.446.161m-3.625 5.856c-.132 0-.197-.066-.197-.197v-4.01H.195c-.13 0-.195-.066-.195-.197v-.245c0-.065.014-.114.043-.147.03-.033.088-.055.173-.07l.705-.087v-.804c0-1.091.523-1.638 1.57-1.638.248 0 .51.036.784.109.072.019.122.047.152.088.029.038.044.107.044.205v.255c0 .124-.048.186-.148.186-.058 0-.14-.01-.248-.029-.11-.02-.23-.03-.369-.03-.3 0-.51.057-.633.172-.121.115-.181.303-.181.564v.903h1.324c.131 0 .197.064.197.195v.373c0 .13-.066.197-.197.197H1.892v4.01c0 .131-.065.197-.196.197Z",
+          samsung: "M19.8166 10.2808l.0459 2.6934h-.023l-.7793-2.6934h-1.2837v3.3925h.8481l-.0458-2.785h.023l.8366 2.785h1.2264v-3.3925zm-16.149 0l-.6418 3.427h.9284l.4699-3.1175h.0229l.4585 3.1174h.9169l-.6304-3.4269zm5.1805 0l-.424 2.6132h-.023l-.424-2.6132H6.5788l-.0688 3.427h.8596l.023-3.0832h.0114l.573 3.0831h.8711l.5731-3.083h.023l.0228 3.083h.8596l-.0802-3.4269zm-7.2664 2.4527c.0343.0802.0229.1949.0114.2522-.0229.1146-.1031.2292-.3324.2292-.2177 0-.3438-.126-.3438-.3095v-.3323H0v.2636c0 .7679.6074.9971 1.2493.9971.6189 0 1.1346-.2178 1.2149-.7794.0458-.298.0114-.4928 0-.5616-.1605-.722-1.467-.9283-1.5588-1.3295-.0114-.0688-.0114-.1375 0-.1834.023-.1146.1032-.2292.3095-.2292.2063 0 .321.126.321.3095v.2063h.8595v-.2407c0-.745-.6762-.8596-1.1576-.8596-.6074 0-1.1117.2063-1.2034.7564-.023.149-.0344.2866.0114.4585.1376.7106 1.364.9169 1.5358 1.3524m11.152 0c.0343.0803.0228.1834.0114.2522-.023.1146-.1032.2292-.3324.2292-.2178 0-.3438-.126-.3438-.3095v-.3323h-.917v.2636c0 .7564.596.9857 1.2379.9857.6189 0 1.1232-.2063 1.2034-.7794.0459-.298.0115-.4814 0-.5616-.1375-.7106-1.4327-.9284-1.5243-1.318-.0115-.0688-.0115-.1376 0-.1835.0229-.1146.1031-.2292.3094-.2292.1948 0 .321.126.321.3095v.2063h.848v-.2407c0-.745-.6647-.8596-1.146-.8596-.6075 0-1.1004.1948-1.192.7564-.023.149-.023.2866.0114.4585.1376.7106 1.341.9054 1.513 1.3524m2.8882.4585c.2407 0 .3094-.1605.3323-.2522.0115-.0343.0115-.0917.0115-.126v-2.533h.871v2.4642c0 .0688 0 .1948-.0114.2292-.0573.6419-.5616.8482-1.192.8482-.6303 0-1.1346-.2063-1.192-.8482 0-.0344-.0114-.1604-.0114-.2292v-2.4642h.871v2.533c0 .0458 0 .0916.0115.126 0 .0917.0688.2522.3095.2522m7.1518-.0344c.2522 0 .3324-.1605.3553-.2522.0115-.0343.0115-.0917.0115-.126v-.4929h-.3553v-.5043H24v.917c0 .0687 0 .1145-.0115.2292-.0573.6303-.596.8481-1.2034.8481-.6075 0-1.1461-.2178-1.2034-.8481-.0115-.1147-.0115-.1605-.0115-.2293v-1.444c0-.0574.0115-.172.0115-.2293.0802-.6419.596-.8482 1.2034-.8482s1.1347.2063 1.2034.8482c.0115.1031.0115.2292.0115.2292v.1146h-.8596v-.1948s0-.0803-.0115-.1261c-.0114-.0802-.0802-.2521-.3438-.2521-.2521 0-.321.1604-.3438.2521-.0115.0458-.0115.1032-.0115.1605v1.5702c0 .0458 0 .0916.0115.126 0 .0917.0917.2522.3323.2522",
+          lg: "M14.522 14.078h3.27v1.33h-4.847v-6.83h1.577v5.5zm6.74-1.274h1.284v1.195c-.236.09-.698.18-1.137.18-1.42 0-1.893-.721-1.893-2.186 0-1.398.45-2.221 1.869-2.221.791 0 1.24.248 1.612.722l.982-.903c-.6-.855-1.646-1.114-2.629-1.114-2.208 0-3.368 1.205-3.368 3.504 0 2.288 1.047 3.528 3.358 3.528 1.06 0 2.096-.27 2.66-.665V11.53h-2.739v1.274zM5.291 6.709a5.29 5.29 0 1 1 0 10.582 5.291 5.291 0 1 1 0-10.582m3.16 8.457a4.445 4.445 0 0 0 1.31-3.161v-.242l-.22.001H6.596v.494h2.662l-.001.015a3.985 3.985 0 0 1-3.965 3.708 3.95 3.95 0 0 1-2.811-1.165 3.952 3.952 0 0 1-1.164-2.811c0-1.061.414-2.059 1.164-2.81a3.951 3.951 0 0 1 2.81-1.164l.252.003v-.495l-.251-.003a4.475 4.475 0 0 0-4.47 4.469c0 1.194.465 2.316 1.309 3.161a4.444 4.444 0 0 0 3.16 1.31 4.444 4.444 0 0 0 3.162-1.31m-2.91-1.297V9.644H5.04v4.72h1.556v-.495H5.543zm-1.265-3.552a.676.676 0 1 0-.675.674.676.676 0 0 0 .675-.674",
+          windows: "M3 5.5l8-1.1v7H3zM12.5 4.2L21 3v8.4h-8.5zM3 12.6h8v7l-8-1.1zM12.5 12.6H21V21l-8.5-1.2z",
           vr: "M3 8h18a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-4.5l-1.6-2.4a1.2 1.2 0 0 0-2 0L11.2 16H3a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1zm1 2v4h4v-4H4zm12 0v4h4v-4h-4z"
         };
+        var BRANDS = ["windows", "apple", "appletv", "linux", "android", "firetv", "samsung", "lg"];
         var tabsEl = document.getElementById("dl-tabs"), listEl = document.getElementById("dl-list"), mainEl = document.getElementById("dl-main");
         var cat = 0, plat = 0;
         function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text) e.textContent = text; return e; }
         function icon(name) {
           var ns = "http://www.w3.org/2000/svg", s = document.createElementNS(ns, "svg"), p = document.createElementNS(ns, "path");
           s.setAttribute("viewBox", "0 0 24 24"); s.setAttribute("aria-hidden", "true"); p.setAttribute("d", ICONS[name] || ICONS.desktop);
+          if (BRANDS.indexOf(name) >= 0) s.setAttribute("class", "brand");
           s.appendChild(p); return s;
+        }
+        function icons(names) {
+          var wrap = el("span", "dl__logos");
+          [].concat(names).forEach(function (n) { wrap.appendChild(icon(n)); });
+          return wrap;
         }
         function renderMain() {
           var p = DATA[cat].platforms[plat];
           mainEl.textContent = "";
-          var head = el("div", "dl__head"); head.appendChild(icon(p.icon)); head.appendChild(el("h3", "", p.name)); mainEl.appendChild(head);
+          var head = el("div", "dl__head"); head.appendChild(icons(p.icon)); head.appendChild(el("h3", "", p.name)); mainEl.appendChild(head);
           if (p.note) mainEl.appendChild(el("p", "dl__note", p.note));
           var box = el("div", "dl__get");
           if (p.get) {
@@ -304,7 +348,7 @@
         function renderList() {
           listEl.textContent = "";
           DATA[cat].platforms.forEach(function (p, i) {
-            var b = el("button", "dl__plat", p.name); b.type = "button"; b.setAttribute("aria-pressed", i === plat);
+            var b = el("button", "dl__plat"); b.type = "button"; b.appendChild(icons(p.icon)); b.appendChild(el("span", "dl__pname", p.name)); b.setAttribute("aria-pressed", i === plat);
             if (!p.get) b.appendChild(el("small", "", "Soon"));
             b.addEventListener("click", function () { plat = i; renderList(); renderMain(); });
             listEl.appendChild(b);
