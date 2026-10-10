@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { MdArrowBack, MdCheckCircle, MdClose, MdDownload, MdHourglassTop, MdLock } from "react-icons/md";
+import { MdArrowBack, MdCheckCircle, MdClose, MdDownload, MdHourglassTop } from "react-icons/md";
 import { DEBRID_NAMES } from "../../domain/deviceSupport";
 import type { ContentType } from "../../domain/types";
 import { hdrLabel, sourceLabel } from "../../lib/downloadLabels";
@@ -59,10 +59,6 @@ export function DownloadPanel({ target, title, subtitle, posterUrl, onClose, loa
             <div className="dlpanel__titletext">
               <h3 className="dlpanel__name clamp-2">{title}</h3>
               {subtitle ? <p className="dlpanel__sub">{subtitle}</p> : null}
-              <div className="dlpanel__note">
-                <span className="dlpanel__lock" aria-hidden="true"><MdLock /></span>
-                <span>Downloads come from your debrid service. Keep links private: they contain your key.</span>
-              </div>
             </div>
           </div>
 

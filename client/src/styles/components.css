@@ -471,10 +471,7 @@
 .dlpanel__poster { width: 112px; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 10px; flex: none; background: var(--surface-high); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); }
 .dlpanel__titletext { flex: 1; min-width: 0; }
 .dlpanel__name { margin: 2px 0 4px; font-size: 26px; font-weight: 700; line-height: 1.15; }
-.dlpanel__sub { margin: 0 0 12px; color: var(--text-2); font-size: 16px; }
-.dlpanel__note { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--divider); border-radius: 12px; color: var(--text-2); font-size: 13px; line-height: 1.35; }
-.dlpanel__lock { flex: none; width: 36px; height: 36px; border-radius: 10px; background: var(--surface-high); display: flex; align-items: center; justify-content: center; color: var(--text); }
-.dlpanel__lock svg { width: 20px; height: 20px; }
+.dlpanel__sub { margin: 0; color: var(--text-2); font-size: 16px; }
 .dlpanel__state { display: flex; align-items: center; gap: 10px; margin: 10px 0 14px; }
 .dlpanel__count { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 4px 0 10px; color: var(--text-2); font-size: 14px; }
 .dlpanel__order { color: var(--text-3); font-size: 13px; }
