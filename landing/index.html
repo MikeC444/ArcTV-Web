@@ -81,13 +81,7 @@
 
           <div class="dl__tabs" role="tablist" aria-label="Choose a device type" id="dl-tabs"></div>
 
-          <div class="dl__card">
-            <div class="dl__side">
-              <p class="dl__label">Choose a platform</p>
-              <div class="dl__list" id="dl-list" role="group" aria-label="Platforms"></div>
-            </div>
-            <div class="dl__main" id="dl-main" aria-live="polite"></div>
-          </div>
+          <div class="dl__card" id="dl-main" aria-live="polite"></div>
 
           <noscript>
             <p class="dl__nojs">
@@ -217,25 +211,35 @@
       (function () {
         var APK = "https://github.com/MikeC444/ArcTV-MobileAPK/releases/latest/download/ArcTV-Mobile.apk";
         var TVAPP = "https://github.com/MikeC444/ArcTV-AndroidTV/releases";
+        var WEB = "https://web.arctv.org";
         var DLCODE = "2368012"; // Downloader (by AFTVnews) code for the latest Fire TV / Android TV app
-        // Each platform either has a "get" list of buttons, or none (shown as Coming soon).
+        // Each category shows big logos, then a button per platform: a link when the app is out, a "Soon" pill when not.
         var DATA = [
-          { id: "desktop", label: "Desktop", logos: ["windows", "apple", "linux"], platforms: [
-            { name: "Windows", icon: "windows" }, { name: "macOS", icon: "apple" }, { name: "Linux", icon: "linux" } ] },
-          { id: "mobile", label: "Mobile", logos: ["android", "apple"], platforms: [
-            { name: "Android", icon: "android", note: "Phones and tablets", get: [{ text: "Download for Android", href: APK, note: "Latest release (APK)" }] },
-            { name: "iPhone & iPad", icon: "apple" } ] },
-          { id: "tv", label: "TV", logos: ["firetv", "android", "appletv"], platforms: [
-            { name: "Fire TV", icon: "firetv", code: DLCODE, get: [{ text: "Get the Fire TV app", href: TVAPP, note: "Latest release" }] },
-            { name: "Android TV", icon: "android", code: DLCODE, get: [{ text: "Get the Android TV app", href: TVAPP, note: "Latest release" }] },
-            { name: "Apple TV", icon: "appletv" }, { name: "Samsung & LG", icon: ["samsung", "lg"] } ] },
-          { id: "vr", label: "VR", logos: ["vr"], platforms: [ { name: "VR headsets", icon: "vr" } ] },
-          { id: "other", label: "Other devices", logos: ["tv"], platforms: [
-            { name: "Game consoles", icon: "tv" }, { name: "Streaming sticks & boxes", icon: "tv" } ] },
-          { id: "web", label: "Web", logos: ["desktop"], platforms: [
-            { name: "Web app", icon: "desktop", note: "Nothing to install", get: [
-              { text: "Launch Web App", href: "https://web.arctv.org", note: "Any modern browser" },
-              { text: "Sign up", href: "https://web.arctv.org/auth", ghost: true } ] } ] }
+          { id: "desktop", label: "Desktop", tab: "desktop", title: "Arc TV for Windows, macOS and Linux",
+            text: "Desktop apps are on the way. Until then, Arc TV works in any modern browser.",
+            logos: ["windows", "apple", "linux"],
+            items: [{ text: "Windows" }, { text: "macOS" }, { text: "Linux" }],
+            web: true },
+          { id: "mobile", label: "Mobile", tab: "phone", title: "Arc TV for Android and iPhone",
+            text: "Browse and play on Android with the app. On iPhone and iPad, use the web app in your browser for now.",
+            logos: ["android", "apple"],
+            items: [{ text: "Download for Android", href: APK, note: "Latest release (APK)" }, { text: "iPhone & iPad" }],
+            web: true },
+          { id: "tv", label: "TV", tab: "tv", title: "Arc TV for Fire TV and Android TV",
+            text: "Built for the remote and the sofa. Sign in with your account, or scan a QR code with your phone.",
+            logos: ["firetv", "android", "appletv", "samsung", "lg"],
+            items: [{ text: "Get the Fire TV app", href: TVAPP }, { text: "Get the Android TV app", href: TVAPP }, { text: "Apple TV" }, { text: "Samsung & LG" }],
+            code: DLCODE },
+          { id: "vr", label: "VR", tab: "vr", title: "Arc TV for VR headsets",
+            text: "VR headsets are on the way. Until then, Arc TV works in any modern browser.",
+            logos: ["vr"], items: [{ text: "VR headsets" }], web: true },
+          { id: "other", label: "Other devices", tab: "other", title: "Arc TV on other devices",
+            text: "Game consoles and streaming sticks and boxes are on the way. Until then, Arc TV works in any modern browser.",
+            logos: ["other"], items: [{ text: "Game consoles" }, { text: "Streaming sticks & boxes" }], web: true },
+          { id: "web", label: "Web", tab: "desktop", title: "Arc TV on the web",
+            text: "Open Arc TV in any modern browser. There\u2019s nothing to install, and you can browse without an account.",
+            logos: ["desktop"],
+            items: [{ text: "Launch Web App", href: WEB, note: "Any modern browser" }, { text: "Sign up", href: WEB + "/auth", ghost: true }] }
         ];
         var ICONS = {
           desktop: "M3 4h18a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1h-7v2h3v2H7v-2h3v-2H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm1 2v9h16V6H4z",
@@ -249,74 +253,61 @@
           samsung: "M19.8166 10.2808l.0459 2.6934h-.023l-.7793-2.6934h-1.2837v3.3925h.8481l-.0458-2.785h.023l.8366 2.785h1.2264v-3.3925zm-16.149 0l-.6418 3.427h.9284l.4699-3.1175h.0229l.4585 3.1174h.9169l-.6304-3.4269zm5.1805 0l-.424 2.6132h-.023l-.424-2.6132H6.5788l-.0688 3.427h.8596l.023-3.0832h.0114l.573 3.0831h.8711l.5731-3.083h.023l.0228 3.083h.8596l-.0802-3.4269zm-7.2664 2.4527c.0343.0802.0229.1949.0114.2522-.0229.1146-.1031.2292-.3324.2292-.2177 0-.3438-.126-.3438-.3095v-.3323H0v.2636c0 .7679.6074.9971 1.2493.9971.6189 0 1.1346-.2178 1.2149-.7794.0458-.298.0114-.4928 0-.5616-.1605-.722-1.467-.9283-1.5588-1.3295-.0114-.0688-.0114-.1375 0-.1834.023-.1146.1032-.2292.3095-.2292.2063 0 .321.126.321.3095v.2063h.8595v-.2407c0-.745-.6762-.8596-1.1576-.8596-.6074 0-1.1117.2063-1.2034.7564-.023.149-.0344.2866.0114.4585.1376.7106 1.364.9169 1.5358 1.3524m11.152 0c.0343.0803.0228.1834.0114.2522-.023.1146-.1032.2292-.3324.2292-.2178 0-.3438-.126-.3438-.3095v-.3323h-.917v.2636c0 .7564.596.9857 1.2379.9857.6189 0 1.1232-.2063 1.2034-.7794.0459-.298.0115-.4814 0-.5616-.1375-.7106-1.4327-.9284-1.5243-1.318-.0115-.0688-.0115-.1376 0-.1835.0229-.1146.1031-.2292.3094-.2292.1948 0 .321.126.321.3095v.2063h.848v-.2407c0-.745-.6647-.8596-1.146-.8596-.6075 0-1.1004.1948-1.192.7564-.023.149-.023.2866.0114.4585.1376.7106 1.341.9054 1.513 1.3524m2.8882.4585c.2407 0 .3094-.1605.3323-.2522.0115-.0343.0115-.0917.0115-.126v-2.533h.871v2.4642c0 .0688 0 .1948-.0114.2292-.0573.6419-.5616.8482-1.192.8482-.6303 0-1.1346-.2063-1.192-.8482 0-.0344-.0114-.1604-.0114-.2292v-2.4642h.871v2.533c0 .0458 0 .0916.0115.126 0 .0917.0688.2522.3095.2522m7.1518-.0344c.2522 0 .3324-.1605.3553-.2522.0115-.0343.0115-.0917.0115-.126v-.4929h-.3553v-.5043H24v.917c0 .0687 0 .1145-.0115.2292-.0573.6303-.596.8481-1.2034.8481-.6075 0-1.1461-.2178-1.2034-.8481-.0115-.1147-.0115-.1605-.0115-.2293v-1.444c0-.0574.0115-.172.0115-.2293.0802-.6419.596-.8482 1.2034-.8482s1.1347.2063 1.2034.8482c.0115.1031.0115.2292.0115.2292v.1146h-.8596v-.1948s0-.0803-.0115-.1261c-.0114-.0802-.0802-.2521-.3438-.2521-.2521 0-.321.1604-.3438.2521-.0115.0458-.0115.1032-.0115.1605v1.5702c0 .0458 0 .0916.0115.126 0 .0917.0917.2522.3323.2522",
           lg: "M14.522 14.078h3.27v1.33h-4.847v-6.83h1.577v5.5zm6.74-1.274h1.284v1.195c-.236.09-.698.18-1.137.18-1.42 0-1.893-.721-1.893-2.186 0-1.398.45-2.221 1.869-2.221.791 0 1.24.248 1.612.722l.982-.903c-.6-.855-1.646-1.114-2.629-1.114-2.208 0-3.368 1.205-3.368 3.504 0 2.288 1.047 3.528 3.358 3.528 1.06 0 2.096-.27 2.66-.665V11.53h-2.739v1.274zM5.291 6.709a5.29 5.29 0 1 1 0 10.582 5.291 5.291 0 1 1 0-10.582m3.16 8.457a4.445 4.445 0 0 0 1.31-3.161v-.242l-.22.001H6.596v.494h2.662l-.001.015a3.985 3.985 0 0 1-3.965 3.708 3.95 3.95 0 0 1-2.811-1.165 3.952 3.952 0 0 1-1.164-2.811c0-1.061.414-2.059 1.164-2.81a3.951 3.951 0 0 1 2.81-1.164l.252.003v-.495l-.251-.003a4.475 4.475 0 0 0-4.47 4.469c0 1.194.465 2.316 1.309 3.161a4.444 4.444 0 0 0 3.16 1.31 4.444 4.444 0 0 0 3.162-1.31m-2.91-1.297V9.644H5.04v4.72h1.556v-.495H5.543zm-1.265-3.552a.676.676 0 1 0-.675.674.676.676 0 0 0 .675-.674",
           windows: "M3 5.5l8-1.1v7H3zM12.5 4.2L21 3v8.4h-8.5zM3 12.6h8v7l-8-1.1zM12.5 12.6H21V21l-8.5-1.2z",
-          vr: "M3 8h18a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-4.5l-1.6-2.4a1.2 1.2 0 0 0-2 0L11.2 16H3a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1zm1 2v4h4v-4H4zm12 0v4h4v-4h-4z"
+          vr: "M3 8h18a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-4.5l-1.6-2.4a1.2 1.2 0 0 0-2 0L11.2 16H3a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1zm1 2v4h4v-4H4zm12 0v4h4v-4h-4z",
+          other: "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"
         };
         var BRANDS = ["windows", "apple", "appletv", "linux", "android", "firetv", "samsung", "lg"];
-        var tabsEl = document.getElementById("dl-tabs"), listEl = document.getElementById("dl-list"), mainEl = document.getElementById("dl-main");
-        var cat = 0, plat = 0;
+        var tabsEl = document.getElementById("dl-tabs"), mainEl = document.getElementById("dl-main");
+        var cat = 0;
         function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text) e.textContent = text; return e; }
         function icon(name) {
           var ns = "http://www.w3.org/2000/svg", s = document.createElementNS(ns, "svg"), p = document.createElementNS(ns, "path");
           s.setAttribute("viewBox", "0 0 24 24"); s.setAttribute("aria-hidden", "true"); p.setAttribute("d", ICONS[name] || ICONS.desktop);
-          if (BRANDS.indexOf(name) >= 0) s.setAttribute("class", "brand");
+          s.setAttribute("class", "logo logo--" + name);
           s.appendChild(p); return s;
         }
-        function icons(names) {
-          var wrap = el("span", "dl__logos");
-          [].concat(names).forEach(function (n) { wrap.appendChild(icon(n)); });
-          return wrap;
-        }
         function renderMain() {
-          var p = DATA[cat].platforms[plat];
+          var c = DATA[cat];
           mainEl.textContent = "";
-          var head = el("div", "dl__head"); head.appendChild(icons(p.icon)); head.appendChild(el("h3", "", p.name)); mainEl.appendChild(head);
-          if (p.note) mainEl.appendChild(el("p", "dl__note", p.note));
-          var box = el("div", "dl__get");
-          if (p.get) {
-            box.appendChild(el("p", "dl__label", "Available now"));
-            p.get.forEach(function (g) {
-              var item = el("div", "dl__item");
-              var a = el("a", "btn btn--sm " + (g.ghost ? "btn--ghost" : "btn--grad"), g.text);
-              a.href = g.href; if (g.href.indexOf("http") === 0 && g.href.indexOf("web.arctv.org") < 0) a.rel = "noopener";
-              item.appendChild(a); if (g.note) item.appendChild(el("span", "", g.note)); box.appendChild(item);
-            });
-          } else {
-            box.appendChild(el("p", "dl__label", "Status"));
-            box.appendChild(el("span", "dl__soon", "Coming soon"));
-            box.appendChild(el("p", "dl__note", "In the meantime, Arc TV works in any modern browser."));
-            var a = el("a", "btn btn--sm btn--ghost", "Launch Web App"); a.href = "https://web.arctv.org"; box.appendChild(a);
-          }
-          mainEl.appendChild(box);
-          if (p.code) {
-            var dl = el("div", "dl__code");
-            dl.appendChild(el("p", "dl__label", "Install with Downloader"));
-            dl.appendChild(el("p", "dl__digits", p.code));
-            dl.appendChild(el("p", "dl__note", "Open the Downloader app on your " + p.name + ", choose Home, type this code and press Go, then install."));
-            mainEl.appendChild(dl);
-          }
-        }
-        function renderList() {
-          listEl.textContent = "";
-          DATA[cat].platforms.forEach(function (p, i) {
-            var b = el("button", "dl__plat"); b.type = "button"; b.appendChild(icons(p.icon)); b.appendChild(el("span", "dl__pname", p.name)); b.setAttribute("aria-pressed", i === plat);
-            if (!p.get) b.appendChild(el("small", "", "Soon"));
-            b.addEventListener("click", function () { plat = i; renderList(); renderMain(); });
-            listEl.appendChild(b);
+          var copy = el("div", "dl__copy"); copy.appendChild(el("h3", "", c.title)); copy.appendChild(el("p", "", c.text)); mainEl.appendChild(copy);
+          var act = el("div", "dl__act");
+          var logos = el("div", "dl__bigs"); c.logos.forEach(function (n) { logos.appendChild(icon(n)); }); act.appendChild(logos);
+          var btns = el("div", "dl__btns");
+          c.items.forEach(function (g) {
+            if (g.href) {
+              var a = el("a", "btn btn--sm " + (g.ghost ? "btn--glass" : "btn--grad"), g.text);
+              a.href = g.href; if (g.href.indexOf("web.arctv.org") < 0) a.rel = "noopener";
+              btns.appendChild(a);
+            } else {
+              var s = el("span", "dl__soonpill", g.text); s.appendChild(el("small", "", "Soon")); btns.appendChild(s);
+            }
           });
+          if (c.web) { var w = el("a", "btn btn--sm btn--light", "Launch Web App"); w.href = WEB; btns.appendChild(w); }
+          act.appendChild(btns);
+          if (c.code) {
+            var dl = el("div", "dl__code");
+            dl.appendChild(el("p", "dl__label", "Or install with Downloader"));
+            dl.appendChild(el("p", "dl__digits", c.code));
+            dl.appendChild(el("p", "dl__note", "Open the Downloader app on your Fire TV or Android TV, choose Home, type this code and press Go, then install."));
+            act.appendChild(dl);
+          }
+          mainEl.appendChild(act);
         }
+        function select(i) { cat = i; renderTabs(); renderMain(); }
         function renderTabs() {
           tabsEl.textContent = "";
           DATA.forEach(function (c, i) {
-            var b = el("button"); b.type = "button"; b.appendChild(icons(c.logos)); b.appendChild(el("span", "", c.label)); b.setAttribute("role", "tab"); b.setAttribute("aria-selected", i === cat); b.tabIndex = i === cat ? 0 : -1;
-            b.addEventListener("click", function () { cat = i; plat = 0; renderTabs(); renderList(); renderMain(); });
+            var b = el("button"); b.type = "button"; b.setAttribute("role", "tab"); b.setAttribute("aria-selected", i === cat); b.tabIndex = i === cat ? 0 : -1;
+            var ic = icon(c.tab); ic.setAttribute("class", "tabicon"); b.appendChild(ic); b.appendChild(el("span", "", c.label));
+            b.addEventListener("click", function () { select(i); });
             b.addEventListener("keydown", function (e) {
               var n = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
-              if (n) { cat = (i + n + DATA.length) % DATA.length; plat = 0; renderTabs(); renderList(); renderMain(); tabsEl.children[cat].focus(); }
+              if (n) { select((i + n + DATA.length) % DATA.length); tabsEl.children[cat].focus(); }
             });
             tabsEl.appendChild(b);
           });
         }
-        renderTabs(); renderList(); renderMain();
+        renderTabs(); renderMain();
       })();
       (function () {
         var links = [].slice.call(document.querySelectorAll(".nav__links a"));

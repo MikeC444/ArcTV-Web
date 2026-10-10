@@ -10,6 +10,7 @@ Status: ⬜ not done · ✅ done (released or merged) · ➖ not needed there (s
 
 | Date | Change | Firestick | Phone |
 |---|---|---|---|
+| 2026-10-10 | Landing page (`landing/`): Get Arc TV redone as one dark card per device type with big brand logos and a button per platform (Soon pills where not out); the category tabs use a single device icon each | ➖ marketing site only, no change needed | ➖ marketing site only, no change needed |
 | 2026-10-10 | Landing page (`landing/`): removed the "Pick your screen" section and its nav link, since Get Arc TV covers it | ➖ marketing site only, no change needed | ➖ marketing site only, no change needed |
 | 2026-10-10 | Landing page (`landing/`): the Downloader code is also shown for Android TV | ➖ marketing site only, no change needed | ➖ marketing site only, no change needed |
 | 2026-10-10 | Landing page (`landing/`): "Powered by mpv and VLC" with their logos in the playback section, plus a "What plays the video?" FAQ | ➖ marketing site only, no change needed | ➖ marketing site only, no change needed |

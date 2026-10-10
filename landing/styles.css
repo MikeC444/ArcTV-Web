@@ -269,3 +269,26 @@ p { text-wrap: pretty; }
 .dl__tabs button { display: inline-flex; align-items: center; gap: 10px; }
 .dl__tabs .dl__logos { gap: 5px; }
 .dl__tabs .dl__logos svg { width: 18px; height: 18px; }
+
+/* downloads: Nuvio-style card with big logos */
+.dl__card { display: grid; grid-template-columns: 1fr 1.1fr; gap: 40px; align-items: center; padding: 48px; border-radius: 28px; background: linear-gradient(160deg, #1b2027, #0b0d10); color: var(--text); box-shadow: 0 20px 50px rgba(15, 21, 25, .18); min-height: 300px; animation: pop .3s ease both; }
+.dl__copy h3 { font-size: clamp(24px, 3vw, 32px); }
+.dl__copy p { margin-top: 14px; color: var(--text-2); font-size: 15px; max-width: 26em; }
+.dl__act { display: grid; gap: 26px; justify-items: center; text-align: center; }
+.dl__bigs { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 18px 24px; }
+.logo { height: 56px; width: 56px; fill: #fff; flex: none; }
+.logo--windows { fill: #0078d4; }
+.logo--android { fill: #3ddc84; }
+.logo--vr, .logo--other, .logo--desktop { fill: var(--accent); }
+.logo--samsung { width: 84px; }
+.dl__btns { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.dl__btns .btn--grad, .dl__btns .btn--glass, .dl__btns .btn--light { padding: 12px 22px; font-size: 14px; }
+.dl__soonpill { display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; border-radius: 99px; border: 1px solid var(--line); background: rgba(255, 255, 255, .04); color: var(--text-2); font-weight: 600; font-size: 14px; }
+.dl__soonpill small { font-size: 11px; opacity: .7; }
+.dl__card .dl__code { margin: 0; width: 100%; max-width: 420px; background: rgba(255, 255, 255, .06); justify-items: center; text-align: center; }
+.dl__card .dl__label, .dl__card .dl__note { color: var(--text-2); }
+.dl__card .dl__digits { color: #fff; }
+.dl__tabs .tabicon { width: 18px; height: 18px; fill: currentColor; flex: none; }
+.dl__tabs button { display: inline-flex; align-items: center; gap: 8px; line-height: 1; }
+@media (max-width: 860px) { .dl__card { grid-template-columns: 1fr; padding: 32px 22px; text-align: center; gap: 28px; } .dl__copy p { margin-inline: auto; } .dl__tabs { justify-content: flex-start; } }
+@media (prefers-reduced-motion: reduce) { .dl__card { animation: none; } }
