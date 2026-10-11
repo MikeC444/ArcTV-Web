@@ -21,6 +21,7 @@ describe("languages", () => {
     for (const raw of ["eng", "en", "en-US", "English", "ENG"]) expect(languageKey(raw)).toBe("en");
     expect(languageKey("fre")).toBe("fr");
     expect(languageKey("pt-BR")).toBe("pt");
+    for (const [raw, key] of [["srp", "sr"], ["hrv", "hr"], ["bos", "bs"], ["mkd", "mk"], ["mac", "mk"], ["Serbian", "sr"], ["Croatian", "hr"], ["Bosnian", "bs"], ["Macedonian", "mk"], ["hr-HR", "hr"]]) expect(languageKey(raw)).toBe(key);
     expect(languageKey("zzz")).toBeNull();
   });
   it("shows a readable name, or the code when it is unknown", () => {
