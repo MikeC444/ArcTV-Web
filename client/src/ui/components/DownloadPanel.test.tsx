@@ -93,4 +93,14 @@ describe("DownloadPanel", () => {
     rerender(<DownloadPanel target={{ type: "TV_SHOW", id: "tt2", season: 2, episode: 3 }} title="Show" onClose={() => {}} load={load} />);
     await waitFor(() => expect(load).toHaveBeenLastCalledWith("TV_SHOW", "tt2", 2, 3));
   });
+
+  it("only a file that was clicked gets the coloured download button", async () => {
+    const other: Stream = { ...stream, id: "s2", releaseTitle: "Movie.2024.720p", url: "https://cdn.example.com/d/xyz/Movie.2024.720p.mkv" };
+    render(<DownloadPanel target={target} title="Movie" onClose={() => {}} load={async () => downloadOptions([stream, other])} />);
+    const links = await screen.findAllByRole("link");
+    expect(links.every((l) => l.getAttribute("data-clicked") === null)).toBe(true);
+    fireEvent.click(links[0]!);
+    expect(links[0]).toHaveAttribute("data-clicked", "true");
+    expect(links[1]).not.toHaveAttribute("data-clicked");
+  });
 });

@@ -29,6 +29,8 @@ export function DownloadPanel({ target, title, subtitle, backdropUrl, logoUrl, s
   const first = useRef<HTMLAnchorElement>(null);
   // Focus goes to the first file once, when the panel first has some; after that the person is using the drop-downs and keeps their place.
   const focusedFirst = useRef(false);
+  // The files clicked in this panel: their download button takes the accent colour, the rest stay plain.
+  const [clicked, setClicked] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
     let cancelled = false;
@@ -132,6 +134,8 @@ export function DownloadPanel({ target, title, subtitle, backdropUrl, logoUrl, s
                       key={o.stream.id}
                       ref={i === 0 ? first : undefined}
                       className="dlrow"
+                      data-clicked={clicked.has(o.stream.id) ? "true" : undefined}
+                      onClick={() => setClicked((prev) => (prev.has(o.stream.id) ? prev : new Set(prev).add(o.stream.id)))}
                       href={o.download.url}
                       download={o.download.filename}
                       target="_blank"
