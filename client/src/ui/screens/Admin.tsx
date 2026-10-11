@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MdClear, MdExpandLess, MdExpandMore, MdRefresh } from "react-icons/md";
 import { formatElapsed, formatWatched, timeAgo } from "../../lib/format";
+import { episodeRange, groupHistory } from "../../lib/historyGroups";
 import { fetchAdminSummary, platformSplit, windowLabel, fetchAdminUser, fetchAdminUsers, filtersActive, newestVersion, NO_FILTERS, type AdminDevice, type ExternalPlayerEvent, type AdminFilters, type AdminSummary, type AdminUserDetail, type AdminUserRow } from "../../state/admin";
 import { ArcButton } from "../components/Buttons";
 import { webSystemLabel } from "../../lib/webSystems";
@@ -249,8 +250,14 @@ function UserDetail({ detail, newest }: { detail: AdminUserDetail | null; newest
           </ul>
           <h3 className="t-title-sm">Recently watched</h3>
           <ul className="admin__list">
-            {detail.history.slice(0, 12).map((h, i) => (
-              <li key={i}><b>{h.title}</b>{sxe(h.seasonNumber, h.episodeNumber)} · {h.completed ? "finished" : formatWatched(h.positionMs)} · {timeAgo(h.watchedAt)}</li>
+            {groupHistory(detail.history).slice(0, 12).map((g, i) => (
+              <li key={i}>
+                {g.single ? (
+                  <><b>{g.title}</b>{sxe(g.single.seasonNumber, g.single.episodeNumber)} · {g.single.completed ? "finished" : formatWatched(g.single.positionMs)} · {timeAgo(g.watchedAt)}</>
+                ) : (
+                  <><b>{g.title}</b> S{g.seasonNumber} · {g.episodes} episodes finished ({episodeRange(g)}) · {timeAgo(g.watchedAt)}</>
+                )}
+              </li>
             ))}
           </ul>
         </div>
