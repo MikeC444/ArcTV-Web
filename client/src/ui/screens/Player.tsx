@@ -8,6 +8,7 @@ import { assessStream, engineFor } from "../../domain/playability";
 import { activeProviders } from "../../domain/registry";
 import type { Content, ContentType, Episode, Stream } from "../../domain/types";
 import { formatTimestamp } from "../../lib/format";
+import { isPlaceholderVideo, PLACEHOLDER_MESSAGE } from "../../lib/placeholderVideo";
 import { parseOptionalInt, routes } from "../../lib/routes";
 import { playSound } from "../../lib/sounds";
 import { useAuth } from "../../state/auth";
@@ -16,6 +17,7 @@ import { useContinueWatching } from "../../state/continueWatching";
 import { findLastSource, matchLastSource, setLastSource } from "../../state/lastSource";
 import { useMyList } from "../../state/myList";
 import { peekPlayerArt } from "../../state/playerArt";
+import { getHandoff } from "../../state/streamHandoff";
 import { readPlayerPrefs, writePlayerPrefs } from "../../state/playerPrefs";
 import { decideProgress, nextEpisodeAfter, nextHoldSeekDelta, offerNextEpisode, shouldOfferResume } from "../../state/progress";
 import { useSettings } from "../../state/settings";
@@ -54,10 +56,13 @@ export function PlayerScreen() {
       const content = owner ? await owner.getDetails(type, id).catch(() => null) : null;
       if (cancelled) return;
       if (!content) return setScreen({ kind: "error", message: "Couldn't load details for this title." });
-      const streams = (await Promise.all(providers.map((x) => x.getStreams(type, id, season, episodeNumber).catch(() => [] as Stream[])))).flat();
+      // The source the person just picked comes straight from the source list: nothing to look up again, so an addon whose ids change between
+      // two requests (AIOStreams) can't make it vanish. Only a resume, which has just the remembered id, asks the addons again.
+      const handedOver = getHandoff(streamId);
+      const streams = handedOver ? [] : (await Promise.all(providers.map((x) => x.getStreams(type, id, season, episodeNumber).catch(() => [] as Stream[])))).flat();
       if (cancelled) return;
       // the source's id can change between two fetches of the same addon: carry on with the same release when it is still offered
-      const stream = streams.find((s) => s.id === streamId) ?? matchLastSource(streams, loaderUserId ? findLastSource(loaderUserId, providerId, id, type, season, episodeNumber) : null);
+      const stream = handedOver ?? streams.find((s) => s.id === streamId) ?? matchLastSource(streams, loaderUserId ? findLastSource(loaderUserId, providerId, id, type, season, episodeNumber) : null);
       if (!stream) return setScreen({ kind: "error", message: "This source is no longer available." });
       const episode = season != null && episodeNumber != null ? (content.seasons.find((s) => s.seasonNumber === season)?.episodes.find((e) => e.episodeNumber === episodeNumber) ?? null) : null;
       setScreen({ kind: "ready", content: { ...content, providerId: content.providerId ?? providerId }, episode, stream });
@@ -230,6 +235,12 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
 
   const overlay = overlays.at(-1) ?? null;
   const next = useMemo(() => nextEpisodeAfter(content.seasons, season, episodeNumber), [content.seasons, season, episodeNumber]);
+  // Set while the source playing is a "not ready yet" slate from a debrid addon (see lib/placeholderVideo.ts): nothing it plays is saved as
+  // progress, and its end must never mark the title as watched.
+  const placeholder = useRef(false);
+  const runtimeMinutes = episode?.runtimeMinutes ?? content.runtimeMinutes;
+  const runtimeRef = useRef(runtimeMinutes);
+  runtimeRef.current = runtimeMinutes;
   const resumeMs = useRef<number | null>(
     (() => {
       const entry = useContinueWatching.getState().findResumePoint(providerId, content.id, type);
@@ -242,7 +253,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
     (completed: boolean, keepalive = false) => {
       // `video.current` is already cleared when the player is torn down (leaving it), so fall back to the element seen at mount
       const v = video.current ?? lastVideo.current;
-      if (!v || !Number.isFinite(v.duration)) return;
+      if (!v || !Number.isFinite(v.duration) || placeholder.current) return;
       const durationMs = Math.round(v.duration * 1000);
       const positionMs = completed ? durationMs : Math.round(v.currentTime * 1000);
       const decision = decideProgress(type, positionMs, durationMs, completed);
@@ -350,6 +361,12 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
     };
 
     const onMeta = () => {
+      placeholder.current = isPlaceholderVideo(v.duration, runtimeRef.current);
+      if (placeholder.current) {
+        v.pause();
+        setError({ type: "unknown", message: PLACEHOLDER_MESSAGE });
+        return;
+      }
       const r = resumeMs.current;
       resumeMs.current = null;
       // a part-watched title carries on from where it was left (unless that is the very end)

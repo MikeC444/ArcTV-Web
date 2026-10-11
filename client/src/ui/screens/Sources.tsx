@@ -9,6 +9,7 @@ import { parseOptionalInt, routes } from "../../lib/routes";
 import { smartPickingApplies, smartPickTarget } from "../../domain/smartPick";
 import { useHasPlus } from "../../state/plusAccess";
 import { useSmartPicking } from "../../state/smartPicking";
+import { putHandoff } from "../../state/streamHandoff";
 import { useSources, type AddonLookupRow } from "../../state/sourcesData";
 import { IconButton, ArcButton, Pill } from "../components/Buttons";
 import { Shimmer } from "../components/Skeletons";
@@ -67,12 +68,19 @@ export function SourcesScreen() {
   // Coming back to this list with Back (from the player) must show the list, not throw you straight into the player again.
   const cameBack = useNavigationType() === "POP";
   const { state, reload } = useSources(providerId, type, id, season, episode, search.get("skip") === "1" || cameBack);
-  const goPlay = (streamId: string, replace = false) => navigate(routes.player(providerId, type, id, season, episode, streamId), { replace });
+  // Every way into the player hands over the source itself, so the player doesn't have to find it again by id (see state/streamHandoff.ts).
+  const goPlay = (streamId: string, replace = false) => {
+    const picked = state.kind === "loaded" ? state.streams.find((s) => s.id === streamId) : undefined;
+    if (picked) putHandoff(picked);
+    navigate(routes.player(providerId, type, id, season, episode, streamId), { replace });
+  };
 
   // "Resume" with a remembered source skips the list entirely.
   const autoSelect = state.kind === "loaded" ? state.autoSelect : null;
   useEffect(() => {
-    if (autoSelect) navigate(routes.player(providerId, type, id, season, episode, autoSelect.id), { replace: true });
+    if (!autoSelect) return;
+    putHandoff(autoSelect);
+    navigate(routes.player(providerId, type, id, season, episode, autoSelect.id), { replace: true });
   }, [autoSelect, navigate, providerId, type, id, season, episode]);
 
   // Autoplay-next-episode lands here with ?auto=1 once the list is complete: take the best source a browser can play.
@@ -81,7 +89,9 @@ export function SourcesScreen() {
     if (!auto || state.kind !== "loaded" || state.searchingMore || !state.recommendedId) return;
     const pick = state.streams.find((s) => s.id === state.recommendedId);
     const playsHere = pick ? ["yes", "unknown"].includes(deviceVerdict(pick).level) : false;
-    if (pick && playsHere) navigate(routes.player(providerId, type, id, season, episode, pick.id), { replace: true });
+    if (!pick || !playsHere) return;
+    putHandoff(pick);
+    navigate(routes.player(providerId, type, id, season, episode, pick.id), { replace: true });
   }, [auto, state, navigate, providerId, type, id, season, episode]);
 
   // ArcTV Plus, Smart source picking (when switched on): once every addon has answered, play the best source this device can play instead of
@@ -101,7 +111,9 @@ export function SourcesScreen() {
   const smartDone = smart && state.kind === "loaded" && (!state.searchingMore || graceOver);
   const smartPick = smartDone && state.kind === "loaded" ? smartPickTarget(state.streams, state.recommendedId) : null;
   useEffect(() => {
-    if (smartPick) navigate(routes.player(providerId, type, id, season, episode, smartPick.id), { replace: true });
+    if (!smartPick) return;
+    putHandoff(smartPick);
+    navigate(routes.player(providerId, type, id, season, episode, smartPick.id), { replace: true });
   }, [smartPick, navigate, providerId, type, id, season, episode]);
   const smartNote = smart && state.kind === "loaded" && !state.searchingMore && !smartPick ? "Smart source picking couldn't find a source that surely plays here, so the choice is yours." : null;
 
