@@ -71,13 +71,16 @@ export function mediaErrorToPlaybackError(error: MediaError | null): PlaybackErr
 
 // ── native <video> ─────────────────────────────────────────────────────────────
 
+/** Text tracks the player added itself for an addon's subtitle file: the engine's own list leaves them out (the Subtitles menu lists them separately). */
+export const addonTextTracks = new WeakSet<TextTrack>();
+
 function nativeTracks(video: HTMLVideoElement): EngineTracks {
   const audioList = (video as unknown as { audioTracks?: ArrayLike<{ id: string; label: string; language: string; enabled: boolean }> }).audioTracks;
   const audio: TrackOption[] = audioList ? Array.from(audioList).map((t, i) => ({ id: String(i), label: t.label || languageLabel(t.language) || `Track ${i + 1}`, selected: t.enabled, language: t.language })) : [];
   const subtitles: TrackOption[] = [];
   for (let i = 0; i < video.textTracks.length; i++) {
     const t = video.textTracks[i]!;
-    if (t.kind !== "subtitles" && t.kind !== "captions") continue;
+    if ((t.kind !== "subtitles" && t.kind !== "captions") || addonTextTracks.has(t)) continue;
     subtitles.push({ id: String(i), label: t.label || languageLabel(t.language) || `Track ${i + 1}`, selected: t.mode === "showing", language: t.language });
   }
   return { audio, subtitles, quality: [] };
@@ -101,7 +104,7 @@ function createNativeEngine(video: HTMLVideoElement, url: string, cb: EngineCall
     selectSubtitle(id) {
       for (let i = 0; i < video.textTracks.length; i++) {
         const t = video.textTracks[i]!;
-        if (t.kind === "subtitles" || t.kind === "captions") t.mode = String(i) === id ? "showing" : "disabled";
+        if ((t.kind === "subtitles" || t.kind === "captions") && !addonTextTracks.has(t)) t.mode = String(i) === id ? "showing" : "disabled";
       }
       publish();
     },
