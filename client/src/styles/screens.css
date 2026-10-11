@@ -177,6 +177,11 @@
 .episode__thumb { width: 100%; height: calc(var(--cw-h)); min-height: 124px; display: block; }
 .episode__play { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: calc(44 * var(--dp)); height: calc(44 * var(--dp)); min-width: 36px; min-height: 36px; border-radius: 50%; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center; color: var(--text); z-index: 1; }
 .episode__play svg { width: 55%; height: 55%; }
+.episode__tick, .seasons__mark { display: inline-flex; align-items: center; gap: 6px; color: var(--text-2); flex: none; }
+.episode__tick { width: calc(28 * var(--dp)); height: calc(28 * var(--dp)); min-width: 28px; min-height: 28px; justify-content: center; }
+.episode__tick svg, .seasons__mark svg { width: 20px; height: 20px; }
+.episode[data-watched] .episode__tick svg, .seasons__mark[aria-pressed="true"] svg { color: var(--watched); }
+.seasons__mark { margin-left: auto; padding: 4px 10px; border-radius: 999px; }
 .episode__title { display: flex; gap: 8px; align-items: baseline; justify-content: space-between; margin-top: calc(8 * var(--dp)); }
 
 /* ── Sources ─────────────────────────────────────────────────────────────── */
