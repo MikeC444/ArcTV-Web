@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { MdArrowBack, MdCheckCircle, MdClose, MdDownload, MdHourglassTop } from "react-icons/md";
 import { DEBRID_NAMES } from "../../domain/deviceSupport";
-import type { ContentType } from "../../domain/types";
+import type { ContentType, Episode, Season } from "../../domain/types";
 import { hdrLabel, sourceLabel } from "../../lib/downloadLabels";
 import { sharpBackdrop } from "../../lib/imageSize";
 import { findDownloadOptions, type DownloadOption } from "../../state/downloadSources";
@@ -20,15 +20,19 @@ export interface DownloadTarget {
  * Developer-only for now. Looks up the sources of one movie or episode and lists the ones that are a plain file, each a real link: the
  * browser downloads it straight from the debrid service (nothing goes through this server). It is a list, not one button, because each
  * link has to be clicked by the person (a download started after waiting for the lookup would be blocked as a pop-up). The order is
- * automatic (see downloadOptions), so there is no sort or filter control.
+ * automatic (see downloadOptions), so there is no sort or filter control. For a show, [seasons] and [onPickEpisode] add a Season and an Episode
+ * drop-down above the list, so any episode's files can be found without going back to the page; the owner of the panel updates [target].
  */
-export function DownloadPanel({ target, title, subtitle, backdropUrl, logoUrl, onClose, load = findDownloadOptions }: { target: DownloadTarget; title: string; subtitle?: string; backdropUrl?: string | null; logoUrl?: string | null; onClose: () => void; load?: typeof findDownloadOptions }) {
+export function DownloadPanel({ target, title, subtitle, backdropUrl, logoUrl, seasons, onPickEpisode, onClose, load = findDownloadOptions }: { target: DownloadTarget; title: string; subtitle?: string; backdropUrl?: string | null; logoUrl?: string | null; seasons?: Season[]; onPickEpisode?: (episode: Episode) => void; onClose: () => void; load?: typeof findDownloadOptions }) {
   const [options, setOptions] = useState<DownloadOption[] | null>(null);
   const [logoFailed, setLogoFailed] = useState(false);
   const first = useRef<HTMLAnchorElement>(null);
+  // Focus goes to the first file once, when the panel first has some; after that the person is using the drop-downs and keeps their place.
+  const focusedFirst = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
+    setOptions(null);
     void load(target.type, target.id, target.season, target.episode).then((found) => !cancelled && setOptions(found), () => !cancelled && setOptions([]));
     return () => {
       cancelled = true;
@@ -36,8 +40,13 @@ export function DownloadPanel({ target, title, subtitle, backdropUrl, logoUrl, o
   }, [load, target.type, target.id, target.season, target.episode]);
 
   useEffect(() => {
-    if (options && options.length > 0) first.current?.focus();
+    if (options && options.length > 0 && !focusedFirst.current) {
+      focusedFirst.current = true;
+      first.current?.focus();
+    }
   }, [options]);
+
+  const pickerSeason = seasons?.find((x) => x.seasonNumber === target.season);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => event.key === "Escape" && onClose();
@@ -74,6 +83,37 @@ export function DownloadPanel({ target, title, subtitle, backdropUrl, logoUrl, o
           </div>
 
           <div className="dlpanel__body">
+          {seasons && seasons.length > 0 && onPickEpisode ? (
+            <div className="dlpanel__pickers">
+              <label className="dlpanel__pick">
+                <span>Season</span>
+                <select
+                  className="dlpanel__select"
+                  value={target.season ?? ""}
+                  onChange={(e) => {
+                    const next = seasons.find((x) => x.seasonNumber === Number(e.target.value));
+                    const episode = next?.episodes[0];
+                    if (episode) onPickEpisode(episode);
+                  }}
+                >
+                  {seasons.map((x) => <option key={x.seasonNumber} value={x.seasonNumber}>{x.seasonNumber === 0 ? "Specials" : `Season ${x.seasonNumber}`} · {x.episodes.length === 1 ? "1 episode" : `${x.episodes.length} episodes`}</option>)}
+                </select>
+              </label>
+              <label className="dlpanel__pick">
+                <span>Episode</span>
+                <select
+                  className="dlpanel__select"
+                  value={target.episode ?? ""}
+                  onChange={(e) => {
+                    const episode = pickerSeason?.episodes.find((x) => x.episodeNumber === Number(e.target.value));
+                    if (episode) onPickEpisode(episode);
+                  }}
+                >
+                  {(pickerSeason?.episodes ?? []).map((x) => <option key={x.id} value={x.episodeNumber}>{x.episodeNumber}. {x.title}</option>)}
+                </select>
+              </label>
+            </div>
+          ) : null}
           {options === null ? (
             <div className="dlpanel__state"><Spinner small /> <span className="t-label-md c-text-2">Finding files…</span></div>
           ) : options.length === 0 ? (

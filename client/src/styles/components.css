@@ -478,6 +478,10 @@
 .dlpanel__sub { margin: 6px 0 0; color: var(--text-2); font-size: 15px; text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8); }
 .dlpanel__body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 4px 24px 22px; overscroll-behavior: contain; }
 .dlpanel__state { display: flex; align-items: center; gap: 10px; margin: 14px 0; }
+.dlpanel__pickers { display: flex; gap: 12px; flex-wrap: wrap; margin: 12px 0 4px; }
+.dlpanel__pick { flex: 1 1 200px; min-width: 0; display: flex; flex-direction: column; gap: 5px; color: var(--text-3); font-size: 13px; }
+.dlpanel__select { width: 100%; box-sizing: border-box; padding: 11px 12px; background: var(--surface); color: var(--text); border: 1px solid var(--divider); border-radius: 12px; font: inherit; font-size: 15px; text-overflow: ellipsis; }
+.dlpanel__select:focus-visible { outline: 2px solid var(--focus-border); outline-offset: 2px; border-color: var(--accent); }
 .dlpanel__count { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 10px 0; color: var(--text-2); font-size: 14px; }
 .dlpanel__order { color: var(--text-3); font-size: 13px; }
 .dlpanel__list { display: flex; flex-direction: column; gap: 10px; }

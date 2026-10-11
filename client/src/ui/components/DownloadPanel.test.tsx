@@ -66,4 +66,31 @@ describe("DownloadPanel", () => {
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
     expect(onClose).toHaveBeenCalled();
   });
+
+  it("for a show, has Season and Episode drop-downs that pick another episode, and none for a movie", async () => {
+    const ep = (season: number, n: number) => ({ id: `e${season}${n}`, seasonNumber: season, episodeNumber: n, title: `Title ${season}-${n}`, description: "", thumbnailUrl: null, runtimeMinutes: null });
+    const seasons = [{ seasonNumber: 1, name: "Season 1", episodes: [ep(1, 1), ep(1, 2)] }, { seasonNumber: 2, name: "Season 2", episodes: [ep(2, 1)] }];
+    const onPick = vi.fn();
+    const load = vi.fn(async () => downloadOptions([stream]));
+    render(<DownloadPanel target={{ type: "TV_SHOW", id: "tt2", season: 1, episode: 1 }} title="Show" seasons={seasons} onPickEpisode={onPick} onClose={() => {}} load={load} />);
+    const [season, episode] = screen.getAllByRole("combobox");
+    expect(season).toHaveValue("1");
+    expect(episode).toHaveValue("1");
+    expect(screen.getByRole("option", { name: "Season 1 · 2 episodes" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "2. Title 1-2" })).toBeInTheDocument();
+    fireEvent.change(episode!, { target: { value: "2" } });
+    expect(onPick).toHaveBeenLastCalledWith(seasons[0]!.episodes[1]);
+    fireEvent.change(season!, { target: { value: "2" } }); // another season starts at its first episode
+    expect(onPick).toHaveBeenLastCalledWith(seasons[1]!.episodes[0]);
+    await screen.findByText("1 source");
+    expect(load).toHaveBeenCalledWith("TV_SHOW", "tt2", 1, 1);
+  });
+
+  it("looks up the files again for the episode the owner moves it to", async () => {
+    const load = vi.fn(async () => downloadOptions([stream]));
+    const { rerender } = render(<DownloadPanel target={{ type: "TV_SHOW", id: "tt2", season: 1, episode: 1 }} title="Show" onClose={() => {}} load={load} />);
+    await screen.findByText("1 source");
+    rerender(<DownloadPanel target={{ type: "TV_SHOW", id: "tt2", season: 2, episode: 3 }} title="Show" onClose={() => {}} load={load} />);
+    await waitFor(() => expect(load).toHaveBeenLastCalledWith("TV_SHOW", "tt2", 2, 3));
+  });
 });

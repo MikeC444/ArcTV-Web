@@ -182,6 +182,8 @@ function DetailContent({ content, similar, providerId, trailer, releaseDate }: {
           subtitle={[content.year, content.type === "TV_SHOW" ? (downloadEpisode ? `Show · S${downloadEpisode.seasonNumber}E${downloadEpisode.episodeNumber}` : "Show") : "Movie"].filter(Boolean).join(" • ")}
           backdropUrl={content.backdropUrl}
           logoUrl={content.logoUrl}
+          seasons={content.type === "TV_SHOW" ? content.seasons : undefined}
+          onPickEpisode={content.type === "TV_SHOW" ? setPickedEpisode : undefined}
           onClose={() => { setDownloading(false); setPickedEpisode(null); }}
         />
       ) : null}
