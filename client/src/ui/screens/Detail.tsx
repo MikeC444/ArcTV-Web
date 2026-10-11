@@ -82,6 +82,9 @@ function DetailContent({ content, similar, providerId, trailer, releaseDate }: {
   const isAdmin = useAuth((s) => s.user?.isAdmin === true);
   const canDownload = hasPlus || isAdmin;
   const [downloading, setDownloading] = useState(false);
+  // The episode picked with an episode's own Download button; the Download button by Play uses the episode Play would play.
+  const [pickedEpisode, setPickedEpisode] = useState<Episode | null>(null);
+  const downloadEpisode = pickedEpisode ?? firstEpisode;
   const actionLabel = resume ? "Resume" : "Play";
   const playLabel = content.type === "TV_SHOW" && firstEpisode ? `${actionLabel} S${firstEpisode.seasonNumber}E${firstEpisode.episodeNumber}` : actionLabel;
 
@@ -131,7 +134,7 @@ function DetailContent({ content, similar, providerId, trailer, releaseDate }: {
             />
             {/* Plus members and developer accounts (web and Mac only for now): lists the files that can be saved (for a show, the episode the Play button would play). */}
             {canDownload ? (
-              <ArcButton text={content.type === "TV_SHOW" && firstEpisode ? `Download S${firstEpisode.seasonNumber}E${firstEpisode.episodeNumber}` : "Download"} icon={<MdDownload />} compact={compact} onClick={() => setDownloading(true)} />
+              <ArcButton text={content.type === "TV_SHOW" && firstEpisode ? `Download S${firstEpisode.seasonNumber}E${firstEpisode.episodeNumber}` : "Download"} icon={<MdDownload />} compact={compact} onClick={() => { setPickedEpisode(null); setDownloading(true); }} />
             ) : null}
             {expanded ? (
               <div className="detail__extra">
@@ -152,7 +155,7 @@ function DetailContent({ content, similar, providerId, trailer, releaseDate }: {
 
       {content.type === "TV_SHOW" && content.seasons.length > 0 ? (
         <>
-          <SeasonsSection seasons={content.seasons} initialSeason={(resumeEpisode ?? firstEpisode)?.seasonNumber} statuses={statuses} onSetWatched={signedIn ? setWatched : undefined} onPlay={(e) => goPlay(e.seasonNumber, e.episodeNumber)} />
+          <SeasonsSection seasons={content.seasons} initialSeason={(resumeEpisode ?? firstEpisode)?.seasonNumber} statuses={statuses} onSetWatched={signedIn ? setWatched : undefined} onDownload={canDownload ? (e) => { setPickedEpisode(e); setDownloading(true); } : undefined} onPlay={(e) => goPlay(e.seasonNumber, e.episodeNumber)} />
           <div className="detail__below">
             <CastRow cast={content.cast} compact={compact} />
           </div>
@@ -174,19 +177,19 @@ function DetailContent({ content, similar, providerId, trailer, releaseDate }: {
       <div style={{ height: compact ? "calc(16 * var(--dp))" : "calc(48 * var(--dp))" }} />
       {canDownload && downloading ? (
         <DownloadPanel
-          target={{ type: content.type, id: content.id, season: firstEpisode?.seasonNumber ?? null, episode: firstEpisode?.episodeNumber ?? null }}
-          title={content.type === "TV_SHOW" && firstEpisode ? `${content.title} S${firstEpisode.seasonNumber}E${firstEpisode.episodeNumber}` : content.title}
-          subtitle={[content.year, content.type === "TV_SHOW" ? (firstEpisode ? `Show · S${firstEpisode.seasonNumber}E${firstEpisode.episodeNumber}` : "Show") : "Movie"].filter(Boolean).join(" • ")}
+          target={{ type: content.type, id: content.id, season: downloadEpisode?.seasonNumber ?? null, episode: downloadEpisode?.episodeNumber ?? null }}
+          title={content.type === "TV_SHOW" && downloadEpisode ? `${content.title} S${downloadEpisode.seasonNumber}E${downloadEpisode.episodeNumber}` : content.title}
+          subtitle={[content.year, content.type === "TV_SHOW" ? (downloadEpisode ? `Show · S${downloadEpisode.seasonNumber}E${downloadEpisode.episodeNumber}` : "Show") : "Movie"].filter(Boolean).join(" • ")}
           backdropUrl={content.backdropUrl}
           logoUrl={content.logoUrl}
-          onClose={() => setDownloading(false)}
+          onClose={() => { setDownloading(false); setPickedEpisode(null); }}
         />
       ) : null}
     </div>
   );
 }
 
-function SeasonsSection({ seasons, initialSeason, statuses, onSetWatched, onPlay }: { seasons: Season[]; initialSeason?: number; statuses: Map<string, EpisodeStatus>; onSetWatched?: (episodes: Episode[], watched: boolean) => void; onPlay: (episode: Episode) => void }) {
+function SeasonsSection({ seasons, initialSeason, statuses, onSetWatched, onDownload, onPlay }: { seasons: Season[]; initialSeason?: number; statuses: Map<string, EpisodeStatus>; onSetWatched?: (episodes: Episode[], watched: boolean) => void; onDownload?: (episode: Episode) => void; onPlay: (episode: Episode) => void }) {
   const [selected, setSelected] = useState(Math.max(0, seasons.findIndex((s) => s.seasonNumber === initialSeason)));
   const season = seasons[selected];
   if (!season) return null;
@@ -232,6 +235,11 @@ function SeasonsSection({ seasons, initialSeason, statuses, onSetWatched, onPlay
               <div className="episode__title">
                 <span className="ellipsis t-title-md">{`${episode.episodeNumber}. ${episode.title}`}</span>
                 {episode.runtimeMinutes ? <span className="c-text-3 t-label-sm">{episode.runtimeMinutes}m</span> : null}
+                {onDownload ? (
+                  <Surface className="episode__tick" radius="50%" ariaLabel={`Download episode ${episode.episodeNumber}: ${episode.title}`} onClick={() => onDownload(episode)}>
+                    <MdDownload aria-hidden="true" />
+                  </Surface>
+                ) : null}
                 {onSetWatched ? (
                   <Surface className="episode__tick" radius="50%" ariaPressed={watched} ariaLabel={watched ? `Mark episode ${episode.episodeNumber} as not watched` : `Mark episode ${episode.episodeNumber} as watched`} onClick={() => onSetWatched([episode], !watched)}>
                     {watched ? <MdCheckCircle aria-hidden="true" /> : <MdOutlineCheckCircle aria-hidden="true" />}
