@@ -343,6 +343,39 @@ describe("Addons", () => {
     useAddons.getState().bootstrapDefault(); // user removed it on purpose → don't bring it back
     expect(useAddons.getState().addons).toHaveLength(0);
   });
+
+  it("installs the OpenSubtitles addon once per account, and a removal sticks", async () => {
+    const manifest = { id: "org.stremio.opensubtitlesv3", name: "OpenSubtitles", version: "1.0.0", resources: ["subtitles"], types: ["movie", "series"], catalogs: [] };
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify(manifest), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    try {
+      hydrateAll("u1");
+      respond = (_path, method, body) => (method === "POST" ? body : undefined);
+      await useAddons.getState().ensureSubtitlesAddon();
+      expect(useAddons.getState().addons.map((a) => a.manifest.id)).toEqual(["org.stremio.opensubtitlesv3"]);
+      useAddons.getState().remove("https://opensubtitles-v3.strem.io/manifest.json");
+      await useAddons.getState().ensureSubtitlesAddon(); // removed on purpose → don't bring it back
+      expect(useAddons.getState().addons).toHaveLength(0);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("does not install OpenSubtitles again when the account already has it", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    try {
+      hydrateAll("u1");
+      respond = () => ({ items: [{ manifestUrl: "https://opensubtitles-v3.strem.io/manifest.json", addonId: "org.stremio.opensubtitlesv3", name: "OpenSubtitles", manifestJson: { id: "org.stremio.opensubtitlesv3", name: "OpenSubtitles" }, enabled: true, sortOrder: 0, updatedAt: "2025-01-01T00:00:00.000Z" }] });
+      await useAddons.getState().pull();
+      await useAddons.getState().ensureSubtitlesAddon();
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(useAddons.getState().addons).toHaveLength(1);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
 });
 
 describe("account isolation in the browser", () => {

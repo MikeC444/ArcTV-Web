@@ -11,6 +11,9 @@ import { Outbox, readJson, writeJson } from "./persist";
 import { libraryKey, libraryName } from "./profile";
 
 export const CINEMETA_MANIFEST_URL = "https://v3-cinemeta.strem.io/manifest.json";
+/** The official OpenSubtitles addon: every account gets it once, so the player's Subtitles menu has files to offer (it can be removed afterwards). */
+export const OPENSUBTITLES_MANIFEST_URL = "https://opensubtitles-v3.strem.io/manifest.json";
+const OPENSUBTITLES_ADDON_ID = "org.stremio.opensubtitlesv3";
 
 /** The synced shape (user_addons row). `manifestJson` is echoed back verbatim so nothing an addon declares is lost in a round trip. */
 interface AddonDto {
@@ -55,6 +58,8 @@ interface AddonsState {
   retryPending(): Promise<void>;
   /** A brand-new account (everything empty in the cloud) gets the same default a fresh TV gets: Cinemeta. */
   bootstrapDefault(): void;
+  /** Installs the OpenSubtitles addon once per account (new and existing), unless the account already has it; a later removal sticks on this device. Call after the addon list has been read from the account. */
+  ensureSubtitlesAddon(): Promise<void>;
   /** Visitors without an account browse with the default addon (Cinemeta); nothing is stored or synced. */
   loadGuestDefault(): void;
 }
@@ -178,6 +183,20 @@ export const useAddons = create<AddonsState>((set, get) => {
       const addon: StoredAddon = { manifestUrl: CINEMETA_MANIFEST_URL, manifest: normalizeManifest(raw), enabled: true, raw };
       set({ userId: null, addons: [addon], ready: true });
       useProviders.getState().replaceAll([new StremioAddonProvider(addon.manifestUrl, addon.manifest)]);
+    },
+
+    async ensureSubtitlesAddon() {
+      const userId = get().userId;
+      if (!userId) return;
+      const flag = libraryKey(userId, "subtitlesAddonOffered");
+      if (readJson<boolean>(flag, false)) return;
+      if (get().addons.some((a) => a.manifestUrl === OPENSUBTITLES_MANIFEST_URL || a.manifest.id === OPENSUBTITLES_ADDON_ID)) return writeJson(flag, true);
+      try {
+        await get().install(OPENSUBTITLES_MANIFEST_URL);
+        writeJson(flag, true);
+      } catch {
+        // offline or the addon is down: not marked, so the next launch tries again
+      }
     },
 
     bootstrapDefault() {

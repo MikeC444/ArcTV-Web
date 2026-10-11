@@ -67,6 +67,8 @@ export async function syncAll(): Promise<void> {
   if (settings.ok && watchlist && continueWatching && addons.ok && settings.empty && addons.empty && useMyList.getState().items.length === 0 && useContinueWatching.getState().items.length === 0) {
     useAddons.getState().bootstrapDefault();
   }
+  // Every account gets the OpenSubtitles addon once, so the player has subtitle files to offer. Only after the cloud list has been read, so an unread list is not mistaken for "no addon yet".
+  if (addons.ok) await useAddons.getState().ensureSubtitlesAddon();
   // Only once the cloud list has really been read: an unread (offline) list looks empty and would wrongly count as a fresh account.
   if (watchlist) void useMyList.getState().backfillWatchedFromHistory();
 }
