@@ -18,6 +18,7 @@ import { IconButton, ArcButton } from "../components/Buttons";
 import { BackButton } from "../components/BackButton";
 import { ContentRow } from "../components/ContentRow";
 import { DownloadPanel } from "../components/DownloadPanel";
+import { DOWNLOAD_INVITATION, PromoDialog } from "../components/PlusPromo";
 import { HomeSkeleton } from "../components/Skeletons";
 import { FullScreenError } from "../components/States";
 import { ScrollRow } from "../components/ScrollRow";
@@ -82,11 +83,21 @@ function DetailContent({ content, similar, providerId, trailer, releaseDate }: {
   const isAdmin = useAuth((s) => s.user?.isAdmin === true);
   const canDownload = hasPlus || isAdmin;
   const [downloading, setDownloading] = useState(false);
+  // Everyone sees the Download buttons; without Plus, pressing one shows the Plus popup instead of the files (a guest is asked to sign in first).
+  const [plusPopup, setPlusPopup] = useState(false);
   // The episode picked with an episode's own Download button; the Download button by Play uses the episode Play would play.
   const [pickedEpisode, setPickedEpisode] = useState<Episode | null>(null);
   // Episodes a file was clicked for in the Downloads panel (this visit): only their Download button takes a colour.
   const [downloaded, setDownloaded] = useState<Set<string>>(() => new Set());
   const downloadEpisode = pickedEpisode ?? firstEpisode;
+  const openDownload = useAccountAction((episode: Episode | null) => {
+    if (!canDownload) {
+      setPlusPopup(true);
+      return;
+    }
+    setPickedEpisode(episode);
+    setDownloading(true);
+  });
   const actionLabel = resume ? "Resume" : "Play";
   const playLabel = content.type === "TV_SHOW" && firstEpisode ? `${actionLabel} S${firstEpisode.seasonNumber}E${firstEpisode.episodeNumber}` : actionLabel;
 
@@ -134,10 +145,8 @@ function DetailContent({ content, similar, providerId, trailer, releaseDate }: {
               title={signedIn && trailer.kind === "notFound" ? "No trailer found for this title" : undefined}
               onClick={() => openTrailer(trailer.kind === "found" ? trailer.value : null)}
             />
-            {/* Plus members and developer accounts (web and Mac only for now): lists the files that can be saved (for a show, the episode the Play button would play). */}
-            {canDownload ? (
-              <ArcButton text={content.type === "TV_SHOW" && firstEpisode ? `Download S${firstEpisode.seasonNumber}E${firstEpisode.episodeNumber}` : "Download"} icon={<MdDownload />} compact={compact} onClick={() => { setPickedEpisode(null); setDownloading(true); }} />
-            ) : null}
+            {/* Everyone sees Download (web and Mac only for now): Plus members and developer accounts get the files that can be saved (for a show, the episode the Play button would play); everyone else gets the Plus popup. */}
+            <ArcButton text={content.type === "TV_SHOW" && firstEpisode ? `Download S${firstEpisode.seasonNumber}E${firstEpisode.episodeNumber}` : "Download"} icon={<MdDownload />} compact={compact} onClick={() => openDownload(null)} />
             {expanded ? (
               <div className="detail__extra">
                 <IconButton compact={compact} icon={isWatched ? <MdCheckCircle /> : <MdOutlineCheckCircle />} label={isWatched ? "Remove from Watched" : "Mark as watched"} onClick={() => toggleWatched(withProvider)} />
@@ -157,7 +166,7 @@ function DetailContent({ content, similar, providerId, trailer, releaseDate }: {
 
       {content.type === "TV_SHOW" && content.seasons.length > 0 ? (
         <>
-          <SeasonsSection seasons={content.seasons} initialSeason={(resumeEpisode ?? firstEpisode)?.seasonNumber} statuses={statuses} downloaded={downloaded} onSetWatched={signedIn ? setWatched : undefined} onDownload={canDownload ? (e) => { setPickedEpisode(e); setDownloading(true); } : undefined} onPlay={(e) => goPlay(e.seasonNumber, e.episodeNumber)} />
+          <SeasonsSection seasons={content.seasons} initialSeason={(resumeEpisode ?? firstEpisode)?.seasonNumber} statuses={statuses} downloaded={downloaded} onSetWatched={signedIn ? setWatched : undefined} onDownload={(e) => openDownload(e)} onPlay={(e) => goPlay(e.seasonNumber, e.episodeNumber)} />
           <div className="detail__below">
             <CastRow cast={content.cast} compact={compact} />
           </div>
@@ -177,6 +186,7 @@ function DetailContent({ content, similar, providerId, trailer, releaseDate }: {
         </div>
       )}
       <div style={{ height: compact ? "calc(16 * var(--dp))" : "calc(48 * var(--dp))" }} />
+      {plusPopup ? <PromoDialog content={DOWNLOAD_INVITATION} onClose={() => setPlusPopup(false)} onGo={() => { setPlusPopup(false); navigate(routes.settings("plus")); }} /> : null}
       {canDownload && downloading ? (
         <DownloadPanel
           target={{ type: content.type, id: content.id, season: downloadEpisode?.seasonNumber ?? null, episode: downloadEpisode?.episodeNumber ?? null }}

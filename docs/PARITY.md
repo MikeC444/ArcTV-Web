@@ -10,6 +10,7 @@ Status: ⬜ not done · ✅ done (released or merged) · ➖ not needed there (s
 
 | Date | Change | Firestick | Phone |
 |---|---|---|---|
+| 2026-10-11 | Download buttons (on a details page and on each episode) are shown to everyone; without Plus, pressing one opens the Plus popup ("Downloads come with ArcTV Plus.", Downloads first) instead of the files, and a guest is asked to sign in first (`Detail.tsx`, `PlusPromo.tsx`) | ➖ downloads are web and Mac only, by choice | ➖ downloads are web and Mac only, by choice |
 | 2026-10-11 | Subtitle language list is System Default, then English, then every other language A to Z (`Settings.tsx`; also the audio language list) | ✅ | ✅ |
 | 2026-10-11 | Episodes' Download button (next to the watched tick) stays plain; it only takes the accent colour once a file was clicked in that episode's Downloads panel (a watched episode no longer tints it) (`Detail.tsx`, `DownloadPanel.tsx`) | ➖ downloads are web and Mac only, by choice | ➖ downloads are web and Mac only, by choice |
 | 2026-10-11 | Downloads panel for a show: Season and Episode drop-downs (with the episode counts) so the files for any episode can be found without going back to the page (`DownloadPanel.tsx`, `Detail.tsx`) | ➖ downloads are web and Mac only, by choice | ➖ downloads are web and Mac only, by choice |

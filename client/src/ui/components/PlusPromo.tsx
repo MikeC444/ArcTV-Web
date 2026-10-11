@@ -75,6 +75,15 @@ const PLUS_INVITATION: PromoContent = {
   hint: "Explore plans in Settings → ArcTV Plus",
 };
 
+/** The Plus popup shown when someone without Plus presses a Download button: the usual invitation with Downloads first. */
+export const DOWNLOAD_INVITATION: PromoContent = {
+  title: "Downloads come with ArcTV Plus.",
+  subtitle: "Save movies and episodes to your device. Everything you use today stays free.",
+  benefits: [BENEFITS[2]!, BENEFITS[0]!, BENEFITS[1]!, BENEFITS[3]!],
+  goLabel: "Take me there",
+  hint: "Explore plans in Settings → ArcTV Plus",
+};
+
 /** The Plus popup's look, with its words passed in. Without `onNever` there is no "Don't show me again" link (a one-time announcement needs none). */
 export function PromoDialog({ onClose, onNever, onGo, content = PLUS_INVITATION }: { onClose(): void; onNever?: () => void; onGo(): void; content?: PromoContent }) {
   const first = useRef<HTMLElement>(null);
