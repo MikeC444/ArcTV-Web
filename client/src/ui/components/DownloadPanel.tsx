@@ -21,16 +21,14 @@ export interface DownloadTarget {
  * browser downloads it straight from the debrid service (nothing goes through this server). It is a list, not one button, because each
  * link has to be clicked by the person (a download started after waiting for the lookup would be blocked as a pop-up). The order is
  * automatic (see downloadOptions), so there is no sort or filter control. For a show, [seasons] and [onPickEpisode] add a Season and an Episode
- * drop-down above the list, so any episode's files can be found without going back to the page; the owner of the panel updates [target].
+ * drop-down above the list, so any episode's files can be found without going back to the page; the owner of the panel updates [target]. [onFileClicked] fires when a file is clicked (the owner marks that episode as downloaded).
  */
-export function DownloadPanel({ target, title, subtitle, backdropUrl, logoUrl, seasons, onPickEpisode, onClose, load = findDownloadOptions }: { target: DownloadTarget; title: string; subtitle?: string; backdropUrl?: string | null; logoUrl?: string | null; seasons?: Season[]; onPickEpisode?: (episode: Episode) => void; onClose: () => void; load?: typeof findDownloadOptions }) {
+export function DownloadPanel({ target, title, subtitle, backdropUrl, logoUrl, seasons, onPickEpisode, onFileClicked, onClose, load = findDownloadOptions }: { target: DownloadTarget; title: string; subtitle?: string; backdropUrl?: string | null; logoUrl?: string | null; seasons?: Season[]; onPickEpisode?: (episode: Episode) => void; onFileClicked?: () => void; onClose: () => void; load?: typeof findDownloadOptions }) {
   const [options, setOptions] = useState<DownloadOption[] | null>(null);
   const [logoFailed, setLogoFailed] = useState(false);
   const first = useRef<HTMLAnchorElement>(null);
   // Focus goes to the first file once, when the panel first has some; after that the person is using the drop-downs and keeps their place.
   const focusedFirst = useRef(false);
-  // The files clicked in this panel: their download button takes the accent colour, the rest stay plain.
-  const [clicked, setClicked] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
     let cancelled = false;
@@ -134,8 +132,7 @@ export function DownloadPanel({ target, title, subtitle, backdropUrl, logoUrl, s
                       key={o.stream.id}
                       ref={i === 0 ? first : undefined}
                       className="dlrow"
-                      data-clicked={clicked.has(o.stream.id) ? "true" : undefined}
-                      onClick={() => setClicked((prev) => (prev.has(o.stream.id) ? prev : new Set(prev).add(o.stream.id)))}
+                      onClick={onFileClicked}
                       href={o.download.url}
                       download={o.download.filename}
                       target="_blank"

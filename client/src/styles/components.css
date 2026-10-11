@@ -499,9 +499,7 @@
 .dlrow__cache[data-cached="true"] { color: var(--teal); }
 .dlrow__cache[data-cached="false"] { color: var(--warn); }
 .dlrow__cache svg { width: 16px; height: 16px; }
-.dlrow__go { flex: none; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--divider); border-radius: 12px; background: transparent; color: var(--text-2); }
-/* The download button only takes the accent colour once that file has been clicked, so it shows which ones were started. */
-.dlrow[data-clicked="true"] .dlrow__go { border-color: color-mix(in srgb, var(--cyan) 35%, transparent); background: color-mix(in srgb, var(--cyan) 8%, transparent); color: var(--cyan); }
+.dlrow__go { flex: none; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; border: 1px solid color-mix(in srgb, var(--cyan) 35%, transparent); border-radius: 12px; background: color-mix(in srgb, var(--cyan) 8%, transparent); color: var(--cyan); }
 .dlrow__go svg { width: 26px; height: 26px; }
 .dlpanel__foot { margin: 16px 0 0; text-align: center; color: var(--text-3); font-size: 13px; }
 @media (max-height: 720px) { .dlpanel__banner { height: 170px; } .dlpanel__banner[data-plain="true"] { height: 120px; } .dlpanel__logo { max-height: 64px; } .dlpanel__name { font-size: 26px; } }

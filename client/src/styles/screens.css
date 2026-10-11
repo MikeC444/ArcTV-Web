@@ -180,7 +180,9 @@
 .episode__tick, .seasons__mark { display: inline-flex; align-items: center; gap: 6px; color: var(--text-2); flex: none; }
 .episode__tick { width: calc(28 * var(--dp)); height: calc(28 * var(--dp)); min-width: 28px; min-height: 28px; justify-content: center; }
 .episode__tick svg, .seasons__mark svg { width: 20px; height: 20px; }
-.episode[data-watched] .episode__tick svg, .seasons__mark[aria-pressed="true"] svg { color: var(--watched); }
+/* The Download button keeps its plain colour until a file was clicked for that episode (a watched episode no longer tints it). */
+.episode__tick--download[data-downloaded="true"] svg { color: var(--cyan); }
+.episode[data-watched] .episode__tick--watch svg, .seasons__mark[aria-pressed="true"] svg { color: var(--watched); }
 .seasons__mark { margin-left: auto; padding: 4px 10px; border-radius: 999px; }
 .episode__title { display: flex; gap: 8px; align-items: baseline; justify-content: space-between; margin-top: calc(8 * var(--dp)); }
 
