@@ -639,10 +639,17 @@ function SoundsPane() {
   );
 }
 
-export const SUBTITLE_LANGUAGES: Array<{ code: string | null; label: string }> = [
-  { code: null, label: "System Default" }, { code: "en", label: "English" }, { code: "es", label: "Spanish" }, { code: "fr", label: "French" }, { code: "de", label: "German" }, { code: "it", label: "Italian" }, { code: "pt", label: "Portuguese" }, { code: "nl", label: "Dutch" },
+const OTHER_LANGUAGES: Array<{ code: string; label: string }> = [
+  { code: "es", label: "Spanish" }, { code: "fr", label: "French" }, { code: "de", label: "German" }, { code: "it", label: "Italian" }, { code: "pt", label: "Portuguese" }, { code: "nl", label: "Dutch" },
   { code: "sv", label: "Swedish" }, { code: "pl", label: "Polish" }, { code: "tr", label: "Turkish" }, { code: "ar", label: "Arabic" }, { code: "hi", label: "Hindi" }, { code: "ja", label: "Japanese" }, { code: "ko", label: "Korean" }, { code: "zh", label: "Chinese" },
   { code: "sr", label: "Serbian" }, { code: "hr", label: "Croatian" }, { code: "bs", label: "Bosnian" }, { code: "mk", label: "Macedonian" },
+];
+
+/** System Default first, then English, then every other language A to Z (also the audio language list). */
+export const SUBTITLE_LANGUAGES: Array<{ code: string | null; label: string }> = [
+  { code: null, label: "System Default" },
+  { code: "en", label: "English" },
+  ...[...OTHER_LANGUAGES].sort((x, y) => x.label.localeCompare(y.label)),
 ];
 
 function SubtitlesPane() {
