@@ -57,7 +57,7 @@ export function PlayerScreen() {
       if (cancelled) return;
       if (!content) return setScreen({ kind: "error", message: "Couldn't load details for this title." });
       // The source the person just picked comes straight from the source list: nothing to look up again, so an addon whose ids change between
-      // two requests (AIOStreams) can't make it vanish. Only a resume, which has just the remembered id, asks the addons again.
+      // two requests (as some addons do) can't make it vanish. Only a resume, which has just the remembered id, asks the addons again.
       const handedOver = getHandoff(streamId);
       const streams = handedOver ? [] : (await Promise.all(providers.map((x) => x.getStreams(type, id, season, episodeNumber).catch(() => [] as Stream[])))).flat();
       if (cancelled) return;
