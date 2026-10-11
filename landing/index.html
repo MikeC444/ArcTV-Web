@@ -344,6 +344,27 @@
         var TVAPP = "https://github.com/MikeC444/ArcTV-AndroidTV/releases";
         var WEB = "https://web.arctv.org";
         var MAC = "https://github.com/MikeC444/ArcTV-Mac/releases/latest"; // the DMG is named per version, so link the release page
+        // The DMG's name carries the version, so there is no fixed download address like the Android APK has. The links point at the release
+        // page (crawlable, and what you get if anything below fails); once the newest DMG's address is known, a click goes straight to the file.
+        var macDmg = null;
+        try { macDmg = sessionStorage.getItem("arctv-mac-dmg"); } catch (e) {}
+        if (!macDmg && window.fetch) {
+          fetch("https://api.github.com/repos/MikeC444/ArcTV-Mac/releases/latest", { headers: { Accept: "application/vnd.github+json" } })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (j) {
+              var a = j && j.assets ? j.assets.filter(function (x) { return /\.dmg$/i.test(x.name); })[0] : null;
+              if (a && /^https:\/\/github\.com\//.test(a.browser_download_url)) {
+                macDmg = a.browser_download_url;
+                try { sessionStorage.setItem("arctv-mac-dmg", macDmg); } catch (e) {}
+              }
+            })
+            .catch(function () {});
+        }
+        document.addEventListener("click", function (e) {
+          if (!macDmg || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+          var a = e.target.closest ? e.target.closest("a") : null;
+          if (a && a.href === MAC) { e.preventDefault(); window.location.href = macDmg; }
+        });
         var DLCODE = "2368012"; // Downloader (by AFTVnews) code for the latest Fire TV / Android TV app
         // Each category shows big logos, then a button per platform: a link when the app is out, a "Soon" pill when not.
         var DATA = [
