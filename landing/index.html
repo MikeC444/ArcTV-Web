@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#0b0d10" />
     <meta name="color-scheme" content="dark light" />
     <title>Arc TV: Movies and TV Shows on Web, Fire TV and Android</title>
-    <meta name="description" content="Arc TV is a free app for movies and TV shows on the web, Fire TV, Android TV and Android. Works with Stremio add-ons: connect your own and keep your list and progress in sync on every screen." />
+    <meta name="description" content="Arc TV is a free app for movies and TV shows on the web, Fire TV, Android TV, Android and Mac. Works with Stremio add-ons: connect your own and keep your list and progress in sync on every screen." />
     <link rel="canonical" href="https://arctv.org/" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
@@ -16,7 +16,7 @@
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Arc TV" />
     <meta property="og:title" content="Arc TV: Movies and TV Shows on Web, Fire TV and Android" />
-    <meta property="og:description" content="Arc TV is a free app for movies and TV shows on the web, Fire TV, Android TV and Android. Works with Stremio add-ons: connect your own and keep your list and progress in sync on every screen." />
+    <meta property="og:description" content="Arc TV is a free app for movies and TV shows on the web, Fire TV, Android TV, Android and Mac. Works with Stremio add-ons: connect your own and keep your list and progress in sync on every screen." />
     <meta property="og:image:alt" content="Arc TV on a laptop and a phone" />
     <meta property="og:url" content="https://arctv.org/" />
     <meta property="og:image" content="https://arctv.org/og-image.png?v=2" />
@@ -25,7 +25,7 @@
     <meta property="og:image:type" content="image/png" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Arc TV: Movies and TV Shows on Web, Fire TV and Android" />
-    <meta name="twitter:description" content="Arc TV is a free app for movies and TV shows on the web, Fire TV, Android TV and Android. Works with Stremio add-ons: connect your own and keep your list and progress in sync on every screen." />
+    <meta name="twitter:description" content="Arc TV is a free app for movies and TV shows on the web, Fire TV, Android TV, Android and Mac. Works with Stremio add-ons: connect your own and keep your list and progress in sync on every screen." />
     <meta name="twitter:image" content="https://arctv.org/og-image.png?v=2" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -45,9 +45,9 @@
     "@type": "SoftwareApplication",
     "name": "Arc TV",
     "url": "https://arctv.org/",
-    "description": "Arc TV is a free app for movies and TV shows on the web, Fire TV, Android TV and Android. Works with Stremio add-ons: connect your own and keep your list and progress in sync on every screen.",
+    "description": "Arc TV is a free app for movies and TV shows on the web, Fire TV, Android TV, Android and Mac. Works with Stremio add-ons: connect your own and keep your list and progress in sync on every screen.",
     "applicationCategory": "MultimediaApplication",
-    "operatingSystem": "Web, Android, Fire OS, Android TV",
+    "operatingSystem": "Web, Android, Fire OS, Android TV, macOS",
     "image": "https://arctv.org/og-image.png",
     "sameAs": ["https://github.com/MikeC444/ArcTV-Web", "https://github.com/MikeC444/ArcTV-AndroidTV", "https://github.com/MikeC444/ArcTV-MobileAPK", "https://github.com/MikeC444/ArcTV-Mac"],
     "offers": {
@@ -106,6 +106,14 @@
         "acceptedAnswer": {
           "@type": "Answer",
           "text": "Add-ons supply catalogues and sources. Arc TV comes with Cinemeta preinstalled for browsing, and you can install more third-party add-ons by URL. Arc TV supports the Stremio add-on format, so add-ons made for Stremio work in it. Arc TV is an independent app and is not affiliated with or endorsed by Stremio, and it doesn’t make or endorse any add-on, so you choose what to add and you’re responsible for it."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is there a Mac app?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Arc TV for Mac needs a Mac with Apple Silicon and macOS 14 or later. It isn’t notarized by Apple yet, so macOS asks you to confirm the first time you open it. Download it from the Mac releases page on GitHub."
         }
       },
       {
@@ -189,14 +197,15 @@
 
           <div class="dl__card" id="dl-main" aria-live="polite">
             <div class="dl__copy">
-              <h3>Arc TV for web, Android, Fire TV and Android TV</h3>
-              <p>Use Arc TV in any modern browser, or install the app on Android, Fire TV and Android TV. Apps for Windows, macOS, Linux, iPhone, iPad, Apple TV, Samsung and LG are coming soon.</p>
+              <h3>Arc TV for web, Mac, Android, Fire TV and Android TV</h3>
+              <p>Use Arc TV in any modern browser, or install the app on Android, Fire TV, Android TV and Mac. Apps for Windows, Linux, iPhone, iPad, Apple TV, Samsung and LG are coming soon.</p>
             </div>
             <div class="dl__act">
               <div class="dl__btns">
                 <a class="btn btn--sm btn--grad" href="https://web.arctv.org">Launch Web App</a>
                 <a class="btn btn--sm btn--glass" href="https://github.com/MikeC444/ArcTV-MobileAPK/releases/latest/download/ArcTV-Mobile.apk" rel="noopener">Download for Android</a>
                 <a class="btn btn--sm btn--glass" href="https://github.com/MikeC444/ArcTV-AndroidTV/releases" rel="noopener">Fire TV and Android TV app</a>
+                <a class="btn btn--sm btn--glass" href="https://github.com/MikeC444/ArcTV-Mac/releases/latest" rel="noopener">Download for Mac</a>
               </div>
             </div>
           </div>
@@ -205,7 +214,8 @@
             <p class="dl__nojs">
               <a href="https://web.arctv.org">Web app</a> &middot;
               <a href="https://github.com/MikeC444/ArcTV-MobileAPK/releases/latest/download/ArcTV-Mobile.apk">Android phone &amp; tablet</a> &middot;
-              <a href="https://github.com/MikeC444/ArcTV-AndroidTV/releases">Fire TV &amp; Android TV</a>
+              <a href="https://github.com/MikeC444/ArcTV-AndroidTV/releases">Fire TV &amp; Android TV</a> &middot;
+              <a href="https://github.com/MikeC444/ArcTV-Mac/releases/latest">Mac</a>
             </p>
           </noscript>
         </div>
@@ -292,6 +302,7 @@
           <details><summary>Can I add my own content?</summary><p>Arc TV doesn&rsquo;t provide, host or recommend any content. You can connect add-ons for services and libraries you have the right to use, such as your own collection or subscriptions. You&rsquo;re responsible for what you add and for following the law and the terms of those services.</p></details>
           <details><summary>Is Arc TV free?</summary><p>Yes. Arc TV is free to use, including browsing, playing, My List, Continue Watching and sync. Arc TV Plus is optional and only there to support development and the servers, with a few extras such as Picked for you, extra profiles and Your stats as a thank you.</p></details>
           <details><summary>What is an add-on?</summary><p>Add-ons supply catalogues and sources. Arc TV comes with Cinemeta preinstalled for browsing, and you can install more third-party add-ons by URL. Arc TV supports the Stremio add-on format, so add-ons made for Stremio work in it. Arc TV is an independent app and is not affiliated with or endorsed by Stremio, and it doesn&rsquo;t make or endorse any add-on, so you choose what to add and you&rsquo;re responsible for it.</p></details>
+          <details><summary>Is there a Mac app?</summary><p>Yes. Arc TV for Mac needs a Mac with Apple Silicon and macOS 14 or later. It isn&rsquo;t notarized by Apple yet, so macOS asks you to confirm the first time you open it. Download it from the Mac releases page on GitHub.</p></details>
           <details><summary>Is Arc TV on iPhone or Apple TV?</summary><p>Not as an app yet. On iPhone and iPad you can use the web app in your browser, which fits small screens.</p></details>
           <details><summary>What plays the video?</summary><p>Arc TV is powered by the mpv and VLC players, which handle a wide range of formats, audio and subtitle tracks.</p></details>
           <details><summary>Is my data the same on web and TV?</summary><p>Yes. The web app is just another device on your account, so My List, Continue Watching, add-ons and settings are shared.</p></details>
@@ -332,13 +343,14 @@
         var APK = "https://github.com/MikeC444/ArcTV-MobileAPK/releases/latest/download/ArcTV-Mobile.apk";
         var TVAPP = "https://github.com/MikeC444/ArcTV-AndroidTV/releases";
         var WEB = "https://web.arctv.org";
+        var MAC = "https://github.com/MikeC444/ArcTV-Mac/releases/latest"; // the DMG is named per version, so link the release page
         var DLCODE = "2368012"; // Downloader (by AFTVnews) code for the latest Fire TV / Android TV app
         // Each category shows big logos, then a button per platform: a link when the app is out, a "Soon" pill when not.
         var DATA = [
-          { id: "desktop", label: "Desktop", tab: "desktop", title: "Arc TV for Windows, macOS and Linux",
-            text: "Desktop apps are on the way. Until then, Arc TV works in any modern browser.",
+          { id: "desktop", label: "Desktop", tab: "desktop", title: "Arc TV for Mac, Windows and Linux",
+            text: "The Mac app needs a Mac with Apple Silicon and macOS 14 or later. Windows and Linux apps are on the way. Until then, Arc TV works in any modern browser.",
             logos: ["windows", "apple", "linux"],
-            items: [{ text: "Windows" }, { text: "macOS" }, { text: "Linux" }],
+            items: [{ text: "Download for Mac", href: MAC, note: "Apple Silicon, macOS 14+ (DMG)" }, { text: "Windows" }, { text: "Linux" }],
             web: true },
           { id: "mobile", label: "Mobile", tab: "phone", title: "Arc TV for Android and iPhone",
             text: "Browse and play on Android with the app. On iPhone and iPad, use the web app in your browser for now.",

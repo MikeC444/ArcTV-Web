@@ -25,7 +25,7 @@ Use it in Chrome, Edge, Firefox or Safari on a computer, phone or tablet. There 
 - **Pick your source**: a source list with quality badges, sizes and a recommended pick, and a player with quality, audio, subtitle and speed menus, skip, autoplay for the next episode and resume
 - **Picked for you**: a Home row chosen from the movies and shows you like, finish and save, with the reason under every poster
 - **Works with the mouse, keyboard, touch or arrow keys**
-- **ArcTV Plus** (the optional paid tier; the free app stays free): up to 5 profiles with kids profiles and PIN locks, Picked for you, smart source picking, your watch stats, and a **Download** button on movies and episodes that is **only on the web for now** (coming soon: parental controls)
+- **ArcTV Plus** (the optional paid tier; the free app stays free): up to 5 profiles with kids profiles and PIN locks, Picked for you, smart source picking, your watch stats, and a **Download** button on movies and episodes (on the web and in the Mac app) (coming soon: parental controls)
 
 ## 📱📺 Arc TV everywhere
 
@@ -36,7 +36,7 @@ Same account, same list, same addons on every device:
 | 🌐 **Web** | [web.arctv.org](https://web.arctv.org) (this repository) |
 | 📺 **Fire TV / Firestick / Android TV** | [ArcTV-AndroidTV](https://github.com/MikeC444/ArcTV-AndroidTV), also home of the account backend |
 | 📱 **Android phones and tablets** | [ArcTV-MobileAPK](https://github.com/MikeC444/ArcTV-MobileAPK) |
-| 💻 **Mac** | [ArcTV-Mac](https://github.com/MikeC444/ArcTV-Mac) |
+| 💻 **Mac** | [ArcTV-Mac](https://github.com/MikeC444/ArcTV-Mac) ([download](https://github.com/MikeC444/ArcTV-Mac/releases/latest)) |
 
 ## ❓ Questions
 
