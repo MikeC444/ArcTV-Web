@@ -4,6 +4,7 @@ import { formatElapsed, formatWatched, timeAgo } from "../../lib/format";
 import { fetchAdminSummary, platformSplit, windowLabel, fetchAdminUser, fetchAdminUsers, filtersActive, newestVersion, NO_FILTERS, type AdminDevice, type ExternalPlayerEvent, type AdminFilters, type AdminSummary, type AdminUserDetail, type AdminUserRow } from "../../state/admin";
 import { ArcButton } from "../components/Buttons";
 import { webSystemLabel } from "../../lib/webSystems";
+import { PlaybackHealth } from "../components/PlaybackHealth";
 import { WebSystems } from "../components/WebSystems";
 import { GrowthChart } from "../components/GrowthChart";
 import { Spinner } from "../components/States";
@@ -134,6 +135,8 @@ export function AdminScreen() {
           }}
         />
       ) : null}
+
+      {summary?.playback ? <PlaybackHealth data={summary.playback} /> : null}
 
       {summary?.externalPlayer ? <ExternalPlayerSection data={summary.externalPlayer} /> : null}
 
