@@ -343,6 +343,7 @@ describe("Addons", () => {
     useAddons.getState().bootstrapDefault(); // user removed it on purpose → don't bring it back
     expect(useAddons.getState().addons).toHaveLength(0);
   });
+
 });
 
 describe("account isolation in the browser", () => {

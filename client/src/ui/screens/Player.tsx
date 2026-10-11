@@ -6,11 +6,13 @@ import { buildRelayUrl, needsRelay, playbackUrl, relayRefusal } from "../../doma
 import { describeContentType, engineForContentType, getContentType } from "../../domain/contentType";
 import { assessStream, engineFor } from "../../domain/playability";
 import { activeProviders } from "../../domain/registry";
+import { findAddonSubtitles, languageKey, parseSubtitleCues, type AddonSubtitle } from "../../domain/stremio/subtitles";
 import type { Content, ContentType, Episode, Stream } from "../../domain/types";
 import { formatTimestamp } from "../../lib/format";
 import { isPlaceholderVideo, PLACEHOLDER_MESSAGE } from "../../lib/placeholderVideo";
 import { parseOptionalInt, routes } from "../../lib/routes";
 import { playSound } from "../../lib/sounds";
+import { useAddons } from "../../state/addons";
 import { useAuth } from "../../state/auth";
 import { useAddonsReady } from "../../state/hooks";
 import { useContinueWatching } from "../../state/continueWatching";
@@ -26,7 +28,7 @@ import { ArcLogo } from "../components/Logo";
 import { FullScreenError, Spinner } from "../components/States";
 import { PlayerLoading } from "../player/Loading";
 import { describeAttempt, describeDiagnostics, EVENTS_WORTH_KEEPING, probeSource, snapshotVideo, type TrailEntry } from "../player/diagnostics";
-import { createEngine, mediaErrorToPlaybackError, pickDefaultAudio, pickDefaultSubtitle, type EngineTracks, type PlaybackError, type PlayerEngine } from "../player/engine";
+import { addonTextTracks, createEngine, mediaErrorToPlaybackError, pickDefaultAudio, pickDefaultSubtitle, type EngineTracks, type PlaybackError, type PlayerEngine } from "../player/engine";
 import { AdvancedPanel, AudioInfoPanel, PlaybackErrorOverlay, SettingsPanel, SourceInfoPanel, SpeedMenu, TrackMenu } from "../player/overlays";
 
 type Screen = { kind: "loading" } | { kind: "error"; message: string } | { kind: "ready"; content: Content; episode: Episode | null; stream: Stream };
@@ -139,6 +141,8 @@ function startTimeoutError(stream: Stream, video: HTMLVideoElement | null, fellB
 const FIRST_REPORT_AFTER_MS = 4_000;
 const REPORT_EVERY_MS = 15_000;
 const EMPTY_TRACKS: EngineTracks = { audio: [], subtitles: [], quality: [] };
+/** Menu ids with this prefix are the addons' subtitle files (the engines' own ids are plain numbers), so one list can hold both. */
+const ONLINE_SUBTITLE_PREFIX = "addon:";
 const KNOWN_NATIVE_EXT = /\.(mp4|m4v|webm|mov|ogv|ogg|mkv)(\?|#|$)/i;
 
 interface PlaybackProps {
@@ -213,7 +217,92 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
     },
     [stream, route, fellBack],
   );
-  const [tracks, setTracks] = useState<EngineTracks>(EMPTY_TRACKS);
+  const [engineTracks, setTracks] = useState<EngineTracks>(EMPTY_TRACKS);
+  // Subtitle files the person's addons offer for this video, which of them is showing (by address), and the text track each became once loaded.
+  const [online, setOnline] = useState<AddonSubtitle[]>([]);
+  const [onlineShown, setOnlineShown] = useState<string | null>(null);
+  const onlineTracks = useRef(new Map<string, TextTrack>());
+  const onlineAutoPicked = useRef(false);
+  const addons = useAddons((s) => s.addons);
+  const tracks = useMemo<EngineTracks>(
+    () => ({
+      ...engineTracks,
+      subtitles: [
+        ...engineTracks.subtitles.map((o) => (onlineShown ? { ...o, selected: false } : o)),
+        ...online.map((s, i) => ({ id: `${ONLINE_SUBTITLE_PREFIX}${i}`, label: `${s.languageName} · ${s.addonName}`, selected: s.url === onlineShown, language: s.languageCode })),
+      ],
+    }),
+    [engineTracks, online, onlineShown],
+  );
+
+  /** Shows an addon's subtitle file (downloading it the first time): the engine's own subtitles go off and the file plays as a text track of the video. */
+  const showOnlineSubtitle = useCallback(
+    async (subtitle: AddonSubtitle) => {
+      const v = video.current;
+      if (!v) return;
+      engine.current?.selectSubtitle(null);
+      onlineTracks.current.forEach((t) => (t.mode = "disabled"));
+      let track = onlineTracks.current.get(subtitle.url);
+      if (!track) {
+        try {
+          const response = await fetch(subtitle.url, { credentials: "omit", referrerPolicy: "no-referrer", signal: AbortSignal.timeout(15_000) });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const cues = parseSubtitleCues(await response.text());
+          if (cues.length === 0) throw new Error("empty");
+          track = v.addTextTrack("subtitles", `${subtitle.languageName} · ${subtitle.addonName}`, languageKey(subtitle.languageCode) ?? "");
+          addonTextTracks.add(track);
+          for (const c of cues) track.addCue(new VTTCue(c.start, c.end, c.text));
+          onlineTracks.current.set(subtitle.url, track);
+        } catch {
+          // A file the browser can't download (the host sends no CORS headers) or can't read: drop it from the list rather than leave a dead choice.
+          setOnline((list) => list.filter((s) => s.url !== subtitle.url));
+          setPill("Couldn't load that subtitle file");
+          return;
+        }
+      }
+      track.mode = "showing";
+      setOnlineShown(subtitle.url);
+    },
+    [],
+  );
+  /** The Subtitles menu's choice: an addon's file (id "addon:n"), one of the video's own tracks, or null for off. */
+  const chooseSubtitle = useCallback(
+    (id: string | null) => {
+      if (id?.startsWith(ONLINE_SUBTITLE_PREFIX)) {
+        const subtitle = online[Number(id.slice(ONLINE_SUBTITLE_PREFIX.length))];
+        if (subtitle) void showOnlineSubtitle(subtitle);
+        return;
+      }
+      onlineTracks.current.forEach((t) => (t.mode = "disabled"));
+      setOnlineShown(null);
+      engine.current?.selectSubtitle(id);
+      setTracks((t) => ({ ...t, subtitles: t.subtitles.map((o) => ({ ...o, selected: o.id === id })) }));
+    },
+    [online, showOnlineSubtitle],
+  );
+
+  // Ask the addons for subtitle files once per video; the list is ready (or empty) well before anyone opens the menu.
+  useEffect(() => {
+    if (addons.length === 0) return;
+    let cancelled = false;
+    void findAddonSubtitles(addons, { type, id: content.id, season, episode: episodeNumber, filename: stream.releaseTitle || null, preferredLanguage: prefsRef.current.defaultSubtitleLanguage }).then((found) => {
+      if (!cancelled) setOnline(found);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [addons, type, content.id, season, episodeNumber, stream.releaseTitle]);
+
+  // The preferred subtitle language is wanted but the video has no subtitle of its own showing: use the addons' file in that language, once.
+  useEffect(() => {
+    if (onlineAutoPicked.current || !started || online.length === 0 || onlineShown) return;
+    if (!prefs.subtitlesEnabled || engineTracks.subtitles.some((o) => o.selected)) return;
+    const wanted = languageKey(prefs.defaultSubtitleLanguage);
+    if (!wanted) return;
+    onlineAutoPicked.current = true;
+    const pick = online.find((s) => languageKey(s.languageCode) === wanted);
+    if (pick) void showOnlineSubtitle(pick);
+  }, [online, started, onlineShown, engineTracks, prefs.subtitlesEnabled, prefs.defaultSubtitleLanguage, showOnlineSubtitle]);
   const [speed, setSpeed] = useState(() => readPlayerPrefs().speed);
   const [controls, setControls] = useState(true);
   const [overlays, setOverlays] = useState<Overlay[]>([]);
@@ -757,7 +846,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
       {overlay === "settings" ? <SettingsPanel tracks={tracks} audioHint={audioHint} speed={speed} autoplayNext={prefs.autoplayNextEpisode} onAutoplayChange={(v) => setPlayer({ autoplayNextEpisode: v })} onOpen={push} onClose={pop} /> : null}
       {overlay === "advanced" ? <AdvancedPanel skipIntro={prefs.skipIntroEnabled} onSkipIntro={(v) => setPlayer({ skipIntroEnabled: v })} onSourceInfo={() => push("info")} onChangeSource={onChangeSource} onClose={pop} /> : null}
       {overlay === "info" ? <SourceInfoPanel stream={stream} tracks={tracks} engine={engine.current?.kind ?? "native"} onClose={pop} /> : null}
-      {overlay === "subtitles" ? <TrackMenu title="Subtitles" options={tracks.subtitles} offLabel="Off" onClose={pop} onSelect={(id) => { engine.current?.selectSubtitle(id); setTracks((t) => ({ ...t, subtitles: t.subtitles.map((o) => ({ ...o, selected: o.id === id })) })); pop(); }} /> : null}
+      {overlay === "subtitles" ? <TrackMenu title="Subtitles" options={tracks.subtitles} offLabel="Off" onClose={pop} onSelect={(id) => { chooseSubtitle(id); pop(); }} /> : null}
       {overlay === "audio" ? <TrackMenu title="Audio" options={tracks.audio} onClose={pop} onSelect={(id) => { if (id) engine.current?.selectAudio(id); setTracks((t) => ({ ...t, audio: t.audio.map((o) => ({ ...o, selected: o.id === id })) })); pop(); }} /> : null}
       {overlay === "quality" ? <TrackMenu title="Quality" options={tracks.quality} onClose={pop} onSelect={(id) => { if (id) engine.current?.selectQuality(id); setTracks((t) => ({ ...t, quality: t.quality.map((o) => ({ ...o, selected: o.id === id })) })); pop(); }} /> : null}
       {overlay === "audio-info" ? <AudioInfoPanel hint={audioHint} onClose={pop} /> : null}
