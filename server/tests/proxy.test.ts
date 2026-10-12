@@ -65,6 +65,15 @@ describe("/api/user allow-list proxy", () => {
     expect((await client.put("/api/user/continue-watching").send({})).status).toBe(404);
   });
 
+  it("forwards the Download-use reports, and nothing else under player-events", async () => {
+    const { backend, client } = await signedIn();
+    const res = await client.post("/api/user/player-events/download").send({ kind: "file", contentType: "MOVIE", episode: false, resolution: "4K", cached: true });
+    expect(res.status).toBe(204);
+    expect(backend.calls.some((c) => c.method === "POST" && c.path === "/user/player-events/download")).toBe(true);
+    expect((await client.post("/api/user/player-events/external").send({})).status).toBe(404);
+    expect((await client.get("/api/user/player-events/download")).status).toBe(404);
+  });
+
   it("forwards removed picks, and each account only sees its own", async () => {
     const backend = createMockBackend();
     backend.addUser("alice@example.com", "password-1234");
