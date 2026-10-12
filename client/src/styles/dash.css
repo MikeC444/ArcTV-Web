@@ -248,3 +248,24 @@
   .dd-cols { grid-template-columns: minmax(0, 1fr); }
   .dd-bars--wide li { grid-template-columns: minmax(0, 1fr) 80px 36px; }
 }
+
+/* who is watching right now */
+.dd-pill--btn { cursor: pointer; font: inherit; color: inherit; }
+.dd-pill--btn:hover { border-color: rgba(155, 92, 255, 0.5); }
+.dd-watchhead { display: flex; flex-direction: column; gap: 8px; }
+.dd-watchhead .dd-sub { margin: 0; }
+.dd-watchhead b { color: var(--text); }
+.dd-watch { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.dd-watchcard { width: 100%; height: 100%; display: flex; flex-direction: column; gap: 4px; padding: 16px 18px; border-radius: 18px; border: 1px solid var(--d-line); background: radial-gradient(120% 80% at 0% 0%, rgba(155, 92, 255, 0.12), transparent 60%), var(--d-card); text-align: left; cursor: pointer; }
+.dd-watchcard:hover { border-color: rgba(155, 92, 255, 0.5); }
+.dd-watchcard:focus-visible { outline: 2px solid var(--focus-border); outline-offset: 2px; }
+.dd-watchcard__top { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; }
+.dd-live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--violet); box-shadow: 0 0 0 4px rgba(155, 92, 255, 0.2), 0 0 12px var(--violet); animation: dd-pulse 2.4s ease-in-out infinite; }
+.dd-watchcard__ago { margin-left: auto; color: var(--text-3); font-weight: 600; }
+.dd-watchcard__title { font-size: 18px; line-height: 1.25; margin-top: 8px; overflow-wrap: anywhere; }
+.dd-watchcard__ep { margin: 0; min-height: 1.4em; }
+.dd-watchcard__bar { display: block; height: 6px; border-radius: 6px; background: rgba(255, 255, 255, 0.08); overflow: hidden; margin-top: 8px; }
+.dd-watchcard__bar i { display: block; height: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--cyan), var(--violet)); }
+.dd-watchcard__who { display: flex; flex-direction: column; min-width: 0; margin-top: auto; padding-top: 12px; border-top: 1px solid var(--d-line); }
+.dd-watchcard__who i { font-style: normal; color: var(--text-3); font-size: 12px; }
+@media (prefers-reduced-motion: reduce) { .dd-live-dot { animation: none; } }

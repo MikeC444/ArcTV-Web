@@ -1,7 +1,8 @@
-export type ViewId = "overview" | "users" | "playback" | "downloads" | "addons" | "versions";
+export type ViewId = "overview" | "watching" | "users" | "playback" | "downloads" | "addons" | "versions";
 
 export const VIEWS: Array<{ id: ViewId; label: string; hint: string }> = [
   { id: "overview", label: "Overview", hint: "The numbers that matter, on one screen" },
+  { id: "watching", label: "Watching", hint: "Who is watching right now, and what" },
   { id: "users", label: "Users", hint: "Every account, with filters and a detail panel" },
   { id: "playback", label: "Playback", hint: "How viewings end, by device, player and quality" },
   { id: "downloads", label: "Downloads", hint: "Download use and other players" },

@@ -1,8 +1,9 @@
-import { MdAutoAwesome, MdDashboard, MdDownload, MdExtension, MdGroups, MdSpeed, MdSystemUpdateAlt } from "react-icons/md";
+import { MdAutoAwesome, MdDashboard, MdDownload, MdExtension, MdGroups, MdPlayCircle, MdSpeed, MdSystemUpdateAlt } from "react-icons/md";
 import { VIEWS, type ViewId } from "./views";
 
 const ICONS: Record<ViewId, JSX.Element> = {
   overview: <MdDashboard />,
+  watching: <MdPlayCircle />,
   users: <MdGroups />,
   playback: <MdSpeed />,
   downloads: <MdDownload />,

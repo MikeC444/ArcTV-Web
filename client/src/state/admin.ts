@@ -118,7 +118,31 @@ export interface AdminUserDetail {
   myListCount: number;
 }
 
+export interface WatchingNow {
+  deviceId: string;
+  userId: string;
+  email: string;
+  displayName: string | null;
+  platform: string;
+  deviceName: string;
+  appVersion: string | null;
+  lastProgressAt: string;
+  title: string | null;
+  contentType: string | null;
+  seasonNumber: number | null;
+  episodeNumber: number | null;
+  episodeTitle: string | null;
+  profileName: string | null;
+  positionMs: number | null;
+  durationMs: number | null;
+}
+export interface WatchingList {
+  windowSeconds: number;
+  watching: WatchingNow[];
+}
+
 export const fetchAdminSummary = () => api<AdminSummary>("/admin/summary");
+export const fetchWatching = () => api<WatchingList>("/admin/watching");
 /** The user list filters; an empty value means "no filter". `device` is "<platform>|<app version>". */
 export interface AdminFilters {
   q: string;

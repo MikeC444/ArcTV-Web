@@ -11,6 +11,7 @@ import { PlaybackView } from "./PlaybackView";
 import { Rail } from "./Rail";
 import { UsersView } from "./UsersView";
 import { VersionsView } from "./VersionsView";
+import { WatchingView } from "./WatchingView";
 import { useAgo, useSummary } from "./useSummary";
 import { platformName } from "../../lib/dash";
 import { platformSplit, windowLabel } from "../../state/admin";
@@ -40,7 +41,7 @@ export function Dashboard() {
 
   const go = useCallback((next: ViewId, id?: string | null) => navigate(adminPath(next, id)), [navigate]);
 
-  // Ctrl/Cmd+K or "/" opens the palette; 1–6 jump between views (not while typing).
+  // Ctrl/Cmd+K or "/" opens the palette; 1–7 jump between views (not while typing).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const typing = e.target instanceof HTMLElement && (e.target.tagName === "INPUT" || e.target.tagName === "SELECT" || e.target.tagName === "TEXTAREA" || e.target.isContentEditable);
@@ -77,7 +78,7 @@ export function Dashboard() {
           {live ? (
             <div className="dash__live" title={liveTip}>
               <span className="dd-pill"><span className="dd-dot" /><b>{live.online.users}</b> online</span>
-              <span className="dd-pill"><span className="dd-dot dd-dot--v" /><b>{live.watching.users}</b> watching</span>
+              <button type="button" className="dd-pill dd-pill--btn" onClick={() => go("watching")} title="See who is watching"><span className="dd-dot dd-dot--v" /><b>{live.watching.users}</b> watching</button>
             </div>
           ) : null}
           <span className="dash__sp" />
@@ -92,6 +93,7 @@ export function Dashboard() {
         <main className="dash__body" id="main" tabIndex={-1}>
           {!summary && !error ? <Spinner /> : null}
           {summary && view === "overview" ? <OverviewView summary={summary} onGo={go} /> : null}
+          {view === "watching" ? <WatchingView onOpenUser={(id) => go("users", id)} /> : null}
           {view === "users" ? <UsersView summary={summary} userId={userId} onOpen={(id) => go("users", id)} onClose={() => go("users")} /> : null}
           {summary && view === "playback" ? <PlaybackView summary={summary} /> : null}
           {summary && view === "downloads" ? <DownloadsView summary={summary} /> : null}
