@@ -57,6 +57,38 @@ describe("anime catalogues", () => {
   });
 });
 
+describe("anime search", () => {
+  const searchExtra = (isRequired: boolean) => [{ name: "search", isRequired, options: null, optionsLimit: null }];
+
+  it("uses a catalogue's own search, and only those that need nothing but the search", async () => {
+    const provider = new StremioAddonProvider(
+      "https://a/manifest.json",
+      manifest({
+        catalogs: [
+          catalog("trending", "anime"),
+          catalog("find", "anime", searchExtra(true)),
+          catalog("needsgenre", "anime", [...searchExtra(true), { name: "genre", isRequired: true, options: ["X"], optionsLimit: null }]),
+          catalog("series-search", "series", searchExtra(false)),
+        ],
+      }),
+    );
+    expect(provider.hasAnimeSearch).toBe(true);
+    client.fetchCatalog.mockResolvedValue([preview("kitsu:5", "Naruto")]);
+    const items = await provider.searchAnime("naru");
+    expect(client.fetchCatalog).toHaveBeenCalledTimes(1);
+    expect(client.fetchCatalog).toHaveBeenCalledWith("https://a/manifest.json", "anime", "find", { search: "naru" });
+    expect(items.map((c) => [c.id, c.type])).toEqual([["kitsu:5", "TV_SHOW"]]);
+  });
+
+  it("falls back to matching titles in the ranked lists when nothing is searchable, and has no anime search without anime catalogues", async () => {
+    const provider = new StremioAddonProvider("https://a/manifest.json", manifest({ catalogs: [catalog("trending", "anime")] }));
+    client.fetchCatalog.mockResolvedValue([preview("kitsu:1", "One Piece"), preview("kitsu:2", "Bleach")]);
+    expect((await provider.searchAnime("piece")).map((c) => c.id)).toEqual(["kitsu:1"]);
+    expect(await provider.searchAnime("  ")).toEqual([]);
+    expect(new StremioAddonProvider("https://a/manifest.json", manifest({ catalogs: [catalog("top", "movie")] })).hasAnimeSearch).toBe(false);
+  });
+});
+
 describe("asking an addon about a show", () => {
   it("asks an anime-only addon for the title as anime, and everyone else as series", async () => {
     const animeOnly = new StremioAddonProvider("https://k/manifest.json", manifest({ id: "k", types: ["anime"], resources: ["catalog", "meta"] }));

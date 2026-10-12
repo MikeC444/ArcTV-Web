@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CatalogProvider } from "./provider";
-import { searchProviders, type SearchResults } from "./search";
+import { searchAnime, searchProviders, type SearchResults } from "./search";
 import type { Content } from "./types";
 
 const item = (id: string, type: "MOVIE" | "TV_SHOW" = "MOVIE"): Content => ({ id, title: id, type, posterUrl: null }) as Content;
@@ -43,3 +43,32 @@ describe("searchProviders", () => {
     expect((await done).movies.map((c) => c.id)).toEqual(["early", "late"]);
   });
 });
+
+describe("searchAnime", () => {
+  const animeProvider = (result: Content[] | Error, delayMs = 0, hasAnimeSearch = true): CatalogProvider =>
+    ({ hasAnimeSearch, searchAnime: () => new Promise((resolve, reject) => setTimeout(() => (result instanceof Error ? reject(result) : resolve(result)), delayMs)) }) as unknown as CatalogProvider;
+
+  it("asks only the addons that have anime, and is empty (nothing asked) without one", async () => {
+    const asked: string[] = [];
+    const spy = { hasAnimeSearch: true, searchAnime: async () => { asked.push("anime"); return [item("k1", "TV_SHOW")]; } } as unknown as CatalogProvider;
+    const plain = { hasAnimeSearch: false, searchAnime: async () => { asked.push("plain"); return [item("no")]; } } as unknown as CatalogProvider;
+    const noMethod = { search: async () => [item("m")] } as unknown as CatalogProvider;
+    const final = await searchAnime([plain, spy, noMethod], "x", () => undefined);
+    expect(asked).toEqual(["anime"]);
+    expect(final.items.map((c) => c.id)).toEqual(["k1"]);
+    const none = await searchAnime([plain, noMethod], "x", () => undefined);
+    expect(none).toEqual({ items: [], pending: 0, failed: 0 });
+  });
+
+  it("merges the anime addons in addon order, dedupes, shows a fast addon first and gives up on a stuck one", async () => {
+    const seen: number[] = [];
+    const done = searchAnime([animeProvider([item("slow"), item("dup")], 60), animeProvider([item("dup"), item("fast")], 0)], "x", (r) => seen.push(r.items.length));
+    await new Promise((r) => setTimeout(r, 20));
+    expect(seen).toEqual([2]);
+    expect((await done).items.map((c) => c.id)).toEqual(["slow", "dup", "fast"]);
+    const stuck = await searchAnime([animeProvider([item("ok")]), animeProvider([item("never")], 500)], "x", () => undefined, 40);
+    expect(stuck.items.map((c) => c.id)).toEqual(["ok"]);
+    expect(stuck.failed).toBe(1);
+  });
+});
+

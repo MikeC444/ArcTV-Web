@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type
 import { MdClose, MdHistory, MdSearch, MdSearchOff } from "react-icons/md";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { activeProviders } from "../../domain/registry";
-import { searchProviders, type SearchResults } from "../../domain/search";
+import { searchAnime, searchProviders, type AnimeSearchResults, type SearchResults } from "../../domain/search";
 import type { Content } from "../../domain/types";
 import { pluralize } from "../../lib/format";
 import { routes } from "../../lib/routes";
@@ -19,14 +19,15 @@ type SearchState =
   | { kind: "idle" }
   | { kind: "searching" }
   /** `loading` while slower addons are still answering. */
-  | { kind: "results"; movies: Content[]; tvShows: Content[]; loading: boolean }
+  | { kind: "results"; anime: Content[]; movies: Content[]; tvShows: Content[]; loading: boolean }
   | { kind: "none"; query: string }
   | { kind: "error"; message: string };
 
 /** Turns what the addons have said so far into what the screen shows. */
-function toState(query: string, r: SearchResults, total: number): SearchState {
-  if (r.movies.length || r.tvShows.length) return { kind: "results", movies: r.movies, tvShows: r.tvShows, loading: r.pending > 0 };
-  if (r.pending > 0) return { kind: "searching" };
+function toState(query: string, r: SearchResults, a: AnimeSearchResults, total: number): SearchState {
+  const loading = r.pending > 0 || a.pending > 0;
+  if (r.movies.length || r.tvShows.length || a.items.length) return { kind: "results", anime: a.items, movies: r.movies, tvShows: r.tvShows, loading };
+  if (loading) return { kind: "searching" };
   return total > 0 && r.failed === total ? { kind: "error", message: "Couldn't reach your installed addons. Check your connection and try again." } : { kind: "none", query };
 }
 
@@ -58,8 +59,24 @@ export function SearchScreen() {
     const providers = activeProviders();
     if (providers.length === 0) return setState({ kind: "none", query: q });
     setState((prev) => (prev.kind === "results" ? { ...prev, loading: true } : { kind: "searching" })); // keep the old results up until the new ones arrive
-    const update = (r: SearchResults) => gen === generation.current && setState(toState(q, r, providers.length));
-    update(await searchProviders(providers, q, update));
+    // Anime has its own line, asked only of the addons that have anime catalogues: without one there is never an anime line.
+    const animeProviders = providers.filter((p) => p.hasAnimeSearch === true);
+    let regular: SearchResults = { movies: [], tvShows: [], pending: providers.length, failed: 0 };
+    let anime: AnimeSearchResults = { items: [], pending: animeProviders.length, failed: 0 };
+    const publish = () => gen === generation.current && setState(toState(q, regular, anime, providers.length));
+    const [regularDone, animeDone] = await Promise.all([
+      searchProviders(providers, q, (r) => {
+        regular = r;
+        publish();
+      }),
+      searchAnime(animeProviders, q, (r) => {
+        anime = r;
+        publish();
+      }),
+    ]);
+    regular = regularDone;
+    anime = animeDone;
+    publish();
   }, []);
 
   useEffect(() => {
@@ -89,10 +106,11 @@ export function SearchScreen() {
   }, [query, setParams, submit]);
 
   const shown = useMemo(() => {
-    if (state.kind !== "results") return { movies: [] as Content[], tvShows: [] as Content[] };
-    return { movies: withoutBlocked(state.movies, blocked), tvShows: withoutBlocked(state.tvShows, blocked) };
+    if (state.kind !== "results") return { anime: [] as Content[], movies: [] as Content[], tvShows: [] as Content[] };
+    return { anime: withoutBlocked(state.anime, blocked), movies: withoutBlocked(state.movies, blocked), tvShows: withoutBlocked(state.tvShows, blocked) };
   }, [state, blocked]);
-  const suggestions = useMemo(() => [...shown.movies, ...shown.tvShows].slice(0, SUGGESTION_COUNT), [shown]);
+  const suggestions = useMemo(() => [...shown.anime, ...shown.movies, ...shown.tvShows].slice(0, SUGGESTION_COUNT), [shown]);
+  const animeIds = useMemo(() => new Set(shown.anime.map((c) => c.id)), [shown.anime]);
   const showSuggestions = open && query.trim().length >= 2 && suggestions.length > 0;
 
   const change = (value: string) => {
@@ -145,7 +163,7 @@ export function SearchScreen() {
     document.getElementById("q")?.focus();
   };
 
-  const hasResults = shown.movies.length > 0 || shown.tvShows.length > 0;
+  const hasResults = shown.anime.length > 0 || shown.movies.length > 0 || shown.tvShows.length > 0;
   return (
     <div className="page">
       <h1 className="t-display-md page__title">Search</h1>
@@ -196,7 +214,7 @@ export function SearchScreen() {
                 >
                   {c.posterUrl ? <img className="sbar__thumb" src={c.posterUrl} alt="" referrerPolicy="no-referrer" /> : <span className="sbar__thumb" />}
                   <span className="sbar__title">{c.title}</span>
-                  <span className="sbar__meta">{c.type === "MOVIE" ? "Movie" : "TV Show"}{c.year ? ` · ${c.year}` : ""}</span>
+                  <span className="sbar__meta">{animeIds.has(c.id) ? "Anime" : c.type === "MOVIE" ? "Movie" : "TV Show"}{c.year ? ` · ${c.year}` : ""}</span>
                 </li>
               ))}
             </ul>
@@ -237,6 +255,7 @@ export function SearchScreen() {
         ) : null}
         {state.kind === "results" && hasResults ? (
           <div onClickCapture={() => useRecentSearches.getState().add(query)}>
+            {shown.anime.length ? <ResultGrid title="Anime" items={shown.anime} watched={watched} /> : null}
             {shown.movies.length ? <ResultGrid title="Movies" items={shown.movies} watched={watched} /> : null}
             {shown.tvShows.length ? <ResultGrid title="TV Shows" items={shown.tvShows} watched={watched} /> : null}
             {state.kind === "results" && state.loading ? (

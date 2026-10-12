@@ -47,6 +47,9 @@ export interface CatalogProvider {
   /** The addon's anime titles, optionally one genre; `getMoreAnimeItems` reads the following pages. */
   getAnimeItems?(genre?: string): Promise<Content[]>;
   getMoreAnimeItems?(page: number, genre?: string): Promise<Content[]>;
+  /** True when the addon can be searched for anime (it has anime catalogues): Search then adds an anime-only line. */
+  readonly hasAnimeSearch?: boolean;
+  searchAnime?(query: string, onPartial?: (items: Content[]) => void): Promise<Content[]>;
 }
 
 /** Set by Home before it fetches (account + day), so the rows draw the same pages and order all day and a different mix tomorrow. */
@@ -63,6 +66,8 @@ const SUPPORTED_CATALOG_TYPES = new Set(["movie", "series"]);
 const ANIME_TYPE = "anime";
 /** A catalogue the Anime tab can read: nothing is required of it except (at most) a genre. */
 const isUsableAnimeCatalog = (catalog: AddonCatalogDef) => catalog.type === ANIME_TYPE && catalog.extra.every((extra) => !extra.isRequired || extra.name === "genre");
+/** An anime catalogue that can be searched: it takes a "search" and asks for nothing else (a genre or paging is optional). */
+const isSearchableAnimeCatalog = (catalog: AddonCatalogDef) => catalog.type === ANIME_TYPE && catalog.extra.some((e) => e.name === "search") && catalog.extra.every((e) => !e.isRequired || e.name === "search");
 const IMDB_ID = /^tt\d+$/;
 /** Id types anime addons use that put only the episode number after the id ("kitsu:7442:3"), not a season and an episode. */
 const EPISODE_ONLY_IDS = /^(kitsu|mal|anilist|anidb):/;
@@ -117,6 +122,7 @@ export class StremioAddonProvider implements CatalogProvider {
   readonly name: string;
   private readonly supported: AddonCatalogDef[];
   private readonly animeCatalogs: AddonCatalogDef[];
+  private readonly animeSearchCatalogs: AddonCatalogDef[];
 
   constructor(
     private readonly manifestUrl: string,
@@ -126,6 +132,30 @@ export class StremioAddonProvider implements CatalogProvider {
     this.name = manifest.name;
     this.supported = manifest.catalogs.filter((catalog) => SUPPORTED_CATALOG_TYPES.has(catalog.type));
     this.animeCatalogs = manifest.catalogs.filter(isUsableAnimeCatalog);
+    this.animeSearchCatalogs = manifest.catalogs.filter(isSearchableAnimeCatalog);
+  }
+
+  get hasAnimeSearch(): boolean {
+    return this.animeCatalogs.length > 0 || this.animeSearchCatalogs.length > 0;
+  }
+
+  /** Like `search`, for the anime catalogues: the addon's own search where a catalogue has one, else a title match over its ranked lists. */
+  async searchAnime(query: string, onPartial?: (items: Content[]) => void): Promise<Content[]> {
+    if (query.trim() === "") return [];
+    if (this.animeSearchCatalogs.length > 0) {
+      const perCatalog: Content[][] = this.animeSearchCatalogs.map(() => []);
+      await Promise.all(
+        this.animeSearchCatalogs.map(async (catalog, index) => {
+          perCatalog[index] = await this.safeCatalog(catalog, { search: query });
+          if (perCatalog[index]!.length > 0) onPartial?.(distinctBy(interleave(perCatalog), (c) => c.id));
+        }),
+      );
+      const server = distinctBy(interleave(perCatalog), (c) => c.id);
+      if (server.length > 0) return server;
+    }
+    const perBase = await Promise.all(this.animeCatalogs.filter(isBaseCatalog).map((catalog) => this.safeCatalog(catalog, {})));
+    const needle = query.toLowerCase();
+    return distinctBy(interleave(perBase), (c) => c.id).filter((c) => c.title.toLowerCase().includes(needle));
   }
 
   get hasAnime(): boolean {
