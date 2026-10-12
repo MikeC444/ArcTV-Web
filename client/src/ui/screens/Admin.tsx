@@ -5,6 +5,7 @@ import { episodeRange, groupHistory } from "../../lib/historyGroups";
 import { fetchAdminSummary, platformSplit, windowLabel, fetchAdminUser, fetchAdminUsers, filtersActive, newestVersion, NO_FILTERS, type AdminDevice, type ExternalPlayerEvent, type AdminFilters, type AdminSummary, type AdminUserDetail, type AdminUserRow } from "../../state/admin";
 import { ArcButton } from "../components/Buttons";
 import { webSystemLabel } from "../../lib/webSystems";
+import { addonWarnings, offerSummary } from "../../lib/addonCapabilities";
 import { DownloadStats } from "../components/DownloadStats";
 import { PlaybackHealth } from "../components/PlaybackHealth";
 import { WebSystems } from "../components/WebSystems";
@@ -238,6 +239,12 @@ function UserDetail({ detail, newest }: { detail: AdminUserDetail | null; newest
             {detail.addons.map((a, i) => (
               <li key={i}>
                 <b>{a.name}</b> · {a.host}{a.debrid ? ` · ${a.debrid}` : a.configured ? " · configured" : ""}{a.enabled ? "" : " · off"}{detail.profiles.length > 1 ? ` · profile ${a.profileId}` : ""}
+                {a.capabilities ? (
+                  <div className="t-label-sm c-text-3">
+                    {offerSummary(a.capabilities)}
+                    {addonWarnings(a.capabilities).map((w) => <div key={w} className="admin__addonwarn">{w}</div>)}
+                  </div>
+                ) : null}
               </li>
             ))}
           </ul>

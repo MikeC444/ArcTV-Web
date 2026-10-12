@@ -601,6 +601,7 @@
 .admin__detail h3 { margin: 10px 0 6px; }
 .admin__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 14px; color: var(--text-2); line-height: 1.4; }
 .admin__list b { color: var(--text); font-weight: 600; }
+.admin__addonwarn { color: #ffb74d; }
 @media (max-width: 860px) {
   .admin__row { grid-template-columns: 1fr 1fr; }
   .admin__row--head { display: none; }

@@ -1,3 +1,4 @@
+import type { AddonCapabilities } from "../lib/addonCapabilities";
 import type { DownloadSummary } from "../lib/downloadStats";
 import type { PlaybackSummary } from "../lib/playbackHealth";
 import type { WebSystem } from "../lib/webSystems";
@@ -97,7 +98,7 @@ export interface AdminUserDetail {
   user: AdminUserRow & { plusStatus: string | null; hasStripeSubscription: boolean };
   profiles: Array<{ id: string; name: string; kind: string; avatar: string; isDefault: boolean; hasPin: boolean; createdAt: string }>;
   devices: Array<AdminDevice & { createdAt: string; revokedAt: string | null }>;
-  addons: Array<{ profileId: string; name: string; addonId: string; host: string; configured: boolean; debrid: string | null; enabled: boolean; installedAt: string; updatedAt: string }>;
+  addons: Array<{ profileId: string; name: string; addonId: string; host: string; configured: boolean; debrid: string | null; enabled: boolean; installedAt: string; updatedAt: string; /** Absent from a backend that predates it. */ capabilities?: AddonCapabilities }>;
   continueWatching: Array<{ profileId: string; title: string; contentType: string; seasonNumber: number | null; episodeNumber: number | null; episodeTitle: string | null; positionMs: number; durationMs: number; lastWatchedAt: string }>;
   history: Array<{ profileId: string; title: string; contentType: string; seasonNumber: number | null; episodeNumber: number | null; positionMs: number; durationMs: number; completed: boolean; watchedAt: string }>;
   myListCount: number;
