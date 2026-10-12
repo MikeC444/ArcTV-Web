@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { MdDownload, MdLaptopMac, MdSync } from "react-icons/md";
-import { MAC_APP_URL, onMac } from "../../lib/mac";
+import { fetchMacDmgUrl, MAC_APP_URL, onMac } from "../../lib/mac";
 import { useAuth } from "../../state/auth";
 import { macAppDue, useMacApp } from "../../state/macApp";
 import { PromoDialog, type PromoContent } from "./PlusPromo";
@@ -26,12 +26,14 @@ const anotherDialogOpen = () => document.querySelector('[role="dialog"]') !== nu
 
 /**
  * A one-time invitation to the Mac app, for a signed-in person on a Mac browser, a few seconds after landing on Home (and after any
- * Plus popup has been dealt with). Close or "Get the Mac app" both mean it has been seen, and it does not come back for that account.
+ * Plus popup has been dealt with). "Get the Mac app" starts downloading the newest disk image (the release page if it can't be found).
+ * Close or the button both mean it has been seen, and it does not come back for that account.
  */
 export function MacAppPromo({ enabled }: { enabled: boolean }) {
   const signedIn = useAuth((s) => s.status === "signedIn");
   const ready = useMacApp((s) => s.userId !== null && macAppDue(s));
   const [open, setOpen] = useState(false);
+  const [dmgUrl, setDmgUrl] = useState<string | null>(null);
   const eligible = enabled && signedIn && ready && onMac();
 
   useEffect(() => {
@@ -47,6 +49,18 @@ export function MacAppPromo({ enabled }: { enabled: boolean }) {
     return () => window.clearTimeout(timer);
   }, [eligible]);
 
+  // Find the newest disk image as soon as the popup is up, so the button can start the download in the same click.
+  useEffect(() => {
+    if (!open) return undefined;
+    let cancelled = false;
+    void fetchMacDmgUrl().then((url) => {
+      if (!cancelled) setDmgUrl(url);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+
   if (!open || !enabled) return null;
 
   const close = () => {
@@ -55,7 +69,17 @@ export function MacAppPromo({ enabled }: { enabled: boolean }) {
   };
   const go = () => {
     close();
-    window.open(MAC_APP_URL, "_blank", "noopener");
+    if (dmgUrl) {
+      const link = document.createElement("a");
+      link.href = dmgUrl;
+      link.rel = "noopener";
+      link.download = "";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } else {
+      window.open(MAC_APP_URL, "_blank", "noopener");
+    }
   };
   return <PromoDialog onClose={close} onGo={go} content={MAC_APP_INVITATION} />;
 }

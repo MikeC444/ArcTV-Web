@@ -54,3 +54,25 @@ describe("MacAppPromo", () => {
     expect(screen.getByText("Arc TV is on your Mac.")).toBeTruthy();
   });
 });
+
+describe("MacAppPromo download", () => {
+  it("the button starts the newest disk image downloading, without leaving the page", async () => {
+    setUserAgent(MAC_UA);
+    const dmg = "https://github.com/MikeC444/ArcTV-Mac/releases/download/v0.2.0/ArcTV-0.2.0.dmg";
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => ({ assets: [{ name: "ArcTV-0.2.0.dmg", browser_download_url: dmg }] }) })));
+    const clicked: string[] = [];
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (this: HTMLAnchorElement) {
+      clicked.push(this.href);
+    });
+    const open = vi.spyOn(window, "open").mockImplementation(() => null);
+    render(<MacAppPromo enabled />);
+    await act(async () => void vi.advanceTimersByTime(4100));
+    await act(async () => void (await Promise.resolve()));
+    fireEvent.click(screen.getByText("Get the Mac app"));
+    expect(clicked).toEqual([dmg]);
+    expect(open).not.toHaveBeenCalled();
+    click.mockRestore();
+    open.mockRestore();
+    vi.unstubAllGlobals();
+  });
+});

@@ -19,3 +19,17 @@ describe("isMacBrowser", () => {
     expect(isMacBrowser(SAFARI_MAC, 5)).toBe(false);
   });
 });
+
+import { macDmgUrl } from "./mac";
+
+describe("macDmgUrl", () => {
+  const ok = "https://github.com/MikeC444/ArcTV-Mac/releases/download/v0.2.0/ArcTV-0.2.0.dmg";
+  it("picks the disk image from the latest release", () => {
+    expect(macDmgUrl({ assets: [{ name: "notes.txt", browser_download_url: "https://x/y.txt" }, { name: "ArcTV-0.2.0.dmg", browser_download_url: ok }] })).toBe(ok);
+  });
+  it("is null with no disk image, a bad answer, or an address outside the Mac app's releases", () => {
+    expect(macDmgUrl({ assets: [] })).toBeNull();
+    expect(macDmgUrl(null)).toBeNull();
+    expect(macDmgUrl({ assets: [{ name: "a.dmg", browser_download_url: "https://evil.example/a.dmg" }] })).toBeNull();
+  });
+});
