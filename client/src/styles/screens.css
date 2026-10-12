@@ -601,7 +601,9 @@
 .admin__detail h3 { margin: 10px 0 6px; }
 .admin__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 14px; color: var(--text-2); line-height: 1.4; }
 .admin__list b { color: var(--text); font-weight: 600; }
-.admin__addonwarn { color: #ffb74d; }
+.admin__addoninfo { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.admin__chip { font-size: 12px; line-height: 1; padding: 5px 9px; border-radius: 999px; background: color-mix(in srgb, var(--text) 9%, transparent); color: var(--text-2); font-weight: 600; white-space: nowrap; }
+.admin__chip--warn { background: color-mix(in srgb, #ffb74d 16%, transparent); color: #ffb74d; cursor: help; }
 @media (max-width: 860px) {
   .admin__row { grid-template-columns: 1fr 1fr; }
   .admin__row--head { display: none; }

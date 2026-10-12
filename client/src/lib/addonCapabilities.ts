@@ -7,23 +7,46 @@ export interface AddonCapabilities {
   otherIdPrefixes: string[];
 }
 
-/** "Home rows (about 4) · Details · Sources", or "Nothing the apps use" when it offers none of the four. */
-export function offerSummary(caps: AddonCapabilities): string {
-  const parts: string[] = [];
-  if (caps.offers.includes("catalog")) parts.push(caps.catalogs.shown > 0 ? `Home rows (about ${caps.catalogs.rows})` : "Catalogues, none the apps use");
-  if (caps.offers.includes("meta")) parts.push("Details");
-  if (caps.offers.includes("stream")) parts.push("Sources");
-  if (caps.offers.includes("subtitles")) parts.push("Subtitles");
-  return parts.length > 0 ? parts.join(" · ") : "Nothing the apps use";
+/** The pills shown for an addon: what it gives the apps, e.g. ["Home rows ≈4", "Details", "Sources"], or ["Nothing used"] when it offers none of the four. */
+export function offerChips(caps: AddonCapabilities): string[] {
+  const chips: string[] = [];
+  if (caps.offers.includes("catalog")) chips.push(caps.catalogs.shown > 0 ? `Home rows ≈${caps.catalogs.rows}` : "No Home rows");
+  if (caps.offers.includes("meta")) chips.push("Details");
+  if (caps.offers.includes("stream")) chips.push("Sources");
+  if (caps.offers.includes("subtitles")) chips.push("Subtitles");
+  return chips.length > 0 ? chips : ["Nothing used"];
+}
+
+/** An id prefix as a person reads it: "kitsu:" -> "kitsu", "bestcine_tv_" -> "bestcine_tv". */
+const prefixName = (prefix: string): string => prefix.replace(/[:_]+$/, "");
+
+/** How many prefixes the short note names before saying "+N more". */
+const PREFIXES_SHOWN = 3;
+
+/** One short note for something worth a second look, with the full explanation to show on hover. */
+export interface AddonNote {
+  text: string;
+  title: string;
 }
 
 /** Things worth a second look for this addon, each one short; empty when nothing stands out. */
-export function addonWarnings(caps: AddonCapabilities): string[] {
-  const out: string[] = [];
+export function addonNotes(caps: AddonCapabilities): AddonNote[] {
+  const notes: AddonNote[] = [];
   if (caps.catalogs.ignored > 0) {
+    const n = caps.catalogs.ignored;
     const types = caps.catalogs.ignoredTypes.join(", ");
-    out.push(`${caps.catalogs.ignored} ${caps.catalogs.ignored === 1 ? "catalogue" : "catalogues"} ignored (type ${types}): the apps only show movie and series catalogues`);
+    notes.push({
+      text: `${n} ${types} ${n === 1 ? "catalogue" : "catalogues"} not shown`,
+      title: `The apps only show movie and series catalogues, so ${n === 1 ? "this one (type" : "these (type"} ${types}) will not make any Home rows.`,
+    });
   }
-  if (caps.otherIdPrefixes.length > 0) out.push(`Uses ${caps.otherIdPrefixes.join(", ")} ids: those titles may not open or play`);
-  return out;
+  const prefixes = caps.otherIdPrefixes.map(prefixName);
+  if (prefixes.length > 0) {
+    const shown = prefixes.slice(0, PREFIXES_SHOWN).join(", ");
+    notes.push({
+      text: `Other ids: ${shown}${prefixes.length > PREFIXES_SHOWN ? ` +${prefixes.length - PREFIXES_SHOWN} more` : ""}`,
+      title: `Titles with these id types (${prefixes.join(", ")}) may not open or play in the apps, which are built around IMDb ids.`,
+    });
+  }
+  return notes;
 }
