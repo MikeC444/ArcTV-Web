@@ -29,15 +29,17 @@ export function WatchingView({ onOpenUser }: { onOpenUser(id: string): void }) {
   }, [load]);
 
   if (!data) return error ? <p className="dash__error" role="alert">Couldn't load who is watching. The backend may need redeploying.</p> : <Spinner />;
-  const people = new Set(data.watching.map((w) => w.userId)).size;
+  // One card per device, even if the backend were ever to repeat one.
+  const watching = [...new Map(data.watching.map((w) => [w.deviceId, w])).values()];
+  const people = new Set(watching.map((w) => w.userId)).size;
   const byPlatform = new Map<string, number>();
-  for (const w of data.watching) byPlatform.set(w.platform, (byPlatform.get(w.platform) ?? 0) + 1);
+  for (const w of watching) byPlatform.set(w.platform, (byPlatform.get(w.platform) ?? 0) + 1);
 
   return (
     <div className="dd-scroll">
       <div className="dd-watchhead">
         <p className="dd-sub">
-          <b>{people}</b> {people === 1 ? "person" : "people"} on <b>{data.watching.length}</b> {data.watching.length === 1 ? "device" : "devices"} · a device counts while it saves playback progress (within {data.windowSeconds} seconds) · refreshes every 10 s
+          <b>{people}</b> {people === 1 ? "person" : "people"} on <b>{watching.length}</b> {watching.length === 1 ? "device" : "devices"} · a device counts while it saves playback progress (within {data.windowSeconds} seconds) · refreshes every 10 s
         </p>
         <span className="dd-pills">
           {[...byPlatform.entries()].map(([p, n]) => (
@@ -46,11 +48,11 @@ export function WatchingView({ onOpenUser }: { onOpenUser(id: string): void }) {
         </span>
         {error ? <p className="dash__error" role="alert">Couldn't refresh. Showing the last numbers.</p> : null}
       </div>
-      {data.watching.length === 0 ? (
+      {watching.length === 0 ? (
         <Card><p className="dd-sub dd-empty">Nobody is watching right now. This fills in as soon as someone presses play.</p></Card>
       ) : (
         <ul className="dd-watch" role="list">
-          {data.watching.map((w) => {
+          {watching.map((w) => {
             const pct = progress(w);
             return (
               <li key={w.deviceId}>
