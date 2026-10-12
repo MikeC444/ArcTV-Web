@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { readJson, userKey, writeJson } from "./persist";
 
 /** Which announcement this is. A revised one later gets a new id and so shows once more. */
-export const MAC_APP_ID = "2026-10-mac-app";
+export const MAC_APP_ID = "2026-10-mac-app-2";
 
 interface MacAppState {
   userId: string | null;
