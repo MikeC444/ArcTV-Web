@@ -111,7 +111,7 @@ export function App() {
           <Route path="settings/:tab" element={<RequireAuth><RequireAdult><SettingsScreen /></RequireAdult></RequireAuth>} />
           {/* Hidden for now: not linked from anywhere. Public, so the address can be shared. */}
           <Route path="guides/debrid" element={<DebridGuideScreen />} />
-          <Route path="admin" element={<RequireAuth><RequireAdmin><Suspense fallback={<Spinner />}><AdminScreen /></Suspense></RequireAdmin></RequireAuth>} />
+          <Route path="admin/*" element={<RequireAuth><RequireAdmin><Suspense fallback={<Spinner />}><AdminScreen /></Suspense></RequireAdmin></RequireAuth>} />
           <Route path="detail/:providerId/:type/:id" element={<DetailScreen />} />
           <Route path="movies/:slug" element={<DetailScreen kind="MOVIE" />} />
           <Route path="tv-shows/:slug" element={<DetailScreen kind="TV_SHOW" />} />

@@ -28,7 +28,7 @@ export function AppShell() {
   useRouteFocus();
   useScrollMemory();
   const overHero = pathname === "/" || isDetailPath(pathname);
-  const fullScreen = pathname.startsWith("/sources"); // like the TV's SourcesScreen: its own back arrow, no top navigation
+  const fullScreen = pathname.startsWith("/sources") || pathname.startsWith("/admin"); // like the TV's SourcesScreen: its own back arrow, no top navigation (the developer dashboard has its own rail)
   return (
     <>
       <a className="skip-link" href="#main">

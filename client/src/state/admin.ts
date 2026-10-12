@@ -51,6 +51,20 @@ export interface AdminSummary {
   playback?: PlaybackSummary;
   /** Web Download use in the last 7 days. Absent from a backend that predates it, and then the card is left out. */
   downloads?: DownloadSummary;
+  /** Accounts that used ArcTV in the last day / 30 days (the 7-day count is `activeLast7Days`). Absent from a backend that predates it. */
+  activity?: { active1d: number; active30d: number };
+  /** What people have installed, across every account. Absent from a backend that predates it, and then the Addons view says so. */
+  addons?: AddonsSummary;
+}
+export interface AddonsSummary {
+  /** People with at least one addon / with a debrid service configured. */
+  usersWithAddons: number;
+  usersWithDebrid: number;
+  /** People with an addon whose catalogues the apps ignore or whose title ids may not open. */
+  flaggedUsers: number;
+  /** The most-installed addon sites, with how many people have each and what its manifests say, most people first. */
+  hosts: Array<{ host: string; users: number; name: string | null; ignoredTypes: string[]; otherIdPrefixes: string[] }>;
+  debrid: Array<{ service: string; users: number }>;
 }
 export interface ExternalPlayerEvent {
   title: string | null;
