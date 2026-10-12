@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { navItems, routes } from "../lib/routes";
 import { selectedNavIndex } from "../ui/components/TopNav";
 import { StremioAddonProvider, streamRequestId } from "./provider";
+import { normalizeManifest } from "./stremio/client";
 import { previewToContent } from "./stremio/mapper";
 import type { AddonManifest } from "./types";
 
@@ -54,6 +55,24 @@ describe("anime catalogues", () => {
   it("shows an anime title as a show", () => {
     expect(previewToContent({ id: "kitsu:1", type: "anime", name: "One" }, "a").type).toBe("TV_SHOW");
     expect(previewToContent({ id: "tt1", type: "movie", name: "Film" }, "a").type).toBe("MOVIE");
+  });
+});
+
+describe("older manifests", () => {
+  it("reads a catalogue's filters from extraSupported / extraRequired when it has no extra list", () => {
+    const m = normalizeManifest({
+      id: "old",
+      name: "Old",
+      catalogs: [
+        { type: "anime", id: "find", name: "Find", extraSupported: ["search", "skip"], extraRequired: ["search"] },
+        { type: "anime", id: "new", name: "New", extra: [{ name: "genre", isRequired: false }] },
+        { type: "anime", id: "plain", name: "Plain" },
+      ],
+    });
+    expect(m.catalogs[0]!.extra).toEqual([{ name: "search", isRequired: true, options: null, optionsLimit: null }, { name: "skip", isRequired: false, options: null, optionsLimit: null }]);
+    expect(m.catalogs[1]!.extra.map((e) => e.name)).toEqual(["genre"]);
+    expect(m.catalogs[2]!.extra).toEqual([]);
+    expect(new StremioAddonProvider("https://old/manifest.json", m).hasAnimeSearch).toBe(true);
   });
 });
 

@@ -19,14 +19,15 @@ type SearchState =
   | { kind: "idle" }
   | { kind: "searching" }
   /** `loading` while slower addons are still answering. */
-  | { kind: "results"; anime: Content[]; movies: Content[]; tvShows: Content[]; loading: boolean }
+  | { kind: "results"; anime: Content[]; movies: Content[]; tvShows: Content[]; loading: boolean; animeAsked: number; animeFailed: number; animeDone: boolean }
   | { kind: "none"; query: string }
   | { kind: "error"; message: string };
 
 /** Turns what the addons have said so far into what the screen shows. */
-function toState(query: string, r: SearchResults, a: AnimeSearchResults, total: number): SearchState {
+function toState(query: string, r: SearchResults, a: AnimeSearchResults, total: number, animeAsked: number): SearchState {
   const loading = r.pending > 0 || a.pending > 0;
-  if (r.movies.length || r.tvShows.length || a.items.length) return { kind: "results", anime: a.items, movies: r.movies, tvShows: r.tvShows, loading };
+  if (r.movies.length || r.tvShows.length || a.items.length)
+    return { kind: "results", anime: a.items, movies: r.movies, tvShows: r.tvShows, loading, animeAsked, animeFailed: a.failed, animeDone: a.pending === 0 };
   if (loading) return { kind: "searching" };
   return total > 0 && r.failed === total ? { kind: "error", message: "Couldn't reach your installed addons. Check your connection and try again." } : { kind: "none", query };
 }
@@ -63,7 +64,7 @@ export function SearchScreen() {
     const animeProviders = providers.filter((p) => p.hasAnimeSearch === true);
     let regular: SearchResults = { movies: [], tvShows: [], pending: providers.length, failed: 0 };
     let anime: AnimeSearchResults = { items: [], pending: animeProviders.length, failed: 0 };
-    const publish = () => gen === generation.current && setState(toState(q, regular, anime, providers.length));
+    const publish = () => gen === generation.current && setState(toState(q, regular, anime, providers.length, animeProviders.length));
     const [regularDone, animeDone] = await Promise.all([
       searchProviders(providers, q, (r) => {
         regular = r;
@@ -256,6 +257,14 @@ export function SearchScreen() {
         {state.kind === "results" && hasResults ? (
           <div onClickCapture={() => useRecentSearches.getState().add(query)}>
             {shown.anime.length ? <ResultGrid title="Anime" items={shown.anime} watched={watched} /> : null}
+            {!shown.anime.length && state.animeAsked > 0 && state.animeDone ? (
+              <section aria-label="Anime">
+                <h2 className="t-title-lg search__heading">Anime</h2>
+                <p className="c-text-2 t-body-md page__pad">
+                  {state.animeFailed >= state.animeAsked ? "Your anime addons didn't answer. Try again in a moment." : `No anime matched "${query.trim()}" in your anime addons.`}
+                </p>
+              </section>
+            ) : null}
             {shown.movies.length ? <ResultGrid title="Movies" items={shown.movies} watched={watched} /> : null}
             {shown.tvShows.length ? <ResultGrid title="TV Shows" items={shown.tvShows} watched={watched} /> : null}
             {state.kind === "results" && state.loading ? (

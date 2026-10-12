@@ -85,6 +85,14 @@ export function fetchJson(url: string, ttlMs = 0): Promise<unknown> {
 
 const CATALOG_TTL = 5 * 60_000;
 
+/** Older addons list a catalogue's filters as `extraSupported: ["search", "genre"]` and `extraRequired: ["search"]` instead of `extra`. */
+function legacyExtra(catalog: Record<string, unknown>): Array<Record<string, unknown>> {
+  const names = (value: unknown): string[] => (Array.isArray(value) ? value.filter((v): v is string => typeof v === "string") : []);
+  const required = new Set(names(catalog.extraRequired));
+  const supported = [...new Set([...names(catalog.extraSupported), ...required])];
+  return supported.map((name) => ({ name, isRequired: required.has(name) }));
+}
+
 export function normalizeManifest(raw: unknown): AddonManifest {
   if (!raw || typeof raw !== "object") throw new AddonHttpError("That URL didn't return an addon manifest.");
   const m = raw as Record<string, unknown>;
@@ -108,7 +116,7 @@ export function normalizeManifest(raw: unknown): AddonManifest {
         type: c.type as string,
         id: c.id as string,
         name: typeof c.name === "string" ? c.name : null,
-        extra: (Array.isArray(c.extra) ? c.extra : [])
+        extra: (Array.isArray(c.extra) ? c.extra : legacyExtra(c))
           .filter((e): e is Record<string, unknown> => !!e && typeof e === "object" && typeof (e as { name?: unknown }).name === "string")
           .map((e) => ({
             name: e.name as string,
