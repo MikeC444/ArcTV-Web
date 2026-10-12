@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useProviders } from "../domain/registry";
 import { routes } from "../lib/routes";
 import type { Content, HomeSection } from "../domain/types";
 import { useAddons } from "./addons";
@@ -40,3 +41,6 @@ export function useAccountAction<A extends unknown[]>(action: (...args: A) => vo
     [signedIn, action, navigate, from],
   );
 }
+
+/** True while an installed addon has anime catalogues: the Anime tab shows only then. */
+export const useHasAnime = (): boolean => useProviders((s) => s.providers.some((p) => p.hasAnime === true));

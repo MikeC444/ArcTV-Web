@@ -37,7 +37,7 @@ export function addonNotes(caps: AddonCapabilities): AddonNote[] {
     const types = caps.catalogs.ignoredTypes.join(", ");
     notes.push({
       text: `${n} ${types} ${n === 1 ? "catalogue" : "catalogues"} not shown`,
-      title: `The apps only show movie and series catalogues, so ${n === 1 ? "this one (type" : "these (type"} ${types}) will not make any Home rows.`,
+      title: `The apps only show movie and series catalogues, so ${n === 1 ? "this one (type" : "these (type"} ${types}) will not make any Home rows.${caps.catalogs.ignoredTypes.includes("anime") ? " The web app shows anime catalogues on its Anime tab; the TV, phone and Mac apps do not yet." : ""}`,
     });
   }
   const prefixes = caps.otherIdPrefixes.map(prefixName);

@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { MdExtension } from "react-icons/md";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { GENRE_OPTIONS } from "../../domain/genreOptions";
 import { activeProviders, useProviders } from "../../domain/registry";
 import type { Content, ContentType } from "../../domain/types";
 import { distinctBy, interleave, shuffled } from "../../lib/format";
 import { routes } from "../../lib/routes";
-import { useAddonsReady, useWatchedIds, withWatched } from "../../state/hooks";
+import { useAddonsReady, useHasAnime, useWatchedIds, withWatched } from "../../state/hooks";
 import { withoutBlocked } from "../../domain/blockedGenres";
 import { useBlockedSet } from "../../state/blockedGenres";
 import { useMyList, type SavedListItem } from "../../state/myList";
@@ -47,11 +47,11 @@ interface PagerSnapshot {
 const pagerCache = new Map<string, PagerSnapshot>();
 
 /** TypeBrowseViewModel / GenreResultsViewModel — first page from every provider, then "skip" pages as you scroll. */
-function usePager(kind: { type: "type"; value: ContentType; genre?: string | null } | { type: "genre"; value: string }): Pager {
+function usePager(kind: { type: "type"; value: ContentType; genre?: string | null } | { type: "anime"; genre?: string | null } | { type: "genre"; value: string }): Pager {
   const providers = useProviders((s) => s.providers);
   const ready = useAddonsReady();
-  const genreOfType = kind.type === "type" ? kind.genre ?? undefined : undefined; // the Movies / TV Shows drop-down
-  const kindKey = `${kind.type}:${kind.value}:${genreOfType ?? ""}`;
+  const genreOfType = kind.type !== "genre" ? kind.genre ?? undefined : undefined; // the Movies / TV Shows / Anime drop-down
+  const kindKey = `${kind.type}:${kind.type === "anime" ? "" : kind.value}:${genreOfType ?? ""}`;
   const cacheKey = `${kindKey}|${providers.map((p) => p.id).join(",")}`;
   const cachedAtStart = pagerCache.get(cacheKey);
   const [items, setItems] = useState<Content[]>(() => cachedAtStart?.items ?? []);
@@ -89,6 +89,7 @@ function usePager(kind: { type: "type"; value: ContentType; genre?: string | nul
         providers.map(async (provider) => {
           try {
             if (kind.type === "type") return { ok: true as const, items: (await provider.getSectionsByType(kind.value, genreOfType)).flatMap((sec) => sec.items) };
+            if (kind.type === "anime") return { ok: true as const, items: (await provider.getAnimeItems?.(genreOfType)) ?? [] };
             return { ok: true as const, items: (await provider.getGenreSection(kind.value))?.items ?? [] };
           } catch {
             return { ok: false as const, items: [] as Content[] };
@@ -115,7 +116,11 @@ function usePager(kind: { type: "type"; value: ContentType; genre?: string | nul
     const gen = s.gen;
     const page = s.page;
     void (async () => {
-      const results = await Promise.all(providers.map((p) => (kind.type === "type" ? p.getMoreItemsByType(kind.value, page, genreOfType) : p.getMoreGenreItems(kind.value, page)).catch(() => [] as Content[])));
+      const results = await Promise.all(
+        providers.map((p) =>
+          (kind.type === "type" ? p.getMoreItemsByType(kind.value, page, genreOfType) : kind.type === "anime" ? p.getMoreAnimeItems?.(page, genreOfType) ?? Promise.resolve([] as Content[]) : p.getMoreGenreItems(kind.value, page)).catch(() => [] as Content[]),
+        ),
+      );
       if (gen !== s.gen) return;
       const fresh = distinctBy(kind.type === "type" ? shuffled(results.flat()) : interleave(results), (c) => c.id).filter((c) => !s.seen.has(c.id));
       if (fresh.length === 0) s.hasMore = false;
@@ -224,6 +229,24 @@ function TypeScreen({ title, type }: { title: string; type: ContentType }) {
   const pager = usePager({ type: "type", value: type, genre });
   const picker = <GenrePicker genres={options} value={genre} onChange={(g) => setParams(g ? { genre: g } : {}, { replace: true })} />;
   return <CatalogPage title={title} pager={pager} headExtra={picker} emptyMessage={genre ? `No ${genre} ${title.toLowerCase()} found right now.` : "Nothing to show here right now."} />;
+}
+/**
+ * The Anime tab: the anime catalogues of every installed addon that has them, in the order the addons rank them (not shuffled), with the genres those
+ * catalogues list. The tab only exists while such an addon is installed, so opening the address without one goes Home.
+ */
+export function AnimeScreen() {
+  const ready = useAddonsReady();
+  const hasAnime = useHasAnime();
+  const providers = useProviders((s) => s.providers);
+  const [params, setParams] = useSearchParams();
+  const requested = params.get("genre");
+  const blockedGenres = useBlockedSet();
+  const options = useMemo(() => [...new Set(providers.flatMap((p) => p.animeGenres?.() ?? []))].filter((g) => !blockedGenres.has(g.toLowerCase())).sort((a, b) => a.localeCompare(b)), [providers, blockedGenres]);
+  const genre = requested && options.includes(requested) ? requested : null;
+  const pager = usePager({ type: "anime", genre });
+  if (ready && !hasAnime) return <Navigate to={routes.home} replace />;
+  const picker = options.length > 0 ? <GenrePicker genres={options} value={genre} onChange={(g) => setParams(g ? { genre: g } : {}, { replace: true })} /> : undefined;
+  return <CatalogPage title="Anime" pager={pager} headExtra={picker} emptyMessage={genre ? `No ${genre} anime found right now.` : "Your anime addons didn't return any titles right now."} />;
 }
 export const MoviesScreen = () => <TypeScreen title="Movies" type="MOVIE" />;
 export const TvShowsScreen = () => <TypeScreen title="TV Shows" type="TV_SHOW" />;

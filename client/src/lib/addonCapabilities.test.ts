@@ -28,6 +28,13 @@ describe("addon capabilities", () => {
     expect(note!.title).toContain("hub");
   });
 
+  it("says the web app shows anime catalogues on its Anime tab", () => {
+    const [anime] = addonNotes(caps({ catalogs: { shown: 0, ignored: 3, ignoredTypes: ["anime"], rows: 0 } }));
+    expect(anime!.title).toContain("Anime tab");
+    const [other] = addonNotes(caps({ catalogs: { shown: 0, ignored: 1, ignoredTypes: ["tv"], rows: 0 } }));
+    expect(other!.title).not.toContain("Anime tab");
+  });
+
   it("reads a single ignored catalogue in the singular", () => {
     expect(addonNotes(caps({ catalogs: { shown: 0, ignored: 1, ignoredTypes: ["tv"], rows: 0 } }))[0]!.text).toBe("1 tv catalogue not shown");
   });

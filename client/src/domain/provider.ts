@@ -40,6 +40,13 @@ export interface CatalogProvider {
   getMoreGenreItems(genre: string, page: number): Promise<Content[]>;
   /** Genres / directors / cast of one title (normalised), for the recommendation engine. Null when the addon has no metadata for it. Never throws. */
   getFeatures?(type: ContentType, id: string): Promise<Features | null>;
+  /** True when the addon has catalogues of type "anime" (Anime tab). Absent on providers that never do. */
+  readonly hasAnime?: boolean;
+  /** The genres its anime catalogues list (read from the manifest, no request). */
+  animeGenres?(): string[];
+  /** The addon's anime titles, optionally one genre; `getMoreAnimeItems` reads the following pages. */
+  getAnimeItems?(genre?: string): Promise<Content[]>;
+  getMoreAnimeItems?(page: number, genre?: string): Promise<Content[]>;
 }
 
 /** Set by Home before it fetches (account + day), so the rows draw the same pages and order all day and a different mix tomorrow. */
@@ -52,6 +59,34 @@ const PAGE_WEIGHTS = [5, 3, 2];
 const NEW_PAGE_WEIGHTS = [6, 4];
 
 const SUPPORTED_CATALOG_TYPES = new Set(["movie", "series"]);
+/** The catalogue type anime addons use. Its titles are shown on the Anime tab, which only exists while an installed addon has such a catalogue. */
+const ANIME_TYPE = "anime";
+/** A catalogue the Anime tab can read: nothing is required of it except (at most) a genre. */
+const isUsableAnimeCatalog = (catalog: AddonCatalogDef) => catalog.type === ANIME_TYPE && catalog.extra.every((extra) => !extra.isRequired || extra.name === "genre");
+const IMDB_ID = /^tt\d+$/;
+/** Id types anime addons use that put only the episode number after the id ("kitsu:7442:3"), not a season and an episode. */
+const EPISODE_ONLY_IDS = /^(kitsu|mal|anilist|anidb):/;
+
+/** Episode video ids learned from title details ("kitsu:7442:3"), by title id then "season:episode": a stream addon is asked for the episode by that id. */
+const episodeVideoIds = new Map<string, Map<string, string>>();
+function rememberEpisodeIds(content: Content): void {
+  if (IMDB_ID.test(content.id)) return;
+  const known = new Map<string, string>();
+  for (const season of content.seasons) for (const episode of season.episodes) if (episode.id) known.set(`${episode.seasonNumber}:${episode.episodeNumber}`, episode.id);
+  if (known.size > 0) episodeVideoIds.set(content.id, known);
+}
+
+/**
+ * The id a stream addon is asked for an episode by. IMDb titles keep "tt:season:episode". Others use the episode's own video id from the
+ * title's details when known (the Stremio rule), else for anime id types "id:episode", else "id:season:episode" as before.
+ */
+export function streamRequestId(id: string, season?: number | null, episode?: number | null): string {
+  if (season == null || episode == null) return id;
+  if (IMDB_ID.test(id)) return `${id}:${season}:${episode}`;
+  const known = episodeVideoIds.get(id)?.get(`${season}:${episode}`);
+  if (known) return known;
+  return EPISODE_ONLY_IDS.test(id) ? `${id}:${episode}` : `${id}:${season}:${episode}`;
+}
 /** Safety ceiling against a pathological addon declaring hundreds of genres (not a curation mechanism). */
 const MAX_GENRE_ROWS = 30;
 /** Stremio's conventional catalog page size — `skip` is an item offset, not a page number. */
@@ -81,6 +116,7 @@ export class StremioAddonProvider implements CatalogProvider {
   readonly id: string;
   readonly name: string;
   private readonly supported: AddonCatalogDef[];
+  private readonly animeCatalogs: AddonCatalogDef[];
 
   constructor(
     private readonly manifestUrl: string,
@@ -89,6 +125,50 @@ export class StremioAddonProvider implements CatalogProvider {
     this.id = manifest.id;
     this.name = manifest.name;
     this.supported = manifest.catalogs.filter((catalog) => SUPPORTED_CATALOG_TYPES.has(catalog.type));
+    this.animeCatalogs = manifest.catalogs.filter(isUsableAnimeCatalog);
+  }
+
+  get hasAnime(): boolean {
+    return this.animeCatalogs.length > 0;
+  }
+
+  animeGenres(): string[] {
+    return this.declaredGenres(this.animeCatalogs);
+  }
+
+  /** The anime catalogues for the Anime tab: the ones that need nothing (the ranked lists) or, for a chosen genre, the ones that list that genre. */
+  private animeCatalogsFor(genre?: string): AddonCatalogDef[] {
+    return genre ? this.animeCatalogs.filter((catalog) => (genreExtra(catalog)?.options ?? []).includes(genre)) : this.animeCatalogs.filter(isBaseCatalog);
+  }
+
+  async getAnimeItems(genre?: string): Promise<Content[]> {
+    const catalogs = this.animeCatalogsFor(genre);
+    const perCatalog = await Promise.all(catalogs.map((catalog) => this.safeCatalog(catalog, genre ? { genre } : {})));
+    return distinctBy(interleave(perCatalog), (c) => c.id);
+  }
+
+  async getMoreAnimeItems(page: number, genre?: string): Promise<Content[]> {
+    const catalogs = this.animeCatalogsFor(genre);
+    return catalogs.length === 0 ? [] : this.fetchPage(catalogs, genre ? { genre } : {}, page);
+  }
+
+  /** Types an addon declares for a resource: the resource's own list when it has one, else the manifest's. */
+  private declaredTypes(resource: "meta" | "stream"): string[] {
+    for (const r of this.manifest.resources) {
+      if (r && typeof r === "object" && (r as { name?: unknown }).name === resource) {
+        const types = (r as { types?: unknown }).types;
+        if (Array.isArray(types)) return types.filter((t): t is string => typeof t === "string");
+      }
+    }
+    return this.manifest.types;
+  }
+
+  /** "series" or "movie" as before; but a show asked of an addon that only declares "anime" for that resource is asked as "anime". */
+  private stremioTypeFor(resource: "meta" | "stream", type: ContentType): string {
+    const base = stremioTypeOf(type);
+    if (type !== "TV_SHOW") return base;
+    const declared = this.declaredTypes(resource);
+    return declared.length > 0 && !declared.includes(base) && declared.includes(ANIME_TYPE) ? ANIME_TYPE : base;
   }
 
   /** Cinemeta's shape: a Popular ("top"), a New ("year", filtered by year) and a Top rated ("imdbRating") ranking, for movies and series. */
@@ -211,7 +291,7 @@ export class StremioAddonProvider implements CatalogProvider {
 
   async getFeatures(type: ContentType, id: string): Promise<Features | null> {
     try {
-      const meta = await fetchMeta(this.manifestUrl, stremioTypeOf(type), id);
+      const meta = await fetchMeta(this.manifestUrl, this.stremioTypeFor("meta", type), id);
       return meta ? featuresFromMeta(meta) : null;
     } catch {
       return null;
@@ -220,8 +300,11 @@ export class StremioAddonProvider implements CatalogProvider {
 
   async getDetails(type: ContentType, id: string): Promise<Content | null> {
     try {
-      const meta = await fetchMeta(this.manifestUrl, stremioTypeOf(type), id);
-      return meta ? metaToContent(meta, this.id) : null;
+      const meta = await fetchMeta(this.manifestUrl, this.stremioTypeFor("meta", type), id);
+      if (!meta) return null;
+      const content = metaToContent(meta, this.id);
+      rememberEpisodeIds(content);
+      return content;
     } catch {
       return null;
     }
@@ -241,9 +324,9 @@ export class StremioAddonProvider implements CatalogProvider {
   async getStreamReport(type: ContentType, id: string, season?: number | null, episode?: number | null): Promise<StreamReport> {
     const addonName = this.name;
     if (!this.offersStreams()) return { addonName, streams: [], lookup: { kind: "unsupported" } };
-    const requestId = season != null && episode != null ? `${id}:${season}:${episode}` : id;
+    const requestId = streamRequestId(id, season, episode);
     try {
-      const streams = uniqueStreamIds((await fetchStreams(this.manifestUrl, stremioTypeOf(type), requestId)).map((stream) => streamToStream(stream, this.id, this.name)));
+      const streams = uniqueStreamIds((await fetchStreams(this.manifestUrl, this.stremioTypeFor("stream", type), requestId)).map((stream) => streamToStream(stream, this.id, this.name)));
       return { addonName, streams, lookup: streams.length > 0 ? { kind: "ok", count: streams.length } : { kind: "none" } };
     } catch (error) {
       if (error instanceof AddonHttpError && error.status === 404) return { addonName, streams: [], lookup: { kind: "none" } }; // "I don't know this id"

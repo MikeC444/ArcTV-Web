@@ -36,10 +36,20 @@ export const NAV_ITEMS = [
   { label: "Settings", to: "/settings" },
 ] as const;
 
+/** The Anime tab, which sits after TV Shows and only exists while an installed addon has anime catalogues. */
+const ANIME_NAV_ITEM = { label: "Anime", to: "/anime" } as const;
+
+/** The nav bar's items: always the six above, with Anime after TV Shows when an installed addon has anime catalogues. */
+export function navItems(hasAnime: boolean): ReadonlyArray<{ readonly label: string; readonly to: string }> {
+  if (!hasAnime) return NAV_ITEMS;
+  return [...NAV_ITEMS.slice(0, 3), ANIME_NAV_ITEM, ...NAV_ITEMS.slice(3)];
+}
+
 export const routes = {
   home: "/",
   movies: "/movies",
   tv: "/tv",
+  anime: "/anime",
   search: "/search",
   admin: "/admin",
   myList: "/my-list",

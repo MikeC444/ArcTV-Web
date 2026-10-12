@@ -10,7 +10,7 @@ import { AppShell } from "./ui/layout/AppShell";
 import { Spinner } from "./ui/components/States";
 import { AddAddonScreen, SettingsScreen } from "./ui/screens/Settings";
 import { AllowGuests, AuthLayout, AuthMethodScreen, AuthStartScreen, PasswordSignInScreen, QrSignInScreen, RequireAuth } from "./ui/screens/Auth";
-import { MoviesScreen, MyListScreen, TvShowsScreen } from "./ui/screens/Browse";
+import { AnimeScreen, MoviesScreen, MyListScreen, TvShowsScreen } from "./ui/screens/Browse";
 import { DebridGuideScreen } from "./ui/screens/DebridGuide";
 import { DetailScreen } from "./ui/screens/Detail";
 import { Home } from "./ui/screens/Home";
@@ -102,6 +102,7 @@ export function App() {
           <Route index element={<Home />} />
           <Route path="movies" element={<MoviesScreen />} />
           <Route path="tv" element={<TvShowsScreen />} />
+          <Route path="anime" element={<AnimeScreen />} />
           <Route path="genres/*" element={<Navigate to="/movies" replace />} />
           <Route path="search" element={<SearchScreen />} />
           <Route path="my-list" element={<RequireAuth><MyListScreen /></RequireAuth>} />

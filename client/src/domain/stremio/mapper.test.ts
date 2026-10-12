@@ -9,7 +9,7 @@ describe("Stremio → Content mapping (port of StremioMapper.kt)", () => {
     expect(c.genres).toEqual([{ id: "drama", name: "Drama" }, { id: "sci-fi", name: "Sci-Fi" }]);
   });
 
-  it("anything that is not 'series' is a movie, and background beats poster for the backdrop", () => {
+  it("anything that is not 'series' or 'anime' is a movie, and background beats poster for the backdrop", () => {
     const c = previewToContent({ id: "x", type: "movie", name: "M", poster: "p", background: "b" }, "a");
     expect(c.type).toBe("MOVIE");
     expect(c.backdropUrl).toBe("b");

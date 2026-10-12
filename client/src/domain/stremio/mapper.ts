@@ -37,7 +37,8 @@ const genresOf = (names: string[] | null | undefined) => (names ?? []).map((name
 export function previewToContent(meta: StremioMetaPreview, providerId: string): Content {
   return {
     id: meta.id,
-    type: meta.type === "series" ? "TV_SHOW" : "MOVIE",
+    // An anime addon's own type ("anime") is a show here: it has episodes, and everything else in the app treats shows that way.
+    type: meta.type === "series" || meta.type === "anime" ? "TV_SHOW" : "MOVIE",
     title: meta.name,
     description: meta.description ?? "",
     posterUrl: meta.poster ?? null,
