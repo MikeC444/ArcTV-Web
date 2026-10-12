@@ -60,6 +60,8 @@ export function PlusPromo({ enabled }: { enabled: boolean }) {
 }
 
 export interface PromoContent {
+  /** The little badge by the logo; "PLUS" when not given. */
+  badge?: string;
   title: string;
   subtitle: string;
   benefits: Array<{ icon: ReactNode; title: string; detail: string }>;
@@ -110,7 +112,7 @@ export function PromoDialog({ onClose, onNever, onGo, content = PLUS_INVITATION 
         </Surface>
         <div className="promo__brand">
           <ArcLogo size={26} />
-          <span className="promo__plus">PLUS</span>
+          <span className="promo__plus">{content.badge ?? "PLUS"}</span>
         </div>
         <h2 id="promo-title" className="promo__title">{content.title}</h2>
         <p className="promo__sub">{content.subtitle}</p>
