@@ -5,6 +5,7 @@ import { episodeRange, groupHistory } from "../../lib/historyGroups";
 import { fetchAdminSummary, platformSplit, windowLabel, fetchAdminUser, fetchAdminUsers, filtersActive, newestVersion, NO_FILTERS, type AdminDevice, type ExternalPlayerEvent, type AdminFilters, type AdminSummary, type AdminUserDetail, type AdminUserRow } from "../../state/admin";
 import { ArcButton } from "../components/Buttons";
 import { webSystemLabel } from "../../lib/webSystems";
+import { DownloadStats } from "../components/DownloadStats";
 import { PlaybackHealth } from "../components/PlaybackHealth";
 import { WebSystems } from "../components/WebSystems";
 import { GrowthChart } from "../components/GrowthChart";
@@ -138,6 +139,8 @@ export function AdminScreen() {
       ) : null}
 
       {summary?.playback ? <PlaybackHealth data={summary.playback} /> : null}
+
+      {summary?.downloads ? <DownloadStats data={summary.downloads} /> : null}
 
       {summary?.externalPlayer ? <ExternalPlayerSection data={summary.externalPlayer} /> : null}
 

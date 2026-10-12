@@ -21,9 +21,9 @@ export interface DownloadTarget {
  * browser downloads it straight from the debrid service (nothing goes through this server). It is a list, not one button, because each
  * link has to be clicked by the person (a download started after waiting for the lookup would be blocked as a pop-up). The order is
  * automatic (see downloadOptions), so there is no sort or filter control. For a show, [seasons] and [onPickEpisode] add a Season and an Episode
- * drop-down above the list, so any episode's files can be found without going back to the page; the owner of the panel updates [target]. [onFileClicked] fires when a file is clicked (the owner marks that episode as downloaded).
+ * drop-down above the list, so any episode's files can be found without going back to the page; the owner of the panel updates [target]. [onFileClicked] fires when a file is clicked, with that file's quality and whether it was cached (the owner marks that episode as downloaded and counts it for the developer panel).
  */
-export function DownloadPanel({ target, title, subtitle, backdropUrl, logoUrl, seasons, onPickEpisode, onFileClicked, onClose, load = findDownloadOptions }: { target: DownloadTarget; title: string; subtitle?: string; backdropUrl?: string | null; logoUrl?: string | null; seasons?: Season[]; onPickEpisode?: (episode: Episode) => void; onFileClicked?: () => void; onClose: () => void; load?: typeof findDownloadOptions }) {
+export function DownloadPanel({ target, title, subtitle, backdropUrl, logoUrl, seasons, onPickEpisode, onFileClicked, onClose, load = findDownloadOptions }: { target: DownloadTarget; title: string; subtitle?: string; backdropUrl?: string | null; logoUrl?: string | null; seasons?: Season[]; onPickEpisode?: (episode: Episode) => void; onFileClicked?: (file: { resolution: string; cached: boolean | null }) => void; onClose: () => void; load?: typeof findDownloadOptions }) {
   const [options, setOptions] = useState<DownloadOption[] | null>(null);
   const [logoFailed, setLogoFailed] = useState(false);
   const first = useRef<HTMLAnchorElement>(null);
@@ -132,7 +132,7 @@ export function DownloadPanel({ target, title, subtitle, backdropUrl, logoUrl, s
                       key={o.stream.id}
                       ref={i === 0 ? first : undefined}
                       className="dlrow"
-                      onClick={onFileClicked}
+                      onClick={() => onFileClicked?.({ resolution: o.stream.qualityBadge, cached: o.stream.debrid ? o.stream.debrid.cached : null })}
                       href={o.download.url}
                       download={o.download.filename}
                       target="_blank"

@@ -1,3 +1,4 @@
+import type { DownloadSummary } from "../lib/downloadStats";
 import type { PlaybackSummary } from "../lib/playbackHealth";
 import type { WebSystem } from "../lib/webSystems";
 import { api } from "../lib/api";
@@ -47,6 +48,8 @@ export interface AdminSummary {
   webSystems?: WebSystem[];
   /** How viewings of the last 7 days ended. Absent from a backend that predates it, and then the card is left out. */
   playback?: PlaybackSummary;
+  /** Web Download use in the last 7 days. Absent from a backend that predates it, and then the card is left out. */
+  downloads?: DownloadSummary;
 }
 export interface ExternalPlayerEvent {
   title: string | null;

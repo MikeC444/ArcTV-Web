@@ -9,6 +9,7 @@ import { CINEMETA_PROVIDER_ID, idFromSlug, routes } from "../../lib/routes";
 import { useAuth } from "../../state/auth";
 import { useContinueWatching } from "../../state/continueWatching";
 import { useDetail } from "../../state/detailData";
+import { reportDownloadEvent } from "../../state/downloadEvents";
 import { useEpisodeStatuses } from "../../state/episodeHistory";
 import { useAccountAction, useWatchedIds } from "../../state/hooks";
 import { findLastStreamId } from "../../state/lastSource";
@@ -92,9 +93,11 @@ function DetailContent({ content, similar, providerId, trailer, releaseDate }: {
   const downloadEpisode = pickedEpisode ?? firstEpisode;
   const openDownload = useAccountAction((episode: Episode | null) => {
     if (!canDownload) {
+      reportDownloadEvent({ kind: "popup", contentType: content.type, episode: content.type === "TV_SHOW" });
       setPlusPopup(true);
       return;
     }
+    reportDownloadEvent({ kind: "opened", contentType: content.type, episode: content.type === "TV_SHOW" });
     setPickedEpisode(episode);
     setDownloading(true);
   });
@@ -196,7 +199,7 @@ function DetailContent({ content, similar, providerId, trailer, releaseDate }: {
           logoUrl={content.logoUrl}
           seasons={content.type === "TV_SHOW" ? content.seasons : undefined}
           onPickEpisode={content.type === "TV_SHOW" ? setPickedEpisode : undefined}
-          onFileClicked={() => { if (downloadEpisode) setDownloaded((prev) => new Set(prev).add(episodeKey(downloadEpisode.seasonNumber, downloadEpisode.episodeNumber))); }}
+          onFileClicked={(file) => { reportDownloadEvent({ kind: "file", contentType: content.type, episode: content.type === "TV_SHOW", resolution: file.resolution, cached: file.cached }); if (downloadEpisode) setDownloaded((prev) => new Set(prev).add(episodeKey(downloadEpisode.seasonNumber, downloadEpisode.episodeNumber))); }}
           onClose={() => { setDownloading(false); setPickedEpisode(null); }}
         />
       ) : null}
