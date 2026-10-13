@@ -9,6 +9,7 @@ import { setLiveLineup } from "../../state/liveLineup";
 import { useAddonsReady, useHasLiveTv } from "../../state/hooks";
 import { Pill } from "../components/Buttons";
 import { EmptyState, Spinner } from "../components/States";
+import { LiveGuide } from "./LiveGuide";
 
 const SEARCH_DELAY_MS = 350;
 /** A page that adds fewer new channels than this is taken to be the last one. */
@@ -30,6 +31,7 @@ export function LiveTvScreen() {
   const liveProviders = useMemo(() => providers.filter((p) => p.hasLiveTv === true), [providers]);
   const [params, setParams] = useSearchParams();
   const requestedGenre = params.get("genre");
+  const guideView = params.get("view") === "guide";
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [providerFilter, setProviderFilter] = useState("");
   const [typed, setTyped] = useState("");
@@ -95,7 +97,10 @@ export function LiveTvScreen() {
     };
   }, [ready, sources.length, fetchPage, query]);
 
-  useEffect(() => setLiveLineup(channels), [channels]);
+  // (the guide takes this over while it is showing, so the player's next / previous follow the rows there)
+  useEffect(() => {
+    if (!guideView) setLiveLineup(channels);
+  }, [channels, guideView]);
 
   const loadMore = useCallback(() => {
     if (!hasMore || status !== "loaded") return;
@@ -125,7 +130,8 @@ export function LiveTvScreen() {
 
   if (ready && !hasLive) return <Navigate to={routes.home} replace />;
 
-  const setGenre = (g: string | null) => setParams(g ? { genre: g } : {}, { replace: true });
+  const setGenre = (g: string | null) => setParams((current) => { const next = new URLSearchParams(current); if (g) next.set("genre", g); else next.delete("genre"); return next; }, { replace: true });
+  const setView = (guide: boolean) => setParams((current) => { const next = new URLSearchParams(current); if (guide) next.set("view", "guide"); else next.delete("view"); return next; }, { replace: true });
   const showSource = liveProviders.length > 1;
 
   return (
@@ -138,6 +144,10 @@ export function LiveTvScreen() {
         </label>
       </div>
       <div className="page__filters live__filters">
+        <div className="live__chips live__views" role="group" aria-label="How to show the channels">
+          <Pill label="Channels" selected={!guideView} onClick={() => setView(false)} />
+          <Pill label="TV Guide" selected={guideView} onClick={() => setView(true)} />
+        </div>
         {types.length > 1 ? (
           <div className="live__chips" role="group" aria-label="Channels or events">
             <Pill label="All" selected={typeFilter === "all"} onClick={() => setTypeFilter("all")} />
@@ -168,6 +178,9 @@ export function LiveTvScreen() {
           message={query ? `Nothing for “${query}”. Try a different name.` : genre ? `No ${genre} channels came back. Try another category.` : "Your TV addons didn't return any channels right now."}
         />
       ) : (
+        guideView ? (
+          <LiveGuide channels={channels} onNeedMore={hasMore ? loadMore : undefined} />
+        ) : (
         <>
           <ul className="live__grid" role="list">
             {channels.map((c) => (
@@ -187,6 +200,7 @@ export function LiveTvScreen() {
           <div ref={sentinel} style={{ height: 1 }} aria-hidden="true" />
           <div style={{ height: "calc(48 * var(--dp))" }} />
         </>
+        )
       )}
     </div>
   );

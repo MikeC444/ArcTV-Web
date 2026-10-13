@@ -4,8 +4,10 @@ import { fileURLToPath } from "node:url";
 import express, { type ErrorRequestHandler, type Express, type NextFunction, type Request, type Response } from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
+import { z } from "zod";
 import { addonProxyHandler, createAddonFetcher } from "./addonProxy.js";
 import { createBackendClient, type BackendFetch } from "./backend.js";
+import { createEpgService, EPG_SOURCES, type EpgService } from "./epg/epgService.js";
 import type { AppConfig } from "./config.js";
 import type { AppContext } from "./context.js";
 import { ApiError, sendError } from "./errors.js";
@@ -57,6 +59,8 @@ function findStaticDir(config: AppConfig): string | undefined {
 
 export interface CreateAppOptions {
   backend?: BackendFetch;
+  /** The TV-guide listings; tests pass one that reads from memory instead of the internet. */
+  epg?: EpgService;
 }
 
 export function createApp(config: AppConfig, options: CreateAppOptions = {}): Express {
@@ -170,6 +174,34 @@ export function createApp(config: AppConfig, options: CreateAppOptions = {}): Ex
     } catch {
       res.removeHeader("Cache-Control");
       res.json({ cast: [] }); // a failed lookup just means no photos this time
+    }
+  });
+
+  // TV guide for the Live TV tab: public XMLTV listings per country, matched to the addon's channel names (see epg/epgService.ts).
+  const epg = options.epg ?? createEpgService();
+  api.get("/epg/sources", perClient(120), (_req, res) => {
+    res.setHeader("Cache-Control", "public, max-age=3600");
+    res.json({ sources: EPG_SOURCES });
+  });
+  const guideBody = z.object({
+    source: z.string().regex(/^[A-Z0-9_]{2,16}$/),
+    channels: z.array(z.object({ key: z.string().min(1).max(300), name: z.string().min(1).max(200) })).min(1).max(300),
+    from: z.number().int().optional(),
+    to: z.number().int().optional(),
+  });
+  api.post("/epg/guide", perClient(60), async (req, res, next) => {
+    try {
+      if (!ctx.sessions.read(req)) throw new ApiError(401, "unauthorized", "Sign in to continue.");
+      const parsed = guideBody.safeParse(req.body);
+      if (!parsed.success || !EPG_SOURCES.some((s) => s.id === parsed.data.source)) throw new ApiError(400, "bad_request", "That guide request isn't valid.");
+      res.removeHeader("Cache-Control");
+      try {
+        res.json(await epg.guide(parsed.data.source, parsed.data.channels, parsed.data.from, parsed.data.to));
+      } catch {
+        throw new ApiError(502, "upstream_error", "The TV guide couldn't be loaded right now. Try again in a little while.");
+      }
+    } catch (error) {
+      next(error);
     }
   });
 

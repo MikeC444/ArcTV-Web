@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import request from "supertest";
-import { createApp } from "../../src/app.js";
+import { createApp, type CreateAppOptions } from "../../src/app.js";
 import type { AppConfig } from "../../src/config.js";
 import type { BackendFetch } from "../../src/backend.js";
 
@@ -20,8 +20,8 @@ export function testConfig(overrides: Partial<AppConfig> = {}): AppConfig {
   };
 }
 
-export function appWith(backend: BackendFetch, overrides: Partial<AppConfig> = {}): Express {
-  return createApp(testConfig(overrides), { backend });
+export function appWith(backend: BackendFetch, overrides: Partial<AppConfig> = {}, options: Omit<CreateAppOptions, "backend"> = {}): Express {
+  return createApp(testConfig(overrides), { backend, ...options });
 }
 
 /** A supertest agent that automatically sends the CSRF header on mutations. */
