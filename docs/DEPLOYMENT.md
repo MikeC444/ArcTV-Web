@@ -37,7 +37,7 @@ You do **not** need the database URL, and the web service must never be given it
 
 The server refuses to start in production without a valid `SESSION_SECRET` and an `https://` API URL.
 
-**TV guide (Live TV tab).** Needs no setting, but the server must be allowed to reach `https://epgshare01.online` (outbound HTTPS). It downloads a country's public XMLTV listings (a few MB, gzip) the first time someone opens the guide for that country, keeps a trimmed copy in memory (about 40 MB for a big country) for three hours, and serves yesterday's copy for up to a day if the host is down. At most four countries are kept at once. The server only ever fetches the fixed list of addresses in `server/src/epg/epgService.ts`; a visitor picks a country, never a web address. If the host is blocked or gone, the guide shows "couldn't be loaded" and the rest of Live TV keeps working.
+**TV guide (Live TV tab).** Switched off in the web app for now (`FEATURES.liveTv` in `client/src/lib/features.ts`), so nothing asks the server for it; the notes below apply once it is switched on. Needs no setting, but the server must be allowed to reach `https://epgshare01.online` (outbound HTTPS). It downloads a country's public XMLTV listings (a few MB, gzip) the first time someone opens the guide for that country, keeps a trimmed copy in memory (about 40 MB for a big country) for three hours, and serves yesterday's copy for up to a day if the host is down. At most four countries are kept at once. The server only ever fetches the fixed list of addresses in `server/src/epg/epgService.ts`; a visitor picks a country, never a web address. If the host is blocked or gone, the guide shows "couldn't be loaded" and the rest of Live TV keeps working.
 
 ## 3. Build and run
 

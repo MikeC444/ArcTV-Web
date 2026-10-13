@@ -4,6 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { LiveChannel } from "../../domain/live";
 import type { CatalogProvider } from "../../domain/provider";
 import { useProviders } from "../../domain/registry";
+import { FEATURES } from "../../lib/features";
+import { useHasLiveTv } from "../../state/hooks";
 import { resetLiveLineup } from "../../state/liveLineup";
 import { useAddons } from "../../state/addons";
 import { LiveTvScreen } from "./LiveTv";
@@ -38,11 +40,13 @@ const renderAt = (path = "/live") =>
   );
 
 beforeEach(() => {
+  FEATURES.liveTv = true; // the tab is switched off in the app for now; these tests are about the screen itself
   vi.stubGlobal("IntersectionObserver", FakeObserver);
   useAddons.setState({ ready: true } as never);
   resetLiveLineup();
 });
 afterEach(() => {
+  FEATURES.liveTv = false;
   cleanup();
   vi.unstubAllGlobals();
   useProviders.setState({ providers: [] });
@@ -100,5 +104,30 @@ describe("LiveTvScreen", () => {
     useProviders.setState({ providers: [{ id: "c", name: "Cinemeta" } as unknown as CatalogProvider] });
     await act(async () => void renderAt());
     expect(await screen.findByText("home")).toBeInTheDocument();
+  });
+});
+
+function HasLive() {
+  return <p>{useHasLiveTv() ? "tab shown" : "tab hidden"}</p>;
+}
+
+describe("the Live TV feature switch", () => {
+  it("shows the tab when an addon has live catalogues and the feature is on", () => {
+    useProviders.setState({ providers: [fakeProvider("tv1", "TV One", [channel("c1", "News One")])] });
+    render(<HasLive />);
+    expect(screen.getByText("tab shown")).toBeInTheDocument();
+  });
+  it("hides the tab while the feature is off, whatever addons are installed, and the screen sends people Home", async () => {
+    FEATURES.liveTv = false;
+    useProviders.setState({ providers: [fakeProvider("tv1", "TV One", [channel("c1", "News One")])] });
+    render(<HasLive />);
+    expect(screen.getByText("tab hidden")).toBeInTheDocument();
+    cleanup();
+    await act(async () => void renderAt());
+    expect(await screen.findByText("home")).toBeInTheDocument();
+  });
+  it("is off in the app as shipped (a fresh copy of the switch, untouched by these tests)", async () => {
+    vi.resetModules();
+    expect((await import("../../lib/features")).FEATURES.liveTv).toBe(false);
   });
 });

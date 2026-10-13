@@ -4,6 +4,7 @@ import { useProviders } from "../domain/registry";
 import { routes } from "../lib/routes";
 import type { Content, HomeSection } from "../domain/types";
 import { useAddons } from "./addons";
+import { FEATURES } from "../lib/features";
 import { useAuth } from "./auth";
 import { useMyList } from "./myList";
 
@@ -45,5 +46,8 @@ export function useAccountAction<A extends unknown[]>(action: (...args: A) => vo
 /** True while an installed addon has anime catalogues: the Anime tab shows only then. */
 export const useHasAnime = (): boolean => useProviders((s) => s.providers.some((p) => p.hasAnime === true));
 
-/** True while an installed addon has channel or event catalogues: the Live TV tab shows only then. */
-export const useHasLiveTv = (): boolean => useProviders((s) => s.providers.some((p) => p.hasLiveTv === true));
+/** True while an installed addon has channel or event catalogues: the Live TV tab shows only then, and never while the feature is switched off (lib/features.ts). */
+export function useHasLiveTv(): boolean {
+  const addonHasLive = useProviders((s) => s.providers.some((p) => p.hasLiveTv === true));
+  return FEATURES.liveTv && addonHasLive;
+}

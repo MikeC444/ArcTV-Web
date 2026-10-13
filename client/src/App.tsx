@@ -11,6 +11,7 @@ import { Spinner } from "./ui/components/States";
 import { AddAddonScreen, SettingsScreen } from "./ui/screens/Settings";
 import { AllowGuests, AuthLayout, AuthMethodScreen, AuthStartScreen, PasswordSignInScreen, QrSignInScreen, RequireAuth } from "./ui/screens/Auth";
 import { AnimeScreen, MoviesScreen, MyListScreen, TvShowsScreen } from "./ui/screens/Browse";
+import { FEATURES } from "./lib/features";
 import { LiveTvScreen } from "./ui/screens/LiveTv";
 import { DebridGuideScreen } from "./ui/screens/DebridGuide";
 import { DetailScreen } from "./ui/screens/Detail";
@@ -105,7 +106,7 @@ export function App() {
           <Route path="movies" element={<MoviesScreen />} />
           <Route path="tv" element={<TvShowsScreen />} />
           <Route path="anime" element={<AnimeScreen />} />
-          <Route path="live" element={<RequireAdult><LiveTvScreen /></RequireAdult>} />
+          {FEATURES.liveTv ? <Route path="live" element={<RequireAdult><LiveTvScreen /></RequireAdult>} /> : null}
           <Route path="genres/*" element={<Navigate to="/movies" replace />} />
           <Route path="search" element={<SearchScreen />} />
           <Route path="my-list" element={<RequireAuth><MyListScreen /></RequireAuth>} />
@@ -121,18 +122,20 @@ export function App() {
           <Route path="sources/:providerId/:type/:id/:season/:episode" element={<RequireAuth><SourcesScreen /></RequireAuth>} />
           <Route path="*" element={<NotFound />} />
         </Route>
-        <Route
-          path="/live/watch/:providerId/:type/:id"
-          element={
-            <RequireAuth>
-              <RequireAdult>
-                <Suspense fallback={<div className="gate"><Spinner /></div>}>
-                  <LivePlayerScreen />
-                </Suspense>
-              </RequireAdult>
-            </RequireAuth>
-          }
-        />
+        {FEATURES.liveTv ? (
+          <Route
+            path="/live/watch/:providerId/:type/:id"
+            element={
+              <RequireAuth>
+                <RequireAdult>
+                  <Suspense fallback={<div className="gate"><Spinner /></div>}>
+                    <LivePlayerScreen />
+                  </Suspense>
+                </RequireAdult>
+              </RequireAuth>
+            }
+          />
+        ) : null}
         <Route
           path="/player/:providerId/:type/:id/:season/:episode/:streamId"
           element={
