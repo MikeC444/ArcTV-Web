@@ -77,6 +77,9 @@
 .dd-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .dd-input { min-width: 0; height: 38px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--d-line); background: var(--surface); color: var(--text); font: inherit; font-size: 14px; }
 .dd-scroll { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 14px; padding-bottom: 12px; }
+/* Cards keep their full height and the view scrolls; without this a tall card is squeezed to the window and clipped. */
+.dd-scroll > * { flex-shrink: 0; }
+.dd-colstack > * { flex-shrink: 0; }
 .dd-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
 .dd-cols > .dd-wide { grid-column: 1 / -1; }
 .dd-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 14px; align-items: start; }
