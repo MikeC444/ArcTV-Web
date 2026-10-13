@@ -44,3 +44,6 @@ export function useAccountAction<A extends unknown[]>(action: (...args: A) => vo
 
 /** True while an installed addon has anime catalogues: the Anime tab shows only then. */
 export const useHasAnime = (): boolean => useProviders((s) => s.providers.some((p) => p.hasAnime === true));
+
+/** True while an installed addon has channel or event catalogues: the Live TV tab shows only then. */
+export const useHasLiveTv = (): boolean => useProviders((s) => s.providers.some((p) => p.hasLiveTv === true));

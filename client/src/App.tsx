@@ -11,6 +11,7 @@ import { Spinner } from "./ui/components/States";
 import { AddAddonScreen, SettingsScreen } from "./ui/screens/Settings";
 import { AllowGuests, AuthLayout, AuthMethodScreen, AuthStartScreen, PasswordSignInScreen, QrSignInScreen, RequireAuth } from "./ui/screens/Auth";
 import { AnimeScreen, MoviesScreen, MyListScreen, TvShowsScreen } from "./ui/screens/Browse";
+import { LiveTvScreen } from "./ui/screens/LiveTv";
 import { DebridGuideScreen } from "./ui/screens/DebridGuide";
 import { DetailScreen } from "./ui/screens/Detail";
 import { Home } from "./ui/screens/Home";
@@ -19,6 +20,7 @@ import { SearchScreen } from "./ui/screens/Search";
 import { SourcesScreen } from "./ui/screens/Sources";
 
 // The player pulls in hls.js / dash.js — only load them when someone actually presses Play.
+const LivePlayerScreen = lazy(() => import("./ui/screens/LivePlayer").then((m) => ({ default: m.LivePlayerScreen })));
 const AdminScreen = lazy(() => import("./ui/screens/Admin").then((m) => ({ default: m.AdminScreen })));
 const PlayerScreen = lazy(() => import("./ui/screens/Player").then((m) => ({ default: m.PlayerScreen })));
 
@@ -103,6 +105,7 @@ export function App() {
           <Route path="movies" element={<MoviesScreen />} />
           <Route path="tv" element={<TvShowsScreen />} />
           <Route path="anime" element={<AnimeScreen />} />
+          <Route path="live" element={<RequireAdult><LiveTvScreen /></RequireAdult>} />
           <Route path="genres/*" element={<Navigate to="/movies" replace />} />
           <Route path="search" element={<SearchScreen />} />
           <Route path="my-list" element={<RequireAuth><MyListScreen /></RequireAuth>} />
@@ -118,6 +121,18 @@ export function App() {
           <Route path="sources/:providerId/:type/:id/:season/:episode" element={<RequireAuth><SourcesScreen /></RequireAuth>} />
           <Route path="*" element={<NotFound />} />
         </Route>
+        <Route
+          path="/live/watch/:providerId/:type/:id"
+          element={
+            <RequireAuth>
+              <RequireAdult>
+                <Suspense fallback={<div className="gate"><Spinner /></div>}>
+                  <LivePlayerScreen />
+                </Suspense>
+              </RequireAdult>
+            </RequireAuth>
+          }
+        />
         <Route
           path="/player/:providerId/:type/:id/:season/:episode/:streamId"
           element={

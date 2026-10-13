@@ -1,4 +1,5 @@
 import { distinctBy } from "../../lib/format";
+import type { LiveChannel, LiveType } from "../live";
 import type { CastMember, Content, Episode, ResolutionTier, Season, SourceHealth, Stream } from "../types";
 import type { StremioMeta, StremioMetaPreview, StremioStream, StremioVideo } from "./models";
 
@@ -192,3 +193,19 @@ export function streamToStream(stream: StremioStream, providerId: string, provid
 }
 
 export const uniqueById = <T extends { id: string }>(items: T[]): T[] => distinctBy(items, (item) => item.id);
+
+/** A channel or live event from a TV addon's catalogue. The picture is the logo when there is one, else the poster. */
+export function previewToChannel(meta: StremioMetaPreview, type: LiveType, providerId: string, providerName: string): LiveChannel {
+  const shape = meta.posterShape === "landscape" || meta.posterShape === "poster" ? meta.posterShape : "square";
+  return {
+    id: meta.id,
+    name: meta.name,
+    type,
+    logoUrl: meta.logo ?? meta.poster ?? meta.background ?? null,
+    shape,
+    description: meta.description ?? "",
+    genres: (meta.genres ?? []).filter((g) => typeof g === "string" && g.trim() !== ""),
+    providerId,
+    providerName,
+  };
+}

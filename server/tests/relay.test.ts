@@ -52,6 +52,12 @@ beforeAll(async () => {
         }
         res.writeHead(200, { "Content-Type": "video/mp4", "Content-Length": MOVIE.length, "Accept-Ranges": "bytes", "Set-Cookie": "tracker=1", "Content-Disposition": 'attachment; filename="x.mp4"' });
         return res.end(MOVIE);
+      case "/live/index.m3u8":
+        res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" }); // some live hosts send their playlists as plain text
+        return res.end("#EXTM3U\n#EXT-X-VERSION:3\n");
+      case "/notes.txt":
+        res.writeHead(200, { "Content-Type": "text/plain" });
+        return res.end("just words");
       case "/untyped":
         res.writeHead(200); // no content type at all
         return res.end(MOVIE);
@@ -235,6 +241,14 @@ describe("stream relay", () => {
     const untyped = await client.get(relayUrl(`${base}/untyped`));
     expect(untyped.status).toBe(200);
     expect(untyped.headers["content-type"]).toBe("application/octet-stream");
+  });
+
+  it("relays a playlist a live host serves as plain text, under its real type, but not other plain text", async () => {
+    const { client } = await signedIn();
+    const playlist = await client.get(relayUrl(`${base}/live/index.m3u8`));
+    expect(playlist.status).toBe(200);
+    expect(playlist.headers["content-type"]).toBe("application/vnd.apple.mpegurl");
+    expect((await client.get(relayUrl(`${base}/notes.txt`))).status).toBe(502);
   });
 
   it("turns upstream failures into a clear 502, and passes 416 through", async () => {

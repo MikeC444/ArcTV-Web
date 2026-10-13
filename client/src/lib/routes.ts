@@ -39,10 +39,13 @@ export const NAV_ITEMS = [
 /** The Anime tab, which sits after TV Shows and only exists while an installed addon has anime catalogues. */
 const ANIME_NAV_ITEM = { label: "Anime", to: "/anime" } as const;
 
-/** The nav bar's items: always the six above, with Anime after TV Shows when an installed addon has anime catalogues. */
-export function navItems(hasAnime: boolean): ReadonlyArray<{ readonly label: string; readonly to: string }> {
-  if (!hasAnime) return NAV_ITEMS;
-  return [...NAV_ITEMS.slice(0, 3), ANIME_NAV_ITEM, ...NAV_ITEMS.slice(3)];
+/** The Live TV tab, after Anime (or TV Shows): it only exists while an installed addon has channel or event catalogues. */
+const LIVE_NAV_ITEM = { label: "Live TV", to: "/live" } as const;
+
+/** The nav bar's items: always the six above, with Anime and Live TV after TV Shows when an installed addon has those catalogues. */
+export function navItems(hasAnime: boolean, hasLiveTv = false): ReadonlyArray<{ readonly label: string; readonly to: string }> {
+  if (!hasAnime && !hasLiveTv) return NAV_ITEMS;
+  return [...NAV_ITEMS.slice(0, 3), ...(hasAnime ? [ANIME_NAV_ITEM] : []), ...(hasLiveTv ? [LIVE_NAV_ITEM] : []), ...NAV_ITEMS.slice(3)];
 }
 
 export const routes = {
@@ -50,6 +53,9 @@ export const routes = {
   movies: "/movies",
   tv: "/tv",
   anime: "/anime",
+  live: "/live",
+  /** Watching one channel (or event). Full screen, like the player. The addon's own type ("tv" / "events") says what to ask it for. */
+  liveChannel: (providerId: string, type: string, id: string) => `/live/watch/${enc(providerId)}/${enc(type)}/${enc(id)}`,
   search: "/search",
   admin: "/admin",
   myList: "/my-list",

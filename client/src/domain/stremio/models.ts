@@ -4,6 +4,8 @@ export interface StremioMetaPreview {
   type: string;
   name: string;
   poster?: string | null;
+  /** "square", "landscape" or "poster"; TV addons usually send "square" logos. */
+  posterShape?: string | null;
   background?: string | null;
   logo?: string | null;
   description?: string | null;

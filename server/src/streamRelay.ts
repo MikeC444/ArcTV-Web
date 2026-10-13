@@ -118,8 +118,10 @@ export function parseRelayPath(originalUrl: string, options: { allowPrivateHosts
 function mediaTypeOf(contentType: string | undefined, url: URL): string | null {
   const declared = (contentType ?? "").split(";")[0]!.trim().toLowerCase();
   if (declared && (MEDIA_TYPE.test(declared) || MEDIA_TYPES.has(declared))) return declared;
-  if (declared) return null; // text/html, application/json … are not media
   const ext = /\.([a-z0-9]{2,4})$/i.exec(url.pathname)?.[1]?.toLowerCase();
+  // Some live-TV hosts serve their HLS playlists as plain text: a plain-text answer for a playlist or stream part is relayed under its real type.
+  if (declared === "text/plain") return ext && ["m3u8", "mpd", "vtt", "ts", "m4s"].includes(ext) ? EXTENSION_TYPES[ext]! : null;
+  if (declared) return null; // text/html, application/json … are not media
   return (ext && EXTENSION_TYPES[ext]) || "application/octet-stream";
 }
 
@@ -259,7 +261,9 @@ export function createStreamRelay(config: Pick<AppConfig, "allowPrivateAddonHost
       }
 
       res.status(status);
-      res.setHeader("Content-Type", override ? contentType : (header(upstream.headers["content-type"]) ?? contentType));
+      const upstreamType = header(upstream.headers["content-type"]);
+      // the type we decided on when the host said plain text for a playlist; otherwise the host's own (unless the addon overrode it)
+      res.setHeader("Content-Type", override || /^text\/plain/i.test(upstreamType ?? "") ? contentType : (upstreamType ?? contentType));
       for (const name of ["content-length", "content-range", "last-modified", "etag"] as const) {
         const value = header(upstream.headers[name]);
         if (value) res.setHeader(name, value);

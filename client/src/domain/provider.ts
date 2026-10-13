@@ -2,7 +2,8 @@ import { homeGenresFor, pickPage, varyOrder } from "./homeVariety";
 import { featuresFromMeta, type Features } from "./recommend/features";
 import { distinctBy, interleave } from "../lib/format";
 import { AddonHttpError, describeAddonError, fetchCatalog, fetchMeta, fetchStreams } from "./stremio/client";
-import { metaToContent, previewToContent, streamToStream } from "./stremio/mapper";
+import { isLiveType, type LiveChannel, type LiveType } from "./live";
+import { metaToContent, previewToChannel, previewToContent, streamToStream } from "./stremio/mapper";
 import type { AddonCatalogDef, AddonManifest, Content, ContentType, HomeSection, Stream } from "./types";
 
 /**
@@ -50,6 +51,20 @@ export interface CatalogProvider {
   /** True when the addon can be searched for anime (it has anime catalogues): Search then adds an anime-only line. */
   readonly hasAnimeSearch?: boolean;
   searchAnime?(query: string, onPartial?: (items: Content[]) => void): Promise<Content[]>;
+  /** True when the addon has catalogues of type "tv" or "events" (Live TV tab). Absent on providers that never do. */
+  readonly hasLiveTv?: boolean;
+  /** The categories its live catalogues list (read from the manifest, no request). */
+  liveGenres?(): string[];
+  /** Which of "tv" / "events" its live catalogues cover (read from the manifest, no request). */
+  liveTypes?(): LiveType[];
+  /** The addon's channels (or events), optionally one category and one of the two types; `page` 0 is the first. */
+  getLiveChannels?(options?: { genre?: string; type?: LiveType; page?: number }): Promise<LiveChannel[]>;
+  /** Channels matching a search, from the live catalogues that can be searched; never throws. */
+  searchLiveChannels?(query: string): Promise<LiveChannel[]>;
+  /** A channel's name and picture from the addon, for when it is opened by address (not from the list); null when the addon doesn't know it. Never throws. */
+  getLiveChannel?(channel: Pick<LiveChannel, "id" | "type">): Promise<LiveChannel | null>;
+  /** What the addon offers to play for one channel; never throws. */
+  getLiveStreamReport?(channel: Pick<LiveChannel, "id" | "type">): Promise<StreamReport>;
 }
 
 /** Set by Home before it fetches (account + day), so the rows draw the same pages and order all day and a different mix tomorrow. */
@@ -68,6 +83,10 @@ const ANIME_TYPE = "anime";
 const isUsableAnimeCatalog = (catalog: AddonCatalogDef) => catalog.type === ANIME_TYPE && catalog.extra.every((extra) => !extra.isRequired || extra.name === "genre");
 /** An anime catalogue that can be searched: it takes a "search" and asks for nothing else (a genre or paging is optional). */
 const isSearchableAnimeCatalog = (catalog: AddonCatalogDef) => catalog.type === ANIME_TYPE && catalog.extra.some((e) => e.name === "search") && catalog.extra.every((e) => !e.isRequired || e.name === "search");
+/** A live catalogue the Live TV tab can read: channels or events that ask for nothing but (at most) a category. */
+const isUsableLiveCatalog = (catalog: AddonCatalogDef) => isLiveType(catalog.type) && catalog.extra.every((extra) => !extra.isRequired || extra.name === "genre");
+/** A live catalogue that can be searched: it takes a "search" and asks for nothing else. */
+const isSearchableLiveCatalog = (catalog: AddonCatalogDef) => isLiveType(catalog.type) && catalog.extra.some((e) => e.name === "search") && catalog.extra.every((e) => !e.isRequired || e.name === "search");
 const IMDB_ID = /^tt\d+$/;
 /** Id types anime addons use that put only the episode number after the id ("kitsu:7442:3"), not a season and an episode. */
 const EPISODE_ONLY_IDS = /^(kitsu|mal|anilist|anidb):/;
@@ -123,6 +142,8 @@ export class StremioAddonProvider implements CatalogProvider {
   private readonly supported: AddonCatalogDef[];
   private readonly animeCatalogs: AddonCatalogDef[];
   private readonly animeSearchCatalogs: AddonCatalogDef[];
+  private readonly liveCatalogs: AddonCatalogDef[];
+  private readonly liveSearchCatalogs: AddonCatalogDef[];
 
   constructor(
     private readonly manifestUrl: string,
@@ -133,6 +154,8 @@ export class StremioAddonProvider implements CatalogProvider {
     this.supported = manifest.catalogs.filter((catalog) => SUPPORTED_CATALOG_TYPES.has(catalog.type));
     this.animeCatalogs = manifest.catalogs.filter(isUsableAnimeCatalog);
     this.animeSearchCatalogs = manifest.catalogs.filter(isSearchableAnimeCatalog);
+    this.liveCatalogs = manifest.catalogs.filter(isUsableLiveCatalog);
+    this.liveSearchCatalogs = manifest.catalogs.filter(isSearchableLiveCatalog);
   }
 
   get hasAnimeSearch(): boolean {
@@ -180,6 +203,76 @@ export class StremioAddonProvider implements CatalogProvider {
   async getMoreAnimeItems(page: number, genre?: string): Promise<Content[]> {
     const catalogs = this.animeCatalogsFor(genre);
     return catalogs.length === 0 ? [] : this.fetchPage(catalogs, genre ? { genre } : {}, page);
+  }
+
+  get hasLiveTv(): boolean {
+    return this.liveCatalogs.length > 0 || this.liveSearchCatalogs.length > 0;
+  }
+
+  liveGenres(): string[] {
+    return this.declaredGenres(this.liveCatalogs);
+  }
+
+  liveTypes(): LiveType[] {
+    return [...new Set([...this.liveCatalogs, ...this.liveSearchCatalogs].map((c) => c.type).filter(isLiveType))];
+  }
+
+  /** The live catalogues to read: the ranked / all-channels ones, or for a chosen category the ones that list it; optionally only channels or only events. */
+  private liveCatalogsFor(genre: string | undefined, type: LiveType | undefined): AddonCatalogDef[] {
+    const byType = this.liveCatalogs.filter((catalog) => !type || catalog.type === type);
+    return genre ? byType.filter((catalog) => (genreExtra(catalog)?.options ?? []).includes(genre)) : byType.filter(isBaseCatalog);
+  }
+
+  private async safeLiveCatalog(catalog: AddonCatalogDef, extra: Record<string, string>): Promise<LiveChannel[]> {
+    try {
+      const type = catalog.type as LiveType;
+      return (await fetchCatalog(this.manifestUrl, catalog.type, catalog.id, extra)).map((meta) => previewToChannel(meta, type, this.id, this.name));
+    } catch {
+      return [];
+    }
+  }
+
+  async getLiveChannels(options: { genre?: string; type?: LiveType; page?: number } = {}): Promise<LiveChannel[]> {
+    const catalogs = this.liveCatalogsFor(options.genre, options.type);
+    const page = options.page ?? 0;
+    const extra: Record<string, string> = options.genre ? { genre: options.genre } : {};
+    const canPage = (catalog: AddonCatalogDef) => catalog.extra.some((e) => e.name === "skip");
+    // a catalogue that cannot page has nothing on page 2 (asked again it would repeat page 1)
+    const readable = page > 0 ? catalogs.filter(canPage) : catalogs;
+    const perCatalog = await Promise.all(readable.map((catalog) => this.safeLiveCatalog(catalog, page > 0 ? { ...extra, skip: String(page * PAGE_SIZE) } : extra)));
+    return distinctBy(interleave(perCatalog), (c) => `${c.type}:${c.id}`);
+  }
+
+  async searchLiveChannels(query: string): Promise<LiveChannel[]> {
+    if (query.trim() === "") return [];
+    const perCatalog = await Promise.all(this.liveSearchCatalogs.map((catalog) => this.safeLiveCatalog(catalog, { search: query })));
+    const found = distinctBy(interleave(perCatalog), (c) => `${c.type}:${c.id}`);
+    if (found.length > 0 || this.liveSearchCatalogs.length > 0) return found;
+    // no catalogue can be searched: match names in the ranked lists instead
+    const needle = query.toLowerCase();
+    const all = await this.getLiveChannels();
+    return all.filter((c) => c.name.toLowerCase().includes(needle));
+  }
+
+  async getLiveChannel(channel: Pick<LiveChannel, "id" | "type">): Promise<LiveChannel | null> {
+    try {
+      const meta = await fetchMeta(this.manifestUrl, channel.type, channel.id);
+      return meta && meta.name ? previewToChannel(meta, channel.type, this.id, this.name) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  async getLiveStreamReport(channel: Pick<LiveChannel, "id" | "type">): Promise<StreamReport> {
+    const addonName = this.name;
+    if (!this.offersStreams()) return { addonName, streams: [], lookup: { kind: "unsupported" } };
+    try {
+      const streams = uniqueStreamIds((await fetchStreams(this.manifestUrl, channel.type, channel.id)).map((stream) => streamToStream(stream, this.id, this.name)));
+      return { addonName, streams, lookup: streams.length > 0 ? { kind: "ok", count: streams.length } : { kind: "none" } };
+    } catch (error) {
+      if (error instanceof AddonHttpError && error.status === 404) return { addonName, streams: [], lookup: { kind: "none" } };
+      return { addonName, streams: [], lookup: { kind: "failed", reason: describeAddonError(error) } };
+    }
   }
 
   /** Types an addon declares for a resource: the resource's own list when it has one, else the manifest's. */
