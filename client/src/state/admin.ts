@@ -1,5 +1,5 @@
 import type { AddonCapabilities } from "../lib/addonCapabilities";
-import type { DownloadSummary } from "../lib/downloadStats";
+import type { DownloadDetail, DownloadSummary } from "../lib/downloadStats";
 import type { PlaybackSummary } from "../lib/playbackHealth";
 import type { WebSystem } from "../lib/webSystems";
 import { api } from "../lib/api";
@@ -143,6 +143,7 @@ export interface WatchingList {
 
 export const fetchAdminSummary = () => api<AdminSummary>("/admin/summary");
 export const fetchWatching = () => api<WatchingList>("/admin/watching");
+export const fetchDownloadDetail = () => api<DownloadDetail>("/admin/downloads");
 /** The user list filters; an empty value means "no filter". `device` is "<platform>|<app version>". */
 export interface AdminFilters {
   q: string;

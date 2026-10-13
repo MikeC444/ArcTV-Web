@@ -23,6 +23,7 @@ describe("/api/admin (developer panel proxy)", () => {
     const { backend, client } = await signedIn();
     expect((await client.get("/api/admin/summary")).body).toMatchObject({ users: 3, versions: [{ version: "0.1.7" }], live: { online: { users: 3 }, watching: { users: 1 } } });
     expect((await client.get("/api/admin/watching")).body).toMatchObject({ windowSeconds: 45, watching: [{ title: "The Film", platform: "fire_tv" }] });
+    expect((await client.get("/api/admin/downloads")).body).toMatchObject({ people: [{ email: "sam@example.com", lastKind: "popup" }] });
     const list = await client.get("/api/admin/users?q=sam&limit=20&offset=40");
     expect(list.body.total).toBe(1);
     const call = backend.calls.find((c) => c.path === "/admin/users")!;

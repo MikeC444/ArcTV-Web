@@ -96,7 +96,7 @@ export function Dashboard() {
           {view === "watching" ? <WatchingView onOpenUser={(id) => go("users", id)} /> : null}
           {view === "users" ? <UsersView summary={summary} userId={userId} onOpen={(id) => go("users", id)} onClose={() => go("users")} /> : null}
           {summary && view === "playback" ? <PlaybackView summary={summary} /> : null}
-          {summary && view === "downloads" ? <DownloadsView summary={summary} /> : null}
+          {summary && view === "downloads" ? <DownloadsView summary={summary} onOpenUser={(id) => go("users", id)} /> : null}
           {summary && view === "addons" ? <AddonsView summary={summary} /> : null}
           {summary && view === "versions" ? <VersionsView summary={summary} onFilterUsers={(f) => navigate(`${routes.admin}/users?${f.startsWith("webSystem:") ? `webSystem=${encodeURIComponent(f.slice(10))}` : `device=${encodeURIComponent(f)}`}`)} /> : null}
         </main>

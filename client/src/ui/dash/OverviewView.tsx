@@ -88,19 +88,20 @@ export function OverviewView({ summary, onGo }: { summary: AdminSummary; onGo(vi
           <p className="dd-sub dd-where__foot">Web: {summary.webSystems.slice(0, 3).map((s) => `${s.system} ${s.users}`).join(" · ")}</p>
         ) : null}
       </Card>
-      <Card className="dd-fun" title="Downloads funnel · 7 days" onOpen={() => onGo("downloads")}>
+      <Card className="dd-fun" title="Download button · 7 days" onOpen={() => onGo("downloads")}>
         {dl && dl.triedPeople > 0 ? (
           <ul className="dd-funnel">
             {[
-              ["Tried", dl.triedPeople],
-              ["Saw Plus popup", dl.popupPeople],
-              ["Opened panel", dl.openedPeople],
+              ["Pressed Download", dl.triedPeople],
+              ["Plus popup (no Plus)", dl.popupPeople],
+              ["File list opened", dl.openedPeople],
               ["Pressed a file", dl.startedPeople],
             ].map(([label, n]) => (
               <li key={label as string}><em>{label}</em><span className="dd-funnel__b" style={{ width: `${Math.max(14, percent(n as number, dl.triedPeople))}%` }}>{n}</span></li>
             ))}
           </ul>
-        ) : <p className="dd-sub">Nothing yet this week.</p>}
+        ) : <p className="dd-sub">Nobody has pressed Download this week.</p>}
+        <p className="dd-sub dd-fun__foot">People, not presses. Popup and file list are two paths: popup is no Plus, file list is Plus.</p>
       </Card>
     </div>
   );
