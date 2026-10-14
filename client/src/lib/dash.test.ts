@@ -82,6 +82,7 @@ describe("chart helpers", () => {
   it("names platforms", () => {
     expect(platformName("fire_tv")).toBe("Fire TV");
     expect(platformName("android_mobile")).toBe("Phone");
+    expect(platformName("windows")).toBe("Windows");
   });
   it("draws a sparkline from low to high", () => {
     expect(sparkPath([1, 2, 3], 100, 10)).toBe("M0.0 10.0 L50.0 5.0 L100.0 0.0");

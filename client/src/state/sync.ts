@@ -7,6 +7,7 @@ import { usePlusPromo } from "./plusPromo";
 import { usePlusWelcome } from "./plusWelcome";
 import { useAndroidApp } from "./androidApp";
 import { useMacApp } from "./macApp";
+import { useWindowsApp } from "./windowsApp";
 import { useContinueWatching } from "./continueWatching";
 import { useMyList } from "./myList";
 import { clearRecommendationCache } from "./recommendations";
@@ -37,6 +38,7 @@ export function hydrateAll(userId: string): void {
   usePlusPromo.getState().hydrate(userId);
   usePlusWelcome.getState().hydrate(userId);
   useMacApp.getState().hydrate(userId);
+  useWindowsApp.getState().hydrate(userId);
   useAndroidApp.getState().hydrate(userId);
 }
 
@@ -115,6 +117,7 @@ export function resetAllStores(): void {
   usePlusPromo.getState().reset();
   usePlusWelcome.getState().reset();
   useMacApp.getState().reset();
+  useWindowsApp.getState().reset();
   useAndroidApp.getState().reset();
   useProfiles.getState().reset();
   clearRecommendationCache();

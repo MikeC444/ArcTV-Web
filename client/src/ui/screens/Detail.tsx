@@ -148,7 +148,7 @@ function DetailContent({ content, similar, providerId, trailer, releaseDate }: {
               title={signedIn && trailer.kind === "notFound" ? "No trailer found for this title" : undefined}
               onClick={() => openTrailer(trailer.kind === "found" ? trailer.value : null)}
             />
-            {/* Everyone sees Download (web and Mac only for now): Plus members and developer accounts get the files that can be saved (for a show, the episode the Play button would play); everyone else gets the Plus popup. */}
+            {/* Everyone sees Download (web, Mac and Windows only for now): Plus members and developer accounts get the files that can be saved (for a show, the episode the Play button would play); everyone else gets the Plus popup. */}
             <ArcButton text={content.type === "TV_SHOW" && firstEpisode ? `Download S${firstEpisode.seasonNumber}E${firstEpisode.episodeNumber}` : "Download"} icon={<MdDownload />} compact={compact} onClick={() => openDownload(null)} />
             {expanded ? (
               <div className="detail__extra">

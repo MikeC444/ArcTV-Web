@@ -5,7 +5,7 @@ import { leftEarly, percent, standsOut, type PlaybackGroup } from "./playbackHea
 /** The pure logic behind the developer dashboard: names, version adoption, the "Needs attention" rules and the little chart shapes. */
 
 export const platformName = (p: string): string =>
-  p === "fire_tv" ? "Fire TV" : p === "web" ? "Web" : p === "android_tv" ? "Android TV" : p === "android_mobile" ? "Phone" : p === "mac" ? "Mac" : p;
+  p === "fire_tv" ? "Fire TV" : p === "web" ? "Web" : p === "android_tv" ? "Android TV" : p === "android_mobile" ? "Phone" : p === "mac" ? "Mac" : p === "windows" ? "Windows" : p;
 
 /** Brand-ish colours for each platform, in the order the legends use. */
 export const PLATFORM_COLORS: Record<string, string> = {
@@ -13,6 +13,7 @@ export const PLATFORM_COLORS: Record<string, string> = {
   web: "#2f80ff",
   android_mobile: "#9b5cff",
   mac: "#ff7ac8",
+  windows: "#ffb347",
   android_tv: "#3ddc97",
 };
 export const platformColor = (p: string): string => PLATFORM_COLORS[p] ?? "#a9a9b4";
