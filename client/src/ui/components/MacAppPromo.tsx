@@ -3,6 +3,7 @@ import { MdDownload, MdLaptopMac, MdSync } from "react-icons/md";
 import { fetchMacDmgUrl, MAC_APP_URL, onMac } from "../../lib/mac";
 import { useAuth } from "../../state/auth";
 import { macAppDue, useMacApp } from "../../state/macApp";
+import { reportAppPromoEvent } from "../../state/appPromoEvents";
 import { PromoDialog, type PromoContent } from "./PlusPromo";
 
 const SHOW_AFTER_MS = 4000;
@@ -45,6 +46,7 @@ export function MacAppPromo({ enabled }: { enabled: boolean }) {
       }
       useMacApp.getState().markShown();
       setOpen(true);
+      reportAppPromoEvent({ app: "mac", kind: "shown" });
     }, SHOW_AFTER_MS);
     return () => window.clearTimeout(timer);
   }, [eligible]);
@@ -67,8 +69,14 @@ export function MacAppPromo({ enabled }: { enabled: boolean }) {
     setOpen(false);
     useMacApp.getState().markSeen();
   };
+  /** Closed without taking the app (the close button, Escape or a click outside). */
+  const dismiss = () => {
+    close();
+    reportAppPromoEvent({ app: "mac", kind: "closed" });
+  };
   const go = () => {
     close();
+    reportAppPromoEvent({ app: "mac", kind: "download" });
     if (dmgUrl) {
       const link = document.createElement("a");
       link.href = dmgUrl;
@@ -81,5 +89,5 @@ export function MacAppPromo({ enabled }: { enabled: boolean }) {
       window.open(MAC_APP_URL, "_blank", "noopener");
     }
   };
-  return <PromoDialog onClose={close} onGo={go} content={MAC_APP_INVITATION} />;
+  return <PromoDialog onClose={dismiss} onGo={go} content={MAC_APP_INVITATION} />;
 }

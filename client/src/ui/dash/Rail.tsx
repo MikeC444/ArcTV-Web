@@ -1,4 +1,4 @@
-import { MdAutoAwesome, MdDashboard, MdDownload, MdExtension, MdGroups, MdPlayCircle, MdSpeed, MdSystemUpdateAlt } from "react-icons/md";
+import { MdAutoAwesome, MdDashboard, MdDownload, MdExtension, MdInstallDesktop, MdGroups, MdPlayCircle, MdSpeed, MdSystemUpdateAlt } from "react-icons/md";
 import { VIEWS, type ViewId } from "./views";
 
 const ICONS: Record<ViewId, JSX.Element> = {
@@ -7,6 +7,7 @@ const ICONS: Record<ViewId, JSX.Element> = {
   users: <MdGroups />,
   playback: <MdSpeed />,
   downloads: <MdDownload />,
+  popups: <MdInstallDesktop />,
   addons: <MdExtension />,
   versions: <MdSystemUpdateAlt />,
 };

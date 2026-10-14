@@ -76,3 +76,32 @@ describe("MacAppPromo download", () => {
     vi.unstubAllGlobals();
   });
 });
+
+describe("MacAppPromo reports to the developer dashboard", () => {
+  const sent: unknown[] = [];
+  beforeEach(() => {
+    sent.length = 0;
+    vi.stubGlobal("fetch", vi.fn(async (path: string, init?: { body?: string }) => {
+      if (String(path).includes("player-events/app-promo")) sent.push(JSON.parse(init!.body!));
+      return { ok: false, status: 404, json: async () => ({}), text: async () => "" };
+    }));
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("says it was shown, then closed", async () => {
+    setUserAgent(MAC_UA);
+    render(<MacAppPromo enabled />);
+    await act(async () => void vi.advanceTimersByTime(4100));
+    fireEvent.click(screen.getAllByText("Close")[0]!);
+    expect(sent).toEqual([{ app: "mac", kind: "shown" }, { app: "mac", kind: "closed" }]);
+  });
+  it("says it was shown, then that the button was pressed", async () => {
+    setUserAgent(MAC_UA);
+    const open = vi.spyOn(window, "open").mockImplementation(() => null);
+    render(<MacAppPromo enabled />);
+    await act(async () => void vi.advanceTimersByTime(4100));
+    fireEvent.click(screen.getByText("Get the Mac app"));
+    expect(sent).toEqual([{ app: "mac", kind: "shown" }, { app: "mac", kind: "download" }]);
+    open.mockRestore();
+  });
+});

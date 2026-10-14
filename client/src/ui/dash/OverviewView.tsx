@@ -88,6 +88,19 @@ export function OverviewView({ summary, onGo }: { summary: AdminSummary; onGo(vi
           <p className="dd-sub dd-where__foot">Web: {summary.webSystems.slice(0, 3).map((s) => `${s.system} ${s.users}`).join(" · ")}</p>
         ) : null}
       </Card>
+      <Card className="dd-fun" title="Desktop app popups · 7 days" onOpen={() => onGo("popups")}>
+        {summary.appPromos && summary.appPromos.some((t) => t.shownPeople > 0) ? (
+          <ul className="dd-funnel">
+            {summary.appPromos.flatMap((t) => [
+              [`${t.app === "windows" ? "Windows" : "Mac"} popup shown`, t.shownPeople, t.shownPeople],
+              [`${t.app === "windows" ? "Windows" : "Mac"}: pressed Get the app`, t.downloadPeople, t.shownPeople],
+            ]).map(([label, n, of]) => (
+              <li key={label as string}><em>{label}</em><span className="dd-funnel__b" style={{ width: `${Math.max(14, percent(n as number, Math.max(1, of as number)))}%` }}>{n}</span></li>
+            ))}
+          </ul>
+        ) : <p className="dd-sub">Nobody has been offered the Mac or Windows app this week.</p>}
+        <p className="dd-sub dd-fun__foot">People, not presses. The web app can't see whether the download finished.</p>
+      </Card>
       <Card className="dd-fun" title="Download button · 7 days" onOpen={() => onGo("downloads")}>
         {dl && dl.triedPeople > 0 ? (
           <ul className="dd-funnel">

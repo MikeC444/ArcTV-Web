@@ -5,6 +5,7 @@ import { routes } from "../../lib/routes";
 import { Spinner } from "../components/States";
 import { AddonsView } from "./AddonsView";
 import { CommandPalette } from "./CommandPalette";
+import { AppPromosView } from "./AppPromosView";
 import { DownloadsView } from "./DownloadsView";
 import { OverviewView } from "./OverviewView";
 import { PlaybackView } from "./PlaybackView";
@@ -97,6 +98,7 @@ export function Dashboard() {
           {view === "users" ? <UsersView summary={summary} userId={userId} onOpen={(id) => go("users", id)} onClose={() => go("users")} /> : null}
           {summary && view === "playback" ? <PlaybackView summary={summary} /> : null}
           {summary && view === "downloads" ? <DownloadsView summary={summary} onOpenUser={(id) => go("users", id)} /> : null}
+          {summary && view === "popups" ? <AppPromosView summary={summary} onOpenUser={(id) => go("users", id)} /> : null}
           {summary && view === "addons" ? <AddonsView summary={summary} /> : null}
           {summary && view === "versions" ? <VersionsView summary={summary} onFilterUsers={(f) => navigate(`${routes.admin}/users?${f.startsWith("webSystem:") ? `webSystem=${encodeURIComponent(f.slice(10))}` : `device=${encodeURIComponent(f)}`}`)} /> : null}
         </main>

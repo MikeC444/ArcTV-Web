@@ -1,4 +1,5 @@
 import type { AddonCapabilities } from "../lib/addonCapabilities";
+import type { AppPromoDetail, AppPromoTotals } from "../lib/appPromoStats";
 import type { DownloadDetail, DownloadSummary } from "../lib/downloadStats";
 import type { PlaybackSummary } from "../lib/playbackHealth";
 import type { WebSystem } from "../lib/webSystems";
@@ -51,6 +52,8 @@ export interface AdminSummary {
   playback?: PlaybackSummary;
   /** Web Download use in the last 7 days. Absent from a backend that predates it, and then the card is left out. */
   downloads?: DownloadSummary;
+  /** How the web app's Mac and Windows app popups did in the last 7 days. Absent from a backend that predates it, and then the view says so. */
+  appPromos?: AppPromoTotals[];
   /** Accounts that used ArcTV in the last day / 30 days (the 7-day count is `activeLast7Days`). Absent from a backend that predates it. */
   activity?: { active1d: number; active30d: number };
   /** What people have installed, across every account. Absent from a backend that predates it, and then the Addons view says so. */
@@ -144,6 +147,7 @@ export interface WatchingList {
 export const fetchAdminSummary = () => api<AdminSummary>("/admin/summary");
 export const fetchWatching = () => api<WatchingList>("/admin/watching");
 export const fetchDownloadDetail = () => api<DownloadDetail>("/admin/downloads");
+export const fetchAppPromoDetail = () => api<AppPromoDetail>("/admin/app-promos");
 /** The user list filters; an empty value means "no filter". `device` is "<platform>|<app version>". */
 export interface AdminFilters {
   q: string;

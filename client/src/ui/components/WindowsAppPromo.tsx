@@ -3,6 +3,7 @@ import { MdComputer, MdDownload, MdSync } from "react-icons/md";
 import { fetchWindowsInstallerUrl, onWindows, WINDOWS_APP_URL } from "../../lib/windows";
 import { useAuth } from "../../state/auth";
 import { windowsAppDue, useWindowsApp } from "../../state/windowsApp";
+import { reportAppPromoEvent } from "../../state/appPromoEvents";
 import { PromoDialog, type PromoContent } from "./PlusPromo";
 
 const SHOW_AFTER_MS = 4000;
@@ -45,6 +46,7 @@ export function WindowsAppPromo({ enabled }: { enabled: boolean }) {
       }
       useWindowsApp.getState().markShown();
       setOpen(true);
+      reportAppPromoEvent({ app: "windows", kind: "shown" });
     }, SHOW_AFTER_MS);
     return () => window.clearTimeout(timer);
   }, [eligible]);
@@ -67,8 +69,14 @@ export function WindowsAppPromo({ enabled }: { enabled: boolean }) {
     setOpen(false);
     useWindowsApp.getState().markSeen();
   };
+  /** Closed without taking the app (the close button, Escape or a click outside). */
+  const dismiss = () => {
+    close();
+    reportAppPromoEvent({ app: "windows", kind: "closed" });
+  };
   const go = () => {
     close();
+    reportAppPromoEvent({ app: "windows", kind: "download" });
     if (installerUrl) {
       const link = document.createElement("a");
       link.href = installerUrl;
@@ -81,5 +89,5 @@ export function WindowsAppPromo({ enabled }: { enabled: boolean }) {
       window.open(WINDOWS_APP_URL, "_blank", "noopener");
     }
   };
-  return <PromoDialog onClose={close} onGo={go} content={WINDOWS_APP_INVITATION} />;
+  return <PromoDialog onClose={dismiss} onGo={go} content={WINDOWS_APP_INVITATION} />;
 }

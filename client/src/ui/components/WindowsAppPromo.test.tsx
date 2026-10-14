@@ -88,3 +88,33 @@ describe("WindowsAppPromo download", () => {
     vi.unstubAllGlobals();
   });
 });
+
+describe("WindowsAppPromo reports to the developer dashboard", () => {
+  const sent: Array<{ path: string; body: unknown }> = [];
+  beforeEach(() => {
+    sent.length = 0;
+    vi.stubGlobal("fetch", vi.fn(async (path: string, init?: { body?: string }) => {
+      if (String(path).includes("player-events/app-promo")) sent.push({ path: String(path), body: JSON.parse(init!.body!) });
+      return { ok: false, status: 404, json: async () => ({}), text: async () => "" };
+    }));
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("says it was shown, then closed", async () => {
+    setUserAgent(WIN_UA);
+    render(<WindowsAppPromo enabled />);
+    await act(async () => void vi.advanceTimersByTime(4100));
+    expect(sent.map((s) => s.body)).toEqual([{ app: "windows", kind: "shown" }]);
+    fireEvent.click(screen.getAllByText("Close")[0]!);
+    expect(sent.map((s) => s.body)).toEqual([{ app: "windows", kind: "shown" }, { app: "windows", kind: "closed" }]);
+  });
+  it("says it was shown, then that the button was pressed (and not that it was closed)", async () => {
+    setUserAgent(WIN_UA);
+    const open = vi.spyOn(window, "open").mockImplementation(() => null);
+    render(<WindowsAppPromo enabled />);
+    await act(async () => void vi.advanceTimersByTime(4100));
+    fireEvent.click(screen.getByText("Get the Windows app"));
+    expect(sent.map((s) => s.body)).toEqual([{ app: "windows", kind: "shown" }, { app: "windows", kind: "download" }]);
+    open.mockRestore();
+  });
+});
