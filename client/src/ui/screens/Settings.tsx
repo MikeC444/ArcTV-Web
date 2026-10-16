@@ -274,8 +274,10 @@ function PlusPane() {
 
       <h3 className="t-title-md plus__h">What Plus adds</h3>
       <ul className="plus__perks">
-        {PLUS_PERKS.map((perk) => {
-          const soon = (perk.needs === "profiles" && !profilesSupported ? "soon" : perk.status) === "soon";
+        {/* What is on now first; anything "Coming soon" goes last (the sort is stable, so each group keeps its order). */}
+        {PLUS_PERKS.map((perk) => ({ perk, soon: (perk.needs === "profiles" && !profilesSupported ? "soon" : perk.status) === "soon" }))
+          .sort((a, b) => Number(a.soon) - Number(b.soon))
+          .map(({ perk, soon }) => {
           return (
             <li key={perk.title} className="plus__perk" data-soon={soon ? "true" : undefined}>
               <span className="plus__perkicon" aria-hidden="true">{PERK_ICONS[perk.title] ?? <MdWorkspacePremium />}</span>
