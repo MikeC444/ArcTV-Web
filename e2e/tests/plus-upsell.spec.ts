@@ -128,4 +128,44 @@ test.describe("ArcTV Plus: prices and nudges for someone without Plus", () => {
     await dialog.getByRole("button", { name: "Close" }).last().click();
     await expect(dialog).toHaveCount(0);
   });
+
+  test("the Lifetime plan says the supporters board is a choice", async ({ page }) => {
+    const account = await newAccount("boardnote");
+    await freeWithPaywall(page);
+    await openSignedIn(page, account, "/settings/plus");
+    await expect(page.getByRole("group", { name: "Plans" }).locator(".plus__plan").nth(2)).toContainText("Lifetime supporters can choose to have their display name on the supporters board on arctv.org.");
+  });
+
+  test("a Lifetime member sees the supporters board switch, off until they turn it on", async ({ page }) => {
+    const account = await newAccount("boardswitch");
+    let board = false;
+    const lifetime = () => ({ active: true, plan: "lifetime", validUntil: null, cancelAtPeriodEnd: false, paywall: true, supporterBoard: board });
+    const puts: unknown[] = [];
+    await page.route("**/user/plus", (route) => (route.request().method() === "GET" ? route.fulfill({ json: { ...lifetime(), trialDays: 0, prices: null } }) : route.continue()));
+    await page.route("**/user/plus/supporter", (route) => {
+      puts.push(route.request().postDataJSON());
+      board = (route.request().postDataJSON() as { show: boolean }).show;
+      return route.fulfill({ json: lifetime() });
+    });
+    await openSignedIn(page, account, "/settings/plus");
+    const toggle = page.getByRole("switch", { name: "Put my name on the supporters board" });
+    await expect(toggle).toBeVisible();
+    await expect(toggle).toHaveAttribute("aria-checked", "false"); // buying Lifetime does not put anyone on it
+    await expect(page.getByText(/It is off until you turn it on/)).toBeVisible();
+    await toggle.click();
+    await expect(toggle).toHaveAttribute("aria-checked", "true");
+    expect(puts).toEqual([{ show: true }]);
+    await toggle.click();
+    await expect(toggle).toHaveAttribute("aria-checked", "false");
+    expect(puts).toEqual([{ show: true }, { show: false }]);
+    await shot(page, "plus-supporters-board-switch");
+  });
+
+  test("someone without Lifetime does not see the switch", async ({ page }) => {
+    const account = await newAccount("noboardswitch");
+    await freeWithPaywall(page);
+    await openSignedIn(page, account, "/settings/plus");
+    await expect(page.getByRole("switch", { name: "Put my name on the supporters board" })).toHaveCount(0);
+  });
 });
+

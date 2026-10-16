@@ -300,6 +300,19 @@
         </div>
       </section>
 
+      <!-- SUPPORTERS: filled in from the API; hidden until it answers -->
+      <section id="supporters" class="dark arc supporters" aria-labelledby="supporters-title" hidden>
+        <div class="wrap center">
+          <span class="plus__tag">Lifetime supporters</span>
+          <h2 id="supporters-title">Thank you to our supporters.</h2>
+          <p class="lede lede--dark">These people went Lifetime and chose to have their name here. Every one of them helps keep Arc TV free for everyone.</p>
+          <ul class="supporters__grid" id="supporters-list"></ul>
+          <p class="supporters__empty" id="supporters-empty" hidden>Be the first Lifetime supporter, and your name can go right here.</p>
+          <p class="plus__fine" id="supporters-count"></p>
+          <p class="plus__fine">Go Lifetime in Settings → Arc TV Plus and you can choose to join them. It is always your choice, and you can take your name off any time.</p>
+        </div>
+      </section>
+
       <!-- FAQ -->
       <section id="faq" class="light arc faq">
         <div class="wrap faq__in">
@@ -492,6 +505,62 @@
             el.classList.add("rv"); io.observe(el);
           });
         }
+      })();
+      (function () {
+        // The supporters board: Lifetime members who chose to be listed. Names only, shown as text. The section stays hidden unless the list loads.
+        var box = document.getElementById("supporters");
+        if (!box || !window.fetch) return;
+        var ctl = window.AbortController ? new AbortController() : null;
+        var timer = ctl ? setTimeout(function () { ctl.abort(); }, 10000) : null;
+        fetch("https://web.arctv.org/api/supporters", ctl ? { signal: ctl.signal } : undefined)
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (j) {
+            if (!j || !Array.isArray(j.supporters)) return;
+            var list = document.getElementById("supporters-list");
+            var people = j.supporters.map(function (x) {
+              return x && typeof x.name === "string" ? { name: x.name.trim().slice(0, 24), avatar: /^[a-z0-9-]{1,32}$/.test(x.avatar || "") ? x.avatar : null, since: /^\d{4}-(0[1-9]|1[0-2])$/.test(x.since || "") ? x.since : null } : null;
+            }).filter(function (x) { return x && x.name; });
+            people.forEach(function (p) {
+              var li = document.createElement("li");
+              li.className = "sup";
+              var pic = document.createElement("span");
+              pic.className = "sup__pic";
+              pic.setAttribute("aria-hidden", "true");
+              pic.textContent = (Array.from(p.name)[0] || "").toUpperCase();
+              if (p.avatar) {
+                var img = new Image();
+                img.alt = "";
+                img.onload = function () { pic.textContent = ""; pic.appendChild(img); };
+                img.src = "https://web.arctv.org/avatars/" + p.avatar + ".webp"; // a missing picture just leaves the letter
+              }
+              var text = document.createElement("span");
+              text.className = "sup__text";
+              var name = document.createElement("b");
+              name.className = "sup__name";
+              name.textContent = p.name;
+              var tag = document.createElement("span");
+              tag.className = "sup__tag";
+              var badge = document.createElement("i");
+              badge.textContent = "Lifetime";
+              tag.appendChild(badge);
+              if (p.since) {
+                var d = new Date(Date.UTC(+p.since.slice(0, 4), +p.since.slice(5, 7) - 1, 1));
+                tag.appendChild(document.createTextNode(" · Since " + d.toLocaleDateString(undefined, { month: "short", year: "numeric", timeZone: "UTC" })));
+              }
+              text.appendChild(name);
+              text.appendChild(tag);
+              li.appendChild(pic);
+              li.appendChild(text);
+              list.appendChild(li);
+            });
+            var names = people;
+            document.getElementById("supporters-empty").hidden = names.length > 0;
+            var total = typeof j.total === "number" && j.total >= names.length ? Math.floor(j.total) : names.length;
+            document.getElementById("supporters-count").textContent = names.length > 0 ? total + (total === 1 ? " Lifetime supporter" : " Lifetime supporters") : "";
+            box.hidden = false;
+          })
+          .catch(function () {})
+          .then(function () { if (timer) clearTimeout(timer); });
       })();
     </script>
   </body>

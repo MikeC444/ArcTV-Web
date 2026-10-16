@@ -188,6 +188,10 @@ Like Stremio (www vs web), the app lives at **web.arctv.org** and **arctv.org** 
 6. `STREAM_RELAY`, `TRUST_PROXY` and the other settings above are unchanged; HSTS (`includeSubDomains`) is only sent by the app.
 
 ### Landing page images
+The landing page's "Thank you to our supporters" section reads the public list from `https://web.arctv.org/api/supporters` (the web app's server,
+which asks the backend's `GET /supporters` at most every five minutes); the section stays hidden if that can't be reached. If the web app moves
+to another address, change that URL at the bottom of `landing/index.html`.
+
 The pictures in `landing/img/` (poster fan, laptop, phone) are cropped from a design board, so they are fairly low
 resolution; replace them with the original full-size files when available (keep the same file names). The hero posters are
 real film artwork, so check licensing before relying on them on a public page. The TV picture (`tv-app.webp`) is a
