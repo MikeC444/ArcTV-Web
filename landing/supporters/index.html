@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b0d10" />
+    <meta name="color-scheme" content="dark light" />
+    <title>Arc TV Lifetime Supporters</title>
+    <meta name="description" content="The people who went Lifetime with Arc TV Plus and chose to have their name here. Thank you for keeping Arc TV free for everyone." />
+    <link rel="canonical" href="https://arctv.org/supporters/" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Arc TV" />
+    <meta property="og:title" content="Arc TV Lifetime Supporters" />
+    <meta property="og:description" content="The people who went Lifetime with Arc TV Plus and chose to have their name here." />
+    <meta property="og:url" content="https://arctv.org/supporters/" />
+    <meta property="og:image" content="https://arctv.org/og-image.png?v=2" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header class="nav">
+      <a class="nav__brand" href="/" aria-label="Arc TV home"><img src="/arctv-logo.png" alt="Arc TV" /></a>
+      <nav class="nav__links" aria-label="Main">
+        <a href="/">Home</a>
+        <a href="/#download">Downloads</a>
+        <a href="/#features">Features</a>
+        <a href="/#plus">Plus</a>
+        <a href="/#faq">FAQ</a>
+        <a href="/supporters/" class="is-active" aria-current="page">Supporters</a>
+      </nav>
+      <a class="btn btn--light btn--sm" href="https://web.arctv.org">Launch Web App</a>
+    </header>
+
+    <main id="main">
+      <!-- SUPPORTERS: filled in from the API -->
+      <section id="supporters" class="dark supporters supporters--page" aria-labelledby="supporters-title">
+        <div class="wrap center">
+          <span class="plus__tag">Lifetime supporters</span>
+          <h1 id="supporters-title">Thank you to our supporters.</h1>
+          <p class="lede lede--dark">These people went Lifetime and chose to have their name here. Every one of them helps keep Arc TV free for everyone.</p>
+          <ul class="supporters__grid" id="supporters-list"></ul>
+          <p class="supporters__empty" id="supporters-empty" hidden>Be the first Lifetime supporter, and your name can go right here.</p>
+          <p class="supporters__empty" id="supporters-error" role="status" hidden>We couldn't load the supporters just now. Please try again in a moment.</p>
+          <p class="plus__fine" id="supporters-count"></p>
+          <p class="plus__fine">Go Lifetime in Settings → Arc TV Plus and you can choose to join them. It is always your choice, and you can take your name off any time.</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="wrap footer__in">
+        <div class="footer__brand"><img src="/arctv-logo.png" alt="Arc TV" /><p>&copy; 2026 Arc TV</p></div>
+        <nav aria-label="Product"><a href="https://web.arctv.org">Web App</a><a href="/#download">Downloads</a><a href="/#features">Features</a><a href="/#plus">Plus</a><a href="/supporters/">Supporters</a></nav>
+        <nav aria-label="Install guides"><a href="/guides/fire-tv/">Fire TV</a><a href="/guides/android-tv/">Android TV</a><a href="/guides/android/">Android</a></nav>
+        <nav aria-label="Help"><a href="/#faq">FAQ</a></nav>
+      </div>
+    </footer>
+
+    <script>
+      (function () {
+        // The supporters board: Lifetime members who chose to be listed. Names only, shown as text. Says so if the list can't be loaded.
+        var box = document.getElementById("supporters");
+        var fail = document.getElementById("supporters-error");
+        if (!box || !window.fetch) { if (fail) fail.hidden = false; return; }
+        var ctl = window.AbortController ? new AbortController() : null;
+        var timer = ctl ? setTimeout(function () { ctl.abort(); }, 10000) : null;
+        fetch("https://web.arctv.org/api/supporters", ctl ? { signal: ctl.signal } : undefined)
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (j) {
+            if (!j || !Array.isArray(j.supporters)) { fail.hidden = false; return; }
+            var list = document.getElementById("supporters-list");
+            var people = j.supporters.map(function (x) {
+              return x && typeof x.name === "string" ? { name: x.name.trim().slice(0, 24), avatar: /^[a-z0-9-]{1,32}$/.test(x.avatar || "") ? x.avatar : null, since: /^\d{4}-(0[1-9]|1[0-2])$/.test(x.since || "") ? x.since : null } : null;
+            }).filter(function (x) { return x && x.name; });
+            people.forEach(function (p) {
+              var li = document.createElement("li");
+              li.className = "sup";
+              var pic = document.createElement("span");
+              pic.className = "sup__pic";
+              pic.setAttribute("aria-hidden", "true");
+              pic.textContent = (Array.from(p.name)[0] || "").toUpperCase();
+              if (p.avatar) {
+                var img = new Image();
+                img.alt = "";
+                img.onload = function () { pic.textContent = ""; pic.appendChild(img); };
+                img.src = "https://web.arctv.org/avatars/" + p.avatar + ".webp"; // a missing picture just leaves the letter
+              }
+              var text = document.createElement("span");
+              text.className = "sup__text";
+              var name = document.createElement("b");
+              name.className = "sup__name";
+              name.textContent = p.name;
+              var tag = document.createElement("span");
+              tag.className = "sup__tag";
+              var badge = document.createElement("i");
+              badge.textContent = "Lifetime";
+              tag.appendChild(badge);
+              if (p.since) {
+                var d = new Date(Date.UTC(+p.since.slice(0, 4), +p.since.slice(5, 7) - 1, 1));
+                tag.appendChild(document.createTextNode(" · Since " + d.toLocaleDateString(undefined, { month: "short", year: "numeric", timeZone: "UTC" })));
+              }
+              text.appendChild(name);
+              text.appendChild(tag);
+              li.appendChild(pic);
+              li.appendChild(text);
+              list.appendChild(li);
+            });
+            var names = people;
+            document.getElementById("supporters-empty").hidden = names.length > 0;
+            var total = typeof j.total === "number" && j.total >= names.length ? Math.floor(j.total) : names.length;
+            document.getElementById("supporters-count").textContent = names.length > 0 ? total + (total === 1 ? " Lifetime supporter" : " Lifetime supporters") : "";
+          })
+          .catch(function () { fail.hidden = false; })
+          .then(function () { if (timer) clearTimeout(timer); });
+      })();
+    </script>
+  </body>
+</html>
