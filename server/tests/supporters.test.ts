@@ -24,7 +24,7 @@ describe("GET /api/supporters (for the landing page)", () => {
     const res = await request(appWith(backend.fetch)).get("/api/supporters").set("Origin", "https://arctv.org");
     expect(res.status).toBe(200);
     expect(res.headers["access-control-allow-origin"]).toBe("*");
-    expect(res.headers["cache-control"]).toContain("max-age=300");
+    expect(res.headers["cache-control"]).toContain("max-age=60");
     expect(res.body).toEqual(board);
     expect(JSON.stringify(res.body)).not.toMatch(/example\.com|u1|extra/);
     expect(backend.calls[0]).toMatchObject({ method: "GET", path: "/supporters" });
