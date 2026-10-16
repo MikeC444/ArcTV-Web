@@ -286,6 +286,12 @@ export function createApp(config: AppConfig, options: CreateAppOptions = {}): Ex
   // ── Static SPA (production) ─────────────────────────────────────────────────
   const staticDir = findStaticDir(config);
   if (staticDir) {
+    // The profile pictures are public, and the landing page (another site) shows them on the supporters page, so they may be used from anywhere;
+    // helmet's default would keep them to this site only.
+    app.use("/avatars", (_req, res, next) => {
+      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+      next();
+    });
     app.use("/assets", express.static(path.join(staticDir, "assets"), { immutable: true, maxAge: "1y", index: false }));
     app.use(express.static(staticDir, { index: false, maxAge: "1h" }));
     app.get(/^(?!\/api\/).*/, (req, res, next) => {
