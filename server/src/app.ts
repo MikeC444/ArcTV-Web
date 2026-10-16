@@ -172,12 +172,12 @@ export function createApp(config: AppConfig, options: CreateAppOptions = {}): Ex
     res.json({ status: "ok", backend: backendCheck.state });
   });
   // The supporters board, for the landing page (another site, so the answer is open to any origin: it is public and read-only). Asked of the Arc TV
-  // service at most every five minutes, and the last good answer is kept if it can't be reached; with none yet it answers 503 so the page can hide itself.
-  const SUPPORTERS_TTL_MS = 5 * 60_000;
+  // service at most once a minute (so a member who switches it on shows up within about a minute), and the last good answer is kept if it can't be reached; with none yet it answers 503 so the page can say it couldn't load.
+  const SUPPORTERS_TTL_MS = 60_000;
   let supporters: { at: number; body: { supporters: PublicSupporter[]; total: number } } | null = null;
   api.get("/supporters", async (_req, res) => {
     res.set("Access-Control-Allow-Origin", "*");
-    res.set("Cache-Control", "public, max-age=300");
+    res.set("Cache-Control", "public, max-age=60");
     if (!supporters || Date.now() - supporters.at > SUPPORTERS_TTL_MS) {
       try {
         const answer = await backend({ method: "GET", path: "/supporters", timeoutMs: 25_000 });
