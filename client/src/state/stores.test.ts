@@ -256,7 +256,7 @@ describe("Settings sync", () => {
     expect(useSettings.getState().player.autoplayNextEpisode).toBe(false);
   });
 
-  it("saves the stats reset time to the account, keeps it through other changes, and pulls it back on another device", async () => {
+  it("saves the stats reset time to the account, keeps it through other changes, pulls it back on another device, and never goes back", async () => {
     hydrateAll("u1");
     respond = (_path, method, body) => (method === "PUT" ? body : undefined);
     useSettings.getState().setStatsResetAt("2026-10-16T10:00:00.000Z");
@@ -275,10 +275,20 @@ describe("Settings sync", () => {
     respond = () => ({ homeRowOrder: [], hiddenRowIds: [], autoplayNextEpisode: true, skipIntroEnabled: true, subtitlesEnabled: true, defaultSubtitleLanguage: null, updatedAt: "2099-02-01T00:00:00.000Z" });
     await useSettings.getState().pull();
     expect(useSettings.getState().statsResetAt).toBe("2026-10-16T10:00:00.000Z");
-    // and a null from the account means count everything again
+    // a reset is final: a null, or an older time, from the account never undoes it
     respond = () => ({ homeRowOrder: [], hiddenRowIds: [], autoplayNextEpisode: true, skipIntroEnabled: true, subtitlesEnabled: true, defaultSubtitleLanguage: null, statsResetAt: null, updatedAt: "2099-03-01T00:00:00.000Z" });
     await useSettings.getState().pull();
-    expect(useSettings.getState().statsResetAt).toBeNull();
+    expect(useSettings.getState().statsResetAt).toBe("2026-10-16T10:00:00.000Z");
+    respond = () => ({ homeRowOrder: [], hiddenRowIds: [], autoplayNextEpisode: true, skipIntroEnabled: true, subtitlesEnabled: true, defaultSubtitleLanguage: null, statsResetAt: "2026-01-01T00:00:00.000Z", updatedAt: "2099-04-01T00:00:00.000Z" });
+    await useSettings.getState().pull();
+    expect(useSettings.getState().statsResetAt).toBe("2026-10-16T10:00:00.000Z");
+    // a later one does move it
+    respond = () => ({ homeRowOrder: [], hiddenRowIds: [], autoplayNextEpisode: true, skipIntroEnabled: true, subtitlesEnabled: true, defaultSubtitleLanguage: null, statsResetAt: "2026-11-01T00:00:00.000Z", updatedAt: "2099-05-01T00:00:00.000Z" });
+    await useSettings.getState().pull();
+    expect(useSettings.getState().statsResetAt).toBe("2026-11-01T00:00:00.000Z");
+    // and pressing reset again can only move it later too
+    useSettings.getState().setStatsResetAt("2026-06-01T00:00:00.000Z");
+    expect(useSettings.getState().statsResetAt).toBe("2026-11-01T00:00:00.000Z");
   });
 
   it("saves blocked genres to the account and pulls them back on another device", async () => {

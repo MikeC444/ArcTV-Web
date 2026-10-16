@@ -28,7 +28,7 @@ interface SettingsState {
   player: PlayerPreferences;
   /** Blocked genres of the signed-in account (see useBlockedGenres, which is what the UI reads). */
   blockedGenres: string[];
-  /** When Your stats was last reset (ISO time), or null to count everything. Synced on the account, per profile. */
+  /** When Your stats was last reset (ISO time), or null if never. Synced on the account, per profile; it only ever moves forward. */
   statsResetAt: string | null;
   /** Local mutation time of the last change (or the server's, after a pull). */
   updatedAt: string | null;
@@ -40,8 +40,8 @@ interface SettingsState {
   setRowOrder(order: string[]): void;
   setPlayer(patch: Partial<PlayerPreferences>): void;
   setBlockedGenres(genres: string[]): void;
-  /** Starts Your stats again from this time (now, for the Reset stats button), or null to count all the history again. */
-  setStatsResetAt(at: string | null): void;
+  /** Starts Your stats again from this time (now, for the Reset stats button). There is no way back: it only ever moves forward. */
+  setStatsResetAt(at: string): void;
   setNavigationVolume(volume: number): void;
   pull(): Promise<{ ok: boolean; empty: boolean }>;
   retryPending(): Promise<void>;
@@ -53,6 +53,13 @@ const PENDING = "settings";
 
 /** Where a person who was not signed in kept their blocked genres (see state/blockedGenres.ts). */
 const GUEST_BLOCKED_KEY = globalKey("blockedGenres");
+
+/** The later of two times (null and missing count as none). */
+export function laterIso(a: string | null | undefined, b: string | null | undefined): string | null {
+  if (!a) return b ?? null;
+  if (!b) return a;
+  return isoMs(b) > isoMs(a) ? b : a;
+}
 
 function toDto(state: Pick<SettingsState, "homeRows" | "player" | "blockedGenres" | "statsResetAt">, updatedAt: string): SettingsDto {
   return {
@@ -87,7 +94,8 @@ export const useSettings = create<SettingsState>((set, get) => {
       },
       // a backend that doesn't know the field leaves what is here alone
       blockedGenres: dto.blockedGenres ?? get().blockedGenres,
-      statsResetAt: dto.statsResetAt === undefined ? get().statsResetAt : dto.statsResetAt,
+      // a reset is final: whichever is later, this device's or the account's, stands (a null or an older one never undoes it)
+      statsResetAt: laterIso(get().statsResetAt, dto.statsResetAt),
       updatedAt: dto.updatedAt,
     });
     persistLocal();
@@ -149,7 +157,7 @@ export const useSettings = create<SettingsState>((set, get) => {
       changed();
     },
     setStatsResetAt(at) {
-      set({ statsResetAt: at });
+      set({ statsResetAt: laterIso(get().statsResetAt, at) });
       changed();
     },
     setNavigationVolume(volume) {
