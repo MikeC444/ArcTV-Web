@@ -95,5 +95,11 @@ export function parsePrices(raw: unknown): PlanPrices | null {
   return out as PlanPrices;
 }
 
-/** Said on the Lifetime plan card: the supporters board is a choice, made after buying. */
-export const LIFETIME_BOARD_NOTE = "Lifetime supporters can choose to have their display name on the supporters board on arctv.org.";
+/** Where the supporters board is (the landing page's own page for it). */
+export const SUPPORTERS_URL = "https://arctv.org/supporters/";
+
+/** The short line on the Lifetime plan card. */
+export const LIFETIME_BOARD_TAG = "Join the supporters board";
+
+/** Said under the plan cards: the supporters board is a choice a Lifetime member makes after buying. */
+export const LIFETIME_BOARD_NOTE = "Go Lifetime and you can choose to have your display name and profile picture on the supporters board on arctv.org, as a thank you.";

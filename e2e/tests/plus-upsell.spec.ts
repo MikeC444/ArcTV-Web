@@ -129,11 +129,16 @@ test.describe("ArcTV Plus: prices and nudges for someone without Plus", () => {
     await expect(dialog).toHaveCount(0);
   });
 
-  test("the Lifetime plan says the supporters board is a choice", async ({ page }) => {
+  test("the plan panel says Lifetime supporters can choose to be on the supporters board, and links to it", async ({ page }) => {
     const account = await newAccount("boardnote");
     await freeWithPaywall(page);
     await openSignedIn(page, account, "/settings/plus");
-    await expect(page.getByRole("group", { name: "Plans" }).locator(".plus__plan").nth(2)).toContainText("Lifetime supporters can choose to have their display name on the supporters board on arctv.org.");
+    await expect(page.getByRole("group", { name: "Plans" }).locator(".plus__plan").nth(2)).toContainText("Join the supporters board");
+    const callout = page.locator(".plus__board");
+    await expect(callout).toContainText("you can choose to have your display name and profile picture on the supporters board on arctv.org");
+    await expect(callout.getByRole("link", { name: "See the supporters board" })).toHaveAttribute("href", "https://arctv.org/supporters/");
+    await callout.scrollIntoViewIfNeeded();
+    await shot(page, "plus-supporters-board-note");
   });
 
   test("a Lifetime member sees the supporters board switch, off until they turn it on", async ({ page }) => {
