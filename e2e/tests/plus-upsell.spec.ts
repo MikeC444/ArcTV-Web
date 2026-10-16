@@ -135,7 +135,7 @@ test.describe("ArcTV Plus: prices and nudges for someone without Plus", () => {
     await openSignedIn(page, account, "/settings/plus");
     await expect(page.getByRole("group", { name: "Plans" }).locator(".plus__plan").nth(2)).toContainText("Join the supporters board");
     const callout = page.locator(".plus__board");
-    await expect(callout).toContainText("you'll be asked at checkout whether you want your display name and profile picture on the supporters board on arctv.org");
+    await expect(callout).toContainText("you'll be asked at checkout whether you want to be on the supporters board on arctv.org, with your display name and picture or just as Anonymous");
     await expect(callout.getByRole("link", { name: "See the supporters board" })).toHaveAttribute("href", "https://arctv.org/supporters/");
     await callout.scrollIntoViewIfNeeded();
     await shot(page, "plus-supporters-board-note");
@@ -144,25 +144,33 @@ test.describe("ArcTV Plus: prices and nudges for someone without Plus", () => {
   test("a Lifetime member sees the supporters board switch, off until they turn it on", async ({ page }) => {
     const account = await newAccount("boardswitch");
     let board = false;
-    const lifetime = () => ({ active: true, plan: "lifetime", validUntil: null, cancelAtPeriodEnd: false, paywall: true, supporterBoard: board });
+    let anon = false;
+    const lifetime = () => ({ active: true, plan: "lifetime", validUntil: null, cancelAtPeriodEnd: false, paywall: true, supporterBoard: board, supporterAnonymous: board ? anon : null });
     const puts: unknown[] = [];
     await page.route("**/user/plus", (route) => (route.request().method() === "GET" ? route.fulfill({ json: { ...lifetime(), trialDays: 0, prices: null } }) : route.continue()));
     await page.route("**/user/plus/supporter", (route) => {
       puts.push(route.request().postDataJSON());
-      board = (route.request().postDataJSON() as { show: boolean }).show;
+      const sent = route.request().postDataJSON() as { show: boolean; anonymous?: boolean };
+      board = sent.show;
+      anon = sent.show && sent.anonymous === true;
       return route.fulfill({ json: lifetime() });
     });
     await openSignedIn(page, account, "/settings/plus");
-    const toggle = page.getByRole("switch", { name: "Put my name on the supporters board" });
+    const toggle = page.getByRole("switch", { name: "Put me on the supporters board" });
     await expect(toggle).toBeVisible();
+    await expect(page.getByRole("switch", { name: "List me as Anonymous" })).toHaveCount(0); // only once on the board
     await expect(toggle).toHaveAttribute("aria-checked", "false"); // buying Lifetime does not put anyone on it
     await expect(page.getByText(/It is off until you turn it on/)).toBeVisible();
     await toggle.click();
     await expect(toggle).toHaveAttribute("aria-checked", "true");
-    expect(puts).toEqual([{ show: true }]);
+    const anonymous = page.getByRole("switch", { name: "List me as Anonymous" });
+    await expect(anonymous).toHaveAttribute("aria-checked", "false");
+    await anonymous.click();
+    await expect(anonymous).toHaveAttribute("aria-checked", "true");
     await toggle.click();
     await expect(toggle).toHaveAttribute("aria-checked", "false");
-    expect(puts).toEqual([{ show: true }, { show: false }]);
+    await expect(anonymous).toHaveCount(0);
+    expect(puts).toEqual([{ show: true, anonymous: false }, { show: true, anonymous: true }, { show: false, anonymous: false }]);
     await shot(page, "plus-supporters-board-switch");
   });
 
@@ -170,7 +178,7 @@ test.describe("ArcTV Plus: prices and nudges for someone without Plus", () => {
     const account = await newAccount("noboardswitch");
     await freeWithPaywall(page);
     await openSignedIn(page, account, "/settings/plus");
-    await expect(page.getByRole("switch", { name: "Put my name on the supporters board" })).toHaveCount(0);
+    await expect(page.getByRole("switch", { name: "Put me on the supporters board" })).toHaveCount(0);
   });
 });
 

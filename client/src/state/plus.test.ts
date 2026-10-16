@@ -108,8 +108,13 @@ describe("ArcTV Plus status", () => {
     await usePlus.getState().pull();
     respond = () => status({ active: true, plan: "lifetime", paywall: true, supporterBoard: true });
     await usePlus.getState().setSupporterBoard(true);
-    expect(calls.at(-1)).toEqual({ path: "/user/plus/supporter", method: "PUT", body: { show: true } });
+    expect(calls.at(-1)).toEqual({ path: "/user/plus/supporter", method: "PUT", body: { show: true, anonymous: false } });
     expect(usePlus.getState().supporterBoard).toBe(true);
+    expect(usePlus.getState().supporterAnonymous).toBe(false);
+    respond = () => status({ active: true, plan: "lifetime", paywall: true, supporterBoard: true, supporterAnonymous: true });
+    await usePlus.getState().setSupporterBoard(true, true);
+    expect(calls.at(-1)).toEqual({ path: "/user/plus/supporter", method: "PUT", body: { show: true, anonymous: true } });
+    expect(usePlus.getState().supporterAnonymous).toBe(true);
     resetAllStores(); // the next launch shows it at once
     hydrateAll("u1");
     expect(usePlus.getState().supporterBoard).toBe(true);
