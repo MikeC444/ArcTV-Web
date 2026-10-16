@@ -120,7 +120,8 @@ test.describe("accessibility", () => {
       expect((await account.tv.post("/user/watch-progress", body)).status).toBe(200);
     }
     await openSignedIn(page, account, "/settings/stats");
-    await expect(page.getByRole("button", { name: "Save as image" })).toBeVisible();
+    await expect(page.getByText("My ArcTV recap")).toBeVisible();
+    await page.getByText("What counts towards your stats").click(); // the opened explanation is checked too
     const found = await problems(page, "settings-stats", phone);
     expect(found, found.join("\n")).toEqual([]);
   });

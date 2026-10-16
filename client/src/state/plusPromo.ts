@@ -1,8 +1,11 @@
 import { create } from "zustand";
 import { readJson, userKey, writeJson } from "./persist";
 
-/** After "Close" the popup stays away this long before it may appear again. */
-export const PROMO_SNOOZE_MS = 7 * 24 * 60 * 60 * 1000;
+/**
+ * The popup stays away this long after it was last on screen (whether it was closed, or left open, or the page was reloaded or left),
+ * before it may appear again.
+ */
+export const PROMO_SNOOZE_MS = 14 * 24 * 60 * 60 * 1000;
 
 interface PromoRecord {
   /** "Don't show me again": never again for this account. */
@@ -19,7 +22,8 @@ interface PromoState extends PromoRecord {
   shownThisSession: boolean;
   hydrate(userId: string): void;
   reset(): void;
-  markShown(): void;
+  /** The popup has just been put on screen: remembered at once, so a reload or leaving the page without closing it does not bring it back. */
+  markShown(now?: number): void;
   /** Close: hide now and come back after the snooze. */
   snooze(now?: number): void;
   /** Don't show me again. */
@@ -32,7 +36,7 @@ export function promoDue(s: Pick<PromoState, "never" | "snoozedUntil" | "shownTh
 }
 
 /**
- * Remembers what the person told the ArcTV Plus popup, per account in this browser: Close snoozes it for a week,
+ * Remembers what the person told the ArcTV Plus popup, per account in this browser: Showing it (or closing it) snoozes it for two weeks,
  * "Don't show me again" switches it off for good. Whether it is *eligible* (signed in, no Plus, paywall on) is decided by the caller.
  */
 export const usePlusPromo = create<PromoState>((set, get) => {
@@ -51,11 +55,12 @@ export const usePlusPromo = create<PromoState>((set, get) => {
     reset() {
       set({ userId: null, ...NONE });
     },
-    markShown() {
+    markShown(now = Date.now()) {
       set({ shownThisSession: true });
+      save({ never: get().never, snoozedUntil: Math.max(get().snoozedUntil, now + PROMO_SNOOZE_MS) });
     },
     snooze(now = Date.now()) {
-      save({ never: get().never, snoozedUntil: now + PROMO_SNOOZE_MS });
+      save({ never: get().never, snoozedUntil: Math.max(get().snoozedUntil, now + PROMO_SNOOZE_MS) });
     },
     dismissForever() {
       save({ never: true, snoozedUntil: get().snoozedUntil });
