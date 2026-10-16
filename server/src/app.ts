@@ -41,6 +41,35 @@ function csrfGuard(req: Request, _res: Response, next: NextFunction): void {
   next();
 }
 
+export interface PublicSupporter {
+  name: string;
+  /** A picture id (letters, digits and dashes) or null. */
+  avatar: string | null;
+  /** The month they joined, "2026-10", or null. */
+  since: string | null;
+}
+
+/**
+ * What the landing page is given: each supporter's display name (at most 24 characters), the picture id of their profile and the month they joined, at
+ * most 500 of them. Anything else in the answer is dropped, and a picture id or month that is not the expected shape becomes null.
+ */
+export function cleanSupporters(json: unknown): { supporters: PublicSupporter[]; total: number } | null {
+  const list = (json as { supporters?: unknown } | null)?.supporters;
+  if (!Array.isArray(list)) return null;
+  const supporters: PublicSupporter[] = [];
+  for (const entry of list.slice(0, 500)) {
+    const e = (entry ?? {}) as { name?: unknown; avatar?: unknown; since?: unknown };
+    if (typeof e.name !== "string" || e.name.trim() === "") continue;
+    supporters.push({
+      name: e.name.trim().slice(0, 24),
+      avatar: typeof e.avatar === "string" && /^[a-z0-9-]{1,32}$/.test(e.avatar) ? e.avatar : null,
+      since: typeof e.since === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(e.since) ? e.since : null,
+    });
+  }
+  const total = (json as { total?: unknown }).total;
+  return { supporters, total: typeof total === "number" && total >= supporters.length ? Math.floor(total) : supporters.length };
+}
+
 function noStore(_req: Request, res: Response, next: NextFunction): void {
   res.setHeader("Cache-Control", "no-store");
   next();
@@ -141,6 +170,29 @@ export function createApp(config: AppConfig, options: CreateAppOptions = {}): Ex
       backendCheck = { at: Date.now(), state };
     }
     res.json({ status: "ok", backend: backendCheck.state });
+  });
+  // The supporters board, for the landing page (another site, so the answer is open to any origin: it is public and read-only). Asked of the Arc TV
+  // service at most every five minutes, and the last good answer is kept if it can't be reached; with none yet it answers 503 so the page can hide itself.
+  const SUPPORTERS_TTL_MS = 5 * 60_000;
+  let supporters: { at: number; body: { supporters: PublicSupporter[]; total: number } } | null = null;
+  api.get("/supporters", async (_req, res) => {
+    res.set("Access-Control-Allow-Origin", "*");
+    res.set("Cache-Control", "public, max-age=300");
+    if (!supporters || Date.now() - supporters.at > SUPPORTERS_TTL_MS) {
+      try {
+        const answer = await backend({ method: "GET", path: "/supporters", timeoutMs: 25_000 });
+        const clean = answer.status === 200 ? cleanSupporters(answer.json) : null;
+        if (clean) supporters = { at: Date.now(), body: clean };
+      } catch {
+        /* unreachable: keep what we have */
+      }
+    }
+    if (!supporters) {
+      res.set("Cache-Control", "no-store");
+      res.status(503).json({ supporters: [], total: 0 });
+      return;
+    }
+    res.json(supporters.body);
   });
   api.use(csrfGuard);
   api.use(express.json({ limit: "100kb" }));

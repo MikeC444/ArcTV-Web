@@ -34,6 +34,7 @@ const ALLOWED: ReadonlyArray<readonly [method: string, path: RegExp]> = [
   ["GET", /^\/plus$/],
   ["POST", /^\/plus\/checkout$/],
   ["POST", /^\/plus\/cancel$/],
+  ["PUT", /^\/plus\/supporter$/], // a Lifetime member chooses to be on the supporters board (or not)
   // The developer panel's Downloads card: the Plus popup shown, the Downloads panel opened, a file pressed (no titles or addresses are sent).
   ["POST", /^\/player-events\/download$/],
 ];

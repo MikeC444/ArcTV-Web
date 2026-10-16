@@ -19,9 +19,11 @@ export interface PlusStatus {
   trialDays: number;
   /** The list price of each plan, for the plan cards; null when the backend didn't send them. Promo codes can lower what checkout charges. */
   prices: PlanPrices | null;
+  /** For a Lifetime member: whether they have chosen to have their display name on the supporters board (off until they say so). null for everyone else. */
+  supporterBoard: boolean | null;
 }
 
-const NONE: PlusStatus = { active: false, plan: null, validUntil: null, cancelAtPeriodEnd: false, paywall: false, trialDays: 0, prices: null };
+const NONE: PlusStatus = { active: false, plan: null, validUntil: null, cancelAtPeriodEnd: false, paywall: false, trialDays: 0, prices: null, supporterBoard: null };
 
 /** The backend's answer as a PlusStatus, with anything missing or malformed read as "none". */
 function parseStatus(status: Partial<Record<keyof PlusStatus, unknown>>): PlusStatus {
@@ -33,6 +35,7 @@ function parseStatus(status: Partial<Record<keyof PlusStatus, unknown>>): PlusSt
     paywall: status.paywall === true,
     trialDays: typeof status.trialDays === "number" && status.trialDays > 0 ? Math.floor(status.trialDays) : 0,
     prices: parsePrices(status.prices),
+    supporterBoard: typeof status.supporterBoard === "boolean" ? status.supporterBoard : null,
   };
 }
 
@@ -46,6 +49,8 @@ interface PlusState extends PlusStatus {
   checkout(plan: PlusPlanId): Promise<string>;
   /** Cancels a monthly or yearly subscription at the end of the period already paid for; Plus stays on until then. */
   cancelSubscription(): Promise<void>;
+  /** A Lifetime member chooses to have their display name on the supporters board, or takes it off. */
+  setSupporterBoard(show: boolean): Promise<void>;
 }
 
 /**
@@ -81,6 +86,15 @@ export const usePlus = create<PlusState>((set, get) => ({
   async checkout(plan) {
     const { url } = await api<{ url: string }>("/user/plus/checkout", { method: "POST", body: { plan } });
     return url;
+  },
+
+  async setSupporterBoard(show) {
+    const { userId } = get();
+    const status = await api<Partial<Record<keyof PlusStatus, unknown>>>("/user/plus/supporter", { method: "PUT", body: { show } });
+    if (!userId || get().userId !== userId) return;
+    set({ supporterBoard: typeof status.supporterBoard === "boolean" ? status.supporterBoard : show });
+    const { active, plan, validUntil, cancelAtPeriodEnd, paywall, trialDays, prices, supporterBoard } = get();
+    writeJson(userKey(userId, "plus"), { active, plan, validUntil, cancelAtPeriodEnd, paywall, trialDays, prices, supporterBoard } satisfies PlusStatus);
   },
 
   async cancelSubscription() {

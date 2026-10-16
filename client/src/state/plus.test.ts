@@ -86,6 +86,38 @@ describe("ArcTV Plus status", () => {
     expect(usePlus.getState().prices).toBeNull();
   });
 
+  it("knows whether a Lifetime member has chosen to be on the supporters board, and null for everyone else", async () => {
+    hydrateAll("u1");
+    respond = () => status({ active: true, plan: "lifetime", paywall: true, supporterBoard: false });
+    await usePlus.getState().pull();
+    expect(usePlus.getState().supporterBoard).toBe(false);
+    respond = () => status({ active: true, plan: "lifetime", paywall: true, supporterBoard: true });
+    await usePlus.getState().pull();
+    expect(usePlus.getState().supporterBoard).toBe(true);
+    respond = () => status({ active: true, plan: "monthly", paywall: true });
+    await usePlus.getState().pull();
+    expect(usePlus.getState().supporterBoard).toBeNull();
+    respond = () => status({ active: true, plan: "lifetime", paywall: true, supporterBoard: "yes" });
+    await usePlus.getState().pull();
+    expect(usePlus.getState().supporterBoard).toBeNull();
+  });
+
+  it("switching the supporters board on asks the account, uses its answer, and remembers it", async () => {
+    hydrateAll("u1");
+    respond = () => status({ active: true, plan: "lifetime", paywall: true, supporterBoard: false });
+    await usePlus.getState().pull();
+    respond = () => status({ active: true, plan: "lifetime", paywall: true, supporterBoard: true });
+    await usePlus.getState().setSupporterBoard(true);
+    expect(calls.at(-1)).toEqual({ path: "/user/plus/supporter", method: "PUT", body: { show: true } });
+    expect(usePlus.getState().supporterBoard).toBe(true);
+    resetAllStores(); // the next launch shows it at once
+    hydrateAll("u1");
+    expect(usePlus.getState().supporterBoard).toBe(true);
+    respond = () => new ApiClientError(409, "conflict", "Only Lifetime supporters can be on the supporters board");
+    await expect(usePlus.getState().setSupporterBoard(false)).rejects.toBeTruthy();
+    expect(usePlus.getState().supporterBoard).toBe(true); // a refusal changes nothing
+  });
+
   it("keeps the last known status when it can't be read, and remembers it for the next launch", async () => {
     hydrateAll("u1");
     respond = () => status({ active: true, plan: "monthly", validUntil: "2099-01-01T00:00:00.000Z" });

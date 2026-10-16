@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { MdBarChart, MdBolt, MdDownload, MdGroups, MdLanguage, MdLock, MdAccountCircle, MdAdd, MdBlock, MdCancel, MdFavorite, MdWorkspacePremium, MdArrowDownward, MdArrowUpward, MdCheck, MdCloudUpload, MdDelete, MdExtension, MdGridView, MdInfo, MdLogout, MdMusicNote, MdSubtitles, MdSwitchAccount, MdTune, MdVolumeUp, MdSpatialAudio, MdStars } from "react-icons/md";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
-import { formatMoney, PLUS_FREE_NOTE, PLUS_PERKS, PLUS_PLANS, PLUS_PROCEEDS_NOTE, savingPercent, yearlyPerDay, yearlyPerMonth, type PlanPrices, type PlusPlan } from "../../domain/plus";
+import { formatMoney, LIFETIME_BOARD_NOTE, PLUS_FREE_NOTE, PLUS_PERKS, PLUS_PLANS, PLUS_PROCEEDS_NOTE, savingPercent, yearlyPerDay, yearlyPerMonth, type PlanPrices, type PlusPlan } from "../../domain/plus";
 import { applyRowOrder, moveRow } from "../../domain/homeRows";
 import { useProviders } from "../../domain/registry";
 import type { HomeSection } from "../../domain/types";
@@ -266,6 +266,7 @@ function PlusPane() {
         )}
       </div>
       <PlusSubscription />
+      {owned && plus.plan === "lifetime" && plus.supporterBoard !== null ? <SupportersBoardOption /> : null}
       <p className="t-body-md plus__free">{PLUS_FREE_NOTE}</p>
       <p className="plus__proceeds">
         <MdFavorite aria-hidden="true" /> <span>{PLUS_PROCEEDS_NOTE}</span>
@@ -309,6 +310,7 @@ function PlusPane() {
                   </div>
                 ) : null}
                 {shown?.versus ? <div className="t-body-sm c-text-2 plus__math">{shown.versus}</div> : null}
+                {plan.id === "lifetime" ? <p className="t-label-sm c-text-3" style={{ margin: "0 0 10px" }}>{LIFETIME_BOARD_NOTE}</p> : null}
                 <p className="t-body-sm c-text-2" style={{ margin: "8px 0 14px", flex: 1 }}>{plan.blurb}</p>
                 <ArcButton text={busy === plan.id ? "Opening…" : plan.id === "lifetime" ? "Get Lifetime" : plan.id === "yearly" && plus.trialDays > 0 ? `Start ${plus.trialDays}-day free trial` : `Choose ${plan.label}`} icon={<MdWorkspacePremium />} variant="filled" compact disabled={busy !== null} onClick={() => void choose(plan.id)} />
               </div>
@@ -412,6 +414,43 @@ function SmartPickingToggle() {
         </span>
         <Switch checked={enabled} white />
       </Surface>
+    </div>
+  );
+}
+
+/**
+ * Settings → ArcTV Plus, for a Lifetime member: the choice to have their display name on the supporters board on the landing page. It is off until
+ * they turn it on; buying Lifetime never turns it on for them.
+ */
+function SupportersBoardOption() {
+  const on = usePlus((s) => s.supporterBoard) === true;
+  const setBoard = usePlus((s) => s.setSupporterBoard);
+  const name = useAuth((s) => s.user?.displayName)?.trim() || null;
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  async function toggle() {
+    setBusy(true);
+    setError(null);
+    try {
+      await setBoard(!on);
+    } catch {
+      setError("Couldn't save that. Try again in a moment.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="plus__setting" style={{ marginTop: 0, marginBottom: 18 }}>
+      <Surface className="homerow__toggle" scale={1.02} borderColor="var(--text)" onClick={() => void toggle()} role="switch" ariaLabel="Put my name on the supporters board" ariaChecked={on} disabled={busy}>
+        <span style={{ flex: 1, minWidth: 0 }}>
+          <span className="t-body-md" style={{ display: "block", color: on ? "var(--text)" : "var(--text-2)" }}>Supporters board</span>
+          <span className="t-label-sm c-text-3" style={{ display: "block" }}>
+            Thank you for going Lifetime! Show {name ? <>your display name, “{name.slice(0, 24)}”,</> : <>“Anonymous supporter” (you have no display name)</>} on the supporters board on arctv.org. It is off until you turn it on, and you can turn it off any time.
+          </span>
+        </span>
+        <Switch checked={on} white />
+      </Surface>
+      {error ? <p className="t-body-sm" role="alert" style={{ margin: "8px 0 0", color: "var(--error)" }}>{error}</p> : null}
     </div>
   );
 }
