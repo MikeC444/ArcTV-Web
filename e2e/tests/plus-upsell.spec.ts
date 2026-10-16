@@ -33,6 +33,7 @@ test.describe("ArcTV Plus: prices and nudges for someone without Plus", () => {
     await expect(yearly.locator("s")).toHaveText("£4.99/mo");
     await expect(yearly).toContainText("£3.33/mo billed yearly, about £0.11 a day");
     await expect(plans.locator(".plus__plan").nth(2)).toContainText("£99.99");
+    await expect(plans.locator(".plus__plan").nth(2)).toContainText("One payment instead of £39.99 every year");
     await expect(plans.getByText("Price at checkout")).toHaveCount(0);
     await expect(page.getByText("List prices. Promo codes can be applied at checkout.")).toBeVisible();
     await plans.scrollIntoViewIfNeeded();

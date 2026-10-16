@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { MdBarChart, MdBolt, MdDownload, MdGroups, MdLanguage, MdLock, MdAccountCircle, MdAdd, MdBlock, MdCancel, MdFavorite, MdWorkspacePremium, MdArrowDownward, MdArrowUpward, MdCheck, MdCloudUpload, MdDelete, MdExtension, MdGridView, MdInfo, MdLogout, MdMusicNote, MdSubtitles, MdSwitchAccount, MdTune, MdVolumeUp, MdSpatialAudio, MdStars } from "react-icons/md";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
-import { formatMoney, lifetimeInYears, PLUS_FREE_NOTE, PLUS_PERKS, PLUS_PLANS, PLUS_PROCEEDS_NOTE, savingPercent, yearlyPerDay, yearlyPerMonth, type PlanPrices, type PlusPlan } from "../../domain/plus";
+import { formatMoney, PLUS_FREE_NOTE, PLUS_PERKS, PLUS_PLANS, PLUS_PROCEEDS_NOTE, savingPercent, yearlyPerDay, yearlyPerMonth, type PlanPrices, type PlusPlan } from "../../domain/plus";
 import { applyRowOrder, moveRow } from "../../domain/homeRows";
 import { useProviders } from "../../domain/registry";
 import type { HomeSection } from "../../domain/types";
@@ -180,7 +180,7 @@ const PERK_ICONS: Record<string, ReactNode> = {
 };
 
 /** What a plan card says about its price. Everything comes from the list prices the backend sent; null when they weren't (the card then says "Price at checkout"). */
-function planPriceText(plan: PlusPlan["id"], prices: PlanPrices | null): { price: string; was?: string; saving?: string; perDay?: string; years?: string } | null {
+function planPriceText(plan: PlusPlan["id"], prices: PlanPrices | null): { price: string; was?: string; saving?: string; perDay?: string; versus?: string } | null {
   if (!prices) return null;
   const price = formatMoney(prices[plan].amount, prices[plan].currency);
   if (!price) return null;
@@ -197,8 +197,9 @@ function planPriceText(plan: PlusPlan["id"], prices: PlanPrices | null): { price
     };
   }
   if (plan === "lifetime") {
-    const years = lifetimeInYears(prices);
-    return { price, years: years && years >= 1 ? `About ${years} years of Yearly, then it's yours for good` : undefined };
+    // Said as a plain comparison with what Yearly costs, only when both are in one currency.
+    const yearly = prices.lifetime.currency === prices.yearly.currency ? formatMoney(prices.yearly.amount, prices.yearly.currency) : null;
+    return { price, versus: yearly ? `One payment instead of ${yearly} every year` : undefined };
   }
   return { price };
 }
@@ -312,7 +313,7 @@ function PlusPane() {
                     {shown.perDay}
                   </div>
                 ) : null}
-                {shown?.years ? <div className="t-body-sm c-text-2 plus__math">{shown.years}</div> : null}
+                {shown?.versus ? <div className="t-body-sm c-text-2 plus__math">{shown.versus}</div> : null}
                 <p className="t-body-sm c-text-2" style={{ margin: "8px 0 14px", flex: 1 }}>{plan.blurb}</p>
                 <ArcButton text={busy === plan.id ? "Opening…" : plan.id === "lifetime" ? "Get Lifetime" : plan.id === "yearly" && plus.trialDays > 0 ? `Start ${plus.trialDays}-day free trial` : `Choose ${plan.label}`} icon={<MdWorkspacePremium />} variant="filled" compact disabled={busy !== null} onClick={() => void choose(plan.id)} />
               </div>
