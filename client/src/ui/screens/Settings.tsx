@@ -547,7 +547,7 @@ function AddonsPane() {
       <p className="addons__notice t-body-sm" role="note">
         <MdInfo aria-hidden="true" />
         <span>
-          <strong>Only addons with a debrid service will play.</strong> Arc TV plays links, not torrents: <Link to={routes.debridGuide}>Step-by-step guide to setting one up</Link>.
+          <strong>On web, only addons with a debrid service will play.</strong> The web app plays links, not torrents (other devices can play torrents): <Link to={routes.debridGuide}>Step-by-step guide to setting one up</Link>.
         </span>
       </p>
       {addons.length === 0 ? (
