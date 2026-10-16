@@ -37,6 +37,26 @@ test.describe("ArcTV Plus extras", () => {
     await expect(stats.locator(".stats__tile", { hasText: "Movies finished" })).toContainText("1");
     await expect(stats.locator(".stats__tile", { hasText: "Episodes watched" })).toContainText("2");
     await expect(stats.locator(".stats__bar[data-peak=\"true\"]")).toHaveCount(1);
+
+    // clearer labels
+    await expect(stats.getByText("On days you watch")).toBeVisible();
+    await expect(stats.locator(".stats__tile", { hasText: "On days you watch" })).toContainText("3 days watched");
+    await expect(stats.getByText("Per day you watch")).toHaveCount(0);
+    await expect(stats.locator(".stats__period").first()).toContainText("all time");
+    // the activity grid: month names above it, a readout for the day tapped, and what the darkest square means
+    await expect(stats.locator(".stats__heatmonths li", { hasText: /[A-Za-z]/ }).first()).toBeVisible();
+    await stats.locator(".stats__cell[data-level]:not(.stats__cell--key)").last().click();
+    await expect(stats.locator(".stats__readout")).toContainText("·");
+    await expect(stats.locator(".stats__legend")).toContainText("the darkest is");
+    // the weekday bars: today marked, and the busiest day in a sentence
+    await expect(stats.locator('.stats__bar[data-today="true"]')).toHaveCount(1);
+    await expect(stats.getByText(/You watch most on \w+days\./)).toBeVisible();
+    // most watched, and the recap that saves as a picture
+    await expect(stats.getByRole("heading", { name: /Most watched/ })).toBeVisible();
+    await expect(stats.locator(".stats__toprow", { hasText: "Fixture Show" })).toBeVisible();
+    await expect(stats.locator(".stats__toprow", { hasText: "Fixture Movie One" })).toBeVisible();
+    const [download] = await Promise.all([page.waitForEvent("download"), stats.getByRole("button", { name: "Save as image" }).click()]);
+    expect(download.suggestedFilename()).toBe("arctv-recap.png");
     await shot(page, "settings-stats");
   });
 

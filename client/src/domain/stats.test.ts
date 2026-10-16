@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeStats, formatDuration, formatShort, heatCells, HEAT_DAYS, watchedMsOf, weekChange, type HistoryItem } from "./stats";
+import { computeStats, formatDuration, formatShort, heatCells, heatMax, heatMonthLabels, HEAT_DAYS, streakNote, watchedMsOf, weekChange, weekdayLine, type HistoryItem } from "./stats";
 
 const HOUR = 3600_000;
 const item = (over: Partial<HistoryItem> = {}): HistoryItem => ({
@@ -148,5 +148,59 @@ describe("the extra numbers", () => {
     expect(cells.at(-1)).toMatchObject({ ms: 4 * HOUR, level: 4 });
     expect(cells.at(-2)).toMatchObject({ ms: HOUR, level: 1 });
     expect(cells[pad]).toMatchObject({ ms: 0, level: 0 });
+  });
+});
+
+describe("the extra numbers", () => {
+  const day = 24 * 3600_000;
+  it("compares the last 30 days with the 30 before, and names the top movie and top show", () => {
+    const stats = computeStats(
+      [
+        item({ contentId: "m1", title: "Big Movie", watchedAt: new Date(NOW.getTime() - 3 * day).toISOString(), positionMs: 2 * HOUR, durationMs: 2 * HOUR, completed: true }),
+        item({ contentId: "m2", title: "Old Movie", watchedAt: new Date(NOW.getTime() - 40 * day).toISOString(), positionMs: HOUR, durationMs: HOUR, completed: true }),
+        item({ contentId: "s1", contentType: "TV_SHOW", seasonNumber: 1, episodeNumber: 1, title: "Show", watchedAt: new Date(NOW.getTime() - 5 * day).toISOString(), positionMs: HOUR / 2, durationMs: HOUR / 2, completed: true }),
+      ],
+      NOW,
+    );
+    expect(stats.last30DaysMs).toBe(2.5 * HOUR);
+    expect(stats.prev30DaysMs).toBe(HOUR);
+    expect(stats.topMovie?.title).toBe("Big Movie");
+    expect(stats.topShow?.title).toBe("Show");
+    expect(computeStats([], NOW).topMovie).toBeNull();
+    expect(computeStats([item({ contentId: "m1", positionMs: HOUR, durationMs: HOUR, completed: true })], NOW).topShow).toBeNull();
+  });
+
+  it("says how far the streak is from the best one", () => {
+    expect(streakNote(5, 6)).toBe("best 6 · 1 day to match it");
+    expect(streakNote(2, 6)).toBe("best 6 · 4 days to match it");
+    expect(streakNote(6, 6)).toBe("your best");
+    expect(streakNote(0, 6)).toBe("best 6");
+    expect(streakNote(0, 0)).toBeNull();
+  });
+
+  it("says which weekday is the busiest, in plain words", () => {
+    expect(weekdayLine(0)).toBe("You watch most on Mondays.");
+    expect(weekdayLine(6)).toBe("You watch most on Sundays.");
+    expect(weekdayLine(null)).toBeNull();
+  });
+
+  it("labels the activity grid with the month where a new one starts, never two names side by side", () => {
+    const daily = new Array<number>(HEAT_DAYS).fill(0);
+    const cells = heatCells(daily, NOW);
+    const labels = heatMonthLabels(cells, "en-US");
+    expect(labels).toHaveLength(Math.ceil(cells.length / 7));
+    const named = labels.filter(Boolean);
+    expect(named.length).toBeGreaterThanOrEqual(3); // 13 weeks span at least three months
+    expect(new Set(named).size).toBe(named.length); // each month named once
+    labels.forEach((label, i) => {
+      if (label && labels[i + 1]) throw new Error(`two month names side by side at column ${i}`);
+    });
+    expect(cells.filter((c) => c.ms !== null).every((c) => c.month !== null)).toBe(true);
+    expect(cells.filter((c) => c.ms === null).every((c) => c.month === null)).toBe(true);
+  });
+
+  it("knows what the darkest square stands for", () => {
+    expect(heatMax([0, 3 * HOUR, HOUR])).toBe(3 * HOUR);
+    expect(heatMax([])).toBe(0);
   });
 });

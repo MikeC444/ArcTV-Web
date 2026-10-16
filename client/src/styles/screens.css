@@ -638,7 +638,23 @@
 .stats__dot--movies { background: var(--cyan); }
 .stats__dot--shows { background: var(--violet); }
 .stats__heatwrap { display: flex; gap: 8px; align-items: stretch; overflow-x: auto; padding-bottom: 2px; }
-.stats__heatdays { list-style: none; margin: 0; padding: 0; display: grid; grid-template-rows: repeat(7, 20px); gap: 4px; line-height: 20px; font-size: 10px; }
+.stats__period { font-weight: 400; color: var(--text-3); }
+.stats__heatcol { display: flex; flex-direction: column; gap: 4px; }
+.stats__heatmonths { list-style: none; margin: 0; padding: 0; display: grid; grid-auto-flow: column; grid-auto-columns: 20px; gap: 4px; height: 14px; line-height: 14px; }
+.stats__heatmonths li { white-space: nowrap; overflow: visible; }
+.stats__cell[data-picked="true"] { outline: 2px solid var(--text); outline-offset: 1px; }
+.stats__readout { margin: 8px 0 0; min-height: 1.4em; color: var(--text-2); }
+.stats__today { display: inline-block; width: 6px; height: 6px; margin-left: 4px; border-radius: 50%; background: var(--cyan); vertical-align: middle; }
+.stats__bar[data-today="true"] .stats__barday { color: var(--text); font-weight: 700; }
+.stats__top { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.stats__toprow { display: flex; gap: 12px; align-items: center; padding: 10px 12px; background: var(--surface); border-radius: 12px; min-width: 0; }
+.stats__topposter { flex: none; width: 54px; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 8px; background: var(--surface-high); }
+.stats__toptitle { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.stats__recap { padding: 16px 18px; border-radius: 14px; background: radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--cyan) 14%, transparent), transparent 60%), var(--surface); }
+.stats__recaphours { font-size: clamp(26px, 5vw, 36px); font-weight: 800; line-height: 1.15; margin: 2px 0 8px; background: var(--brand-gradient-wide); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.stats__recaplines { margin: 0 0 12px; padding-left: 18px; display: grid; gap: 2px; }
+.stats__recapactions { display: flex; flex-wrap: wrap; gap: 10px; }
+.stats__heatdays { list-style: none; margin: 18px 0 0; padding: 0; display: grid; grid-template-rows: repeat(7, 20px); gap: 4px; line-height: 20px; font-size: 12px; }
 .stats__heat { list-style: none; margin: 0; padding: 0; display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 20px); grid-auto-columns: 20px; gap: 4px; }
 .stats__cell { width: 20px; height: 20px; border-radius: 5px; background: var(--surface-high); }
 .stats__cell--blank { background: transparent; }

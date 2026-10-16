@@ -1,7 +1,7 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { MdAvTimer, MdCalendarMonth, MdDateRange, MdLocalFireDepartment, MdLock, MdMovie, MdTrendingDown, MdTrendingFlat, MdTrendingUp, MdTv, MdWorkspacePremium } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
-import { formatDuration, formatShort, heatCells, WEEKDAYS, weekChange, type WatchStats as Stats } from "../../domain/stats";
+import { formatDuration, formatShort, heatCells, heatMax, heatMonthLabels, streakNote, WEEKDAYS, weekChange, weekdayLine, type WatchStats as Stats } from "../../domain/stats";
 import { pluralize } from "../../lib/format";
 import { routes } from "../../lib/routes";
 import { useHasPlus } from "../../state/plusAccess";
@@ -10,6 +10,7 @@ import { activeProfileOf, useProfiles } from "../../state/profiles";
 import { useWatchStats } from "../../state/watchStats";
 import { ArcButton } from "./Buttons";
 import { Spinner } from "./States";
+import { StatsRecap } from "./StatsRecap";
 
 /** Settings → Account → Your stats: an ArcTV Plus feature, read from the watch history of the profile in use. Others see what it is and where to get it. */
 export function WatchStats() {
@@ -20,7 +21,7 @@ export function WatchStats() {
   const state = useWatchStats(plus || offer, profileId);
   const navigate = useNavigate();
   return (
-    <section className="stats" aria-label="Your stats">
+    <div className="stats">
       {!plus && offer && state.kind === "ready" && !state.stats.empty ? (
         <StatsPreview stats={state.stats} truncated={state.truncated} onGo={() => navigate(routes.settings("plus"))} />
       ) : !plus ? (
@@ -37,7 +38,7 @@ export function WatchStats() {
       ) : (
         <StatsBody stats={state.stats} truncated={state.truncated} />
       )}
-    </section>
+    </div>
   );
 }
 
@@ -54,7 +55,7 @@ function StatsPreview({ stats, truncated, onGo }: { stats: Stats; truncated: boo
         {stats.streakDays >= 2 ? <div className="t-label-md c-text-2">{stats.streakDays}-day streak going</div> : null}
       </div>
       <div className="stats__blurwrap">
-        <div className="stats__blur" aria-hidden="true">
+        <div className="stats__blur" aria-hidden="true" {...({ inert: "" } as Record<string, string>)}>
           <StatsBody stats={stats} truncated={truncated} />
         </div>
         <div className="stats__unlock">
@@ -69,6 +70,7 @@ function StatsPreview({ stats, truncated, onGo }: { stats: Stats; truncated: boo
 }
 
 export function StatsBody({ stats, truncated }: { stats: Stats; truncated: boolean }) {
+  const [picked, setPicked] = useState<number | null>(null); // the day last pointed at or tapped in the activity grid
   if (stats.empty) return <p className="t-body-sm c-text-2">Nothing here yet. Watch something and your stats will appear.</p>;
   const peak = Math.max(...stats.byWeekdayMs, 1);
   const since = stats.firstWatchedAt ? new Date(stats.firstWatchedAt).toLocaleDateString(undefined, { month: "long", year: "numeric" }) : null;
@@ -76,6 +78,13 @@ export function StatsBody({ stats, truncated }: { stats: Stats; truncated: boole
   const cells = heatCells(stats.dailyMs);
   const split = stats.movieMs + stats.showMs;
   const moviePct = split > 0 ? Math.round((stats.movieMs / split) * 100) : 0;
+  const monthChange = weekChange(stats.last30DaysMs, stats.prev30DaysMs);
+  const months = heatMonthLabels(cells);
+  const darkest = heatMax(stats.dailyMs);
+  const today = (new Date().getDay() + 6) % 7;
+  const period = truncated ? "your recent history" : "all time";
+  const pickedCell = picked !== null ? cells[picked] : undefined;
+  const topPicks = [stats.topShow, stats.topMovie].filter((t): t is NonNullable<typeof t> => t !== null);
   return (
     <>
       <div className="stats__hero">
@@ -94,16 +103,16 @@ export function StatsBody({ stats, truncated }: { stats: Stats; truncated: boole
 
       <div className="stats__tiles">
         <Tile icon={<MdDateRange />} label="Last 7 days" value={formatDuration(stats.last7DaysMs)} />
-        <Tile icon={<MdCalendarMonth />} label="Last 30 days" value={formatDuration(stats.last30DaysMs)} />
-        <Tile icon={<MdLocalFireDepartment />} label="Day streak" value={pluralize(stats.streakDays, "day")} note={stats.longestStreakDays > stats.streakDays ? `best ${stats.longestStreakDays}` : stats.streakDays > 0 && stats.streakDays === stats.longestStreakDays ? "your best" : undefined} hot={stats.streakDays >= 3} />
-        <Tile icon={<MdAvTimer />} label="Per day you watch" value={formatDuration(stats.avgPerActiveDayMs)} note={`${pluralize(stats.activeDays, "day")} in all`} />
+        <Tile icon={<MdCalendarMonth />} label="Last 30 days" value={formatDuration(stats.last30DaysMs)} note={monthChange ? (monthChange.direction === "same" ? "same as the 30 days before" : `${monthChange.percent}% ${monthChange.direction === "up" ? "more" : "less"} than the 30 days before`) : undefined} />
+        <Tile icon={<MdLocalFireDepartment />} label="Day streak" value={pluralize(stats.streakDays, "day")} note={streakNote(stats.streakDays, stats.longestStreakDays) ?? undefined} hot={stats.streakDays >= 3} />
+        <Tile icon={<MdAvTimer />} label="On days you watch" value={formatDuration(stats.avgPerActiveDayMs)} note={`${pluralize(stats.activeDays, "day")} watched`} />
         <Tile icon={<MdMovie />} label="Movies finished" value={String(stats.moviesFinished)} />
         <Tile icon={<MdTv />} label="Episodes watched" value={String(stats.episodesWatched)} note={stats.showsWatched > 0 ? `across ${pluralize(stats.showsWatched, "show")}` : undefined} />
       </div>
 
       {split > 0 ? (
         <>
-          <h4 className="t-label-lg stats__sub">Movies or shows</h4>
+          <h3 className="t-label-lg stats__sub">Movies or shows <span className="stats__period">· {period}</span></h3>
           <div className="stats__split" role="img" aria-label={`${moviePct}% of your time is movies, ${100 - moviePct}% is shows`}>
             <span className="stats__splitfill" style={{ width: `${moviePct}%` }} />
           </div>
@@ -114,31 +123,67 @@ export function StatsBody({ stats, truncated }: { stats: Stats; truncated: boole
         </>
       ) : null}
 
-      <h4 className="t-label-lg stats__sub">Last 13 weeks</h4>
-      <div className="stats__heatwrap">
+      <h3 className="t-label-lg stats__sub">Last 13 weeks</h3>
+      <div className="stats__heatwrap" tabIndex={0} role="group" aria-label="Activity grid, scrolls sideways on a narrow screen">
         <ol className="stats__heatdays t-label-sm c-text-3" aria-hidden="true">
           {["Mon", "", "Wed", "", "Fri", "", "Sun"].map((d, i) => <li key={i}>{d}</li>)}
         </ol>
-        <ol className="stats__heat" aria-label="Time watched each day over the last 13 weeks">
-          {cells.map((c, i) => (c.ms === null ? <li key={i} className="stats__cell stats__cell--blank" /> : <li key={i} className="stats__cell" data-level={c.level} title={`${c.label}: ${c.ms > 0 ? formatDuration(c.ms) : "nothing watched"}`} />))}
-        </ol>
+        <div className="stats__heatcol">
+          <ol className="stats__heatmonths t-label-sm c-text-3" aria-hidden="true">
+            {months.map((m, i) => <li key={i}>{m}</li>)}
+          </ol>
+          <ol className="stats__heat" aria-label="Time watched each day over the last 13 weeks">
+            {cells.map((c, i) =>
+              c.ms === null ? (
+                <li key={i} className="stats__cell stats__cell--blank" />
+              ) : (
+                <li key={i} className="stats__cell" data-level={c.level} data-picked={picked === i ? "true" : undefined} title={`${c.label}: ${c.ms > 0 ? formatDuration(c.ms) : "nothing watched"}`} onClick={() => setPicked(i)} onMouseEnter={() => setPicked(i)} />
+              ),
+            )}
+          </ol>
+        </div>
       </div>
+      <p className="t-label-md stats__readout" role="status">
+        {pickedCell && pickedCell.ms !== null ? `${pickedCell.label} · ${pickedCell.ms > 0 ? formatDuration(pickedCell.ms) : "nothing watched"}` : "Tap or point at a square to see that day."}
+      </p>
       <div className="stats__legend t-label-sm c-text-3" aria-hidden="true">
-        Less {[0, 1, 2, 3, 4].map((l) => <i key={l} className="stats__cell stats__cell--key" data-level={l} />)} More
+        Less {[0, 1, 2, 3, 4].map((l) => <i key={l} className="stats__cell stats__cell--key" data-level={l} />)} More{darkest > 0 ? ` · the darkest is ${formatDuration(darkest)} in a day` : ""}
       </div>
 
-      <h4 className="t-label-lg stats__sub">Busiest day{stats.busiestWeekday != null ? `: ${WEEKDAYS[stats.busiestWeekday]}` : ""}</h4>
+      <h3 className="t-label-lg stats__sub">Busiest day{stats.busiestWeekday != null ? `: ${WEEKDAYS[stats.busiestWeekday]}` : ""} <span className="stats__period">· {period}</span></h3>
       <ul className="stats__bars" aria-label="Time watched by day of the week">
         {WEEKDAYS.map((day, i) => (
-          <li key={day} className="stats__bar" data-peak={i === stats.busiestWeekday ? "true" : undefined}>
+          <li key={day} className="stats__bar" data-peak={i === stats.busiestWeekday ? "true" : undefined} data-today={i === today ? "true" : undefined}>
             <span className="t-label-sm stats__barval">{formatShort(stats.byWeekdayMs[i]!)}</span>
             <span className="stats__barbox">
               <span className="stats__barfill" style={{ height: `${Math.max(4, Math.round((stats.byWeekdayMs[i]! / peak) * 100))}%` }} title={`${day}: ${formatDuration(stats.byWeekdayMs[i]!)}`} />
             </span>
-            <span className="t-label-sm stats__barday">{day.slice(0, 3)}</span>
+            <span className="t-label-sm stats__barday">{day.slice(0, 3)}{i === today ? <i className="stats__today" role="img" aria-label=" (today)" /> : null}</span>
           </li>
         ))}
       </ul>
+      {weekdayLine(stats.busiestWeekday) ? <p className="t-body-sm c-text-2" style={{ margin: "10px 0 0" }}>{weekdayLine(stats.busiestWeekday)}</p> : null}
+
+      {topPicks.length > 0 ? (
+        <>
+          <h3 className="t-label-lg stats__sub">Most watched <span className="stats__period">· {period}</span></h3>
+          <ul className="stats__top">
+            {topPicks.map((t) => (
+              <li key={`${t.type}|${t.title}`} className="stats__toprow">
+                {t.posterUrl ? <img className="stats__topposter" src={t.posterUrl} alt="" loading="lazy" /> : <span className="stats__topposter" aria-hidden="true" />}
+                <div style={{ minWidth: 0 }}>
+                  <div className="t-label-sm c-text-3">{t.type === "TV_SHOW" ? "Show" : "Movie"}</div>
+                  <div className="t-title-md stats__toptitle">{t.title}</div>
+                  <div className="t-label-sm c-text-2">{formatDuration(t.watchedMs)}{t.type === "TV_SHOW" ? ` · ${pluralize(t.parts, "episode")}` : ""}</div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+
+      <h3 className="t-label-lg stats__sub">Your recap</h3>
+      <StatsRecap stats={stats} />
 
       <p className="t-label-sm c-text-3" style={{ margin: "14px 0 0" }}>
         Counted from your watch history{truncated ? " (the most recent part of it)" : ""}. A title you watch again counts once, on the day you last watched it.

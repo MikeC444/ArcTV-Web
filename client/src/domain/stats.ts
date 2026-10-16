@@ -35,6 +35,8 @@ export interface WatchStats {
   last30DaysMs: number;
   /** The 7 days before the last 7 (to say whether this week was busier or quieter). */
   prev7DaysMs: number;
+  /** The 30 days before the last 30 (the same comparison for the month). */
+  prev30DaysMs: number;
   /** Time in movies and in episodes of shows. */
   movieMs: number;
   showMs: number;
@@ -56,6 +58,9 @@ export interface WatchStats {
   /** The longest run of consecutive days with something watched, ever. */
   longestStreakDays: number;
   topTitles: TopTitle[];
+  /** The movie and the show with the most time watched, or null when there is none of that kind. */
+  topMovie: TopTitle | null;
+  topShow: TopTitle | null;
   firstWatchedAt: string | null;
 }
 
@@ -80,13 +85,14 @@ function localDay(ms: number): number {
 export function computeStats(items: readonly HistoryItem[], now: Date = new Date(), topCount = 5): WatchStats {
   const valid = items.filter((i) => Number.isFinite(Date.parse(i.watchedAt)));
   if (valid.length === 0) {
-    return { empty: true, totalMs: 0, last7DaysMs: 0, last30DaysMs: 0, prev7DaysMs: 0, movieMs: 0, showMs: 0, activeDays: 0, avgPerActiveDayMs: 0, dailyMs: new Array<number>(HEAT_DAYS).fill(0), titlesWatched: 0, moviesFinished: 0, episodesWatched: 0, showsWatched: 0, byWeekdayMs: [0, 0, 0, 0, 0, 0, 0], busiestWeekday: null, streakDays: 0, longestStreakDays: 0, topTitles: [], firstWatchedAt: null };
+    return { empty: true, totalMs: 0, last7DaysMs: 0, last30DaysMs: 0, prev7DaysMs: 0, prev30DaysMs: 0, movieMs: 0, showMs: 0, activeDays: 0, avgPerActiveDayMs: 0, dailyMs: new Array<number>(HEAT_DAYS).fill(0), titlesWatched: 0, moviesFinished: 0, episodesWatched: 0, showsWatched: 0, byWeekdayMs: [0, 0, 0, 0, 0, 0, 0], busiestWeekday: null, streakDays: 0, longestStreakDays: 0, topTitles: [], topMovie: null, topShow: null, firstWatchedAt: null };
   }
   const nowMs = now.getTime();
   let totalMs = 0;
   let last7 = 0;
   let last30 = 0;
   let prev7 = 0;
+  let prev30 = 0;
   let movieMs = 0;
   let showMs = 0;
   const today = localDay(nowMs);
@@ -105,6 +111,7 @@ export function computeStats(items: readonly HistoryItem[], now: Date = new Date
     if (nowMs - at <= 7 * DAY_MS) last7 += ms;
     if (nowMs - at <= 30 * DAY_MS) last30 += ms;
     if (nowMs - at > 7 * DAY_MS && nowMs - at <= 14 * DAY_MS) prev7 += ms;
+    if (nowMs - at > 30 * DAY_MS && nowMs - at <= 60 * DAY_MS) prev30 += ms;
     if (item.contentType === "MOVIE") movieMs += ms;
     else showMs += ms;
     const ago = today - localDay(at);
@@ -141,12 +148,15 @@ export function computeStats(items: readonly HistoryItem[], now: Date = new Date
     cursor--;
   }
 
+  const ranked = [...titles.values()].filter((t) => t.watchedMs > 0).sort((a, b) => b.watchedMs - a.watchedMs);
+
   return {
     empty: false,
     totalMs,
     last7DaysMs: last7,
     last30DaysMs: last30,
     prev7DaysMs: prev7,
+    prev30DaysMs: prev30,
     movieMs,
     showMs,
     activeDays: days.size,
@@ -160,7 +170,9 @@ export function computeStats(items: readonly HistoryItem[], now: Date = new Date
     busiestWeekday: busiest > 0 ? byWeekday.indexOf(busiest) : null,
     streakDays: streak,
     longestStreakDays: longest,
-    topTitles: [...titles.values()].filter((t) => t.watchedMs > 0).sort((a, b) => b.watchedMs - a.watchedMs).slice(0, topCount),
+    topTitles: ranked.slice(0, topCount),
+    topMovie: ranked.find((t) => t.type === "MOVIE") ?? null,
+    topShow: ranked.find((t) => t.type === "TV_SHOW") ?? null,
     firstWatchedAt: new Date(first).toISOString(),
   };
 }
@@ -187,7 +199,21 @@ export function formatShort(ms: number): string {
   return hours < 10 ? `${Math.round(hours * 10) / 10}h` : `${Math.round(hours)}h`;
 }
 
-/** This week against the one before: "up 18%", "down 30%", "the same", or null when there is nothing to compare. */
+/** What to say under the streak: how far it is from the best one. Null when there is nothing to say. */
+export function streakNote(streak: number, longest: number): string | null {
+  if (longest <= 0) return null;
+  if (streak <= 0) return `best ${longest}`;
+  if (streak >= longest) return streak === longest ? "your best" : null;
+  const left = longest - streak;
+  return `best ${longest} · ${left} ${left === 1 ? "day" : "days"} to match it`;
+}
+
+/** "You watch most on Mondays." for the weekday bars; null with no history. */
+export function weekdayLine(busiestWeekday: number | null): string | null {
+  return busiestWeekday == null ? null : `You watch most on ${WEEKDAYS[busiestWeekday]}s.`;
+}
+
+/** This week against the one before (or any period against the one before it): "up 18%", "down 30%", "the same", or null when there is nothing to compare. */
 export function weekChange(last7: number, prev7: number): { direction: "up" | "down" | "same"; percent: number } | null {
   if (!(prev7 > 0)) return null;
   const percent = Math.round(((last7 - prev7) / prev7) * 100);
@@ -201,6 +227,8 @@ export interface HeatCell {
   level: 0 | 1 | 2 | 3 | 4;
   /** "Mon 5 Oct" for the tooltip. */
   label: string;
+  /** Month of the day, 0 to 11; null for the blank cells. */
+  month: number | null;
 }
 
 /** The activity grid's cells, week by week (Monday first), column by column: pad to a Monday, then one cell per day. */
@@ -208,11 +236,33 @@ export function heatCells(dailyMs: readonly number[], now: Date = new Date()): H
   const max = Math.max(...dailyMs, 0);
   const first = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (dailyMs.length - 1));
   const pad = (first.getDay() + 6) % 7;
-  const cells: HeatCell[] = Array.from({ length: pad }, () => ({ ms: null, level: 0, label: "" }));
+  const cells: HeatCell[] = Array.from({ length: pad }, () => ({ ms: null, level: 0, label: "", month: null }));
   dailyMs.forEach((ms, i) => {
     const date = new Date(first.getFullYear(), first.getMonth(), first.getDate() + i);
     const level = ms <= 0 || max <= 0 ? 0 : (Math.min(4, Math.max(1, Math.ceil((ms / max) * 4))) as 1 | 2 | 3 | 4);
-    cells.push({ ms, level, label: date.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" }) });
+    cells.push({ ms, level, label: date.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" }), month: date.getMonth() });
   });
   return cells;
 }
+
+/**
+ * The month names to print above the activity grid, one entry per week column: the month's short name where a new month starts and an empty
+ * string elsewhere. The first column is only named when the next column is not already a new month, so two names never sit side by side.
+ */
+export function heatMonthLabels(cells: readonly HeatCell[], locale?: string): string[] {
+  const columns = Math.ceil(cells.length / 7);
+  const monthOf = (column: number): number | null => cells.slice(column * 7, column * 7 + 7).find((c) => c.month !== null)?.month ?? null;
+  const labels: string[] = [];
+  let previous: number | null = null;
+  for (let column = 0; column < columns; column++) {
+    const month = monthOf(column);
+    const isNew = month !== null && month !== previous;
+    const crowded = column === 0 && monthOf(1) !== null && monthOf(1) !== month;
+    labels.push(isNew && !crowded ? new Date(2000, month!, 1).toLocaleDateString(locale, { month: "short" }) : "");
+    if (month !== null) previous = month;
+  }
+  return labels;
+}
+
+/** The most watched in one day over the grid's period (what the darkest square stands for). */
+export const heatMax = (dailyMs: readonly number[]): number => Math.max(...dailyMs, 0);
