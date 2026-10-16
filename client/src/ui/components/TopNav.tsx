@@ -61,7 +61,8 @@ export function TopNav({ transparent = false }: { transparent?: boolean }) {
   const guest = useAuth((s) => s.status !== "signedIn");
   // Without an account the Settings link becomes "Sign In" (and Settings itself is unreachable).
   // A kids profile has no Settings (addons, sign-out and the Plus page stay with the adults): its nav ends at My List.
-  const profile = useProfiles((s) => (s.supported && s.plus ? activeProfileOf(s) : undefined));
+  // Everyone sees who is watching; without Plus that is the account's own profile, and the chip opens the Profiles screen where more can be added.
+  const profile = useProfiles((s) => (s.supported ? activeProfileOf(s) : undefined));
   const kids = profile?.kind === "kids";
   const items = guest ? navList.map((item) => (item.to === "/settings" ? { label: "Sign In", to: routes.auth } : item)) : kids ? navList.filter((item) => item.to !== "/settings" && item.to !== "/live") : navList;
   return (
