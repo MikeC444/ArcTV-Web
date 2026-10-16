@@ -1,7 +1,7 @@
 /**
  * "Your stats": what the account's watch history says about how it is used. Pure, so every number is tested directly. The history holds
  * one row per movie or episode (the furthest point reached and when it was last watched), so a title watched twice counts once, on the
- * day it was last watched.
+ * day it was last watched. Episodes only ticked as watched by hand are left out: playing something is what counts.
  */
 export interface HistoryItem {
   providerId: string;
@@ -14,6 +14,8 @@ export interface HistoryItem {
   positionMs: number;
   durationMs: number;
   completed: boolean;
+  /** Marked watched by hand rather than played (the account records this); absent from an older backend. */
+  markedManually?: boolean;
   /** ISO time it was last watched. */
   watchedAt: string;
 }
@@ -82,6 +84,16 @@ function localDay(ms: number): number {
   return Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / DAY_MS);
 }
 
+/**
+ * Whether a history row is only a tick the person pressed ("mark as watched" on an episode or a season) and not something that was played.
+ * New rows say so themselves. Older ones were written with the show's listed runtime as both the position and the length, in whole minutes,
+ * which real playback (a length in milliseconds, from the file) essentially never is, so those are recognised that way.
+ */
+export function isMarkedByHand(item: Pick<HistoryItem, "contentType" | "markedManually" | "completed" | "positionMs" | "durationMs">): boolean {
+  if (item.markedManually === true) return true;
+  return item.contentType === "TV_SHOW" && item.completed && item.durationMs > 0 && item.positionMs === item.durationMs && item.durationMs % 60_000 === 0;
+}
+
 /** The history from the moment Your stats was last reset onwards (all of it when it never was, or the time is not a time). */
 export function afterReset<T extends Pick<HistoryItem, "watchedAt">>(items: readonly T[], resetAt: string | null): T[] {
   const from = resetAt ? Date.parse(resetAt) : NaN;
@@ -89,7 +101,8 @@ export function afterReset<T extends Pick<HistoryItem, "watchedAt">>(items: read
 }
 
 export function computeStats(items: readonly HistoryItem[], now: Date = new Date(), topCount = 5): WatchStats {
-  const valid = items.filter((i) => Number.isFinite(Date.parse(i.watchedAt)));
+  // Only what was played counts: a tick pressed by hand is not time watched, an episode watched, a day on the streak or anything else here.
+  const valid = items.filter((i) => Number.isFinite(Date.parse(i.watchedAt)) && !isMarkedByHand(i));
   if (valid.length === 0) {
     return { empty: true, totalMs: 0, last7DaysMs: 0, last30DaysMs: 0, prev7DaysMs: 0, prev30DaysMs: 0, movieMs: 0, showMs: 0, activeDays: 0, avgPerActiveDayMs: 0, dailyMs: new Array<number>(HEAT_DAYS).fill(0), titlesWatched: 0, moviesFinished: 0, episodesWatched: 0, showsWatched: 0, byWeekdayMs: [0, 0, 0, 0, 0, 0, 0], busiestWeekday: null, streakDays: 0, longestStreakDays: 0, topTitles: [], topMovie: null, topShow: null, firstWatchedAt: null };
   }

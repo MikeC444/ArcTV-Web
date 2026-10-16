@@ -246,6 +246,7 @@ export function StatsBody({ stats, truncated }: { stats: Stats; truncated: boole
         <summary className="t-label-lg">What counts towards your stats</summary>
         <ul className="t-body-sm c-text-2">
           <li>Everything you watch in ArcTV while signed in to your account, on any device. Each profile has its own stats.</li>
+          <li>Only what you actually play counts. Marking a movie, episode or season as watched gives it a tick but adds nothing to your stats.</li>
           <li>A finished movie or episode counts for its whole length. One you stopped part-way counts for how far you got.</li>
           <li>A title you watch again counts once, on the day you last watched it, so rewatching doesn't add to your hours.</li>
           <li>Anything you watch outside ArcTV, or without being signed in, isn't included.</li>

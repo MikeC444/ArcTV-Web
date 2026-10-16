@@ -116,7 +116,7 @@ test.describe("accessibility", () => {
       watchedAt: new Date(Date.now() - ago * 86_400_000).toISOString(),
       ...over,
     });
-    for (const body of [watched("fxm1", "Fixture Movie One", 0), watched("fxm2", "Fixture Movie Two", 3), watched("fxs1", "Fixture Show", 1, { contentType: "TV_SHOW", seasonNumber: 1, episodeNumber: 1, positionMs: 2_400_000, durationMs: 2_400_000 })]) {
+    for (const body of [watched("fxm1", "Fixture Movie One", 0), watched("fxm2", "Fixture Movie Two", 3), watched("fxs1", "Fixture Show", 1, { contentType: "TV_SHOW", seasonNumber: 1, episodeNumber: 1, positionMs: 2_399_000, durationMs: 2_400_000 })]) {
       expect((await account.tv.post("/user/watch-progress", body)).status).toBe(200);
     }
     await openSignedIn(page, account, "/settings/stats");
