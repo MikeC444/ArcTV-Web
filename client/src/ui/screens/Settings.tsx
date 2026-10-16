@@ -87,10 +87,11 @@ export function SettingsScreen() {
             <div className="settings__group" key={group.label}>
               <div className="settings__grouplabel">{group.label}</div>
               {group.items.map((c) => {
-                // A Plus-only category stays in the list but can't be opened without Plus, and says so.
-                const locked = c.plusOnly === true && !hasPlus;
+                // A Plus-only category stays in the list but can't be opened without Plus, and says so. One with a preview looks like any other
+                // (no lock, no tag): opening it shows a taste of the page and what Plus adds.
+                const locked = c.plusOnly === true && !hasPlus && c.preview !== true;
                 return (
-                  <Surface key={c.id} className="settings__cat" onClick={() => navigate(routes.settings(c.id))} scale={1.02} disabled={locked && !c.preview} ariaLabel={locked ? (c.preview ? `${c.title}, preview, the full version is for ArcTV Plus` : `${c.title}, only for ArcTV Plus`) : undefined} ariaCurrent={c.id === selected ? "page" : undefined} dataAttrs={{ selected: c.id === selected, locked, autofocus: c.id === selected }}>
+                  <Surface key={c.id} className="settings__cat" onClick={() => navigate(routes.settings(c.id))} scale={1.02} disabled={locked} ariaLabel={locked ? `${c.title}, only for ArcTV Plus` : undefined} ariaCurrent={c.id === selected ? "page" : undefined} dataAttrs={{ selected: c.id === selected, locked, autofocus: c.id === selected }}>
                     <span className="settings__caticon" aria-hidden="true">{locked ? <MdLock /> : c.icon}</span>
                     <span className="t-title-md">{c.title}</span>
                     {locked ? <span className="plus__soon settings__plustag" data-kind="plus" aria-hidden="true">Plus</span> : null}
