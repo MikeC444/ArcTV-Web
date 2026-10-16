@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { MdBarChart, MdBolt, MdDownload, MdGroups, MdLanguage, MdLock, MdAccountCircle, MdAdd, MdBlock, MdCancel, MdFavorite, MdWorkspacePremium, MdArrowDownward, MdArrowUpward, MdCheck, MdCloudUpload, MdDelete, MdExtension, MdGridView, MdInfo, MdLogout, MdMusicNote, MdSubtitles, MdSwitchAccount, MdTune, MdVolumeUp, MdSpatialAudio, MdStars } from "react-icons/md";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
-import { formatMoney, LIFETIME_BOARD_NOTE, PLUS_FREE_NOTE, PLUS_PERKS, PLUS_PLANS, PLUS_PROCEEDS_NOTE, savingPercent, yearlyPerDay, yearlyPerMonth, type PlanPrices, type PlusPlan } from "../../domain/plus";
+import { formatMoney, LIFETIME_BOARD_NOTE, LIFETIME_BOARD_TAG, PLUS_FREE_NOTE, PLUS_PERKS, PLUS_PLANS, PLUS_PROCEEDS_NOTE, savingPercent, SUPPORTERS_URL, yearlyPerDay, yearlyPerMonth, type PlanPrices, type PlusPlan } from "../../domain/plus";
 import { applyRowOrder, moveRow } from "../../domain/homeRows";
 import { useProviders } from "../../domain/registry";
 import type { HomeSection } from "../../domain/types";
@@ -310,13 +310,19 @@ function PlusPane() {
                   </div>
                 ) : null}
                 {shown?.versus ? <div className="t-body-sm c-text-2 plus__math">{shown.versus}</div> : null}
-                {plan.id === "lifetime" ? <p className="t-label-sm c-text-3" style={{ margin: "0 0 10px" }}>{LIFETIME_BOARD_NOTE}</p> : null}
+                {plan.id === "lifetime" ? <span className="plus__boardtag"><MdFavorite aria-hidden="true" /> {LIFETIME_BOARD_TAG}</span> : null}
                 <p className="t-body-sm c-text-2" style={{ margin: "8px 0 14px", flex: 1 }}>{plan.blurb}</p>
                 <ArcButton text={busy === plan.id ? "Opening…" : plan.id === "lifetime" ? "Get Lifetime" : plan.id === "yearly" && plus.trialDays > 0 ? `Start ${plus.trialDays}-day free trial` : `Choose ${plan.label}`} icon={<MdWorkspacePremium />} variant="filled" compact disabled={busy !== null} onClick={() => void choose(plan.id)} />
               </div>
               );
             })}
           </div>
+          <p className="plus__board">
+            <MdFavorite aria-hidden="true" />
+            <span>
+              {LIFETIME_BOARD_NOTE} <a href={SUPPORTERS_URL}>See the supporters board</a>
+            </span>
+          </p>
           {plus.prices ? <p className="t-body-sm c-text-3" style={{ margin: "12px 0 0" }}>List prices. Promo codes can be applied at checkout.</p> : null}
           {waiting ? <p className="t-body-sm c-text-2" style={{ margin: "12px 0 0" }}>Waiting for your payment… this switches on by itself when it goes through.</p> : null}
           {error ? <p className="t-body-sm" role="alert" style={{ margin: "12px 0 0", color: "var(--error)" }}>{error}</p> : null}
