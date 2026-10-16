@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
-import { newAccount, openSignedIn } from "./helpers";
+import { ADDON, newAccount, openSignedIn } from "./helpers";
 
 /**
  * Accessibility, checked automatically on every screen: axe-core (WCAG 2.0 / 2.1 / 2.2 A + AA and its best-practice rules) must
@@ -95,6 +95,34 @@ test.describe("accessibility", () => {
     all.push(...(await problems(page, "player", phone)));
 
     expect(all, all.join("\n")).toEqual([]);
+  });
+
+  test("Your stats, with a real history behind it, passes axe-core and the tap-target and text-size checks", async ({ page }, info) => {
+    const phone = info.project.name.startsWith("mobile");
+    const account = await newAccount("a11y-stats");
+    const watched = (contentId: string, title: string, ago: number, over: Record<string, unknown> = {}) => ({
+      providerId: "test.arctv.fixture",
+      contentId,
+      contentType: "MOVIE",
+      seasonNumber: null,
+      episodeNumber: null,
+      episodeTitle: null,
+      title,
+      posterUrl: `${ADDON}/img/poster/${contentId}.svg`,
+      backdropUrl: null,
+      positionMs: 6_000_000,
+      durationMs: 6_000_000,
+      completed: true,
+      watchedAt: new Date(Date.now() - ago * 86_400_000).toISOString(),
+      ...over,
+    });
+    for (const body of [watched("fxm1", "Fixture Movie One", 0), watched("fxm2", "Fixture Movie Two", 3), watched("fxs1", "Fixture Show", 1, { contentType: "TV_SHOW", seasonNumber: 1, episodeNumber: 1, positionMs: 2_400_000, durationMs: 2_400_000 })]) {
+      expect((await account.tv.post("/user/watch-progress", body)).status).toBe(200);
+    }
+    await openSignedIn(page, account, "/settings/stats");
+    await expect(page.getByRole("button", { name: "Save as image" })).toBeVisible();
+    const found = await problems(page, "settings-stats", phone);
+    expect(found, found.join("\n")).toEqual([]);
   });
 
   test("reduced motion: the hero does not rotate by itself, nothing slides or zooms", async ({ page }) => {
