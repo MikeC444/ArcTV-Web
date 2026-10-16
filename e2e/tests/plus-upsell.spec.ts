@@ -100,4 +100,22 @@ test.describe("ArcTV Plus: prices and nudges for someone without Plus", () => {
     await expect(page.getByRole("button", { name: "Like", exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: /with ArcTV Plus/ })).toHaveCount(0);
   });
+
+  test("the profile is shown in the top bar without Plus too, and opens the Profiles screen", async ({ page }) => {
+    const account = await newAccount("freeprofile");
+    await freeWithPaywall(page);
+    // what the server answers for an account without Plus: just its own profile
+    await page.route("**/api/profiles", (route) =>
+      route.request().method() === "GET"
+        ? route.fulfill({ json: { supported: true, plus: false, limit: 5, profiles: [{ id: "main", name: "Me", avatar: "fox", kind: "adult", hasPin: false, isDefault: true }], active: "main" } })
+        : route.continue(),
+    );
+    await openSignedIn(page, account, "/");
+    const chip = page.locator(".topnav__profile");
+    await expect(chip).toBeVisible();
+    await expect(chip).toContainText("Me");
+    await chip.click();
+    await expect(page).toHaveURL(/\/profiles/);
+    await expect(page.getByRole("button", { name: "Add profile, with ArcTV Plus" })).toBeVisible();
+  });
 });
