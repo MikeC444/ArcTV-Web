@@ -82,6 +82,12 @@ function localDay(ms: number): number {
   return Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / DAY_MS);
 }
 
+/** The history from the moment Your stats was last reset onwards (all of it when it never was, or the time is not a time). */
+export function afterReset<T extends Pick<HistoryItem, "watchedAt">>(items: readonly T[], resetAt: string | null): T[] {
+  const from = resetAt ? Date.parse(resetAt) : NaN;
+  return Number.isFinite(from) ? items.filter((i) => Date.parse(i.watchedAt) >= from) : [...items];
+}
+
 export function computeStats(items: readonly HistoryItem[], now: Date = new Date(), topCount = 5): WatchStats {
   const valid = items.filter((i) => Number.isFinite(Date.parse(i.watchedAt)));
   if (valid.length === 0) {

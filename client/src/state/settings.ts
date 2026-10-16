@@ -17,6 +17,8 @@ interface SettingsDto {
   defaultAudioLanguage?: string | null;
   /** Genres the person never wants to see, kept on the account so every device agrees. Absent from a backend that predates it. */
   blockedGenres?: string[];
+  /** When Reset stats was last pressed (Your stats then counts only what was watched after it); null counts everything. Absent from a backend that predates it. */
+  statsResetAt?: string | null;
   updatedAt: string | null;
 }
 
@@ -26,6 +28,8 @@ interface SettingsState {
   player: PlayerPreferences;
   /** Blocked genres of the signed-in account (see useBlockedGenres, which is what the UI reads). */
   blockedGenres: string[];
+  /** When Your stats was last reset (ISO time), or null to count everything. Synced on the account, per profile. */
+  statsResetAt: string | null;
   /** Local mutation time of the last change (or the server's, after a pull). */
   updatedAt: string | null;
   /** UI sounds are device-local — they are not part of the synced account settings. Off by default on the web (volume 0); turn them up in Settings → Sounds. */
@@ -36,6 +40,8 @@ interface SettingsState {
   setRowOrder(order: string[]): void;
   setPlayer(patch: Partial<PlayerPreferences>): void;
   setBlockedGenres(genres: string[]): void;
+  /** Starts Your stats again from this time (now, for the Reset stats button), or null to count all the history again. */
+  setStatsResetAt(at: string | null): void;
   setNavigationVolume(volume: number): void;
   pull(): Promise<{ ok: boolean; empty: boolean }>;
   retryPending(): Promise<void>;
@@ -48,7 +54,7 @@ const PENDING = "settings";
 /** Where a person who was not signed in kept their blocked genres (see state/blockedGenres.ts). */
 const GUEST_BLOCKED_KEY = globalKey("blockedGenres");
 
-function toDto(state: Pick<SettingsState, "homeRows" | "player" | "blockedGenres">, updatedAt: string): SettingsDto {
+function toDto(state: Pick<SettingsState, "homeRows" | "player" | "blockedGenres" | "statsResetAt">, updatedAt: string): SettingsDto {
   return {
     homeRowOrder: state.homeRows.order,
     hiddenRowIds: state.homeRows.hiddenRowIds,
@@ -58,14 +64,15 @@ function toDto(state: Pick<SettingsState, "homeRows" | "player" | "blockedGenres
     defaultSubtitleLanguage: state.player.defaultSubtitleLanguage,
     defaultAudioLanguage: state.player.defaultAudioLanguage,
     blockedGenres: state.blockedGenres,
+    statsResetAt: state.statsResetAt,
     updatedAt,
   };
 }
 
 export const useSettings = create<SettingsState>((set, get) => {
   const persistLocal = () => {
-    const { userId, homeRows, player, blockedGenres, updatedAt } = get();
-    if (userId) writeJson(libraryKey(userId, "settings"), { homeRows, player, blockedGenres, updatedAt });
+    const { userId, homeRows, player, blockedGenres, statsResetAt, updatedAt } = get();
+    if (userId) writeJson(libraryKey(userId, "settings"), { homeRows, player, blockedGenres, statsResetAt, updatedAt });
   };
 
   function apply(dto: SettingsDto) {
@@ -80,6 +87,7 @@ export const useSettings = create<SettingsState>((set, get) => {
       },
       // a backend that doesn't know the field leaves what is here alone
       blockedGenres: dto.blockedGenres ?? get().blockedGenres,
+      statsResetAt: dto.statsResetAt === undefined ? get().statsResetAt : dto.statsResetAt,
       updatedAt: dto.updatedAt,
     });
     persistLocal();
@@ -108,17 +116,18 @@ export const useSettings = create<SettingsState>((set, get) => {
     homeRows: DEFAULT_HOME_ROW_PREFERENCES,
     player: DEFAULT_PLAYER_PREFERENCES,
     blockedGenres: [],
+    statsResetAt: null,
     updatedAt: null,
     navigationVolume: readJson<{ navigationVolume: number }>(SOUND_KEY, { navigationVolume: 0 }).navigationVolume,
 
     hydrate(userId) {
       outbox = new Outbox<SettingsDto>(userId, libraryName("settings"));
-      const stored = readJson<{ homeRows: HomeRowPreferences; player: PlayerPreferences; blockedGenres?: string[]; updatedAt: string | null } | null>(libraryKey(userId, "settings"), null);
-      set({ userId, homeRows: stored?.homeRows ?? DEFAULT_HOME_ROW_PREFERENCES, player: { ...DEFAULT_PLAYER_PREFERENCES, ...(stored?.player ?? {}) }, blockedGenres: stored?.blockedGenres ?? [], updatedAt: stored?.updatedAt ?? null });
+      const stored = readJson<{ homeRows: HomeRowPreferences; player: PlayerPreferences; blockedGenres?: string[]; statsResetAt?: string | null; updatedAt: string | null } | null>(libraryKey(userId, "settings"), null);
+      set({ userId, homeRows: stored?.homeRows ?? DEFAULT_HOME_ROW_PREFERENCES, player: { ...DEFAULT_PLAYER_PREFERENCES, ...(stored?.player ?? {}) }, blockedGenres: stored?.blockedGenres ?? [], statsResetAt: stored?.statsResetAt ?? null, updatedAt: stored?.updatedAt ?? null });
     },
     reset() {
       outbox = null;
-      set({ userId: null, homeRows: DEFAULT_HOME_ROW_PREFERENCES, player: DEFAULT_PLAYER_PREFERENCES, blockedGenres: [], updatedAt: null });
+      set({ userId: null, homeRows: DEFAULT_HOME_ROW_PREFERENCES, player: DEFAULT_PLAYER_PREFERENCES, blockedGenres: [], statsResetAt: null, updatedAt: null });
     },
 
     setRowHidden(rowId, hidden) {
@@ -137,6 +146,10 @@ export const useSettings = create<SettingsState>((set, get) => {
     },
     setBlockedGenres(genres) {
       set({ blockedGenres: genres });
+      changed();
+    },
+    setStatsResetAt(at) {
+      set({ statsResetAt: at });
       changed();
     },
     setNavigationVolume(volume) {

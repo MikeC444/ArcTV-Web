@@ -256,6 +256,31 @@ describe("Settings sync", () => {
     expect(useSettings.getState().player.autoplayNextEpisode).toBe(false);
   });
 
+  it("saves the stats reset time to the account, keeps it through other changes, and pulls it back on another device", async () => {
+    hydrateAll("u1");
+    respond = (_path, method, body) => (method === "PUT" ? body : undefined);
+    useSettings.getState().setStatsResetAt("2026-10-16T10:00:00.000Z");
+    useSettings.getState().setRowHidden("row-1", true); // another change must not drop it
+    await flush();
+    const puts = calls.filter((c) => c.method === "PUT");
+    expect(puts[0]!.body).toMatchObject({ statsResetAt: "2026-10-16T10:00:00.000Z" });
+    expect(puts[1]!.body).toMatchObject({ statsResetAt: "2026-10-16T10:00:00.000Z", hiddenRowIds: ["row-1"] });
+
+    resetAllStores(); // another device
+    hydrateAll("u1");
+    respond = () => ({ homeRowOrder: [], hiddenRowIds: [], autoplayNextEpisode: true, skipIntroEnabled: true, subtitlesEnabled: true, defaultSubtitleLanguage: null, statsResetAt: "2026-10-16T10:00:00.000Z", updatedAt: "2099-01-01T00:00:00.000Z" });
+    await useSettings.getState().pull();
+    expect(useSettings.getState().statsResetAt).toBe("2026-10-16T10:00:00.000Z");
+    // an older backend that does not send the field leaves it alone
+    respond = () => ({ homeRowOrder: [], hiddenRowIds: [], autoplayNextEpisode: true, skipIntroEnabled: true, subtitlesEnabled: true, defaultSubtitleLanguage: null, updatedAt: "2099-02-01T00:00:00.000Z" });
+    await useSettings.getState().pull();
+    expect(useSettings.getState().statsResetAt).toBe("2026-10-16T10:00:00.000Z");
+    // and a null from the account means count everything again
+    respond = () => ({ homeRowOrder: [], hiddenRowIds: [], autoplayNextEpisode: true, skipIntroEnabled: true, subtitlesEnabled: true, defaultSubtitleLanguage: null, statsResetAt: null, updatedAt: "2099-03-01T00:00:00.000Z" });
+    await useSettings.getState().pull();
+    expect(useSettings.getState().statsResetAt).toBeNull();
+  });
+
   it("saves blocked genres to the account and pulls them back on another device", async () => {
     hydrateAll("u1");
     respond = (_path, method, body) => (method === "PUT" ? body : undefined);

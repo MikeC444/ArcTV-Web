@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeStats, formatDuration, formatShort, heatCells, heatMax, heatMonthLabels, HEAT_DAYS, streakNote, watchedMsOf, weekChange, weekdayLine, type HistoryItem } from "./stats";
+import { afterReset, computeStats, formatDuration, formatShort, heatCells, heatMax, heatMonthLabels, HEAT_DAYS, streakNote, watchedMsOf, weekChange, weekdayLine, type HistoryItem } from "./stats";
 
 const HOUR = 3600_000;
 const item = (over: Partial<HistoryItem> = {}): HistoryItem => ({
@@ -202,5 +202,26 @@ describe("the extra numbers", () => {
   it("knows what the darkest square stands for", () => {
     expect(heatMax([0, 3 * HOUR, HOUR])).toBe(3 * HOUR);
     expect(heatMax([])).toBe(0);
+  });
+});
+
+describe("afterReset", () => {
+  const a = item({ contentId: "a", watchedAt: "2026-10-01T12:00:00.000Z" });
+  const b = item({ contentId: "b", watchedAt: "2026-10-10T12:00:00.000Z" });
+  it("keeps everything when stats were never reset, or the time is not a time", () => {
+    expect(afterReset([a, b], null)).toEqual([a, b]);
+    expect(afterReset([a, b], "garbage")).toEqual([a, b]);
+  });
+  it("keeps only what was watched at or after the reset", () => {
+    expect(afterReset([a, b], "2026-10-05T00:00:00.000Z")).toEqual([b]);
+    expect(afterReset([a, b], "2026-10-10T12:00:00.000Z")).toEqual([b]);
+    expect(afterReset([a, b], "2026-11-01T00:00:00.000Z")).toEqual([]);
+  });
+  it("starts the numbers again: the totals only count what came after", () => {
+    const all = computeStats([a, b], NOW);
+    const fresh = computeStats(afterReset([a, b], "2026-10-05T00:00:00.000Z"), NOW);
+    expect(fresh.totalMs).toBeLessThan(all.totalMs);
+    expect(fresh.moviesFinished).toBe(1);
+    expect(computeStats(afterReset([a, b], "2026-11-01T00:00:00.000Z"), NOW).empty).toBe(true);
   });
 });

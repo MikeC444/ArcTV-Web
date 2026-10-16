@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api";
-import { computeStats, type HistoryItem, type WatchStats } from "../domain/stats";
+import { afterReset, computeStats, type HistoryItem, type WatchStats } from "../domain/stats";
+import { useSettings } from "./settings";
 
 export type WatchStatsState = { kind: "loading" } | { kind: "error" } | { kind: "ready"; stats: WatchStats; truncated: boolean };
 
@@ -28,19 +29,25 @@ export async function loadHistory(): Promise<{ items: HistoryItem[]; truncated: 
   return { items, truncated: true };
 }
 
-/** Settings → Account → Your stats. Reads nothing until [enabled] (a Plus feature), and again whenever [refreshKey] changes. */
+type LoadedHistory = { kind: "loading" } | { kind: "error" } | { kind: "ready"; items: HistoryItem[]; truncated: boolean };
+
+/**
+ * Settings → Account → Your stats. Reads nothing until [enabled] (a Plus feature), and again whenever [refreshKey] changes. Only what was
+ * watched since the last "Reset stats" (a synced setting) is counted; the history itself is never touched.
+ */
 export function useWatchStats(enabled: boolean, refreshKey: unknown = null): WatchStatsState {
-  const [state, setState] = useState<WatchStatsState>({ kind: "loading" });
+  const [loaded, setLoaded] = useState<LoadedHistory>({ kind: "loading" });
+  const resetAt = useSettings((s) => s.statsResetAt);
   useEffect(() => {
     if (!enabled) return;
     let cancelled = false;
-    setState({ kind: "loading" });
+    setLoaded({ kind: "loading" });
     loadHistory()
-      .then(({ items, truncated }) => !cancelled && setState({ kind: "ready", stats: computeStats(items), truncated }))
-      .catch(() => !cancelled && setState({ kind: "error" }));
+      .then(({ items, truncated }) => !cancelled && setLoaded({ kind: "ready", items, truncated }))
+      .catch(() => !cancelled && setLoaded({ kind: "error" }));
     return () => {
       cancelled = true;
     };
   }, [enabled, refreshKey]);
-  return state;
+  return useMemo<WatchStatsState>(() => (loaded.kind === "ready" ? { kind: "ready", stats: computeStats(afterReset(loaded.items, resetAt)), truncated: loaded.truncated } : loaded), [loaded, resetAt]);
 }
