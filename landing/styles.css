@@ -236,6 +236,9 @@ p { text-wrap: pretty; }
 .plus__grid b { font-size: 18px; letter-spacing: -.02em; }
 .plus__grid span { font-size: 14px; color: var(--text-2); line-height: 1.55; }
 .plus__grid .is-soon { border-style: dashed; background: transparent; opacity: .7; }
+.plus__board { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px 14px; max-width: 46em; margin: 28px auto 0; padding: 14px 20px; border-radius: 18px; background: linear-gradient(135deg, rgba(25, 230, 255, .08), rgba(155, 92, 255, .08)); border: 1px solid rgba(25, 230, 255, .25); font-size: 15px; line-height: 1.5; color: var(--text); text-align: left; }
+.plus__boardtag { flex: none; padding: 3px 10px; border-radius: 99px; background: var(--grad); color: #04141a; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.plus__board a { color: var(--accent); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 .plus__fine { margin-top: 28px; font-size: 14px; color: var(--text-2); }
 @media (max-width: 860px) { .plus__grid { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 520px) { .plus__grid { grid-template-columns: 1fr; } }
