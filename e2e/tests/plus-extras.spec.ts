@@ -40,7 +40,7 @@ test.describe("ArcTV Plus extras", () => {
     await shot(page, "settings-stats");
   });
 
-  test("Your stats is its own tab in the You group, and shows a preview page without Plus", async ({ page }) => {
+  test("Your stats is its own tab in the You group, and shows a preview page without Plus, and is not marked as locked", async ({ page }) => {
     const account = await newAccount("statstab");
     await openSignedIn(page, account, "/settings/account");
     const tab = page.getByRole("link", { name: "Your stats" }).or(page.locator(".settings__cat", { hasText: "Your stats" }));
@@ -54,10 +54,11 @@ test.describe("ArcTV Plus extras", () => {
         : route.continue(),
     );
     await page.goto("/settings/account");
-    const locked = page.locator(".settings__cat", { hasText: "Your stats" });
-    await expect(locked).toHaveAttribute("data-locked", "true");
-    await expect(locked).toContainText("Plus");
-    await expect(locked).toBeEnabled(); // it opens, to a taste of the page rather than the real thing
+    const locked = page.locator(".settings__cat", { hasText: "Your stats" }); // (not locked any more; the name is from when it was)
+    await expect(locked).toHaveAttribute("data-locked", "false"); // no lock or Plus tag: it invites a click, and opens to a taste of the page
+    await expect(locked).not.toContainText("Plus");
+    await expect(locked).toBeEnabled();
+    await expect(page.locator(".settings__cat", { hasText: "Recommendations" })).toHaveAttribute("data-locked", "true"); // the others stay locked
     await shot(page, "settings-stats-locked");
     await locked.click();
     await expect(page).toHaveURL(/\/settings\/stats/);

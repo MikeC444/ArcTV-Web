@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatMoney, lifetimeInYears, parsePrices, savingPercent, yearlyPerDay, yearlyPerMonth, type PlanPrices } from "./plus";
+import { formatMoney, parsePrices, savingPercent, yearlyPerDay, yearlyPerMonth, type PlanPrices } from "./plus";
 
 const prices = (monthly: number, yearly: number, lifetime = 9999, currency = "gbp"): PlanPrices => ({
   monthly: { amount: monthly, currency },
@@ -31,10 +31,6 @@ describe("the yearly comparison", () => {
     expect(savingPercent(prices(499, 7000))).toBeNull(); // dearer
     expect(savingPercent({ ...prices(499, 3999), yearly: { amount: 3999, currency: "usd" } })).toBeNull();
     expect(savingPercent(prices(0, 3999))).toBeNull();
-  });
-  it("says how many years of yearly Lifetime costs, only within one currency", () => {
-    expect(lifetimeInYears(prices(499, 3999, 9999))).toBe(2.5);
-    expect(lifetimeInYears({ ...prices(499, 3999), lifetime: { amount: 9999, currency: "usd" } })).toBeNull();
   });
 });
 

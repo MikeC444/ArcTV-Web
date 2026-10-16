@@ -83,12 +83,6 @@ export function savingPercent(prices: PlanPrices): number | null {
 /** What the yearly plan costs per day, in the smallest unit. */
 export const yearlyPerDay = (yearly: PlanPrice): number => Math.round(yearly.amount / 365);
 
-/** How many years of yearly the Lifetime price is, to one decimal; null unless both are in one currency. */
-export function lifetimeInYears(prices: PlanPrices): number | null {
-  if (prices.lifetime.currency !== prices.yearly.currency || prices.yearly.amount <= 0) return null;
-  return Math.round((prices.lifetime.amount / prices.yearly.amount) * 10) / 10;
-}
-
 /** Reads the backend's `prices` field defensively: all three plans with a positive whole amount and a currency, else null. */
 export function parsePrices(raw: unknown): PlanPrices | null {
   if (!raw || typeof raw !== "object") return null;
