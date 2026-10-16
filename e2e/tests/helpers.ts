@@ -96,11 +96,17 @@ export async function signIn(context: BrowserContext, email: string, password = 
 export const WELCOME_ID = "2026-10-features-downloads";
 
 /** `welcome: true` leaves the one-time "Everything in ArcTV Plus" welcome popup to appear; by default it is marked seen so it never gets in a test's way. */
-export async function openSignedIn(page: Page, account: TestAccount, path = "/", options: { welcome?: boolean } = {}) {
+export const WINDOWS_APP_ID = "2026-10-windows-app-1";
+
+/** `apps: true` also leaves the "Arc TV is on your PC" popup due (the test browser reports Windows), to test popups taking turns; by default it is marked seen too. */
+export async function openSignedIn(page: Page, account: TestAccount, path = "/", options: { welcome?: boolean; apps?: boolean } = {}) {
   await useClientIp(page.context());
   await signIn(page.context(), account.email);
   if (!options.welcome) {
     await page.addInitScript(([key, id]) => localStorage.setItem(key!, JSON.stringify({ seen: id })), [`mtv:v1:${account.tv.userId}:plus-welcome`, WELCOME_ID]);
+  }
+  if (!options.apps) {
+    await page.addInitScript(([key, id]) => localStorage.setItem(key!, JSON.stringify({ seen: id })), [`mtv:v1:${account.tv.userId}:windows-app-popup`, WINDOWS_APP_ID]);
   }
   await page.goto(path);
 }

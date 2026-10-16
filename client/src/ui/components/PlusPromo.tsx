@@ -9,9 +9,9 @@ import { activeProfileOf, useProfiles } from "../../state/profiles";
 import { promoDue, usePlusPromo } from "../../state/plusPromo";
 import { usePlusWelcome, welcomeDue } from "../../state/plusWelcome";
 import { ArcLogo } from "./Logo";
+import { useQueuedPopup } from "./popupQueue";
 import { Surface } from "./Surface";
 
-const SHOW_AFTER_MS = 4000;
 
 const BENEFITS = [
   { icon: <MdFavorite />, title: "Picked for you", detail: "A Home row chosen from the movies and shows you like, with the reason under each poster." },
@@ -34,14 +34,10 @@ export function PlusPromo({ enabled }: { enabled: boolean }) {
   const [open, setOpen] = useState(false);
   const eligible = enabled && signedIn && paywall && !hasPlus && adult && ready;
 
-  useEffect(() => {
-    if (!eligible) return undefined;
-    const timer = window.setTimeout(() => {
-      usePlusPromo.getState().markShown();
-      setOpen(true);
-    }, SHOW_AFTER_MS);
-    return () => window.clearTimeout(timer);
-  }, [eligible]);
+  useQueuedPopup("plus-promo", eligible, open, () => {
+    usePlusPromo.getState().markShown();
+    setOpen(true);
+  });
 
   if (!open || !enabled || hasPlus) return null;
 
@@ -221,14 +217,10 @@ export function PlusWelcome({ enabled }: { enabled: boolean }) {
   const [open, setOpen] = useState(false);
   const eligible = enabled && signedIn && hasPlus && adult && ready;
 
-  useEffect(() => {
-    if (!eligible) return undefined;
-    const timer = window.setTimeout(() => {
-      usePlusWelcome.getState().markShown();
-      setOpen(true);
-    }, SHOW_AFTER_MS);
-    return () => window.clearTimeout(timer);
-  }, [eligible]);
+  useQueuedPopup("plus-welcome", eligible, open, () => {
+    usePlusWelcome.getState().markShown();
+    setOpen(true);
+  });
 
   if (!open || !enabled || !hasPlus) return null;
 
