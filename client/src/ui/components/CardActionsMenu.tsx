@@ -13,6 +13,8 @@ import { useFeedback } from "../../state/feedback";
 import { useMyList } from "../../state/myList";
 import { usePickedDismissed } from "../../state/pickedDismissed";
 import { useHasPlus } from "../../state/plusAccess";
+import { usePlusInvite } from "../../state/plusInvite";
+import { useCanOfferPlus } from "../../state/plusNudge";
 import { Surface } from "./Surface";
 
 /** ui/components/CardActionsMenu.kt — what holding OK on a poster (or right-click / long-press) opens. */
@@ -26,6 +28,7 @@ export function CardActionsMenu() {
   const toggleWatched = useAccountAction(useMyList((s) => s.toggleWatched));
   const removeFromContinueWatching = useContinueWatching((s) => s.removeEntry);
   const hasPlus = useHasPlus();
+  const canOffer = useCanOfferPlus();
   const feedback = useFeedback((s) => (content ? s.entries[content.id]?.value : undefined));
   const toggleFeedback = useAccountAction(useFeedback((s) => s.toggle));
   const dismissPick = usePickedDismissed((s) => s.dismiss);
@@ -170,6 +173,26 @@ export function CardActionsMenu() {
                 {feedback === "dislike" ? <MdThumbDown /> : <MdOutlineThumbDown />}
                 Not for me
               </Surface>
+            </>
+          ) : canOffer ? (
+            <>
+              {/* Without Plus the buttons are still here: pressing one explains what Picked for you does with them. Nothing is stored. */}
+              {(["like", "dislike"] as const).map((kind) => (
+                <Surface
+                  key={kind}
+                  className="cardmenu__secondary"
+                  radius="12px"
+                  ariaLabel={kind === "like" ? "Like, with ArcTV Plus" : "Not for me, with ArcTV Plus"}
+                  onClick={() => {
+                    close();
+                    usePlusInvite.getState().open("picked");
+                  }}
+                >
+                  {kind === "like" ? <MdOutlineThumbUp /> : <MdOutlineThumbDown />}
+                  {kind === "like" ? "Like" : "Not for me"}
+                  <span className="plus__soon" data-kind="plus" aria-hidden="true">Plus</span>
+                </Surface>
+              ))}
             </>
           ) : null}
         </div>

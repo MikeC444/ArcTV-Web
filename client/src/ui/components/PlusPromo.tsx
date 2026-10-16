@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { MdArrowForward, MdClose, MdFavorite, MdBarChart, MdBolt, MdDownload, MdGroups, MdWorkspacePremium } from "react-icons/md";
+import { MdArrowForward, MdClose, MdFavorite, MdBarChart, MdBolt, MdDownload, MdGroups, MdThumbUp, MdWorkspacePremium } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import { routes } from "../../lib/routes";
 import { useAuth } from "../../state/auth";
 import { usePlus } from "../../state/plus";
+import { usePlusInvite, type PlusInviteKind } from "../../state/plusInvite";
 import { activeProfileOf, useProfiles } from "../../state/profiles";
 import { promoDue, usePlusPromo } from "../../state/plusPromo";
 import { usePlusWelcome, welcomeDue } from "../../state/plusWelcome";
@@ -85,6 +86,53 @@ export const DOWNLOAD_INVITATION: PromoContent = {
   goLabel: "Take me there",
   hint: "Explore plans in Settings → ArcTV Plus",
 };
+
+/** The popup for someone who pressed Like or "Not for me" without Plus: Picked for you first, because that is what their taste feeds. */
+export const PICKED_INVITATION: PromoContent = {
+  title: "Tell ArcTV what you like.",
+  subtitle: "With ArcTV Plus, Like and Not for me shape a Home row picked for you. Everything you use today stays free.",
+  benefits: [BENEFITS[0]!, { icon: <MdThumbUp />, title: "Like and Not for me", detail: "On every movie and show, so your picks get better the more you use them." }, BENEFITS[1]!, BENEFITS[3]!],
+  goLabel: "Take me there",
+  hint: "Explore plans in Settings → ArcTV Plus",
+};
+
+/** The popup for someone who pressed Add profile without Plus. */
+export const PROFILES_INVITATION: PromoContent = {
+  title: "Give everyone their own profile.",
+  subtitle: "ArcTV Plus adds up to 5 profiles on one account. Everything you use today stays free.",
+  benefits: [BENEFITS[1]!, BENEFITS[0]!, BENEFITS[2]!, BENEFITS[3]!],
+  goLabel: "Take me there",
+  hint: "Explore plans in Settings → ArcTV Plus",
+};
+
+/** The popup for someone who wants the full Your stats without Plus. */
+export const STATS_INVITATION: PromoContent = {
+  title: "See your whole watching story.",
+  subtitle: "ArcTV Plus unlocks your full stats: weekly changes, your busiest day and a map of the last 13 weeks.",
+  benefits: [{ icon: <MdBarChart />, title: "Your stats", detail: "How much you watch, how this week compares, your streak and a map of your last 13 weeks." }, BENEFITS[0]!, BENEFITS[1]!, BENEFITS[3]!],
+  goLabel: "Take me there",
+  hint: "Explore plans in Settings → ArcTV Plus",
+};
+
+const INVITATIONS: Record<PlusInviteKind, PromoContent> = { picked: PICKED_INVITATION, profiles: PROFILES_INVITATION, stats: STATS_INVITATION };
+
+/** Draws the Plus invitation a locked feature asked for (see `usePlusInvite`), and takes "Take me there" to the Plus tab. */
+export function PlusInviteHost() {
+  const kind = usePlusInvite((s) => s.kind);
+  const navigate = useNavigate();
+  if (!kind) return null;
+  const close = () => usePlusInvite.getState().close();
+  return (
+    <PromoDialog
+      content={INVITATIONS[kind]}
+      onClose={close}
+      onGo={() => {
+        close();
+        navigate(routes.settings("plus"));
+      }}
+    />
+  );
+}
 
 /** The Plus popup's look, with its words passed in. Without `onNever` there is no "Don't show me again" link (a one-time announcement needs none). */
 export function PromoDialog({ onClose, onNever, onGo, content = PLUS_INVITATION }: { onClose(): void; onNever?: () => void; onGo(): void; content?: PromoContent }) {

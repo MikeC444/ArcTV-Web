@@ -40,7 +40,7 @@ test.describe("ArcTV Plus extras", () => {
     await shot(page, "settings-stats");
   });
 
-  test("Your stats is its own tab in the You group, and shown but not clickable without Plus", async ({ page }) => {
+  test("Your stats is its own tab in the You group, and shows a preview page without Plus", async ({ page }) => {
     const account = await newAccount("statstab");
     await openSignedIn(page, account, "/settings/account");
     const tab = page.getByRole("link", { name: "Your stats" }).or(page.locator(".settings__cat", { hasText: "Your stats" }));
@@ -57,12 +57,11 @@ test.describe("ArcTV Plus extras", () => {
     const locked = page.locator(".settings__cat", { hasText: "Your stats" });
     await expect(locked).toHaveAttribute("data-locked", "true");
     await expect(locked).toContainText("Plus");
-    await expect(locked).toBeDisabled();
+    await expect(locked).toBeEnabled(); // it opens, to a taste of the page rather than the real thing
     await shot(page, "settings-stats-locked");
-    await locked.click({ force: true });
-    await expect(page).toHaveURL(/\/settings\/account/); // it did not open
-    await page.goto("/settings/stats"); // by address: it says what it is and where to get it
-    await expect(page.getByText("Your stats are only for ArcTV Plus.")).toBeVisible();
+    await locked.click();
+    await expect(page).toHaveURL(/\/settings\/stats/);
+    await expect(page.getByText("Your stats are only for ArcTV Plus.")).toBeVisible(); // no history yet: it says what it is and where to get it
   });
 
   test("Smart source picking skips the source list and plays the best source", async ({ page }) => {

@@ -25,6 +25,8 @@ import { FullScreenError } from "../components/States";
 import { ScrollRow } from "../components/ScrollRow";
 import { useFeedback } from "../../state/feedback";
 import { useHasPlus } from "../../state/plusAccess";
+import { usePlusInvite } from "../../state/plusInvite";
+import { useCanOfferPlus } from "../../state/plusNudge";
 import { Surface } from "../components/Surface";
 
 /**
@@ -64,6 +66,7 @@ function DetailContent({ content, similar, providerId, trailer, releaseDate }: {
     if (videoId) window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`, "_blank", "noopener,noreferrer");
   });
   const hasPlus = useHasPlus();
+  const canOffer = useCanOfferPlus();
   const feedback = useFeedback((s) => s.entries[content.id]?.value);
   const toggleFeedback = useAccountAction(useFeedback((s) => s.toggle));
   const resume = useContinueWatching((s) => s.items.find((e) => e.providerId === providerId && e.contentId === content.id && e.contentType === content.type));
@@ -158,6 +161,11 @@ function DetailContent({ content, similar, providerId, trailer, releaseDate }: {
                   <>
                     <IconButton compact={compact} icon={feedback === "like" ? <MdThumbUp /> : <MdOutlineThumbUp />} label={feedback === "like" ? "Remove like" : "Like"} ariaPressed={feedback === "like"} onClick={() => toggleFeedback(content, "like")} />
                     <IconButton compact={compact} icon={feedback === "dislike" ? <MdThumbDown /> : <MdOutlineThumbDown />} label={feedback === "dislike" ? "Remove “Not for me”" : "Not for me"} ariaPressed={feedback === "dislike"} onClick={() => toggleFeedback(content, "dislike")} />
+                  </>
+                ) : canOffer ? (
+                  <>
+                    <IconButton compact={compact} icon={<MdOutlineThumbUp />} label="Like, with ArcTV Plus" onClick={() => usePlusInvite.getState().open("picked")} />
+                    <IconButton compact={compact} icon={<MdOutlineThumbDown />} label="Not for me, with ArcTV Plus" onClick={() => usePlusInvite.getState().open("picked")} />
                   </>
                 ) : null}
               </div>

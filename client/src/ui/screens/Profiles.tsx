@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AVATARS, avatarById, isValidPin, PIN_LENGTH, PROFILE_NAME_MAX, type Profile, type ProfileKind } from "../../domain/profiles";
 import { ApiClientError } from "../../lib/api";
 import { routes } from "../../lib/routes";
+import { usePlusInvite } from "../../state/plusInvite";
 import { useProfiles } from "../../state/profiles";
 import { signOutAndWipe } from "../../state/sync";
 import { ArcButton, Switch } from "../components/Buttons";
@@ -141,6 +142,16 @@ export function ProfilesScreen() {
           {canAdd ? (
             <li>
               <Surface className="profiletile profiletile--add" radius="calc(14 * var(--dp))" borderColor="var(--text)" onClick={() => setEditing("new")} ariaLabel="Add profile">
+                <span className="profiletile__plus" aria-hidden="true">
+                  <MdAdd />
+                </span>
+              </Surface>
+              <div className="profiletile__name">Add profile</div>
+            </li>
+          ) : ready && supported && !plus ? (
+            <li>
+              {/* Without Plus the tile is still here: it explains what more profiles give. Nothing is created. */}
+              <Surface className="profiletile profiletile--add" radius="calc(14 * var(--dp))" borderColor="var(--text)" onClick={() => usePlusInvite.getState().open("profiles")} ariaLabel="Add profile, with ArcTV Plus">
                 <span className="profiletile__plus" aria-hidden="true">
                   <MdAdd />
                 </span>

@@ -7,7 +7,7 @@ import { CardActionsMenu } from "../components/CardActionsMenu";
 import { AndroidAppPromo } from "../components/AndroidAppPromo";
 import { MacAppPromo } from "../components/MacAppPromo";
 import { WindowsAppPromo } from "../components/WindowsAppPromo";
-import { PlusPromo, PlusWelcome } from "../components/PlusPromo";
+import { PlusInviteHost, PlusPromo, PlusWelcome } from "../components/PlusPromo";
 import { OfflineBanner } from "../components/OfflineBanner";
 import { TopNav } from "../components/TopNav";
 
@@ -41,6 +41,7 @@ export function AppShell() {
       </main>
       <OfflineBanner />
       <CardActionsMenu />
+      <PlusInviteHost />
       <PlusPromo enabled={pathname === "/"} />
       <PlusWelcome enabled={pathname === "/"} />
       <MacAppPromo enabled={pathname === "/"} />

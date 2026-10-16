@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { MdBarChart, MdBolt, MdDownload, MdGroups, MdLanguage, MdLock, MdAccountCircle, MdAdd, MdBlock, MdCancel, MdFavorite, MdWorkspacePremium, MdArrowDownward, MdArrowUpward, MdCheck, MdCloudUpload, MdDelete, MdExtension, MdGridView, MdInfo, MdLogout, MdMusicNote, MdSubtitles, MdSwitchAccount, MdTune, MdVolumeUp, MdSpatialAudio, MdStars } from "react-icons/md";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
-import { PLUS_FREE_NOTE, PLUS_PERKS, PLUS_PLANS, PLUS_PROCEEDS_NOTE } from "../../domain/plus";
+import { formatMoney, lifetimeInYears, PLUS_FREE_NOTE, PLUS_PERKS, PLUS_PLANS, PLUS_PROCEEDS_NOTE, savingPercent, yearlyPerDay, yearlyPerMonth, type PlanPrices, type PlusPlan } from "../../domain/plus";
 import { applyRowOrder, moveRow } from "../../domain/homeRows";
 import { useProviders } from "../../domain/registry";
 import type { HomeSection } from "../../domain/types";
@@ -20,6 +20,8 @@ import { RecommendationsPane } from "../components/RecommendationsPane";
 import { WatchStats } from "../components/WatchStats";
 import { useSmartPicking } from "../../state/smartPicking";
 import { useHasPlus } from "../../state/plusAccess";
+import { usePlusInvite } from "../../state/plusInvite";
+import { useCanOfferPlus } from "../../state/plusNudge";
 import { useBlockedGenres } from "../../state/blockedGenres";
 import { useSettings } from "../../state/settings";
 import { signOutAndWipe } from "../../state/sync";
@@ -28,7 +30,7 @@ import { Spinner } from "../components/States";
 import { Surface } from "../components/Surface";
 
 type Tab = "account" | "addons" | "home-rows" | "blocked-genres" | "plus" | "plus-settings" | "recommendations" | "stats" | "sounds" | "subtitles" | "audio";
-type Category = { id: Tab; icon: ReactNode; title: string; subtitle: string; /** Greyed out and not clickable without ArcTV Plus. */ plusOnly?: boolean };
+type Category = { id: Tab; icon: ReactNode; title: string; subtitle: string; /** Greyed out and not clickable without ArcTV Plus. */ plusOnly?: boolean; /** Still openable without Plus: the page shows a taste of it and what Plus adds. */ preview?: boolean };
 const GROUPS: Array<{ label: string; items: Category[] }> = [
   {
     label: "You",
@@ -37,7 +39,7 @@ const GROUPS: Array<{ label: string; items: Category[] }> = [
       { id: "plus", icon: <MdWorkspacePremium />, title: "ArcTV Plus", subtitle: "Extra features for supporters" },
       { id: "plus-settings", icon: <MdTune />, title: "Plus settings", subtitle: "Switches for your Plus features", plusOnly: true },
       { id: "recommendations", icon: <MdStars />, title: "Recommendations", subtitle: "What shapes your Picked for you row", plusOnly: true },
-      { id: "stats", icon: <MdBarChart />, title: "Your stats", subtitle: "How much you watch, at a glance", plusOnly: true },
+      { id: "stats", icon: <MdBarChart />, title: "Your stats", subtitle: "How much you watch, at a glance", plusOnly: true, preview: true },
     ],
   },
   {
@@ -88,7 +90,7 @@ export function SettingsScreen() {
                 // A Plus-only category stays in the list but can't be opened without Plus, and says so.
                 const locked = c.plusOnly === true && !hasPlus;
                 return (
-                  <Surface key={c.id} className="settings__cat" onClick={() => navigate(routes.settings(c.id))} scale={1.02} disabled={locked} ariaLabel={locked ? `${c.title}, only for ArcTV Plus` : undefined} ariaCurrent={c.id === selected ? "page" : undefined} dataAttrs={{ selected: c.id === selected, locked, autofocus: c.id === selected }}>
+                  <Surface key={c.id} className="settings__cat" onClick={() => navigate(routes.settings(c.id))} scale={1.02} disabled={locked && !c.preview} ariaLabel={locked ? (c.preview ? `${c.title}, preview, the full version is for ArcTV Plus` : `${c.title}, only for ArcTV Plus`) : undefined} ariaCurrent={c.id === selected ? "page" : undefined} dataAttrs={{ selected: c.id === selected, locked, autofocus: c.id === selected }}>
                     <span className="settings__caticon" aria-hidden="true">{locked ? <MdLock /> : c.icon}</span>
                     <span className="t-title-md">{c.title}</span>
                     {locked ? <span className="plus__soon settings__plustag" data-kind="plus" aria-hidden="true">Plus</span> : null}
@@ -176,6 +178,30 @@ const PERK_ICONS: Record<string, ReactNode> = {
   "Your stats": <MdBarChart />,
   Download: <MdDownload />,
 };
+
+/** What a plan card says about its price. Everything comes from the list prices the backend sent; null when they weren't (the card then says "Price at checkout"). */
+function planPriceText(plan: PlusPlan["id"], prices: PlanPrices | null): { price: string; was?: string; saving?: string; perDay?: string; years?: string } | null {
+  if (!prices) return null;
+  const price = formatMoney(prices[plan].amount, prices[plan].currency);
+  if (!price) return null;
+  if (plan === "yearly") {
+    const perMonth = formatMoney(yearlyPerMonth(prices.yearly), prices.yearly.currency);
+    const saving = savingPercent(prices);
+    const perDay = formatMoney(yearlyPerDay(prices.yearly), prices.yearly.currency);
+    return {
+      price,
+      // The monthly price struck through only when yearly really is cheaper per month; otherwise just say what it works out to.
+      was: saving && perMonth ? formatMoney(prices.monthly.amount, prices.monthly.currency) ?? undefined : undefined,
+      saving: saving ? `Save ${saving}%` : undefined,
+      perDay: perDay ? `${perMonth ? `${perMonth}/mo billed yearly, ` : ""}about ${perDay} a day` : undefined,
+    };
+  }
+  if (plan === "lifetime") {
+    const years = lifetimeInYears(prices);
+    return { price, years: years && years >= 1 ? `About ${years} years of Yearly, then it's yours for good` : undefined };
+  }
+  return { price };
+}
 
 function PlusPane() {
   const plus = usePlus();
@@ -271,17 +297,29 @@ function PlusPane() {
           </ol>
 
           <div className="plus__plans" role="group" aria-label="Plans">
-            {PLUS_PLANS.map((plan) => (
+            {PLUS_PLANS.map((plan) => {
+              const shown = planPriceText(plan.id, plus.prices);
+              return (
               <div key={plan.id} className="plus__plan" data-featured={plan.note ? "true" : undefined}>
                 {plan.id === "yearly" && plus.trialDays > 0 ? <span className="plus__note">{plus.trialDays} days free</span> : plan.note ? <span className="plus__note">{plan.note}</span> : null}
                 <div className="t-title-md">{plan.label}</div>
-                <div className="plus__price">{plan.price ?? "Price at checkout"}</div>
+                <div className="plus__price">{shown?.price ?? plan.price ?? "Price at checkout"}</div>
                 <div className="t-label-sm c-text-3">{plan.per}</div>
-                <p className="t-body-sm c-text-2" style={{ margin: "8px 0 14px" }}>{plan.blurb}</p>
+                {shown?.saving ? <span className="plus__save">{shown.saving}</span> : null}
+                {shown?.perDay ? (
+                  <div className="t-body-sm c-text-2 plus__math">
+                    {shown.was ? <><s className="plus__was" aria-label={`Monthly price ${shown.was}`}>{shown.was}/mo</s>{" "}</> : null}
+                    {shown.perDay}
+                  </div>
+                ) : null}
+                {shown?.years ? <div className="t-body-sm c-text-2 plus__math">{shown.years}</div> : null}
+                <p className="t-body-sm c-text-2" style={{ margin: "8px 0 14px", flex: 1 }}>{plan.blurb}</p>
                 <ArcButton text={busy === plan.id ? "Opening…" : plan.id === "lifetime" ? "Get Lifetime" : plan.id === "yearly" && plus.trialDays > 0 ? `Start ${plus.trialDays}-day free trial` : `Choose ${plan.label}`} icon={<MdWorkspacePremium />} variant="filled" compact disabled={busy !== null} onClick={() => void choose(plan.id)} />
               </div>
-            ))}
+              );
+            })}
           </div>
+          {plus.prices ? <p className="t-body-sm c-text-3" style={{ margin: "12px 0 0" }}>List prices. Promo codes can be applied at checkout.</p> : null}
           {waiting ? <p className="t-body-sm c-text-2" style={{ margin: "12px 0 0" }}>Waiting for your payment… this switches on by itself when it goes through.</p> : null}
           {error ? <p className="t-body-sm" role="alert" style={{ margin: "12px 0 0", color: "var(--error)" }}>{error}</p> : null}
           {plus.trialDays > 0 ? <p className="t-body-sm c-text-3" style={{ margin: "12px 0 0" }}>Your card is taken at checkout, but nothing is charged for the first {plus.trialDays} days. Cancel before then and you pay nothing. The free trial is for the yearly plan, once per account.</p> : null}
@@ -295,10 +333,17 @@ function PlusPane() {
 function AccountPane() {
   const user = useAuth((s) => s.user);
   const profile = useProfiles((s) => (s.supported && s.plus ? activeProfileOf(s) : undefined));
+  const freeWithProfiles = useProfiles((s) => s.ready && s.supported && !s.plus);
+  const canAddProfile = useCanOfferPlus() && freeWithProfiles;
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   return (
     <div>
+      {canAddProfile ? (
+        <div style={{ marginBottom: 16 }}>
+          <ArcButton text="Add a profile" icon={<MdGroups />} compact onClick={() => usePlusInvite.getState().open("profiles")} />
+        </div>
+      ) : null}
       {profile ? (
         <div className="accountprofile">
           <div className="accountprofile__avatar">
