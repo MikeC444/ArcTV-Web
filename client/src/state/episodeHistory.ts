@@ -73,7 +73,7 @@ export function useEpisodeStatuses(content: Content, providerId: string, signedI
         const base = { providerId, contentId: content.id, contentType: content.type, seasonNumber: e.seasonNumber, episodeNumber: e.episodeNumber, episodeTitle: e.title, title: content.title, posterUrl: content.posterUrl, backdropUrl: content.backdropUrl, durationMs };
         // A finished report clears the show's Continue Watching entry, so the one the person is really part-way through goes back afterwards.
         const keep = resume && !(resume.seasonNumber === e.seasonNumber && resume.episodeNumber === e.episodeNumber) ? resume : undefined;
-        store.reportProgress({ ...base, positionMs: watched ? durationMs : 0, completed: watched });
+        store.reportProgress({ ...base, positionMs: watched ? durationMs : 0, completed: watched, markedManually: true });
         if (keep) store.reportProgress({ providerId: keep.providerId, contentId: keep.contentId, contentType: keep.contentType, seasonNumber: keep.seasonNumber, episodeNumber: keep.episodeNumber, episodeTitle: keep.episodeTitle, title: keep.title, posterUrl: keep.posterUrl, backdropUrl: keep.backdropUrl, positionMs: keep.positionMs, durationMs: keep.durationMs, completed: false });
         else if (!watched) store.removeEntry(providerId, content.id, content.type);
       }

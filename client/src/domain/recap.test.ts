@@ -4,7 +4,7 @@ import { computeStats, type HistoryItem } from "./stats";
 
 const NOW = new Date("2026-10-16T12:00:00");
 const HOUR = 3600_000;
-const item = (over: Partial<HistoryItem>): HistoryItem => ({ providerId: "p", contentId: "c", contentType: "MOVIE", seasonNumber: null, episodeNumber: null, title: "T", posterUrl: null, positionMs: HOUR, durationMs: HOUR, completed: true, watchedAt: new Date(NOW.getTime() - HOUR).toISOString(), ...over });
+const item = (over: Partial<HistoryItem>): HistoryItem => ({ providerId: "p", contentId: "c", contentType: "MOVIE", seasonNumber: null, episodeNumber: null, title: "T", posterUrl: null, positionMs: HOUR - 1, durationMs: HOUR, completed: true, watchedAt: new Date(NOW.getTime() - HOUR).toISOString(), ...over });
 
 describe("the recap card", () => {
   it("has nothing to say without a history", () => {

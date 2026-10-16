@@ -35,6 +35,8 @@ export interface WatchProgressRequest {
   positionMs: number;
   durationMs: number;
   completed: boolean;
+  /** Marked watched (or unwatched) by hand rather than played: it gives the tick but Your stats does not count it as time watched. */
+  markedManually?: boolean;
   watchedAt: string;
 }
 

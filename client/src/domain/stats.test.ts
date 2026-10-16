@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { afterReset, computeStats, formatDuration, formatShort, heatCells, heatMax, heatMonthLabels, HEAT_DAYS, streakNote, watchedMsOf, weekChange, weekdayLine, type HistoryItem } from "./stats";
+import { afterReset, computeStats, isMarkedByHand, formatDuration, formatShort, heatCells, heatMax, heatMonthLabels, HEAT_DAYS, streakNote, watchedMsOf, weekChange, weekdayLine, type HistoryItem } from "./stats";
 
 const HOUR = 3600_000;
 const item = (over: Partial<HistoryItem> = {}): HistoryItem => ({
@@ -42,8 +42,8 @@ describe("computeStats", () => {
       [
         item({ contentId: "m1", watchedAt: "2026-10-06T20:00:00" }),
         item({ contentId: "m2", watchedAt: "2026-09-20T20:00:00", positionMs: 1 * HOUR, durationMs: 2 * HOUR, completed: false }),
-        item({ contentId: "s1", contentType: "TV_SHOW", seasonNumber: 1, episodeNumber: 1, title: "A Show", positionMs: HOUR, durationMs: HOUR, watchedAt: "2026-10-05T20:00:00" }),
-        item({ contentId: "s1", contentType: "TV_SHOW", seasonNumber: 1, episodeNumber: 2, title: "A Show", positionMs: HOUR, durationMs: HOUR, watchedAt: "2026-10-04T20:00:00" }),
+        item({ contentId: "s1", contentType: "TV_SHOW", seasonNumber: 1, episodeNumber: 1, title: "A Show", positionMs: HOUR - 1, durationMs: HOUR, watchedAt: "2026-10-05T20:00:00" }),
+        item({ contentId: "s1", contentType: "TV_SHOW", seasonNumber: 1, episodeNumber: 2, title: "A Show", positionMs: HOUR - 1, durationMs: HOUR, watchedAt: "2026-10-04T20:00:00" }),
       ],
       NOW,
     );
@@ -60,8 +60,8 @@ describe("computeStats", () => {
     const stats = computeStats(
       [
         item({ contentId: "m1", title: "Short", positionMs: HOUR, durationMs: HOUR }),
-        item({ contentId: "s1", contentType: "TV_SHOW", episodeNumber: 1, title: "Long Show", positionMs: HOUR, durationMs: HOUR, watchedAt: "2026-10-05T20:00:00" }),
-        item({ contentId: "s1", contentType: "TV_SHOW", episodeNumber: 2, title: "Long Show", positionMs: HOUR, durationMs: HOUR, watchedAt: "2026-10-04T20:00:00" }),
+        item({ contentId: "s1", contentType: "TV_SHOW", episodeNumber: 1, title: "Long Show", positionMs: HOUR - 1, durationMs: HOUR, watchedAt: "2026-10-05T20:00:00" }),
+        item({ contentId: "s1", contentType: "TV_SHOW", episodeNumber: 2, title: "Long Show", positionMs: HOUR - 1, durationMs: HOUR, watchedAt: "2026-10-04T20:00:00" }),
       ],
       NOW,
     );
@@ -106,7 +106,7 @@ describe("the extra numbers", () => {
       [
         item({ contentId: "m1", watchedAt: "2026-10-06T20:00:00" }), // this week, 2 h
         item({ contentId: "m2", watchedAt: "2026-09-28T20:00:00", positionMs: HOUR, durationMs: HOUR }), // the week before, 1 h
-        item({ contentId: "s1", contentType: "TV_SHOW", episodeNumber: 1, positionMs: HOUR, durationMs: HOUR, watchedAt: "2026-10-07T10:00:00" }),
+        item({ contentId: "s1", contentType: "TV_SHOW", episodeNumber: 1, positionMs: HOUR - 1, durationMs: HOUR, watchedAt: "2026-10-07T10:00:00" }),
       ],
       NOW,
     );
@@ -158,7 +158,7 @@ describe("the extra numbers", () => {
       [
         item({ contentId: "m1", title: "Big Movie", watchedAt: new Date(NOW.getTime() - 3 * day).toISOString(), positionMs: 2 * HOUR, durationMs: 2 * HOUR, completed: true }),
         item({ contentId: "m2", title: "Old Movie", watchedAt: new Date(NOW.getTime() - 40 * day).toISOString(), positionMs: HOUR, durationMs: HOUR, completed: true }),
-        item({ contentId: "s1", contentType: "TV_SHOW", seasonNumber: 1, episodeNumber: 1, title: "Show", watchedAt: new Date(NOW.getTime() - 5 * day).toISOString(), positionMs: HOUR / 2, durationMs: HOUR / 2, completed: true }),
+        item({ contentId: "s1", contentType: "TV_SHOW", seasonNumber: 1, episodeNumber: 1, title: "Show", watchedAt: new Date(NOW.getTime() - 5 * day).toISOString(), positionMs: HOUR / 2 - 1, durationMs: HOUR / 2, completed: true }),
       ],
       NOW,
     );
@@ -223,5 +223,38 @@ describe("afterReset", () => {
     expect(fresh.totalMs).toBeLessThan(all.totalMs);
     expect(fresh.moviesFinished).toBe(1);
     expect(computeStats(afterReset([a, b], "2026-11-01T00:00:00.000Z"), NOW).empty).toBe(true);
+  });
+});
+
+describe("episodes only ticked as watched by hand", () => {
+  const MIN = 60_000;
+  const played = item({ contentId: "s1", contentType: "TV_SHOW", seasonNumber: 1, episodeNumber: 1, title: "Show", positionMs: 45 * MIN - 1234, durationMs: 45 * MIN, completed: true, watchedAt: "2026-10-07T10:00:00" });
+  const ticked = item({ contentId: "s1", contentType: "TV_SHOW", seasonNumber: 1, episodeNumber: 2, title: "Show", positionMs: 45 * MIN, durationMs: 45 * MIN, completed: true, markedManually: true, watchedAt: "2026-10-06T10:00:00" });
+
+  it("are recognised by the account's flag, or, for older rows, by the listed runtime used as both position and length", () => {
+    expect(isMarkedByHand(ticked)).toBe(true);
+    expect(isMarkedByHand({ ...played, markedManually: true })).toBe(true);
+    expect(isMarkedByHand(played)).toBe(false);
+    // a row from before the flag: a whole-minute length with the position exactly at the end
+    expect(isMarkedByHand({ ...ticked, markedManually: undefined })).toBe(true);
+    expect(isMarkedByHand({ ...ticked, markedManually: false })).toBe(true);
+    // not for a movie, an unfinished episode, or one whose length is not whole minutes
+    expect(isMarkedByHand({ ...ticked, markedManually: undefined, contentType: "MOVIE" })).toBe(false);
+    expect(isMarkedByHand({ ...ticked, markedManually: undefined, completed: false })).toBe(false);
+    expect(isMarkedByHand({ ...ticked, markedManually: undefined, positionMs: 45 * MIN + 17, durationMs: 45 * MIN + 17 })).toBe(false);
+  });
+
+  it("do not count as time watched, episodes watched, a day watched or the top show", () => {
+    const stats = computeStats([played, ticked], NOW);
+    expect(stats.totalMs).toBe(45 * MIN);
+    expect(stats.episodesWatched).toBe(1);
+    expect(stats.activeDays).toBe(1);
+    expect(stats.dailyMs.reduce((a, b) => a + b, 0)).toBe(45 * MIN);
+    expect(stats.topShow?.parts).toBe(1);
+    expect(stats.streakDays).toBeLessThanOrEqual(1);
+  });
+
+  it("leave nothing when every row was only ticked", () => {
+    expect(computeStats([ticked], NOW).empty).toBe(true);
   });
 });

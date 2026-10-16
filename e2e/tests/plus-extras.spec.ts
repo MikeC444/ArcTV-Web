@@ -24,8 +24,8 @@ test.describe("ArcTV Plus extras", () => {
     for (const body of [
       progress("fxm1", "Fixture Movie One", {}),
       progress("fxm2", "Fixture Movie Two", { positionMs: 1_800_000, completed: false, watchedAt: new Date(Date.now() - 2 * 86_400_000).toISOString() }),
-      progress("fxs1", "Fixture Show", { contentType: "TV_SHOW", seasonNumber: 1, episodeNumber: 1, positionMs: 2_400_000, durationMs: 2_400_000, watchedAt: new Date(Date.now() - 86_400_000).toISOString() }),
-      progress("fxs1", "Fixture Show", { contentType: "TV_SHOW", seasonNumber: 1, episodeNumber: 2, positionMs: 2_400_000, durationMs: 2_400_000 }),
+      progress("fxs1", "Fixture Show", { contentType: "TV_SHOW", seasonNumber: 1, episodeNumber: 1, positionMs: 2_399_000, durationMs: 2_400_000, watchedAt: new Date(Date.now() - 86_400_000).toISOString() }),
+      progress("fxs1", "Fixture Show", { contentType: "TV_SHOW", seasonNumber: 1, episodeNumber: 2, positionMs: 2_399_000, durationMs: 2_400_000 }),
     ]) {
       expect((await account.tv.post("/user/watch-progress", body)).status).toBe(200);
     }
@@ -61,6 +61,27 @@ test.describe("ArcTV Plus extras", () => {
     await stats.getByText("What counts towards your stats").click();
     await expect(stats.getByText(/counts once, on the day you last watched it/)).toBeVisible();
     await shot(page, "settings-stats");
+  });
+
+  test("only what is played counts: ticking a whole season as watched adds nothing to the stats", async ({ page }) => {
+    const account = await newAccount("tickstats");
+    // one episode really played to the end (a length that is not whole minutes, as a real file's is)
+    expect((await account.tv.post("/user/watch-progress", progress("fxs1", "Fixture Show", { contentType: "TV_SHOW", seasonNumber: 1, episodeNumber: 1, positionMs: 2_404_000, durationMs: 2_405_000 }))).status).toBe(200);
+    await openSignedIn(page, account, "/detail/test.arctv.fixture/TV_SHOW/fxs1");
+    await page.locator(".seasons__mark").click(); // "Mark season watched"
+    await expect(page.locator(".seasons__mark")).toContainText("Season watched");
+    // the ticks are in the account's history, flagged as marked by hand; the played episode is not
+    await expect
+      .poll(async () => ((await account.tv.get("/user/history?limit=50")).body.items as Array<{ episodeNumber: number; markedManually: boolean }>).filter((i) => i.markedManually).length)
+      .toBeGreaterThan(0);
+    const items = (await account.tv.get("/user/history?limit=50")).body.items as Array<{ episodeNumber: number; markedManually: boolean }>;
+    expect(items.find((i) => i.episodeNumber === 1)?.markedManually).toBe(false);
+
+    await page.goto("/settings/stats");
+    const stats = page.getByRole("region", { name: "Your stats" });
+    await expect(stats.locator(".stats__big")).toContainText("40 minutes"); // just the one episode that was played
+    await expect(stats.locator(".stats__tile", { hasText: "Episodes watched" })).toContainText("1");
+    await expect(stats.locator(".stats__tile", { hasText: "On days you watch" })).toContainText("1 day watched");
   });
 
   test("Reset stats starts the numbers again from today on the account, deletes nothing, and can be undone", async ({ page }) => {
