@@ -51,12 +51,15 @@ test.describe("ArcTV Plus extras", () => {
     // the weekday bars: today marked, and the busiest day in a sentence
     await expect(stats.locator('.stats__bar[data-today="true"]')).toHaveCount(1);
     await expect(stats.getByText(/You watch most on \w+days\./)).toBeVisible();
-    // most watched, and the recap that saves as a picture
+    // most watched, and the recap
     await expect(stats.getByRole("heading", { name: /Most watched/ })).toBeVisible();
     await expect(stats.locator(".stats__toprow", { hasText: "Fixture Show" })).toBeVisible();
     await expect(stats.locator(".stats__toprow", { hasText: "Fixture Movie One" })).toBeVisible();
-    const [download] = await Promise.all([page.waitForEvent("download"), stats.getByRole("button", { name: "Save as image" }).click()]);
-    expect(download.suggestedFilename()).toBe("arctv-recap.png");
+    await expect(stats.getByText("My ArcTV recap")).toBeVisible();
+    await expect(stats.getByRole("button", { name: /Save as image|Share/ })).toHaveCount(0); // the recap is a summary only
+    // what counts towards the stats, explained and opened on demand
+    await stats.getByText("What counts towards your stats").click();
+    await expect(stats.getByText(/counts once, on the day you last watched it/)).toBeVisible();
     await shot(page, "settings-stats");
   });
 

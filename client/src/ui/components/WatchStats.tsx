@@ -242,9 +242,17 @@ export function StatsBody({ stats, truncated }: { stats: Stats; truncated: boole
       <h3 className="t-label-lg stats__sub">Your recap</h3>
       <StatsRecap stats={stats} />
 
-      <p className="t-label-sm c-text-3" style={{ margin: "14px 0 0" }}>
-        Counted from your watch history{truncated ? " (the most recent part of it)" : ""}. A title you watch again counts once, on the day you last watched it.
-      </p>
+      <details className="stats__counts">
+        <summary className="t-label-lg">What counts towards your stats</summary>
+        <ul className="t-body-sm c-text-2">
+          <li>Everything you watch in ArcTV while signed in to your account, on any device. Each profile has its own stats.</li>
+          <li>A finished movie or episode counts for its whole length. One you stopped part-way counts for how far you got.</li>
+          <li>A title you watch again counts once, on the day you last watched it, so rewatching doesn't add to your hours.</li>
+          <li>Anything you watch outside ArcTV, or without being signed in, isn't included.</li>
+          <li>Reset stats starts the numbers again from today. Your watch history is kept.</li>
+          {truncated ? <li>Your history is very long, so only the most recent part of it is counted.</li> : null}
+        </ul>
+      </details>
     </>
   );
 }

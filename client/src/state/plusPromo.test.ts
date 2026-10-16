@@ -16,7 +16,22 @@ describe("ArcTV Plus popup rules", () => {
     usePlusPromo.getState().markShown();
     expect(promoDue(usePlusPromo.getState())).toBe(false);
   });
-  it("Close snoozes it for a week, then it may come back (kept per account)", () => {
+  it("is remembered the moment it is shown, so a reload or leaving without closing does not bring it back", () => {
+    usePlusPromo.getState().markShown(5_000);
+    usePlusPromo.setState({ shownThisSession: false }); // a reload: the tab forgets, the account's record does not
+    usePlusPromo.getState().reset();
+    usePlusPromo.setState({ shownThisSession: false });
+    usePlusPromo.getState().hydrate("u1");
+    expect(promoDue(usePlusPromo.getState(), 5_000 + PROMO_SNOOZE_MS - 1)).toBe(false);
+    expect(promoDue(usePlusPromo.getState(), 5_000 + PROMO_SNOOZE_MS)).toBe(true);
+  });
+  it("is two weeks between showings, and Close never shortens it", () => {
+    expect(PROMO_SNOOZE_MS).toBe(14 * 24 * 3600_000);
+    usePlusPromo.getState().markShown(10_000);
+    usePlusPromo.getState().snooze(1_000); // closed "earlier" than the stored time: the later one stands
+    expect(usePlusPromo.getState().snoozedUntil).toBe(10_000 + PROMO_SNOOZE_MS);
+  });
+  it("Close snoozes it for two weeks, then it may come back (kept per account)", () => {
     usePlusPromo.getState().snooze(1_000);
     expect(promoDue(usePlusPromo.getState(), 1_000 + PROMO_SNOOZE_MS - 1)).toBe(false);
     expect(promoDue(usePlusPromo.getState(), 1_000 + PROMO_SNOOZE_MS)).toBe(true);
