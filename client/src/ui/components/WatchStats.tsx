@@ -89,15 +89,17 @@ function StatsReset() {
 }
 
 /**
- * What someone without Plus sees: their real last-30-days hours and streak in plain text, and the rest of their stats blurred behind
- * a button. The blurred part is decoration only (hidden from screen readers and not clickable); the plain numbers say it all.
+ * What someone without Plus sees: a blurred stand-in for their last-30-days time (the real number is Plus), their streak in plain text, and the rest
+ * of their stats blurred behind a button. The blurred parts are decoration only (hidden from screen readers and not clickable).
  */
 function StatsPreview({ stats, truncated, onGo }: { stats: Stats; truncated: boolean; onGo(): void }) {
   return (
     <div className="stats__preview">
       <div className="stats__hero">
         <div className="t-label-md c-text-3">In the last 30 days you've watched</div>
-        <div className="stats__big">{formatDuration(stats.last30DaysMs)}</div>
+        {/* The number is hidden: this is a stand-in, blurred, not the person's real total (so it is not sitting in the page for anyone to read), and Plus unlocks the real one. */}
+        <div className="stats__big stats__big--hidden" aria-hidden="true">24 hours 30 minutes</div>
+        <span className="sr-only">Your watch time is unlocked with ArcTV Plus.</span>
         {stats.streakDays >= 2 ? <div className="t-label-md c-text-2">{stats.streakDays}-day streak going</div> : null}
       </div>
       <div className="stats__blurwrap">

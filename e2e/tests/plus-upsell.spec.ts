@@ -65,7 +65,7 @@ test.describe("ArcTV Plus: prices and nudges for someone without Plus", () => {
     await expect(page).toHaveURL(/\/settings\/plus/);
   });
 
-  test("Your stats gives a taste of the real numbers, blurs the rest, and points to Plus", async ({ page }) => {
+  test("Your stats blurs the number and the rest of the page, and points to Plus", async ({ page }) => {
     const account = await newAccount("statspreview");
     const body = {
       providerId: "test.arctv.fixture",
@@ -86,7 +86,12 @@ test.describe("ArcTV Plus: prices and nudges for someone without Plus", () => {
     await freeWithPaywall(page);
     await openSignedIn(page, account, "/settings/stats");
     const preview = page.locator(".stats__preview");
-    await expect(preview.locator(".stats__hero .stats__big").first()).toContainText("1 hour 40 minutes");
+    // the 30-day number is blurred out and is not the real one: the real total is not in that part of the page
+    const hidden = preview.locator(".stats__hero").first().locator(".stats__big--hidden");
+    await expect(hidden).toBeVisible();
+    await expect(hidden).toHaveAttribute("aria-hidden", "true");
+    await expect(hidden).toHaveCSS("filter", /blur/);
+    await expect(preview.locator(".stats__hero").first()).not.toContainText("1 hour 40 minutes");
     await expect(preview.locator(".stats__blur")).toHaveAttribute("aria-hidden", "true");
     await shot(page, "settings-stats-preview");
     await preview.getByRole("button", { name: /See ArcTV Plus/ }).click();

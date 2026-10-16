@@ -638,6 +638,7 @@
 .stats__dot--movies { background: var(--cyan); }
 .stats__dot--shows { background: var(--violet); }
 .stats__heatwrap { display: flex; gap: 8px; align-items: stretch; overflow-x: auto; padding-bottom: 2px; }
+.stats__big--hidden { filter: blur(10px); user-select: none; pointer-events: none; }
 .stats__period { font-weight: 400; color: var(--text-3); }
 .stats__heatcol { display: flex; flex-direction: column; gap: 4px; }
 .stats__heatmonths { list-style: none; margin: 0; padding: 0; display: grid; grid-auto-flow: column; grid-auto-columns: 20px; gap: 4px; height: 14px; line-height: 14px; }
