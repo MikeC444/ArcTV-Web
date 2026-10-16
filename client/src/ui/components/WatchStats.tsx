@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { MdAvTimer, MdCalendarMonth, MdClose, MdDateRange, MdHistory, MdLocalFireDepartment, MdLock, MdMovie, MdRestartAlt, MdTrendingDown, MdTrendingFlat, MdTrendingUp, MdTv, MdWorkspacePremium } from "react-icons/md";
+import { MdAvTimer, MdCalendarMonth, MdClose, MdDateRange, MdLocalFireDepartment, MdLock, MdMovie, MdRestartAlt, MdTrendingDown, MdTrendingFlat, MdTrendingUp, MdTv, MdWorkspacePremium } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import { formatDuration, formatShort, heatCells, heatMax, heatMonthLabels, streakNote, WEEKDAYS, weekChange, weekdayLine, type WatchStats as Stats } from "../../domain/stats";
 import { pluralize } from "../../lib/format";
@@ -47,8 +47,8 @@ export function WatchStats() {
 }
 
 /**
- * Starts Your stats again from now, on every device (the time is kept with the account's settings), after one question. Nothing is deleted: the watch
- * history, Continue Watching and the watched ticks stay, and "Show all my history again" brings the old numbers back.
+ * Starts Your stats again from now, on every device (the time is kept with the account's settings), after one question. It is final: there is no
+ * way back to the old numbers. The watch history itself, Continue Watching and the watched ticks are not touched.
  */
 function StatsReset() {
   const resetAt = useSettings((s) => s.statsResetAt);
@@ -58,11 +58,11 @@ function StatsReset() {
   const since = resetAt && Number.isFinite(Date.parse(resetAt)) ? new Date(resetAt).toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" }) : null;
   return (
     <div className="stats__reset">
-      {since ? <p className="t-body-sm c-text-2" style={{ margin: "0 0 10px" }}>Counting from {since}. Your older history is kept.</p> : null}
+      {since ? <p className="t-body-sm c-text-2" style={{ margin: "0 0 10px" }}>Counting from {since}.</p> : null}
       {asking ? (
         <div className="stats__resetask" role="group" aria-label="Reset your stats">
-          <p className="t-body-md" style={{ margin: 0 }}><strong>Start your stats again from today?</strong></p>
-          <p className="t-body-sm c-text-2" style={{ margin: "4px 0 10px" }}>This is the same on all your devices. Your watch history, Continue Watching and watched ticks stay as they are, and you can bring the old numbers back any time.</p>
+          <p className="t-body-md" style={{ margin: 0 }}><strong>Reset your stats?</strong></p>
+          <p className="t-body-sm c-text-2" style={{ margin: "4px 0 10px" }}>Your stats start again from zero and you can't get the old numbers back. Your Continue Watching and watched ticks are not affected.</p>
           <div className="stats__recapactions">
             <ArcButton
               text="Yes, reset"
@@ -81,17 +81,6 @@ function StatsReset() {
       ) : (
         <div className="stats__recapactions">
           <ArcButton text="Reset stats" icon={<MdRestartAlt />} compact onClick={() => { setNote(""); setAsking(true); }} />
-          {resetAt ? (
-            <ArcButton
-              text="Show all my history again"
-              icon={<MdHistory />}
-              compact
-              onClick={() => {
-                setResetAt(null);
-                setNote("Showing all your history again.");
-              }}
-            />
-          ) : null}
         </div>
       )}
       <p className="t-label-sm c-text-3" role="status" style={{ margin: "8px 0 0" }}>{note}</p>
@@ -250,7 +239,7 @@ export function StatsBody({ stats, truncated }: { stats: Stats; truncated: boole
           <li>A finished movie or episode counts for its whole length. One you stopped part-way counts for how far you got.</li>
           <li>A title you watch again counts once, on the day you last watched it, so rewatching doesn't add to your hours.</li>
           <li>Anything you watch outside ArcTV, or without being signed in, isn't included.</li>
-          <li>Reset stats starts the numbers again from today. Your watch history is kept.</li>
+          <li>Reset stats starts the numbers again from today and can't be undone. Continue Watching and your watched ticks are not affected.</li>
           {truncated ? <li>Your history is very long, so only the most recent part of it is counted.</li> : null}
         </ul>
       </details>
