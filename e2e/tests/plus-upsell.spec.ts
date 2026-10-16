@@ -135,7 +135,7 @@ test.describe("ArcTV Plus: prices and nudges for someone without Plus", () => {
     await openSignedIn(page, account, "/settings/plus");
     await expect(page.getByRole("group", { name: "Plans" }).locator(".plus__plan").nth(2)).toContainText("Join the supporters board");
     const callout = page.locator(".plus__board");
-    await expect(callout).toContainText("you can choose to have your display name and profile picture on the supporters board on arctv.org");
+    await expect(callout).toContainText("you'll be asked at checkout whether you want your display name and profile picture on the supporters board on arctv.org");
     await expect(callout.getByRole("link", { name: "See the supporters board" })).toHaveAttribute("href", "https://arctv.org/supporters/");
     await callout.scrollIntoViewIfNeeded();
     await shot(page, "plus-supporters-board-note");
