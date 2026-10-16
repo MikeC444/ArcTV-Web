@@ -21,9 +21,11 @@ export interface PlusStatus {
   prices: PlanPrices | null;
   /** For a Lifetime member: whether they have chosen to have their display name on the supporters board (off until they say so). null for everyone else. */
   supporterBoard: boolean | null;
+  /** With the board on: listed as "Anonymous" (no name, no picture) instead. null when not on the board. */
+  supporterAnonymous: boolean | null;
 }
 
-const NONE: PlusStatus = { active: false, plan: null, validUntil: null, cancelAtPeriodEnd: false, paywall: false, trialDays: 0, prices: null, supporterBoard: null };
+const NONE: PlusStatus = { active: false, plan: null, validUntil: null, cancelAtPeriodEnd: false, paywall: false, trialDays: 0, prices: null, supporterBoard: null, supporterAnonymous: null };
 
 /** The backend's answer as a PlusStatus, with anything missing or malformed read as "none". */
 function parseStatus(status: Partial<Record<keyof PlusStatus, unknown>>): PlusStatus {
@@ -36,6 +38,7 @@ function parseStatus(status: Partial<Record<keyof PlusStatus, unknown>>): PlusSt
     trialDays: typeof status.trialDays === "number" && status.trialDays > 0 ? Math.floor(status.trialDays) : 0,
     prices: parsePrices(status.prices),
     supporterBoard: typeof status.supporterBoard === "boolean" ? status.supporterBoard : null,
+    supporterAnonymous: typeof status.supporterAnonymous === "boolean" ? status.supporterAnonymous : null,
   };
 }
 
@@ -49,8 +52,8 @@ interface PlusState extends PlusStatus {
   checkout(plan: PlusPlanId): Promise<string>;
   /** Cancels a monthly or yearly subscription at the end of the period already paid for; Plus stays on until then. */
   cancelSubscription(): Promise<void>;
-  /** A Lifetime member chooses to have their display name on the supporters board, or takes it off. */
-  setSupporterBoard(show: boolean): Promise<void>;
+  /** A Lifetime member chooses to be on the supporters board (by display name, or as Anonymous), or takes it off. */
+  setSupporterBoard(show: boolean, anonymous?: boolean): Promise<void>;
 }
 
 /**
@@ -88,13 +91,16 @@ export const usePlus = create<PlusState>((set, get) => ({
     return url;
   },
 
-  async setSupporterBoard(show) {
+  async setSupporterBoard(show, anonymous = false) {
     const { userId } = get();
-    const status = await api<Partial<Record<keyof PlusStatus, unknown>>>("/user/plus/supporter", { method: "PUT", body: { show } });
+    const status = await api<Partial<Record<keyof PlusStatus, unknown>>>("/user/plus/supporter", { method: "PUT", body: { show, anonymous } });
     if (!userId || get().userId !== userId) return;
-    set({ supporterBoard: typeof status.supporterBoard === "boolean" ? status.supporterBoard : show });
-    const { active, plan, validUntil, cancelAtPeriodEnd, paywall, trialDays, prices, supporterBoard } = get();
-    writeJson(userKey(userId, "plus"), { active, plan, validUntil, cancelAtPeriodEnd, paywall, trialDays, prices, supporterBoard } satisfies PlusStatus);
+    set({
+      supporterBoard: typeof status.supporterBoard === "boolean" ? status.supporterBoard : show,
+      supporterAnonymous: typeof status.supporterAnonymous === "boolean" ? status.supporterAnonymous : show ? anonymous : null,
+    });
+    const { active, plan, validUntil, cancelAtPeriodEnd, paywall, trialDays, prices, supporterBoard, supporterAnonymous } = get();
+    writeJson(userKey(userId, "plus"), { active, plan, validUntil, cancelAtPeriodEnd, paywall, trialDays, prices, supporterBoard, supporterAnonymous } satisfies PlusStatus);
   },
 
   async cancelSubscription() {

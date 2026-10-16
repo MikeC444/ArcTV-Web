@@ -430,15 +430,16 @@ function SmartPickingToggle() {
  */
 function SupportersBoardOption() {
   const on = usePlus((s) => s.supporterBoard) === true;
+  const anonymous = usePlus((s) => s.supporterAnonymous) === true;
   const setBoard = usePlus((s) => s.setSupporterBoard);
   const name = useAuth((s) => s.user?.displayName)?.trim() || null;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  async function toggle() {
+  async function save(show: boolean, anon: boolean) {
     setBusy(true);
     setError(null);
     try {
-      await setBoard(!on);
+      await setBoard(show, anon);
     } catch {
       setError("Couldn't save that. Try again in a moment.");
     } finally {
@@ -447,15 +448,24 @@ function SupportersBoardOption() {
   }
   return (
     <div className="plus__setting" style={{ marginTop: 0, marginBottom: 18 }}>
-      <Surface className="homerow__toggle" scale={1.02} borderColor="var(--text)" onClick={() => void toggle()} role="switch" ariaLabel="Put my name on the supporters board" ariaChecked={on} disabled={busy}>
+      <Surface className="homerow__toggle" scale={1.02} borderColor="var(--text)" onClick={() => void save(!on, false)} role="switch" ariaLabel="Put me on the supporters board" ariaChecked={on} disabled={busy}>
         <span style={{ flex: 1, minWidth: 0 }}>
           <span className="t-body-md" style={{ display: "block", color: on ? "var(--text)" : "var(--text-2)" }}>Supporters board</span>
           <span className="t-label-sm c-text-3" style={{ display: "block" }}>
-            Thank you for going Lifetime! Show {name ? <>your display name, “{name.slice(0, 24)}”,</> : <>“Anonymous supporter” (you have no display name)</>} on the supporters board on arctv.org. It is off until you turn it on, and you can turn it off any time.
+            Thank you for going Lifetime! Show {name ? <>your display name, “{name.slice(0, 24)}”, and profile picture</> : <>“Anonymous supporter” (you have no display name)</>} on the supporters board on arctv.org. It is off until you turn it on, and you can turn it off any time.
           </span>
         </span>
         <Switch checked={on} white />
       </Surface>
+      {on ? (
+        <Surface className="homerow__toggle" scale={1.02} borderColor="var(--text)" onClick={() => void save(true, !anonymous)} role="switch" ariaLabel="List me as Anonymous" ariaChecked={anonymous} disabled={busy} style={{ marginTop: 8 }}>
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <span className="t-body-md" style={{ display: "block", color: anonymous ? "var(--text)" : "var(--text-2)" }}>List me as Anonymous</span>
+            <span className="t-label-sm c-text-3" style={{ display: "block" }}>Keep your name and picture private: you still show on the board, as “Anonymous”.</span>
+          </span>
+          <Switch checked={anonymous} white />
+        </Surface>
+      ) : null}
       {error ? <p className="t-body-sm" role="alert" style={{ margin: "8px 0 0", color: "var(--error)" }}>{error}</p> : null}
     </div>
   );

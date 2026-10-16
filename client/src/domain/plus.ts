@@ -102,4 +102,4 @@ export const SUPPORTERS_URL = "https://arctv.org/supporters/";
 export const LIFETIME_BOARD_TAG = "Join the supporters board";
 
 /** Said under the plan cards: the supporters board is a choice, asked at checkout and changeable in Settings. */
-export const LIFETIME_BOARD_NOTE = "Go Lifetime and you'll be asked at checkout whether you want your display name and profile picture on the supporters board on arctv.org, as a thank you. You can change your mind any time in Settings.";
+export const LIFETIME_BOARD_NOTE = "Go Lifetime and you'll be asked at checkout whether you want to be on the supporters board on arctv.org, with your display name and picture or just as Anonymous, as a thank you. You can change your mind any time in Settings.";
