@@ -116,6 +116,11 @@ test.describe("ArcTV Plus: prices and nudges for someone without Plus", () => {
     await expect(chip).toContainText("Me");
     await chip.click();
     await expect(page).toHaveURL(/\/profiles/);
-    await expect(page.getByRole("button", { name: "Add profile, with ArcTV Plus" })).toBeVisible();
+    await expect(page.getByText("More profiles come with ArcTV Plus")).toHaveCount(0); // no static upsell block any more
+    await page.getByRole("button", { name: "Add profile, with ArcTV Plus" }).click();
+    const dialog = page.getByRole("dialog", { name: "Give everyone their own profile." });
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole("button", { name: "Close" }).last().click();
+    await expect(dialog).toHaveCount(0);
   });
 });

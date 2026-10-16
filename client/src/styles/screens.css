@@ -528,10 +528,6 @@
 .profiletile__name { margin-top: calc(12 * var(--dp)); font-weight: 600; font-size: calc(19 * var(--dp)); overflow-wrap: anywhere; }
 .profiletile__kind { margin-top: 2px; font-size: calc(13 * var(--dp)); color: var(--text-3); letter-spacing: 0.04em; text-transform: uppercase; }
 .profiles__actions { margin-top: calc(40 * var(--dp)); display: flex; flex-direction: column; align-items: center; gap: 10px; }
-.profiles__upsell { margin-top: calc(40 * var(--dp)); max-width: 640px; display: flex; gap: 16px; align-items: center; text-align: left; background: var(--bg-elevated); border: 1px solid var(--divider); border-radius: 16px; padding: 16px 20px; flex-wrap: wrap; }
-.profiles__upsell > svg { font-size: 32px; color: var(--accent); flex: none; }
-.profiles__upsell > div { flex: 1; min-width: 220px; }
-.profiles__link { color: var(--accent); font-weight: 600; }
 .profiles__skip { margin: calc(28 * var(--dp)) 0 0; }
 .profiles__skip a { color: var(--text-2); }
 .pinfield { width: 8.5em; text-align: center; letter-spacing: 0.5em; font-size: calc(28 * var(--dp)); padding: 10px 8px 10px calc(8px + 0.5em); background: var(--surface); color: var(--text); border: 1px solid var(--divider); border-radius: 12px; }

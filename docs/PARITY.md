@@ -11,6 +11,7 @@ Status: ⬜ not done · ✅ done (released or merged) · ➖ not needed there (s
 
 | Date | Change | Firestick | Phone | Mac | Windows |
 |---|---|---|---|---|---|
+| 2026-10-16 | Profiles screen without Plus: the static "More profiles come with ArcTV Plus" block is gone, and the Add profile tile opens the Plus popup about profiles (it did nothing on this screen before, because the popup was not drawn there) (`Profiles.tsx`) | ⬜ | ⬜ | ⬜ | ⬜ |
 | 2026-10-16 | The profile chip (avatar and name) in the top bar shows for everyone, not only Plus members: without Plus it is the account's own profile, and pressing it opens the Profiles screen (with the Add profile popup) (`TopNav.tsx`) | ⬜ | ⬜ | ⬜ | ⬜ |
 | 2026-10-16 | Settings → ArcTV Plus: the "How to subscribe" steps are gone (the plan cards explain themselves); the plans now sit under a "Choose a plan" heading (`Settings.tsx`) | ➖ the Fire TV has its own plan screen | ➖ | ⬜ if the plan screen has the steps | ⬜ if the plan screen has the steps |
 | 2026-10-16 | Home popups no longer show over each other: the Plus popup, the Plus tour and the Mac, Windows and Android app announcements now take turns (the Plus ones first, then an app announcement after they are closed), one at a time (`ui/components/popupQueue.ts`) | ➖ web popups only | ➖ web popups only | ➖ web popups only | ➖ web popups only |

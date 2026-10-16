@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { MdAdd, MdCheck, MdClose, MdDelete, MdEdit, MdLock, MdWorkspacePremium } from "react-icons/md";
+import { MdAdd, MdCheck, MdClose, MdDelete, MdEdit, MdLock } from "react-icons/md";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AVATARS, avatarById, isValidPin, PIN_LENGTH, PROFILE_NAME_MAX, type Profile, type ProfileKind } from "../../domain/profiles";
 import { ApiClientError } from "../../lib/api";
 import { routes } from "../../lib/routes";
+import { PlusInviteHost } from "../components/PlusPromo";
 import { usePlusInvite } from "../../state/plusInvite";
 import { useProfiles } from "../../state/profiles";
 import { signOutAndWipe } from "../../state/sync";
@@ -168,20 +169,6 @@ export function ProfilesScreen() {
           </div>
         ) : null}
 
-        {ready && supported && !plus ? (
-          <div className="profiles__upsell">
-            <MdWorkspacePremium aria-hidden="true" />
-            <div>
-              <div className="t-title-md">More profiles come with ArcTV Plus</div>
-              <p className="t-body-sm c-text-2" style={{ margin: "4px 0 0" }}>
-                Give everyone at home their own My List, Continue Watching and recommendations, add kids profiles, and lock any profile with a PIN.
-              </p>
-            </div>
-            <Link className="profiles__link" to={routes.settings("plus")}>
-              See ArcTV Plus
-            </Link>
-          </div>
-        ) : null}
         {ready && !supported ? <p className="t-body-sm c-text-2 profiles__hint">Profiles aren't available yet. Everything you watch stays in your account's one library for now.</p> : null}
         {!managing && ready && (chosen || !plus || !supported) ? (
           <p className="profiles__skip">
@@ -200,6 +187,8 @@ export function ProfilesScreen() {
         />
       ) : null}
       {editing ? <ProfileEditor profile={editing === "new" ? null : editing} onClose={() => setEditing(null)} /> : null}
+      {/* This screen is outside the app shell, so it draws the Plus popup that Add profile opens without Plus. */}
+      <PlusInviteHost />
     </main>
   );
 }
