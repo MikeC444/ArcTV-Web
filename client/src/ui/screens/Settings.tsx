@@ -291,13 +291,7 @@ function PlusPane() {
 
       {plus.paywall && !plus.active ? (
         <>
-          <h3 className="t-title-md plus__h">How to subscribe</h3>
-          <ol className="plus__steps t-body-md">
-            <li>Pick a plan below: monthly, yearly, or a one-time Lifetime payment.{plus.trialDays > 0 ? ` Yearly starts with ${plus.trialDays} days free.` : ""}</li>
-            <li>Complete the secure checkout in the page that opens. It is added to your account (you're already signed in here).</li>
-            <li>Come back to this tab: Plus switches on by itself within a minute.</li>
-          </ol>
-
+          <h3 className="t-title-md plus__h">Choose a plan</h3>
           <div className="plus__plans" role="group" aria-label="Plans">
             {PLUS_PLANS.map((plan) => {
               const shown = planPriceText(plan.id, plus.prices);
