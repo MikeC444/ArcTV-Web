@@ -10,7 +10,12 @@ const email = z.string().trim().toLowerCase().email("Enter a valid email address
 const password = z.string().min(1, "Enter your password.").max(256);
 const loginBody = z.object({ email, password }).strict();
 const registerBody = z
-  .object({ email, password: z.string().min(8, "Password must be at least 8 characters.").max(256), displayName: z.string().trim().min(1).max(100).optional() })
+  .object({
+    email,
+    password: z.string().min(8, "Password must be at least 8 characters.").max(256),
+    // Required: it is also the account's first profile, whose name is at most 24 characters.
+    displayName: z.string({ required_error: "Enter a display name.", invalid_type_error: "Enter a display name." }).trim().min(1, "Enter a display name.").max(24, "Display name can be at most 24 characters."),
+  })
   .strict();
 const qrStatusQuery = z.object({ token: z.string().min(16).max(256) });
 

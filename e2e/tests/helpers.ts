@@ -32,7 +32,7 @@ export class Tv {
     return { status: response.status, body: text ? JSON.parse(text) : undefined };
   }
   async register() {
-    const r = await this.call("POST", "/auth/register", { email: this.email, password: PASSWORD, deviceId: this.deviceId, deviceName: "Living Room TV", platform: "fire_tv" });
+    const r = await this.call("POST", "/auth/register", { email: this.email, password: PASSWORD, displayName: "Tester", deviceId: this.deviceId, deviceName: "Living Room TV", platform: "fire_tv" });
     expect(r.status, JSON.stringify(r.body)).toBe(201);
     this.accessToken = r.body.accessToken;
     this.userId = r.body.user.id;

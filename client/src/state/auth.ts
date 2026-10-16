@@ -37,6 +37,16 @@ const MIN_PASSWORD_LENGTH = 8;
 const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 /** Loose client-side check (validateCredentials in PasswordSignInViewModel) — the server stays the authority. */
+/** The longest display name an account can be created with: it is also the account's first profile, whose name has the same limit. */
+export const DISPLAY_NAME_MAX = 24;
+
+/** Creating an account needs a display name; null when this one is fine. */
+export function validateDisplayName(displayName: string): string | null {
+  if (displayName.trim() === "") return "Enter a display name.";
+  if (displayName.trim().length > DISPLAY_NAME_MAX) return `Display name can be at most ${DISPLAY_NAME_MAX} characters.`;
+  return null;
+}
+
 export function validateCredentials(email: string, password: string): string | null {
   if (email.trim() === "") return "Enter your email address.";
   if (!EMAIL_PATTERN.test(email.trim())) return "Enter a valid email address.";

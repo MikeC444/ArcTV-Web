@@ -29,7 +29,7 @@ test.describe("sign-in flows", () => {
     await expect(page.getByRole("heading", { name: "Continue Watching" })).toBeVisible(); // the TV's progress, on the web
     await expect(page.locator(".card__title", { hasText: "Resume Me" })).toBeVisible();
     // no second account was created for this email
-    const again = await fetch(`${BACKEND}/auth/register`, { method: "POST", headers: { "Content-Type": "application/json", "X-Forwarded-For": nextIp() }, body: JSON.stringify({ email: account.email, password: PASSWORD, deviceId: randomUUID() }) });
+    const again = await fetch(`${BACKEND}/auth/register`, { method: "POST", headers: { "Content-Type": "application/json", "X-Forwarded-For": nextIp() }, body: JSON.stringify({ email: account.email, password: PASSWORD, displayName: "Again", deviceId: randomUUID() }) });
     expect(again.status).toBe(409);
   });
 
@@ -84,13 +84,31 @@ test.describe("sign-in flows", () => {
     await useClientIp(page.context());
     await page.goto("/auth/password/register");
     await page.getByPlaceholder("Email").fill(email);
-    await page.getByPlaceholder("Display name (optional)").fill("Web Person");
+    await page.getByPlaceholder("Display name").fill("Web Person");
     await page.getByPlaceholder("Password").fill(PASSWORD);
     await page.getByRole("button", { name: "Create Account" }).click();
     await expect(page).not.toHaveURL(/\/auth/);
     const login = await fetch(`${BACKEND}/auth/login`, { method: "POST", headers: { "Content-Type": "application/json", "X-Forwarded-For": new Tv(email).ip }, body: JSON.stringify({ email, password: PASSWORD, deviceId: randomUUID(), platform: "fire_tv" }) });
     expect(login.status).toBe(200);
-    expect((await login.json()).user.displayName).toBe("Web Person");
+    const signedIn = await login.json();
+    expect(signedIn.user.displayName).toBe("Web Person");
+    // the name is also the account's default profile
+    const profiles = await fetch(`${BACKEND}/user/profiles`, { headers: { Authorization: `Bearer ${signedIn.accessToken}`, "X-Forwarded-For": new Tv(email).ip } });
+    expect((await profiles.json()).profiles[0]).toMatchObject({ name: "Web Person", isDefault: true });
+  });
+
+  test("creating an account needs a display name", async ({ page }) => {
+    const email = uniqueEmail("noname");
+    await useClientIp(page.context());
+    await page.goto("/auth/password/register");
+    await page.getByPlaceholder("Email").fill(email);
+    await page.getByPlaceholder("Password").fill(PASSWORD);
+    await page.getByRole("button", { name: "Create Account" }).click();
+    await expect(page.getByRole("alert")).toContainText("Enter a display name.");
+    await expect(page).toHaveURL(/\/auth/);
+    await page.getByPlaceholder("Display name").fill("x".repeat(40)); // the field stops at 24
+    await expect(page.getByPlaceholder("Display name")).toHaveValue("x".repeat(24));
+    await expect(page.getByText("This is also the name of your first profile.")).toBeVisible();
   });
 
   test("QR sign-in: a phone completes it on the backend's activation flow and the browser signs in by itself", async ({ page }) => {

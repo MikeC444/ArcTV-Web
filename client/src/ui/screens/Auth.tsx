@@ -5,7 +5,7 @@ import { Navigate, Outlet, useLocation, useNavigate, useParams } from "react-rou
 import heroImage from "../../assets/img/auth_hero_living_room.webp";
 import { api, ApiClientError } from "../../lib/api";
 import { routes } from "../../lib/routes";
-import { useAuth, validateCredentials, type SessionUser } from "../../state/auth";
+import { DISPLAY_NAME_MAX, useAuth, validateCredentials, validateDisplayName, type SessionUser } from "../../state/auth";
 import { ArcButton } from "../components/Buttons";
 import { ArcLogo } from "../components/Logo";
 import { FullScreenError, Spinner } from "../components/States";
@@ -132,7 +132,7 @@ export function PasswordSignInScreen() {
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     if (waitLeft > 0) return;
-    const problem = validateCredentials(email, password);
+    const problem = (isRegister ? validateDisplayName(displayName) : null) ?? validateCredentials(email, password);
     if (problem) return setError(problem);
     setBusy(true);
     setError(null);
@@ -163,8 +163,9 @@ export function PasswordSignInScreen() {
         <input id="email" className="mfield" aria-invalid={error ? true : undefined} aria-describedby={error ? "auth-error" : undefined} type="email" inputMode="email" autoComplete="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} data-autofocus="true" autoCapitalize="none" spellCheck={false} />
         {isRegister ? (
           <>
-            <label className="sr-only" htmlFor="name">Display name (optional)</label>
-            <input id="name" className="mfield" type="text" autoComplete="nickname" placeholder="Display name (optional)" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+            <label className="sr-only" htmlFor="name">Display name</label>
+            <input id="name" className="mfield" type="text" autoComplete="nickname" required aria-required="true" maxLength={DISPLAY_NAME_MAX} aria-invalid={error ? true : undefined} aria-describedby="name-hint" placeholder="Display name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+            <p id="name-hint" className="t-label-sm c-text-3" style={{ margin: "-4px 0 0" }}>This is also the name of your first profile.</p>
           </>
         ) : null}
         <label className="sr-only" htmlFor="password">Password</label>
