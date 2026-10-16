@@ -90,6 +90,7 @@ Admin-only changes (the developer panel) are not ported: no TV or phone equivale
 | Change | Where it is | Web |
 |---|---|---|
 | Cinemeta added when an account has no addon that offers catalogues (empty Home fix); the server now does this for every app version too (see `addonService.seedDefaultAddon` in the Firestick repo) | Firestick 0.3.1, phone (unreleased) | ⬜ the web app does not check this itself; the server fix covers it once deployed |
+| Settings → Addons on the TV: the whole addon row is the focusable on/off switch (bold border, On/Off label), Left returns to the category list, and long lists scroll fully clear of the bottom edge | Firestick (unreleased) | ➖ remote-control focus; the web page already scrolls and has a visible switch |
 | A black Arc TV logo screen at startup while the app loads | Firestick 0.3.0, phone (unreleased) | ⬜ |
 | Updates tab with the app version and Check for updates | Firestick 0.3.0, phone | ➖ a website is always the latest |
 
