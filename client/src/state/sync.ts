@@ -3,6 +3,7 @@ import { useAuth } from "./auth";
 import { useFeedback } from "./feedback";
 import { usePickedDismissed } from "./pickedDismissed";
 import { usePlus } from "./plus";
+import { usePlusNudge } from "./plusNudge";
 import { usePlusPromo } from "./plusPromo";
 import { usePlusWelcome } from "./plusWelcome";
 import { useAndroidApp } from "./androidApp";
@@ -36,6 +37,7 @@ export function hydrateAll(userId: string): void {
   usePickedDismissed.getState().hydrate(userId);
   usePlus.getState().hydrate(userId);
   usePlusPromo.getState().hydrate(userId);
+  usePlusNudge.getState().hydrate(userId);
   usePlusWelcome.getState().hydrate(userId);
   useMacApp.getState().hydrate(userId);
   useWindowsApp.getState().hydrate(userId);
@@ -115,6 +117,7 @@ export function resetAllStores(): void {
   usePickedDismissed.getState().reset();
   usePlus.getState().reset();
   usePlusPromo.getState().reset();
+  usePlusNudge.getState().reset();
   usePlusWelcome.getState().reset();
   useMacApp.getState().reset();
   useWindowsApp.getState().reset();

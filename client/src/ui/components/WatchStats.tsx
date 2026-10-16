@@ -5,6 +5,7 @@ import { formatDuration, formatShort, heatCells, WEEKDAYS, weekChange, type Watc
 import { pluralize } from "../../lib/format";
 import { routes } from "../../lib/routes";
 import { useHasPlus } from "../../state/plusAccess";
+import { useCanOfferPlus } from "../../state/plusNudge";
 import { activeProfileOf, useProfiles } from "../../state/profiles";
 import { useWatchStats } from "../../state/watchStats";
 import { ArcButton } from "./Buttons";
@@ -14,11 +15,15 @@ import { Spinner } from "./States";
 export function WatchStats() {
   const plus = useHasPlus();
   const profileId = useProfiles((s) => (s.supported && s.plus ? activeProfileOf(s)?.id ?? null : null));
-  const state = useWatchStats(plus, profileId);
+  // Without Plus (and with the paywall on) the person's own history is still read, to show them a taste of what they would get.
+  const offer = useCanOfferPlus();
+  const state = useWatchStats(plus || offer, profileId);
   const navigate = useNavigate();
   return (
     <section className="stats" aria-label="Your stats">
-      {!plus ? (
+      {!plus && offer && state.kind === "ready" && !state.stats.empty ? (
+        <StatsPreview stats={state.stats} truncated={state.truncated} onGo={() => navigate(routes.settings("plus"))} />
+      ) : !plus ? (
         <div className="stats__locked">
           <MdLock aria-hidden="true" />
           <p className="t-body-md" style={{ margin: 0 }}><strong>Your stats are only for ArcTV Plus.</strong></p>
@@ -33,6 +38,33 @@ export function WatchStats() {
         <StatsBody stats={state.stats} truncated={state.truncated} />
       )}
     </section>
+  );
+}
+
+/**
+ * What someone without Plus sees: their real last-30-days hours and streak in plain text, and the rest of their stats blurred behind
+ * a button. The blurred part is decoration only (hidden from screen readers and not clickable); the plain numbers say it all.
+ */
+function StatsPreview({ stats, truncated, onGo }: { stats: Stats; truncated: boolean; onGo(): void }) {
+  return (
+    <div className="stats__preview">
+      <div className="stats__hero">
+        <div className="t-label-md c-text-3">In the last 30 days you've watched</div>
+        <div className="stats__big">{formatDuration(stats.last30DaysMs)}</div>
+        {stats.streakDays >= 2 ? <div className="t-label-md c-text-2">{stats.streakDays}-day streak going</div> : null}
+      </div>
+      <div className="stats__blurwrap">
+        <div className="stats__blur" aria-hidden="true">
+          <StatsBody stats={stats} truncated={truncated} />
+        </div>
+        <div className="stats__unlock">
+          <MdLock aria-hidden="true" />
+          <p className="t-body-md" style={{ margin: 0 }}><strong>There's more to your stats.</strong></p>
+          <p className="t-body-sm c-text-2" style={{ margin: 0 }}>ArcTV Plus unlocks how this week compares, your busiest day and a map of your last 13 weeks.</p>
+          <ArcButton text="See ArcTV Plus" icon={<MdWorkspacePremium />} compact onClick={onGo} />
+        </div>
+      </div>
+    </div>
   );
 }
 

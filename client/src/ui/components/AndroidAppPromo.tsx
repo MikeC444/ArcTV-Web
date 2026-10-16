@@ -3,11 +3,8 @@ import { MdPhoneAndroid, MdSync, MdDownload } from "react-icons/md";
 import { ANDROID_APP_URL, fetchAndroidApkUrl, onAndroidPhone } from "../../lib/androidApp";
 import { useAuth } from "../../state/auth";
 import { androidAppDue, useAndroidApp } from "../../state/androidApp";
+import { APP_POPUP, useQueuedPopup } from "./popupQueue";
 import { PromoDialog, type PromoContent } from "./PlusPromo";
-
-const SHOW_AFTER_MS = 4000;
-/** How often to look again while another popup (the Plus ones) is still open, so two never stack. */
-const RETRY_MS = 2000;
 
 export const ANDROID_APP_INVITATION: PromoContent = {
   badge: "ANDROID",
@@ -22,8 +19,6 @@ export const ANDROID_APP_INVITATION: PromoContent = {
   hint: "Free to download. Android will ask you to allow the install.",
 };
 
-const anotherDialogOpen = () => document.querySelector('[role="dialog"]') !== null;
-
 /**
  * A one-time invitation to the Android app, for a signed-in person on an Android phone or tablet browser, a few seconds after landing on
  * Home (and after any Plus popup has been dealt with). "Get the Android app" starts downloading the newest app file (the release page if it
@@ -36,18 +31,10 @@ export function AndroidAppPromo({ enabled }: { enabled: boolean }) {
   const [apkUrl, setApkUrl] = useState<string | null>(null);
   const eligible = enabled && signedIn && ready && onAndroidPhone();
 
-  useEffect(() => {
-    if (!eligible) return undefined;
-    let timer = window.setTimeout(function show() {
-      if (anotherDialogOpen()) {
-        timer = window.setTimeout(show, RETRY_MS);
-        return;
-      }
-      useAndroidApp.getState().markShown();
-      setOpen(true);
-    }, SHOW_AFTER_MS);
-    return () => window.clearTimeout(timer);
-  }, [eligible]);
+  useQueuedPopup("android-app", eligible, open, () => {
+    useAndroidApp.getState().markShown();
+    setOpen(true);
+  }, APP_POPUP);
 
   // Find the newest app file as soon as the popup is up, so the button can start the download in the same click.
   useEffect(() => {

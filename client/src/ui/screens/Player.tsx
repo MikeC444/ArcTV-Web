@@ -27,6 +27,7 @@ import { IconButton, ArcButton } from "../components/Buttons";
 import { ArcLogo } from "../components/Logo";
 import { FullScreenError, Spinner } from "../components/States";
 import { PlayerLoading } from "../player/Loading";
+import { PlusEndCard } from "../player/PlusEndCard";
 import { describeAttempt, describeDiagnostics, EVENTS_WORTH_KEEPING, probeSource, snapshotVideo, type TrailEntry } from "../player/diagnostics";
 import { addonTextTracks, createEngine, mediaErrorToPlaybackError, pickDefaultAudio, pickDefaultSubtitle, type EngineTracks, type PlaybackError, type PlayerEngine } from "../player/engine";
 import { AdvancedPanel, AudioInfoPanel, PlaybackErrorOverlay, SettingsPanel, SourceInfoPanel, SpeedMenu, TrackMenu } from "../player/overlays";
@@ -858,6 +859,7 @@ function Playback({ content, episode, stream, providerId, type, season, episodeN
           <div className="pnext__title t-label-md ellipsis">{`S${next.season} E${next.episode} • ${next.title}`}</div>
         </div>
       ) : null}
+      {phase === "ended" && !next && !error ? <PlusEndCard /> : null}
       {upNext ? <UpNext next={upNext} onCancel={() => setUpNext(null)} onGo={() => onNextEpisode(upNext)} /> : null}
       {error ? (
         <PlaybackErrorOverlay

@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { parsePrices, type PlanPrices } from "../domain/plus";
 import { api } from "../lib/api";
 import { readJson, userKey, writeJson } from "./persist";
 
@@ -16,9 +17,24 @@ export interface PlusStatus {
   paywall: boolean;
   /** Free days a first monthly or yearly subscription starts with, when this account is offered them; 0 otherwise. */
   trialDays: number;
+  /** The list price of each plan, for the plan cards; null when the backend didn't send them. Promo codes can lower what checkout charges. */
+  prices: PlanPrices | null;
 }
 
-const NONE: PlusStatus = { active: false, plan: null, validUntil: null, cancelAtPeriodEnd: false, paywall: false, trialDays: 0 };
+const NONE: PlusStatus = { active: false, plan: null, validUntil: null, cancelAtPeriodEnd: false, paywall: false, trialDays: 0, prices: null };
+
+/** The backend's answer as a PlusStatus, with anything missing or malformed read as "none". */
+function parseStatus(status: Partial<Record<keyof PlusStatus, unknown>>): PlusStatus {
+  return {
+    active: status.active === true,
+    plan: (status.plan as PlusStatus["plan"]) ?? null,
+    validUntil: (status.validUntil as string | null) ?? null,
+    cancelAtPeriodEnd: status.cancelAtPeriodEnd === true,
+    paywall: status.paywall === true,
+    trialDays: typeof status.trialDays === "number" && status.trialDays > 0 ? Math.floor(status.trialDays) : 0,
+    prices: parsePrices(status.prices),
+  };
+}
 
 interface PlusState extends PlusStatus {
   userId: string | null;
@@ -41,7 +57,7 @@ export const usePlus = create<PlusState>((set, get) => ({
   userId: null,
 
   hydrate(userId) {
-    set({ userId, ...readJson<PlusStatus>(userKey(userId, "plus"), NONE) });
+    set({ userId, ...NONE, ...readJson<Partial<PlusStatus>>(userKey(userId, "plus"), {}) });
   },
   reset() {
     set({ userId: null, ...NONE });
@@ -51,9 +67,9 @@ export const usePlus = create<PlusState>((set, get) => ({
     const { userId } = get();
     if (!userId) return false;
     try {
-      const status = await api<PlusStatus>("/user/plus");
+      const status = await api<Partial<Record<keyof PlusStatus, unknown>>>("/user/plus");
       if (get().userId !== userId) return false; // signed out or switched account while waiting
-      const next: PlusStatus = { active: status.active === true, plan: status.plan ?? null, validUntil: status.validUntil ?? null, cancelAtPeriodEnd: status.cancelAtPeriodEnd === true, paywall: status.paywall === true, trialDays: typeof status.trialDays === "number" && status.trialDays > 0 ? Math.floor(status.trialDays) : 0 };
+      const next = parseStatus(status);
       set(next);
       writeJson(userKey(userId, "plus"), next);
       return true;
@@ -69,9 +85,9 @@ export const usePlus = create<PlusState>((set, get) => ({
 
   async cancelSubscription() {
     const { userId } = get();
-    const status = await api<PlusStatus>("/user/plus/cancel", { method: "POST", body: {} });
+    const status = await api<Partial<Record<keyof PlusStatus, unknown>>>("/user/plus/cancel", { method: "POST", body: {} });
     if (!userId || get().userId !== userId) return;
-    const next: PlusStatus = { active: status.active === true, plan: status.plan ?? null, validUntil: status.validUntil ?? null, cancelAtPeriodEnd: status.cancelAtPeriodEnd === true, paywall: status.paywall === true, trialDays: typeof status.trialDays === "number" && status.trialDays > 0 ? Math.floor(status.trialDays) : 0 };
+    const next = parseStatus(status);
     set(next);
     writeJson(userKey(userId, "plus"), next);
   },

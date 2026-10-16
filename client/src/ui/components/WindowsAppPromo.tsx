@@ -4,11 +4,8 @@ import { fetchWindowsInstallerUrl, onWindows, WINDOWS_APP_URL } from "../../lib/
 import { useAuth } from "../../state/auth";
 import { windowsAppDue, useWindowsApp } from "../../state/windowsApp";
 import { reportAppPromoEvent } from "../../state/appPromoEvents";
+import { APP_POPUP, useQueuedPopup } from "./popupQueue";
 import { PromoDialog, type PromoContent } from "./PlusPromo";
-
-const SHOW_AFTER_MS = 4000;
-/** How often to look again while another popup (the Plus ones) is still open, so two never stack. */
-const RETRY_MS = 2000;
 
 export const WINDOWS_APP_INVITATION: PromoContent = {
   badge: "WINDOWS",
@@ -23,8 +20,6 @@ export const WINDOWS_APP_INVITATION: PromoContent = {
   hint: "Free to download. Windows may ask you to confirm before it runs (the app isn't code-signed yet).",
 };
 
-const anotherDialogOpen = () => document.querySelector('[role="dialog"]') !== null;
-
 /**
  * A one-time invitation to the Windows app, for a signed-in person on a Windows browser, a few seconds after landing on Home (and after any
  * Plus popup has been dealt with). "Get the Windows app" starts downloading the newest installer (the release page if it can't be found).
@@ -37,19 +32,11 @@ export function WindowsAppPromo({ enabled }: { enabled: boolean }) {
   const [installerUrl, setInstallerUrl] = useState<string | null>(null);
   const eligible = enabled && signedIn && ready && onWindows();
 
-  useEffect(() => {
-    if (!eligible) return undefined;
-    let timer = window.setTimeout(function show() {
-      if (anotherDialogOpen()) {
-        timer = window.setTimeout(show, RETRY_MS);
-        return;
-      }
-      useWindowsApp.getState().markShown();
-      setOpen(true);
-      reportAppPromoEvent({ app: "windows", kind: "shown" });
-    }, SHOW_AFTER_MS);
-    return () => window.clearTimeout(timer);
-  }, [eligible]);
+  useQueuedPopup("windows-app", eligible, open, () => {
+    useWindowsApp.getState().markShown();
+    setOpen(true);
+    reportAppPromoEvent({ app: "windows", kind: "shown" });
+  }, APP_POPUP);
 
   // Find the newest installer as soon as the popup is up, so the button can start the download in the same click.
   useEffect(() => {

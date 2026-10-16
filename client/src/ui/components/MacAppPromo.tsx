@@ -4,11 +4,8 @@ import { fetchMacDmgUrl, MAC_APP_URL, onMac } from "../../lib/mac";
 import { useAuth } from "../../state/auth";
 import { macAppDue, useMacApp } from "../../state/macApp";
 import { reportAppPromoEvent } from "../../state/appPromoEvents";
+import { APP_POPUP, useQueuedPopup } from "./popupQueue";
 import { PromoDialog, type PromoContent } from "./PlusPromo";
-
-const SHOW_AFTER_MS = 4000;
-/** How often to look again while another popup (the Plus ones) is still open, so two never stack. */
-const RETRY_MS = 2000;
 
 export const MAC_APP_INVITATION: PromoContent = {
   badge: "MAC",
@@ -23,8 +20,6 @@ export const MAC_APP_INVITATION: PromoContent = {
   hint: "Free to download",
 };
 
-const anotherDialogOpen = () => document.querySelector('[role="dialog"]') !== null;
-
 /**
  * A one-time invitation to the Mac app, for a signed-in person on a Mac browser, a few seconds after landing on Home (and after any
  * Plus popup has been dealt with). "Get the Mac app" starts downloading the newest disk image (the release page if it can't be found).
@@ -37,19 +32,11 @@ export function MacAppPromo({ enabled }: { enabled: boolean }) {
   const [dmgUrl, setDmgUrl] = useState<string | null>(null);
   const eligible = enabled && signedIn && ready && onMac();
 
-  useEffect(() => {
-    if (!eligible) return undefined;
-    let timer = window.setTimeout(function show() {
-      if (anotherDialogOpen()) {
-        timer = window.setTimeout(show, RETRY_MS);
-        return;
-      }
-      useMacApp.getState().markShown();
-      setOpen(true);
-      reportAppPromoEvent({ app: "mac", kind: "shown" });
-    }, SHOW_AFTER_MS);
-    return () => window.clearTimeout(timer);
-  }, [eligible]);
+  useQueuedPopup("mac-app", eligible, open, () => {
+    useMacApp.getState().markShown();
+    setOpen(true);
+    reportAppPromoEvent({ app: "mac", kind: "shown" });
+  }, APP_POPUP);
 
   // Find the newest disk image as soon as the popup is up, so the button can start the download in the same click.
   useEffect(() => {

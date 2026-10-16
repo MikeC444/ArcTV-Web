@@ -69,6 +69,23 @@ describe("ArcTV Plus status", () => {
     expect(usePlus.getState().trialDays).toBe(0);
   });
 
+  it("reads the plan prices, and treats missing, partial or odd ones as none", async () => {
+    hydrateAll("u1");
+    const prices = { monthly: { amount: 499, currency: "GBP" }, yearly: { amount: 3999, currency: "gbp" }, lifetime: { amount: 9999, currency: "gbp" } };
+    respond = () => status({ paywall: true, prices });
+    await usePlus.getState().pull();
+    expect(usePlus.getState().prices).toEqual({ monthly: { amount: 499, currency: "gbp" }, yearly: { amount: 3999, currency: "gbp" }, lifetime: { amount: 9999, currency: "gbp" } });
+    respond = () => status({ paywall: true, prices: { monthly: prices.monthly } });
+    await usePlus.getState().pull();
+    expect(usePlus.getState().prices).toBeNull();
+    respond = () => status({ paywall: true, prices: { ...prices, yearly: { amount: "39.99", currency: "gbp" } } });
+    await usePlus.getState().pull();
+    expect(usePlus.getState().prices).toBeNull();
+    respond = () => status({ paywall: true });
+    await usePlus.getState().pull();
+    expect(usePlus.getState().prices).toBeNull();
+  });
+
   it("keeps the last known status when it can't be read, and remembers it for the next launch", async () => {
     hydrateAll("u1");
     respond = () => status({ active: true, plan: "monthly", validUntil: "2099-01-01T00:00:00.000Z" });
