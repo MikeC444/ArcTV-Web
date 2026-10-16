@@ -98,7 +98,7 @@ function StatsPreview({ stats, truncated, onGo }: { stats: Stats; truncated: boo
       <div className="stats__hero">
         <div className="t-label-md c-text-3">In the last 30 days you've watched</div>
         {/* The number is hidden: this is a stand-in, blurred, not the person's real total (so it is not sitting in the page for anyone to read), and Plus unlocks the real one. */}
-        <div className="stats__big stats__big--hidden" aria-hidden="true">24 hours 30 minutes</div>
+        <div className="stats__big stats__big--hidden" aria-hidden="true">1,000,000 hours</div>
         <span className="sr-only">Your watch time is unlocked with ArcTV Plus.</span>
         {stats.streakDays >= 2 ? <div className="t-label-md c-text-2">{stats.streakDays}-day streak going</div> : null}
       </div>
