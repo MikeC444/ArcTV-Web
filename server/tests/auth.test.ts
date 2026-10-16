@@ -53,7 +53,7 @@ describe("sign-in through the web server", () => {
     const created = await post("/api/auth/register").send({ email: "new@example.com", password: "password-1234", displayName: "New" });
     expect(created.status).toBe(201);
     expect(created.body.user.displayName).toBe("New");
-    const dup = await post("/api/auth/register").send({ email: "new@example.com", password: "password-1234" });
+    const dup = await post("/api/auth/register").send({ email: "new@example.com", password: "password-1234", displayName: "New" });
     expect(dup.status).toBe(409);
     expect(dup.body.error.code).toBe("email_taken");
   });
@@ -62,7 +62,13 @@ describe("sign-in through the web server", () => {
     const backend = createMockBackend();
     const { post } = agentFor(appWith(backend.fetch));
     expect((await post("/api/auth/login").send({ email: "nope", password: "x" })).status).toBe(400);
-    expect((await post("/api/auth/register").send({ email: "a@b.co", password: "short" })).status).toBe(400);
+    expect((await post("/api/auth/register").send({ email: "a@b.co", password: "short", displayName: "A" })).status).toBe(400);
+    // a display name is needed to create an account (it is also the first profile), and is at most 24 characters
+    for (const displayName of [undefined, "", "   ", "x".repeat(25)]) {
+      const res = await post("/api/auth/register").send({ email: "a@b.co", password: "password-1234", displayName });
+      expect(res.status).toBe(400);
+      expect(JSON.stringify(res.body)).toMatch(/display name/i);
+    }
     expect((await post("/api/auth/login").send({ email: "a@b.co", password: "x", isAdmin: true })).status).toBe(400); // strict schema
     expect(backend.calls).toHaveLength(0);
   });

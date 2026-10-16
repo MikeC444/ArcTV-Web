@@ -6,7 +6,7 @@ import { formatElapsed, formatWatched, formatReleaseDate, formatRuntime, formatT
 import { isoMs, monotonicIso, resetMonotonicClock } from "../lib/iso";
 import { decideProgress, nextEpisodeAfter, nextHoldSeekDelta } from "../state/progress";
 import { buildGenreList } from "./genreList";
-import { validateCredentials } from "../state/auth";
+import { validateCredentials, validateDisplayName } from "../state/auth";
 import { sortContent } from "../ui/screens/Browse";
 import { orderSources, sortStreams } from "../ui/screens/Sources";
 import { recommendedStreamId } from "../state/sourcesData";
@@ -181,6 +181,16 @@ describe("genres list (GenresViewModel)", () => {
     expect(out.slice(2)).toEqual(["2024", "2023", "2022", "2021", "2020", "2019", "2018", "2017", "2016"]);
   });
   it("has no years when the addon declares none", () => expect(buildGenreList(["B", "A"])).toEqual(["A", "B"]));
+});
+
+describe("display name on sign-up (validateDisplayName)", () => {
+  it.each([
+    ["", "Enter a display name."],
+    ["   ", "Enter a display name."],
+    ["x".repeat(25), "Display name can be at most 24 characters."],
+    ["x".repeat(24), null],
+    ["  Alex  ", null],
+  ])("%j", (name, expected) => expect(validateDisplayName(name)).toBe(expected));
 });
 
 describe("sign-in validation (validateCredentials)", () => {
