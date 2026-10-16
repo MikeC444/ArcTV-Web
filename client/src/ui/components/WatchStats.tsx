@@ -1,11 +1,12 @@
 import { useState, type ReactNode } from "react";
-import { MdAvTimer, MdCalendarMonth, MdDateRange, MdLocalFireDepartment, MdLock, MdMovie, MdTrendingDown, MdTrendingFlat, MdTrendingUp, MdTv, MdWorkspacePremium } from "react-icons/md";
+import { MdAvTimer, MdCalendarMonth, MdClose, MdDateRange, MdHistory, MdLocalFireDepartment, MdLock, MdMovie, MdRestartAlt, MdTrendingDown, MdTrendingFlat, MdTrendingUp, MdTv, MdWorkspacePremium } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import { formatDuration, formatShort, heatCells, heatMax, heatMonthLabels, streakNote, WEEKDAYS, weekChange, weekdayLine, type WatchStats as Stats } from "../../domain/stats";
 import { pluralize } from "../../lib/format";
 import { routes } from "../../lib/routes";
 import { useHasPlus } from "../../state/plusAccess";
 import { useCanOfferPlus } from "../../state/plusNudge";
+import { useSettings } from "../../state/settings";
 import { activeProfileOf, useProfiles } from "../../state/profiles";
 import { useWatchStats } from "../../state/watchStats";
 import { ArcButton } from "./Buttons";
@@ -36,8 +37,64 @@ export function WatchStats() {
       ) : state.kind === "error" ? (
         <p className="t-body-sm c-text-2">Couldn't read your watch history right now. Try again in a moment.</p>
       ) : (
-        <StatsBody stats={state.stats} truncated={state.truncated} />
+        <>
+          <StatsBody stats={state.stats} truncated={state.truncated} />
+          <StatsReset />
+        </>
       )}
+    </div>
+  );
+}
+
+/**
+ * Starts Your stats again from now, on every device (the time is kept with the account's settings), after one question. Nothing is deleted: the watch
+ * history, Continue Watching and the watched ticks stay, and "Show all my history again" brings the old numbers back.
+ */
+function StatsReset() {
+  const resetAt = useSettings((s) => s.statsResetAt);
+  const setResetAt = useSettings((s) => s.setStatsResetAt);
+  const [asking, setAsking] = useState(false);
+  const [note, setNote] = useState("");
+  const since = resetAt && Number.isFinite(Date.parse(resetAt)) ? new Date(resetAt).toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" }) : null;
+  return (
+    <div className="stats__reset">
+      {since ? <p className="t-body-sm c-text-2" style={{ margin: "0 0 10px" }}>Counting from {since}. Your older history is kept.</p> : null}
+      {asking ? (
+        <div className="stats__resetask" role="group" aria-label="Reset your stats">
+          <p className="t-body-md" style={{ margin: 0 }}><strong>Start your stats again from today?</strong></p>
+          <p className="t-body-sm c-text-2" style={{ margin: "4px 0 10px" }}>This is the same on all your devices. Your watch history, Continue Watching and watched ticks stay as they are, and you can bring the old numbers back any time.</p>
+          <div className="stats__recapactions">
+            <ArcButton
+              text="Yes, reset"
+              icon={<MdRestartAlt />}
+              compact
+              dataAttrs={{ autofocus: true }}
+              onClick={() => {
+                setResetAt(new Date().toISOString());
+                setAsking(false);
+                setNote("Your stats were reset. They count from today.");
+              }}
+            />
+            <ArcButton text="Cancel" compact icon={<MdClose />} onClick={() => setAsking(false)} />
+          </div>
+        </div>
+      ) : (
+        <div className="stats__recapactions">
+          <ArcButton text="Reset stats" icon={<MdRestartAlt />} compact onClick={() => { setNote(""); setAsking(true); }} />
+          {resetAt ? (
+            <ArcButton
+              text="Show all my history again"
+              icon={<MdHistory />}
+              compact
+              onClick={() => {
+                setResetAt(null);
+                setNote("Showing all your history again.");
+              }}
+            />
+          ) : null}
+        </div>
+      )}
+      <p className="t-label-sm c-text-3" role="status" style={{ margin: "8px 0 0" }}>{note}</p>
     </div>
   );
 }

@@ -60,6 +60,41 @@ test.describe("ArcTV Plus extras", () => {
     await shot(page, "settings-stats");
   });
 
+  test("Reset stats starts the numbers again from today on the account, deletes nothing, and can be undone", async ({ page }) => {
+    const account = await newAccount("statsreset");
+    expect((await account.tv.post("/user/watch-progress", progress("fxm1", "Fixture Movie One", {}))).status).toBe(200);
+    await openSignedIn(page, account, "/settings/stats");
+    const stats = page.getByRole("region", { name: "Your stats" });
+    await expect(stats.locator(".stats__big")).toContainText("1 hour 40 minutes");
+
+    // asking first: Cancel changes nothing
+    await stats.getByRole("button", { name: "Reset stats" }).click();
+    await expect(stats.getByRole("group", { name: "Reset your stats" })).toContainText("Start your stats again from today?");
+    await stats.getByRole("button", { name: "Cancel" }).click();
+    await expect(stats.locator(".stats__big")).toContainText("1 hour 40 minutes");
+
+    // reset: nothing is counted any more, the account remembers it, the history is untouched
+    await stats.getByRole("button", { name: "Reset stats" }).click();
+    await stats.getByRole("button", { name: "Yes, reset" }).click();
+    await expect(stats.getByText("Nothing here yet.")).toBeVisible();
+    await expect(stats.getByText(/Counting from /)).toBeVisible();
+    await expect.poll(async () => (await account.tv.get("/user/settings")).body.statsResetAt).not.toBeNull();
+    expect((await account.tv.get("/user/history?limit=10")).body.items).toHaveLength(1);
+    await page.reload();
+    await expect(stats.getByText("Nothing here yet.")).toBeVisible(); // still reset after a reload
+    await shot(page, "settings-stats-reset");
+
+    // watching something new counts again, from the reset on
+    expect((await account.tv.post("/user/watch-progress", progress("fxm2", "Fixture Movie Two", { positionMs: 1_800_000, durationMs: 1_800_000, watchedAt: new Date().toISOString() }))).status).toBe(200);
+    await page.reload();
+    await expect(stats.locator(".stats__big")).toContainText("30 minutes");
+
+    // bring the old numbers back
+    await stats.getByRole("button", { name: "Show all my history again" }).click();
+    await expect(stats.locator(".stats__big")).toContainText("2 hours 10 minutes");
+    await expect.poll(async () => (await account.tv.get("/user/settings")).body.statsResetAt).toBeNull();
+  });
+
   test("Your stats is its own tab in the You group, and shows a preview page without Plus, and is not marked as locked", async ({ page }) => {
     const account = await newAccount("statstab");
     await openSignedIn(page, account, "/settings/account");
