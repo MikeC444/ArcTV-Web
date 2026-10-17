@@ -69,3 +69,15 @@ export function moveRow(displayOrder: string[], rowId: string, delta: number): s
   ids.splice(newIndex, 0, rowId);
   return ids;
 }
+
+/**
+ * `globalOrder` (every row, in the order Home uses) after `rowId` moved `delta` places among `subset` (the rows one Settings page shows, in their order):
+ * the other rows keep their places, and the subset's rows take the subset's places in the new order. Null when it cannot move that way.
+ */
+export function reorderWithin(globalOrder: string[], subset: string[], rowId: string, delta: number): string[] | null {
+  const moved = moveRow(subset, rowId, delta);
+  if (!moved) return null;
+  const inSubset = new Set(subset);
+  let next = 0;
+  return globalOrder.map((id) => (inSubset.has(id) ? moved[next++]! : id));
+}

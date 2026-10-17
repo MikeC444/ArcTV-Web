@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyRowOrder, dedupeRows, moveRow } from "./homeRows";
+import { applyRowOrder, dedupeRows, moveRow, reorderWithin } from "./homeRows";
 import { assessStream, engineFor } from "./playability";
 import type { HomeSection } from "./types";
 import { formatElapsed, formatWatched, formatReleaseDate, formatRuntime, formatTimestamp, interleave, distinctBy } from "../lib/format";
@@ -255,5 +255,17 @@ describe("duplicate stream links", () => {
     const mk = (id: string) => ({ id, providerId: "p", providerLabel: "P", resolutionTier: "OTHER" as const, qualityBadge: "SD", releaseTitle: "t" });
     expect(uniqueStreamIds([mk("a"), mk("b"), mk("a"), mk("a")]).map((s) => s.id)).toEqual(["a", "b", "a#1", "a#2"]);
     expect(uniqueStreamIds([mk("x")]).map((s) => s.id)).toEqual(["x"]);
+  });
+});
+
+describe("reorderWithin", () => {
+  it("moves a row among one page's rows while the other addons' rows keep their places", () => {
+    const global = ["a1", "b1", "a2", "b2", "a3"];
+    expect(reorderWithin(global, ["a1", "a2", "a3"], "a3", -1)).toEqual(["a1", "b1", "a3", "b2", "a2"]);
+    expect(reorderWithin(global, ["a1", "a2", "a3"], "a1", 1)).toEqual(["a2", "b1", "a1", "b2", "a3"]);
+  });
+  it("cannot move past either end or an id the page does not show", () => {
+    expect(reorderWithin(["a", "b"], ["a", "b"], "a", -1)).toBeNull();
+    expect(reorderWithin(["a", "b"], ["a", "b"], "z", 1)).toBeNull();
   });
 });

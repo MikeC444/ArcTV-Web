@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { MdBarChart, MdBolt, MdDownload, MdGroups, MdLanguage, MdLock, MdAccountCircle, MdAdd, MdBlock, MdCancel, MdFavorite, MdWorkspacePremium, MdArrowDownward, MdArrowUpward, MdCheck, MdCloudUpload, MdDelete, MdExtension, MdGridView, MdInfo, MdLogout, MdMusicNote, MdSubtitles, MdSwitchAccount, MdTune, MdVolumeUp, MdSpatialAudio, MdStars } from "react-icons/md";
+import { MdBarChart, MdBolt, MdDownload, MdGroups, MdLanguage, MdLock, MdAccountCircle, MdAdd, MdBlock, MdCancel, MdFavorite, MdWorkspacePremium, MdArrowBack, MdArrowDownward, MdArrowUpward, MdCheck, MdCloudUpload, MdDelete, MdExtension, MdGridView, MdInfo, MdLogout, MdMusicNote, MdSubtitles, MdSwitchAccount, MdTune, MdVolumeUp, MdSpatialAudio, MdStars } from "react-icons/md";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { formatMoney, LIFETIME_BOARD_NOTE, LIFETIME_BOARD_TAG, PLUS_FREE_NOTE, PLUS_PERKS, PLUS_PLANS, PLUS_PROCEEDS_NOTE, savingPercent, SUPPORTERS_URL, yearlyPerDay, yearlyPerMonth, type PlanPrices, type PlusPlan } from "../../domain/plus";
-import { applyRowOrder, moveRow } from "../../domain/homeRows";
+import { applyRowOrder, reorderWithin } from "../../domain/homeRows";
 import { useProviders } from "../../domain/registry";
 import type { HomeSection } from "../../domain/types";
 import { pluralize } from "../../lib/format";
@@ -659,6 +659,14 @@ export function AddAddonScreen() {
   );
 }
 
+/** One addon's rows, for its page in Home Rows. */
+interface AddonRows {
+  id: string;
+  name: string;
+  rows: HomeSection[];
+}
+
+/** Settings → Home Rows: a short hub (the streaming tiles, then one card per installed addon that has rows), each opening a page with all of its items in one list. */
 function HomeRowsPane() {
   const providers = useProviders((s) => s.providers);
   const ready = useAddonsReady();
@@ -668,11 +676,13 @@ function HomeRowsPane() {
   const services = useStreamingServices();
   const setServiceOrder = useSettings((s) => s.setServiceOrder);
   const setServiceVisible = useSettings((s) => s.setServiceVisible);
-  const [rows, setRows] = useState<HomeSection[] | null>(null);
+  const [addons, setAddons] = useState<AddonRows[] | null>(null);
+  const [page, setPage] = useState<string>("hub"); // "hub", "streaming" or "addon:<id>"
+  const [lastOpened, setLastOpened] = useState<string | null>(null);
   useEffect(() => {
-    if (!ready || providers.length === 0) return setRows(null);
+    if (!ready || providers.length === 0) return setAddons(null);
     let cancelled = false;
-    setRows(null);
+    setAddons(null);
     void Promise.all(
       providers.map(async (p) => {
         const out: HomeSection[] = [];
@@ -681,68 +691,103 @@ function HomeRowsPane() {
         } catch {
           /* a failing addon just contributes no rows */
         }
-        return out;
+        return { id: p.id, name: p.name, rows: out };
       }),
-    ).then((lists) => !cancelled && setRows(lists.flat()));
+    ).then((lists) => !cancelled && setAddons(lists.filter((l) => l.rows.length > 0)));
     return () => {
       cancelled = true;
     };
   }, [providers, ready]);
-  const ordered = useMemo(() => (rows ? applyRowOrder(rows, prefs) : []), [rows, prefs]);
+  const allRows = useMemo(() => (addons ? addons.flatMap((a) => a.rows) : []), [addons]);
+  const ordered = useMemo(() => applyRowOrder(allRows, prefs), [allRows, prefs]);
   const displayOrder = useMemo(() => ordered.map((r) => r.id), [ordered]);
 
   if (!ready) return <Spinner />;
   if (providers.length === 0) return <p className="c-text-2 t-body-md">Install an addon first — its rows will show up here once it's added.</p>;
-  if (rows === null) return <Spinner />;
-  if (rows.length === 0) return <p className="c-text-2 t-body-md">Your installed addons aren't reporting any rows right now.</p>;
+  if (addons === null) return <Spinner />;
+  if (addons.length === 0 && services.length === 0) return <p className="c-text-2 t-body-md">Your installed addons aren't reporting any rows right now.</p>;
+
+  const open = (key: string) => {
+    setLastOpened(key);
+    setPage(key);
+  };
+  const addonPage = page.startsWith("addon:") ? addons.find((a) => `addon:${a.id}` === page) : undefined;
+  const showing = page === "streaming" && services.length > 0 ? "streaming" : addonPage ? page : "hub";
+
+  if (showing === "hub") {
+    const visibleCount = services.filter((id) => isServiceVisible(id, prefs.hiddenRowIds)).length;
+    const cards: Array<{ key: string; title: string; summary: string }> = [
+      ...(services.length > 0 ? [{ key: "streaming", title: "Streaming tiles", summary: `${visibleCount} of ${services.length} on Home` }] : []),
+      ...addons.map((a) => ({ key: `addon:${a.id}`, title: a.name, summary: `${a.rows.filter((r) => !prefs.hiddenRowIds.includes(r.id)).length} of ${a.rows.length} rows on Home` })),
+    ];
+    return (
+      <div>
+        <p className="t-body-sm c-text-2" style={{ margin: "0 0 8px" }}>Pick one to choose what shows on Home and in what order.</p>
+        <ul className="homerows homerows--hub">
+          {cards.map((card) => (
+            <li key={card.key} className="homerow">
+              <Surface className="homerow__toggle homerow__card" scale={1.02} borderColor="var(--text)" onClick={() => open(card.key)} autoFocus={card.key === lastOpened}>
+                <span className="t-body-md" style={{ flex: 1 }}>{card.title}</span>
+                <span className="t-label-sm c-text-2">{card.summary}</span>
+              </Surface>
+            </li>
+          ))}
+        </ul>
+        <p className="t-label-sm c-text-3" style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 10 }}><MdInfo aria-hidden="true" /> Changes are saved automatically</p>
+      </div>
+    );
+  }
+
+  interface Entry {
+    id: string;
+    title: string;
+    on: boolean;
+    detail?: string;
+  }
+  let title: string;
+  let entries: Entry[];
+  let toggle: (id: string, on: boolean) => void;
+  let move: (id: string, delta: number) => void;
+  if (showing === "streaming") {
+    title = "Streaming tiles";
+    entries = services.map((id) => ({ id, title: streamingServiceById(id)?.name ?? id, on: isServiceVisible(id, prefs.hiddenRowIds) }));
+    toggle = (id, on) => setServiceVisible(id, on);
+    move = (id, delta) => {
+      const next = moveService(services, id, delta);
+      if (next) setServiceOrder(next);
+    };
+  } else {
+    const rows = applyRowOrder(addonPage!.rows, prefs);
+    title = addonPage!.name;
+    entries = rows.map((r) => ({ id: r.id, title: r.title, on: !prefs.hiddenRowIds.includes(r.id), detail: pluralize(r.items.length, "title") }));
+    toggle = (id, on) => setRowHidden(id, !on);
+    move = (id, delta) => {
+      const next = reorderWithin(displayOrder, rows.map((r) => r.id), id, delta);
+      if (next) setRowOrder(next);
+    };
+  }
   return (
     <div>
-      {services.length > 0 ? (
-        <>
-          <h3 className="t-label-lg" style={{ margin: "0 0 4px" }}>Streaming services</h3>
-          <p className="t-body-sm c-text-2" style={{ margin: "0 0 8px" }}>Your addons offer these. Turn off the ones you don't want as tiles on Home, and use the arrows to put them in your order.</p>
-          <ul className="homerows" style={{ marginBottom: 18 }}>
-            {services.map((id, position) => {
-              const name = streamingServiceById(id)?.name ?? id;
-              const visible = isServiceVisible(id, prefs.hiddenRowIds);
-              const move = (delta: number) => {
-                const next = moveService(services, id, delta);
-                if (next) setServiceOrder(next);
-              };
-              return (
-                <li key={id} className="homerow">
-                  <Surface className="homerow__toggle" scale={1.02} borderColor="var(--text)" onClick={() => setServiceVisible(id, !visible)} role="switch" ariaLabel={`${name} tile`} ariaChecked={visible}>
-                    <span className="t-body-md" style={{ flex: 1, color: visible ? "var(--text)" : "var(--text-3)" }}>{name}</span>
-                    <Switch checked={visible} white />
-                  </Surface>
-                  <Surface className="homerow__move" radius="8px" background="var(--surface)" borderColor="var(--text)" onClick={() => move(-1)} disabled={position === 0} ariaLabel={`Move ${name} up`}><MdArrowUpward /></Surface>
-                  <Surface className="homerow__move" radius="8px" background="var(--surface)" borderColor="var(--text)" onClick={() => move(1)} disabled={position === services.length - 1} ariaLabel={`Move ${name} down`}><MdArrowDownward /></Surface>
-                </li>
-              );
-            })}
-          </ul>
-        </>
-      ) : null}
-      <p className="t-body-sm c-text-2" style={{ margin: "0 0 8px" }}>Toggle categories on or off, and use the arrows to reorder them.</p>
-      <ul className="homerows">
-        {ordered.map((row, index) => {
-          const visible = !prefs.hiddenRowIds.includes(row.id);
-          const move = (delta: number) => {
-            const next = moveRow(displayOrder, row.id, delta);
-            if (next) setRowOrder(next);
-          };
-          return (
-            <li key={row.id} className="homerow">
-              <Surface className="homerow__toggle" scale={1.02} borderColor="var(--text)" onClick={() => setRowHidden(row.id, visible)} role="switch" ariaLabel={row.title} ariaChecked={visible}>
-                <span className="t-body-md" style={{ flex: 1, color: visible ? "var(--text)" : "var(--text-3)" }}>{row.title}</span>
-                <span className="t-label-sm" style={{ color: visible ? "var(--text-2)" : "var(--text-3)" }}>{pluralize(row.items.length, "title")}</span>
-                <Switch checked={visible} white />
-              </Surface>
-              <Surface className="homerow__move" radius="8px" background="var(--surface)" borderColor="var(--text)" onClick={() => move(-1)} disabled={index === 0} ariaLabel={`Move ${row.title} up`}><MdArrowUpward /></Surface>
-              <Surface className="homerow__move" radius="8px" background="var(--surface)" borderColor="var(--text)" onClick={() => move(1)} disabled={index === ordered.length - 1} ariaLabel={`Move ${row.title} down`}><MdArrowDownward /></Surface>
-            </li>
-          );
-        })}
+      <div className="homerows__head">
+        <ArcButton text="Back" compact icon={<MdArrowBack />} onClick={() => setPage("hub")} />
+        <h3 className="t-label-lg" style={{ margin: 0 }}>{title}</h3>
+      </div>
+      <p className="t-body-sm c-text-2" style={{ margin: "0 0 8px" }}>
+        {entries.filter((e) => e.on).length} of {entries.length} on Home. Click a name to turn it on or off; use the arrows to move it up or down.
+      </p>
+      <ul className="homerows homerows--list">
+        {entries.map((entry, index) => (
+          <li key={entry.id} className="homerow">
+            <Surface className="homerow__toggle" scale={1.02} borderColor="var(--text)" onClick={() => toggle(entry.id, !entry.on)} role="switch" ariaLabel={entry.title} ariaChecked={entry.on} autoFocus={index === 0}>
+              <span className="homerow__num t-label-md" aria-hidden="true">{index + 1}</span>
+              <span className="t-body-md" style={{ flex: 1, color: entry.on ? "var(--text)" : "var(--text-3)" }}>{entry.title}</span>
+              {entry.detail ? <span className="t-label-sm" style={{ color: entry.on ? "var(--text-2)" : "var(--text-3)" }}>{entry.detail}</span> : null}
+              <Switch checked={entry.on} white />
+            </Surface>
+            <Surface className="homerow__move" radius="8px" background="var(--surface)" borderColor="var(--text)" onClick={() => move(entry.id, -1)} disabled={index === 0} ariaLabel={`Move ${entry.title} up`}><MdArrowUpward /></Surface>
+            <Surface className="homerow__move" radius="8px" background="var(--surface)" borderColor="var(--text)" onClick={() => move(entry.id, 1)} disabled={index === entries.length - 1} ariaLabel={`Move ${entry.title} down`}><MdArrowDownward /></Surface>
+          </li>
+        ))}
       </ul>
       <p className="t-label-sm c-text-3" style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 10 }}><MdInfo aria-hidden="true" /> Changes are saved automatically</p>
     </div>
