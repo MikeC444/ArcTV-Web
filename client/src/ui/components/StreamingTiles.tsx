@@ -29,7 +29,7 @@ const BRAND: Record<string, { bg: string; image?: string; logo?: "white" | "blac
   netflix: { bg: "#000" },
   disney: { bg: "#003f4f", image: "linear-gradient(175deg, #011828 0%, #002f3d 35%, #015e70 70%, #0098a5 88%, #2bbcc1 100%)" },
   prime: { bg: "#fff" },
-  max: { bg: "#000" },
+  max: { bg: "#fff" },
   apple: { bg: "#000" },
   paramount: { bg: "#0064ff", logo: "white" },
   hulu: { bg: "#1ce783", logo: "white" },
