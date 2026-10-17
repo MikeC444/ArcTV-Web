@@ -584,3 +584,6 @@
   .card:not([data-cw="true"]) .card__surface:focus-visible,
   .card:not([data-cw="true"]) .card__surface:not(:disabled):not([aria-disabled="true"]):hover { transform: translateZ(0) scale(var(--tvs-scale)); }
 }
+
+/* The tiles have no heading, so keep the space it took: the hero's dots sit at the hero's lower edge and must not land on the first tiles. */
+.row--streaming { padding-top: calc(56 * var(--dp)); }

@@ -90,9 +90,6 @@ export function StreamingTiles() {
   if (services.length === 0) return null;
   return (
     <section className="row row--streaming" data-tiles={TILE_STYLE} aria-label="Streaming services">
-      <h2 className="row__title" style={{ margin: 0 }}>
-        Streaming services
-      </h2>
       <ScrollRow label="Streaming services" className="row__scroller row__scroller--posters hide-scroll" contentKey={services.join(",")} centerOn=".card__surface" role="list">
         {services.map((id) => {
           const service = streamingServiceById(id);
