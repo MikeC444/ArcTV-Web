@@ -17,7 +17,7 @@ import { Pill } from "../components/Buttons";
 import { ContentCard } from "../components/ContentCard";
 import { GenrePicker } from "../components/GenrePicker";
 import { SortPicker } from "../components/SortPicker";
-import { GridSkeleton } from "../components/Skeletons";
+import { GridSkeleton, PosterPlaceholder } from "../components/Skeletons";
 import { EmptyState, FullScreenError } from "../components/States";
 
 type SortMode = "FEATURED" | "HIGHEST_RATED" | "NEWEST";
@@ -33,6 +33,8 @@ export const sortContent = (items: Content[], sort: SortMode): Content[] =>
 interface Pager {
   items: Content[];
   status: "loading" | "loaded" | "error";
+  /** False once every page has been read (nothing more will arrive by scrolling). */
+  hasMore: boolean;
   loadMore(): void;
   retry(): void;
 }
@@ -61,6 +63,7 @@ function usePager(kind: { type: "type"; value: ContentType; genre?: string | nul
   const [items, setItems] = useState<Content[]>(() => cachedAtStart?.items ?? []);
   const [status, setStatus] = useState<Pager["status"]>(cachedAtStart ? "loaded" : "loading");
   const [tick, setTick] = useState(0);
+  const [more, setMore] = useState(cachedAtStart?.hasMore ?? true);
   const state = useRef({ page: 1, hasMore: true, loading: false, seen: new Set<string>(), gen: 0, items: [] as Content[], tmdbPage: 1 });
 
   useEffect(() => {
@@ -69,6 +72,7 @@ function usePager(kind: { type: "type"; value: ContentType; genre?: string | nul
     s.page = 1;
     s.tmdbPage = 1;
     s.hasMore = true;
+    setMore(true);
     s.loading = false;
     s.seen = new Set();
     const hit = pagerCache.get(cacheKey);
@@ -76,6 +80,7 @@ function usePager(kind: { type: "type"; value: ContentType; genre?: string | nul
       s.page = hit.page;
       s.tmdbPage = hit.tmdbPage ?? 1;
       s.hasMore = hit.hasMore;
+      setMore(hit.hasMore);
       s.items = hit.items;
       s.seen = new Set(hit.items.map((c) => c.id));
       setItems(hit.items);
@@ -157,6 +162,7 @@ function usePager(kind: { type: "type"; value: ContentType; genre?: string | nul
         if (exhausted) s.hasMore = false;
       }
       pagerCache.set(cacheKey, { items: s.items, page: s.page, hasMore: s.hasMore, tmdbPage: s.tmdbPage });
+      setMore(s.hasMore);
       s.loading = false;
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -165,6 +171,7 @@ function usePager(kind: { type: "type"; value: ContentType; genre?: string | nul
   return {
     items,
     status,
+    hasMore: more,
     loadMore,
     retry: () => {
       pagerCache.delete(cacheKey);
@@ -173,8 +180,11 @@ function usePager(kind: { type: "type"; value: ContentType; genre?: string | nul
   };
 }
 
+const PLACEHOLDERS = 24; // whole rows at 2, 3, 4, 6 or 8 across
+
 /** Grid + infinite-scroll sentinel shared by Movies, TV Shows, Genre results and My List. */
-export function ContentGrid({ items, onLoadMore }: { items: Content[]; onLoadMore?: () => void }) {
+/** `placeholders`: grey poster shapes after the last title while more are still to come, so the page can be scrolled ahead of what has loaded. */
+export function ContentGrid({ items, onLoadMore, placeholders = false }: { items: Content[]; onLoadMore?: () => void; placeholders?: boolean }) {
   const sentinel = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = sentinel.current;
@@ -191,8 +201,11 @@ export function ContentGrid({ items, onLoadMore }: { items: Content[]; onLoadMor
             <ContentCard content={content} />
           </div>
         ))}
+        {/* with placeholders the trigger sits in front of them, so the next page starts loading as the first grey shape comes near */}
+        {placeholders ? <div ref={sentinel} style={{ gridColumn: "1 / -1", height: 1 }} aria-hidden="true" /> : null}
+        {placeholders ? Array.from({ length: PLACEHOLDERS }, (_, i) => <PosterPlaceholder key={`ph${i}`} />) : null}
       </div>
-      <div ref={sentinel} style={{ height: 1 }} aria-hidden="true" />
+      {placeholders ? null : <div ref={sentinel} style={{ height: 1 }} aria-hidden="true" />}
       <div style={{ height: "calc(48 * var(--dp))" }} />
     </>
   );
@@ -215,7 +228,7 @@ function Page({ title, children, filters, back, headExtra }: { title: string; ch
   );
 }
 
-function CatalogPage({ title, pager, emptyMessage, back, headExtra }: { title: string; pager: Pager; emptyMessage: string; back?: string; headExtra?: ReactNode }) {
+function CatalogPage({ title, pager, emptyMessage, back, headExtra, placeholders = false }: { title: string; pager: Pager; emptyMessage: string; back?: string; headExtra?: ReactNode; placeholders?: boolean }) {
   const watched = useWatchedIds();
   const [sort, setSort] = useState<SortMode>("FEATURED");
   const navigate = useNavigate();
@@ -237,7 +250,7 @@ function CatalogPage({ title, pager, emptyMessage, back, headExtra }: { title: s
       headExtra={headExtra}
       filters={items.length > 0 ? SORTS.map((s) => <Pill key={s.id} label={s.label} selected={sort === s.id} large onClick={() => setSort(s.id)} dataAttrs={{ autofocus: s.id === "FEATURED" }} />) : undefined}
     >
-      {items.length === 0 ? <p className="page__empty">{emptyMessage}</p> : <ContentGrid items={items} onLoadMore={pager.loadMore} />}
+      {items.length === 0 ? <p className="page__empty">{emptyMessage}</p> : <ContentGrid items={items} onLoadMore={pager.loadMore} placeholders={placeholders && pager.hasMore} />}
     </Page>
   );
 }
@@ -285,7 +298,7 @@ export function StreamingServiceScreen() {
   const known = streamingServiceById(service);
   const pager = usePager({ type: "service", value: service });
   if (!known || (ready && !available.includes(service))) return <Navigate to={routes.home} replace />;
-  return <CatalogPage title={known.name} pager={pager} back={routes.home} emptyMessage={`Your addons didn't return any ${known.name} titles right now.`} />;
+  return <CatalogPage title={known.name} pager={pager} back={routes.home} emptyMessage={`Your addons didn't return any ${known.name} titles right now.`} placeholders />;
 }
 export const MoviesScreen = () => <TypeScreen title="Movies" type="MOVIE" />;
 export const TvShowsScreen = () => <TypeScreen title="TV Shows" type="TV_SHOW" />;
