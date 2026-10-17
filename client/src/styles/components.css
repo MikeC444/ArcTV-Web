@@ -511,3 +511,5 @@
 .svc__name { font-weight: 800; font-size: clamp(16px, 11cqw, calc(30 * var(--dp))); color: var(--text); text-align: center; }
 /* Five tiles across at every width from a tablet up, whatever the screen size (a phone keeps Continue Watching's size, where five would be too small to read). */
 @media (min-width: 721px) { .row--streaming .card[data-cw="true"] { width: calc((100% - 4 * var(--poster-gap)) / 5); } }
+/* Every streaming-service tile is black; a faint edge keeps it visible against the dark page. */
+.row--streaming .card__surface:not(:hover):not(:focus-visible) { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1); }

@@ -21,24 +21,6 @@ import primeLogo from "../../assets/streaming/prime.webp";
 /** The logo of each service that has one; a service without a file shows its name in text instead. */
 const LOGOS: Record<string, string> = { netflix: netflixLogo, disney: disneyLogo, prime: primeLogo, max: maxLogo, apple: appleLogo, paramount: paramountLogo, hulu: huluLogo, peacock: peacockLogo, crunchyroll: crunchyrollLogo, skyshowtime: skyshowtimeLogo, britbox: britboxLogo, itvx: itvxLogo, iplayer: iplayerLogo, sky: skyLogo };
 
-/** A dark tint behind each logo (close to the brand's colour), so the logo reads the same on every tile. */
-const TINTS: Record<string, string> = {
-  netflix: "#1c0709",
-  disney: "#0a1636",
-  prime: "#06202c",
-  max: "#160c34",
-  apple: "#1e1e22",
-  paramount: "#08142e",
-  hulu: "#07241a",
-  peacock: "#14141a",
-  crunchyroll: "#241005",
-  skyshowtime: "#0b0b12",
-  britbox: "#0d273d",
-  itvx: "#111a05",
-  iplayer: "#16141a",
-  sky: "#111218",
-};
-
 /**
  * Home's "Streaming services" row, shown only while an installed addon has a catalogue for at least one service the person has not turned off
  * (Settings → Home Rows). The tiles are the size and shape of a Continue Watching card, with the logo where the picture would be.
@@ -59,7 +41,7 @@ export function StreamingTiles() {
           return (
             <div role="listitem" key={id} style={{ display: "contents" }}>
               <div className="card" data-cw="true">
-                <Surface to={routes.streaming(id)} className="card__surface" ariaLabel={`${service.name} titles`} background={TINTS[id] ?? "var(--surface)"}>
+                <Surface to={routes.streaming(id)} className="card__surface" ariaLabel={`${service.name} titles`} background="#000">
                   <span className="svc__logo">{logo ? <img src={logo} alt="" loading="lazy" decoding="async" draggable={false} /> : <span className="svc__name">{service.name}</span>}</span>
                 </Surface>
                 <div className="card__title">{service.name}</div>
