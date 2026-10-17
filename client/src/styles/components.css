@@ -523,7 +523,7 @@
   --svc-glow: rgba(255, 255, 255, 0.25);
   border-radius: calc(20 * var(--dp));
   transform-style: preserve-3d;
-  transition: transform 260ms var(--ease), box-shadow 260ms var(--ease);
+  transition: transform 150ms var(--ease), box-shadow 150ms var(--ease);
 }
 .row--streaming[data-tiles="glass"] .card__surface::before {
   content: "";

@@ -55,7 +55,7 @@ const BRAND: Record<string, { bg: string; image?: string; logo?: "white" | "blac
  */
 const TILE_STYLE: "glass" | "flat" = "glass";
 
-/** Tips a hovered tile toward the pointer, and moves the spot of light with it (the CSS reads these; nothing tilts with reduced motion or on touch). */
+/** Tips a hovered tile toward the pointer from the moment it enters (not only once it moves), and moves the spot of light with it (the CSS reads these; nothing tilts with reduced motion or on touch). */
 function tiltToward(event: PointerEvent<HTMLDivElement>) {
   if (event.pointerType !== "mouse") return;
   const surface = event.currentTarget.querySelector<HTMLElement>(".card__surface");
@@ -92,7 +92,7 @@ export function StreamingTiles() {
           const logo = LOGOS[id];
           return (
             <div role="listitem" key={id} style={{ display: "contents" }}>
-              <div className="card" data-cw="true" onPointerMove={TILE_STYLE === "glass" ? tiltToward : undefined} onPointerLeave={TILE_STYLE === "glass" ? resetTilt : undefined}>
+              <div className="card" data-cw="true" onPointerEnter={TILE_STYLE === "glass" ? tiltToward : undefined} onPointerMove={TILE_STYLE === "glass" ? tiltToward : undefined} onPointerLeave={TILE_STYLE === "glass" ? resetTilt : undefined}>
                 <Surface to={routes.streaming(id)} className="card__surface" ariaLabel={`${service.name} titles`} background={BRAND[id]?.bg ?? "#000"} backgroundImage={BRAND[id]?.image} style={BRAND[id]?.glow ? ({ "--svc-glow": BRAND[id]?.glow } as CSSProperties) : undefined}>
                   <span className="svc__logo">{logo ? <img src={logo} alt="" data-logo={BRAND[id]?.logo} loading="lazy" decoding="async" draggable={false} /> : <span className="svc__name">{service.name}</span>}</span>
                 </Surface>
