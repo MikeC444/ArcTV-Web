@@ -5,13 +5,14 @@ import { Surface } from "./Surface";
 import { ScrollRow } from "./ScrollRow";
 import appleLogo from "../../assets/streaming/apple.webp";
 import disneyLogo from "../../assets/streaming/disney.webp";
+import maxLogo from "../../assets/streaming/max.webp";
 import huluLogo from "../../assets/streaming/hulu.webp";
 import netflixLogo from "../../assets/streaming/netflix.webp";
 import paramountLogo from "../../assets/streaming/paramount.webp";
 import primeLogo from "../../assets/streaming/prime.webp";
 
 /** The logo of each service that has one; a service without a file shows its name in text instead. */
-const LOGOS: Record<string, string> = { netflix: netflixLogo, disney: disneyLogo, prime: primeLogo, apple: appleLogo, paramount: paramountLogo, hulu: huluLogo };
+const LOGOS: Record<string, string> = { netflix: netflixLogo, disney: disneyLogo, prime: primeLogo, max: maxLogo, apple: appleLogo, paramount: paramountLogo, hulu: huluLogo };
 
 /** A dark tint behind each logo (close to the brand's colour), so the logo reads the same on every tile. */
 const TINTS: Record<string, string> = {

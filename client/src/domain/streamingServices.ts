@@ -17,7 +17,7 @@ export const STREAMING_SERVICES: readonly StreamingService[] = [
   { id: "netflix", name: "Netflix", words: ["netflix", "nfx"] },
   { id: "disney", name: "Disney+", words: ["disney", "disneyplus", "dnp"] },
   { id: "prime", name: "Prime Video", words: ["prime", "primevideo", "amazon", "amp"] },
-  { id: "max", name: "Max", words: ["hbo", "hbomax", "hbm", "max"] },
+  { id: "max", name: "HBO Max", words: ["hbo", "hbomax", "hbm", "max"] },
   { id: "apple", name: "Apple TV+", words: ["apple", "appletv", "atp"] },
   { id: "paramount", name: "Paramount+", words: ["paramount", "paramountplus", "pmp"] },
   { id: "hulu", name: "Hulu", words: ["hulu", "hlu"] },
