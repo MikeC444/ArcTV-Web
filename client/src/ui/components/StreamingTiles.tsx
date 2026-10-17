@@ -32,7 +32,7 @@ export function StreamingTiles() {
   const services = useVisibleStreamingServices();
   if (services.length === 0) return null;
   return (
-    <section className="row" aria-label="Streaming services">
+    <section className="row row--streaming" aria-label="Streaming services">
       <h2 className="row__title" style={{ margin: 0 }}>
         Streaming services
       </h2>

@@ -509,3 +509,5 @@
 .svc__logo { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 14% 18%; }
 .svc__logo img { max-width: 100%; max-height: 100%; object-fit: contain; user-select: none; -webkit-user-drag: none; }
 .svc__name { font-weight: 800; font-size: clamp(16px, 11cqw, calc(30 * var(--dp))); color: var(--text); text-align: center; }
+/* Five tiles across at every width from a tablet up, whatever the screen size (a phone keeps Continue Watching's size, where five would be too small to read). */
+@media (min-width: 721px) { .row--streaming .card[data-cw="true"] { width: calc((100% - 4 * var(--poster-gap)) / 5); } }
