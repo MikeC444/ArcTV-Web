@@ -297,6 +297,8 @@
 .homerow__toggle { flex: 1; --tvs-bg: var(--surface); display: flex; align-items: center; gap: calc(12 * var(--dp)); padding: calc(4 * var(--dp)) calc(16 * var(--dp)); min-height: 44px; text-align: left; }
 .homerow__move { width: calc(34 * var(--dp)); height: calc(34 * var(--dp)); min-width: 36px; min-height: 36px; display: flex; align-items: center; justify-content: center; color: var(--text-2); flex: none; }
 .homerow__move svg { width: 60%; height: 60%; }
+.homerow__card { min-height: calc(72 * var(--dp)); padding: calc(10 * var(--dp)) calc(28 * var(--dp)); font-size: 1.15em; }
+.homerows--hub { gap: calc(12 * var(--dp)); }
 .homerows--list, .homerows--hub { grid-template-columns: 1fr; }
 .homerows--list { gap: calc(4 * var(--dp)); }
 .homerows__head { display: flex; align-items: center; gap: calc(12 * var(--dp)); margin-bottom: calc(6 * var(--dp)); }
