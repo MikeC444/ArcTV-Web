@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { MdCheck, MdMoreVert } from "react-icons/md";
 import { routes } from "../../lib/routes";
 import { useAuth } from "../../state/auth";
 import { findLastStreamId } from "../../state/lastSource";
 import { useCardMenu } from "../../state/cardMenu";
 import { stashDetailPreview } from "../../state/pendingDetail";
+import { useTitleLogo } from "../../state/titleLogo";
 import type { Content, RowStyle } from "../../domain/types";
 import { Surface } from "./Surface";
 
@@ -18,6 +20,9 @@ interface ContentCardProps {
 /** ui/components/ContentCard.kt — poster (or 16:9 backdrop for Continue Watching), watched tick, rating on focus, progress bar. Its size comes from the row / grid it sits in (--poster-cols). */
 export function ContentCard({ content, style = "STANDARD", autoFocus, to }: ContentCardProps) {
   const openMenu = useCardMenu((s) => s.open);
+  // a Continue Watching poster carries the title's logo in its top left corner (looked up, as the saved entry has none)
+  const logo = useTitleLogo(content, style === "CONTINUE_WATCHING");
+  const [logoFailed, setLogoFailed] = useState(false);
   const isCw = style === "CONTINUE_WATCHING";
   const image = isCw ? content.backdropUrl : content.posterUrl;
   const progress = content.watchProgress;
@@ -54,6 +59,12 @@ export function ContentCard({ content, style = "STANDARD", autoFocus, to }: Cont
         {isCw ? (
           <>
             <div className="card__cw-scrim" />
+            {logo && !logoFailed ? (
+              <>
+                <div className="card__cw-scrim-top" />
+                <img className="card__logo" src={logo} alt="" loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={() => setLogoFailed(true)} />
+              </>
+            ) : null}
             {progress ? (
               <div className="card__progress" role="progressbar" aria-valuenow={Math.round(fraction * 100)} aria-valuemin={0} aria-valuemax={100} aria-label="Watched so far">
                 <span style={{ width: `${fraction * 100}%` }} />
