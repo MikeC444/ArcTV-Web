@@ -230,7 +230,8 @@ export class StremioAddonProvider implements CatalogProvider {
   }
 
   async getMoreServiceItems(page: number, service: string): Promise<Content[]> {
-    const catalogs = this.serviceCatalogs.get(service) ?? [];
+    // Only a catalogue that declares "skip" has more pages (the Streaming Catalogs addon's take no extras at all: its one page is all there is).
+    const catalogs = (this.serviceCatalogs.get(service) ?? []).filter((catalog) => catalog.extra.some((extra) => extra.name === "skip"));
     return catalogs.length === 0 ? [] : this.fetchPage(catalogs, {}, page);
   }
 
