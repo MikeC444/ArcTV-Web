@@ -14,6 +14,7 @@ import iplayerLogo from "../../assets/streaming/iplayer.webp";
 import itvxLogo from "../../assets/streaming/itvx.webp";
 import peacockLogo from "../../assets/streaming/peacock.webp";
 import skyLogo from "../../assets/streaming/sky.webp";
+import discoveryLogo from "../../assets/streaming/discovery.webp";
 import shudderLogo from "../../assets/streaming/shudder.webp";
 import skyshowtimeLogo from "../../assets/streaming/skyshowtime.webp";
 import huluLogo from "../../assets/streaming/hulu.webp";
@@ -22,7 +23,7 @@ import paramountLogo from "../../assets/streaming/paramount.webp";
 import primeLogo from "../../assets/streaming/prime.webp";
 
 /** The logo of each service that has one; a service without a file shows its name in text instead. */
-const LOGOS: Record<string, string> = { netflix: netflixLogo, disney: disneyLogo, prime: primeLogo, max: maxLogo, apple: appleLogo, paramount: paramountLogo, hulu: huluLogo, peacock: peacockLogo, crunchyroll: crunchyrollLogo, skyshowtime: skyshowtimeLogo, britbox: britboxLogo, itvx: itvxLogo, iplayer: iplayerLogo, sky: skyLogo, channel4: channel4Logo, shudder: shudderLogo };
+const LOGOS: Record<string, string> = { netflix: netflixLogo, disney: disneyLogo, prime: primeLogo, max: maxLogo, apple: appleLogo, paramount: paramountLogo, hulu: huluLogo, peacock: peacockLogo, crunchyroll: crunchyrollLogo, skyshowtime: skyshowtimeLogo, britbox: britboxLogo, itvx: itvxLogo, iplayer: iplayerLogo, sky: skyLogo, channel4: channel4Logo, shudder: shudderLogo, discovery: discoveryLogo };
 
 /**
  * Each service's own tile colour (what its app icon sits on), and whether its logo is drawn all white or all black on that colour. A logo with no
@@ -43,6 +44,7 @@ const BRAND: Record<string, { bg: string; image?: string; logo?: "white" | "blac
   itvx: { bg: "#dfeb55", logo: "black", glow: "rgba(223, 235, 85, 0.5)" },
   iplayer: { bg: "#000", glow: "rgba(255, 70, 150, 0.5)" },
   sky: { bg: "#fff", glow: "rgba(160, 90, 255, 0.5)" },
+  discovery: { bg: "#000", glow: "rgba(255, 150, 60, 0.5)" },
   shudder: { bg: "#000", glow: "rgba(220, 20, 30, 0.55)" },
   channel4: { bg: "#000", glow: "rgba(170, 255, 140, 0.45)" },
 };
