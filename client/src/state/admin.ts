@@ -4,7 +4,7 @@ import type { DownloadDetail, DownloadSummary } from "../lib/downloadStats";
 import type { PlaybackSummary } from "../lib/playbackHealth";
 import type { WebSystem } from "../lib/webSystems";
 import { api } from "../lib/api";
-import type { GrowthPoint } from "../lib/growth";
+import type { GrowthPoint, HourlyPoint } from "../lib/growth";
 
 /** What the developer panel reads (GET /api/admin/*, read-only; the backend only answers accounts flagged is_admin). */
 export interface AdminDevice {
@@ -46,6 +46,8 @@ export interface AdminSummary {
   live?: LiveSummary;
   /** One point per day (UTC) for the last 180 days. Absent from a backend that predates it, and then the graph is left out. */
   userGrowth?: GrowthPoint[];
+  /** One point per hour (UTC) for the last 72 hours. Absent from a backend that predates it, and then the Hourly switch is left out. */
+  userGrowthHourly?: HourlyPoint[];
   /** Web users per operating system. Absent from a backend that predates it, and then the card is left out. */
   webSystems?: WebSystem[];
   /** How viewings of the last 7 days ended. Absent from a backend that predates it, and then the card is left out. */

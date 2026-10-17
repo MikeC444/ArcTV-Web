@@ -69,3 +69,36 @@ export function labelIndices(length: number, count = 5): number[] {
   for (let i = 0; i < count; i++) picked.add(Math.round((i * (length - 1)) / (count - 1)));
   return [...picked].sort((a, b) => a - b);
 }
+
+/** One hour of the hourly series (UTC): when it starts, how many accounts were created in it, and how many existed by its end. */
+export interface HourlyPoint {
+  /** The start of the hour as YYYY-MM-DDTHH:00Z. */
+  hour: string;
+  newUsers: number;
+  total: number;
+}
+
+export type HourlyRange = 24 | 48 | 72;
+export const HOURLY_RANGES: Array<{ id: HourlyRange; label: string }> = [
+  { id: 24, label: "24 hours" },
+  { id: 48, label: "48 hours" },
+  { id: 72, label: "72 hours" },
+];
+
+/** The last N hours of the hourly series. */
+export const hourlyRangePoints = (points: HourlyPoint[], range: HourlyRange): HourlyPoint[] => points.slice(-range);
+
+/** "14:00" for 2026-10-17T14:00Z. */
+export const formatHourOfDay = (hour: string): string => hour.slice(11, 16);
+
+/** "Oct 17, 14:00" for 2026-10-17T14:00Z (UTC, so no time zone shifts it). */
+export function formatHour(hour: string): string {
+  return `${formatDay(hour.slice(0, 10))}, ${formatHourOfDay(hour)}`;
+}
+
+/** The hour with the most sign-ups (the first of equals), or undefined when nobody signed up in any of them. */
+export function busiestHour(points: HourlyPoint[]): HourlyPoint | undefined {
+  let best: HourlyPoint | undefined;
+  for (const p of points) if (p.newUsers > (best?.newUsers ?? 0)) best = p;
+  return best;
+}

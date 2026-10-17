@@ -48,6 +48,23 @@ describe("OverviewView", () => {
   });
 });
 
+describe("the Hourly growth switch", () => {
+  const hourly = Array.from({ length: 72 }, (_, i) => ({ hour: `2026-10-${String(15 + Math.floor(i / 24)).padStart(2, "0")}T${String(i % 24).padStart(2, "0")}:00Z`, newUsers: i === 70 ? 6 : 0, total: 100 + (i >= 70 ? 6 : 0) }));
+  it("is there with the hourly numbers, and shows the busiest hour and the sign-ups of the last 24 hours", () => {
+    render(<OverviewView summary={{ ...summary, userGrowthHourly: hourly }} onGo={() => undefined} />);
+    fireEvent.click(screen.getByRole("button", { name: "Hourly" }));
+    expect(screen.getByText(/new in the last 24 hours/)).toHaveTextContent("busiest hour 22:00 UTC (+6)");
+    fireEvent.click(screen.getByRole("button", { name: "72 hours" }));
+    expect(screen.getByText(/new in the last 72 hours/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Daily" }));
+    expect(screen.queryByText(/new in the last 24 hours/)).not.toBeInTheDocument();
+  });
+  it("is left out when the backend has no hourly numbers", () => {
+    render(<OverviewView summary={summary} onGo={() => undefined} />);
+    expect(screen.queryByRole("button", { name: "Hourly" })).not.toBeInTheDocument();
+  });
+});
+
 describe("VersionsView", () => {
   it("compares each app with its own newest version and lists who is behind", () => {
     const filter = vi.fn();

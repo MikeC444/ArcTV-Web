@@ -1,7 +1,9 @@
 import { attentionAlerts, platformColor, platformName, versionsByPlatform, weekOverWeek, type DashAlert } from "../../lib/dash";
 import { percent } from "../../lib/downloadStats";
 import type { AdminSummary } from "../../state/admin";
+import { useState } from "react";
 import { GrowthChart } from "../components/GrowthChart";
+import { HourlyGrowthChart } from "../components/HourlyGrowthChart";
 import { Bar, Card, Delta, Donut, Spark, Stat } from "./Primitives";
 import type { ViewId } from "./views";
 
@@ -10,6 +12,8 @@ const ICON: Record<DashAlert["level"], string> = { bad: "!", warn: "↑", ok: "�
 /** The overview: everything that matters, laid out to fit one screen. Tiles open the view with the full picture. */
 export function OverviewView({ summary, onGo }: { summary: AdminSummary; onGo(view: ViewId): void }) {
   const growth = summary.userGrowth ?? [];
+  const hourly = summary.userGrowthHourly ?? [];
+  const [growthView, setGrowthView] = useState<"daily" | "hourly">("daily");
   const totals = growth.map((p) => p.total);
   const daily = growth.map((p) => p.newUsers);
   const wow = weekOverWeek(daily);
@@ -76,7 +80,19 @@ export function OverviewView({ summary, onGo }: { summary: AdminSummary; onGo(vi
         <div className="dd-sub">{summary.plus.monthly} monthly · {summary.plus.yearly} yearly · {summary.plus.lifetime} lifetime</div>
       </Card>
       <Card className="dd-growth" title="User growth">
-        {growth.length > 0 ? <GrowthChart points={growth} /> : <p className="dd-sub">Growth needs the newer backend.</p>}
+        {hourly.length > 0 ? (
+          <div className="admin__range dd-growth__switch" role="group" aria-label="Growth by">
+            <button type="button" aria-pressed={growthView === "daily"} onClick={() => setGrowthView("daily")}>Daily</button>
+            <button type="button" aria-pressed={growthView === "hourly"} onClick={() => setGrowthView("hourly")}>Hourly</button>
+          </div>
+        ) : null}
+        {growthView === "hourly" && hourly.length > 0 ? (
+          <HourlyGrowthChart points={hourly} />
+        ) : growth.length > 0 ? (
+          <GrowthChart points={growth} />
+        ) : (
+          <p className="dd-sub">Growth needs the newer backend.</p>
+        )}
       </Card>
       <Card className="dd-where" title="Devices by app" onOpen={() => onGo("versions")}>
         <ul className="dd-bars">
