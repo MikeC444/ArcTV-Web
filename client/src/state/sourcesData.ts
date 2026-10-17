@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { startRank, type DeviceCaps } from "../domain/deviceSupport";
 import type { StreamLookup } from "../domain/provider";
+import { loadDetails } from "../domain/detailSource";
 import { activeProviders } from "../domain/registry";
 import { resolutionOrdinal, type Content, type ContentType, type Stream } from "../domain/types";
 import { useAuth } from "./auth";
@@ -43,13 +44,12 @@ export function useSources(providerId: string, type: ContentType, id: string, se
     setState({ kind: "loading" });
     if (!ready) return;
     const providers = activeProviders();
-    const owner = providers.find((p) => p.id === providerId);
     const resume = useContinueWatching.getState().findResumePoint(providerId, id, type);
     const sameTarget = !!resume && (resume.seasonNumber ?? null) === season && (resume.episodeNumber ?? null) === episode;
     const resumeFlow = sameTarget && !skipAutoSelect;
 
     void (async () => {
-      const contentPromise = owner ? owner.getDetails(type, id).catch(() => null) : Promise.resolve(null);
+      const contentPromise = loadDetails(providers, providerId, type, id);
       const fail = () => !cancelled && setState({ kind: "error", message: "Couldn't load details for this title." });
 
       if (resumeFlow) {

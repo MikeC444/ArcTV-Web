@@ -1,4 +1,4 @@
-import type { AddonCatalogDef, Content } from "./types";
+import type { AddonCatalogDef } from "./types";
 
 /**
  * The streaming services Home can offer as tiles (Netflix, Disney+ and so on). A tile only exists while an installed addon has a catalogue for the
@@ -86,13 +86,3 @@ export const serviceRowId = (service: string): string => `streaming:${service}`;
 
 /** Which of these services the person has not hidden. */
 export const visibleServices = (services: string[], hiddenRowIds: readonly string[]): string[] => services.filter((s) => !hiddenRowIds.includes(serviceRowId(s)));
-
-/**
- * A streaming-catalogue addon only lists titles: its own details for one (when it has any) are thin or wrong (a show with hundreds of episodes named after
- * files, a film with no year). A title with an IMDb id is the same title in the metadata addon (Cinemeta), so while that addon is installed such a title is
- * opened from it, exactly as if it had been found in Cinemeta's own lists. Titles without an IMDb id, or with no metadata addon, keep their own addon.
- */
-export function withMetaOwner(items: Content[], installedProviderIds: readonly string[], metaProviderId: string): Content[] {
-  if (!installedProviderIds.includes(metaProviderId)) return items;
-  return items.map((c) => (/^tt\d+$/.test(c.id) && c.providerId !== metaProviderId ? { ...c, providerId: metaProviderId } : c));
-}

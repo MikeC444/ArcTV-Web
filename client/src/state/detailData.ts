@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { loadDetails } from "../domain/detailSource";
 import { useProviders } from "../domain/registry";
 import type { Content, ContentType } from "../domain/types";
 import { api } from "../lib/api";
@@ -32,7 +33,8 @@ export function useDetail(providerId: string, type: ContentType, id: string, wat
     setTrailer({ kind: "idle" });
     setReleaseDate({ kind: "idle" });
     if (!ready) return;
-    const provider = providers.find((p) => p.id === providerId);
+    // The addon the title came from, or (when it has since been removed or turned off) whichever addon is first, which still lists related titles.
+    const provider = providers.find((p) => p.id === providerId) ?? providers[0];
     if (!provider) {
       if (!content) {
         setError("This addon is no longer installed.");
@@ -42,7 +44,7 @@ export function useDetail(providerId: string, type: ContentType, id: string, wat
     }
     if (!content) setLoading(true);
     void (async () => {
-      const detail = await provider.getDetails(type, id).catch(() => null);
+      const detail = await loadDetails(providers, providerId, type, id);
       if (cancelled) return;
       if (!detail) {
         if (!content) setError("Couldn't load details for this title.");

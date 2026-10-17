@@ -5,8 +5,8 @@ import { GENRE_OPTIONS } from "../../domain/genreOptions";
 import { activeProviders, useProviders } from "../../domain/registry";
 import type { Content, ContentType } from "../../domain/types";
 import { distinctBy, interleave, shuffled } from "../../lib/format";
-import { CINEMETA_PROVIDER_ID, routes } from "../../lib/routes";
-import { streamingServiceById, withMetaOwner } from "../../domain/streamingServices";
+import { routes } from "../../lib/routes";
+import { streamingServiceById } from "../../domain/streamingServices";
 import { useAddonsReady, useHasAnime, useStreamingServices, useWatchedIds, withWatched } from "../../state/hooks";
 import { withoutBlocked } from "../../domain/blockedGenres";
 import { useBlockedSet } from "../../state/blockedGenres";
@@ -91,7 +91,7 @@ function usePager(kind: { type: "type"; value: ContentType; genre?: string | nul
           try {
             if (kind.type === "type") return { ok: true as const, items: (await provider.getSectionsByType(kind.value, genreOfType)).flatMap((sec) => sec.items) };
             if (kind.type === "anime") return { ok: true as const, items: (await provider.getAnimeItems?.(genreOfType)) ?? [] };
-            if (kind.type === "service") return { ok: true as const, items: withMetaOwner((await provider.getServiceItems?.(kind.value)) ?? [], providers.map((p) => p.id), CINEMETA_PROVIDER_ID) };
+            if (kind.type === "service") return { ok: true as const, items: (await provider.getServiceItems?.(kind.value)) ?? [] };
             return { ok: true as const, items: (await provider.getGenreSection(kind.value))?.items ?? [] };
           } catch {
             return { ok: false as const, items: [] as Content[] };
@@ -120,7 +120,7 @@ function usePager(kind: { type: "type"; value: ContentType; genre?: string | nul
     void (async () => {
       const results = await Promise.all(
         providers.map((p) =>
-          (kind.type === "type" ? p.getMoreItemsByType(kind.value, page, genreOfType) : kind.type === "anime" ? p.getMoreAnimeItems?.(page, genreOfType) ?? Promise.resolve([] as Content[]) : kind.type === "service" ? (p.getMoreServiceItems?.(page, kind.value) ?? Promise.resolve([] as Content[])).then((more) => withMetaOwner(more, providers.map((q) => q.id), CINEMETA_PROVIDER_ID)) : p.getMoreGenreItems(kind.value, page)).catch(() => [] as Content[]),
+          (kind.type === "type" ? p.getMoreItemsByType(kind.value, page, genreOfType) : kind.type === "anime" ? p.getMoreAnimeItems?.(page, genreOfType) ?? Promise.resolve([] as Content[]) : kind.type === "service" ? p.getMoreServiceItems?.(page, kind.value) ?? Promise.resolve([] as Content[]) : p.getMoreGenreItems(kind.value, page)).catch(() => [] as Content[]),
         ),
       );
       if (gen !== s.gen) return;
