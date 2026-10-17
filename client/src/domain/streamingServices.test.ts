@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { orderServices, serviceOfCatalog, serviceRowId, visibleServices } from "./streamingServices";
+import { inUserOrder, isServiceRowId, moveService, orderServices, serviceOfCatalog, serviceRowId, visibleServices, withServiceOrder } from "./streamingServices";
 
 describe("serviceOfCatalog", () => {
   it("finds a service from the catalogue's name", () => {
@@ -40,5 +40,26 @@ describe("orderServices / visibleServices", () => {
   it("hides the ones the person turned off in Home Rows", () => {
     expect(visibleServices(["netflix", "disney"], [serviceRowId("disney")])).toEqual(["netflix"]);
     expect(visibleServices(["netflix"], ["something-else"])).toEqual(["netflix"]);
+  });
+});
+
+describe("the person's own order of services", () => {
+  it("puts placed services first in their order, then the rest in tile order", () => {
+    const all = ["netflix", "disney", "prime", "hulu"];
+    expect(inUserOrder(all, [])).toEqual(all);
+    expect(inUserOrder(all, ["streaming:hulu", "some_row", "streaming:netflix"])).toEqual(["hulu", "netflix", "disney", "prime"]);
+    expect(inUserOrder(["netflix"], ["streaming:hulu", "streaming:netflix"])).toEqual(["netflix"]);
+  });
+  it("moves a service up or down, and not past the ends", () => {
+    expect(moveService(["a", "b", "c"], "c", -1)).toEqual(["a", "c", "b"]);
+    expect(moveService(["a", "b", "c"], "a", 1)).toEqual(["b", "a", "c"]);
+    expect(moveService(["a", "b", "c"], "a", -1)).toBeNull();
+    expect(moveService(["a", "b", "c"], "c", 1)).toBeNull();
+    expect(moveService(["a"], "zzz", 1)).toBeNull();
+  });
+  it("keeps ordinary rows' entries when the services' order is written", () => {
+    expect(withServiceOrder(["row1", "streaming:a", "row2"], ["b", "a"])).toEqual(["row1", "row2", "streaming:b", "streaming:a"]);
+    expect(isServiceRowId("streaming:a")).toBe(true);
+    expect(isServiceRowId("row1")).toBe(false);
   });
 });
