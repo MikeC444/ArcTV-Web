@@ -7,6 +7,7 @@ import appleLogo from "../../assets/streaming/apple.webp";
 import disneyLogo from "../../assets/streaming/disney.webp";
 import maxLogo from "../../assets/streaming/max.webp";
 import britboxLogo from "../../assets/streaming/britbox.webp";
+import channel4Logo from "../../assets/streaming/channel4.webp";
 import crunchyrollLogo from "../../assets/streaming/crunchyroll.webp";
 import iplayerLogo from "../../assets/streaming/iplayer.webp";
 import itvxLogo from "../../assets/streaming/itvx.webp";
@@ -19,7 +20,7 @@ import paramountLogo from "../../assets/streaming/paramount.webp";
 import primeLogo from "../../assets/streaming/prime.webp";
 
 /** The logo of each service that has one; a service without a file shows its name in text instead. */
-const LOGOS: Record<string, string> = { netflix: netflixLogo, disney: disneyLogo, prime: primeLogo, max: maxLogo, apple: appleLogo, paramount: paramountLogo, hulu: huluLogo, peacock: peacockLogo, crunchyroll: crunchyrollLogo, skyshowtime: skyshowtimeLogo, britbox: britboxLogo, itvx: itvxLogo, iplayer: iplayerLogo, sky: skyLogo };
+const LOGOS: Record<string, string> = { netflix: netflixLogo, disney: disneyLogo, prime: primeLogo, max: maxLogo, apple: appleLogo, paramount: paramountLogo, hulu: huluLogo, peacock: peacockLogo, crunchyroll: crunchyrollLogo, skyshowtime: skyshowtimeLogo, britbox: britboxLogo, itvx: itvxLogo, iplayer: iplayerLogo, sky: skyLogo, channel4: channel4Logo };
 
 /**
  * Each service's own tile colour (what its app icon sits on), and whether its logo is drawn all white or all black on that colour. A logo with no
@@ -40,6 +41,7 @@ const BRAND: Record<string, { bg: string; image?: string; logo?: "white" | "blac
   itvx: { bg: "#dfeb55", logo: "black" },
   iplayer: { bg: "#000" },
   sky: { bg: "#fff" },
+  channel4: { bg: "#000" },
 };
 
 /**
