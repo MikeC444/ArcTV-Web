@@ -6,13 +6,18 @@ import { ScrollRow } from "./ScrollRow";
 import appleLogo from "../../assets/streaming/apple.webp";
 import disneyLogo from "../../assets/streaming/disney.webp";
 import maxLogo from "../../assets/streaming/max.webp";
+import britboxLogo from "../../assets/streaming/britbox.webp";
+import crunchyrollLogo from "../../assets/streaming/crunchyroll.webp";
+import itvxLogo from "../../assets/streaming/itvx.webp";
+import peacockLogo from "../../assets/streaming/peacock.webp";
+import skyshowtimeLogo from "../../assets/streaming/skyshowtime.webp";
 import huluLogo from "../../assets/streaming/hulu.webp";
 import netflixLogo from "../../assets/streaming/netflix.webp";
 import paramountLogo from "../../assets/streaming/paramount.webp";
 import primeLogo from "../../assets/streaming/prime.webp";
 
 /** The logo of each service that has one; a service without a file shows its name in text instead. */
-const LOGOS: Record<string, string> = { netflix: netflixLogo, disney: disneyLogo, prime: primeLogo, max: maxLogo, apple: appleLogo, paramount: paramountLogo, hulu: huluLogo };
+const LOGOS: Record<string, string> = { netflix: netflixLogo, disney: disneyLogo, prime: primeLogo, max: maxLogo, apple: appleLogo, paramount: paramountLogo, hulu: huluLogo, peacock: peacockLogo, crunchyroll: crunchyrollLogo, skyshowtime: skyshowtimeLogo, britbox: britboxLogo, itvx: itvxLogo };
 
 /** A dark tint behind each logo (close to the brand's colour), so the logo reads the same on every tile. */
 const TINTS: Record<string, string> = {
@@ -23,6 +28,11 @@ const TINTS: Record<string, string> = {
   apple: "#1e1e22",
   paramount: "#08142e",
   hulu: "#07241a",
+  peacock: "#14141a",
+  crunchyroll: "#241005",
+  skyshowtime: "#0b0b12",
+  britbox: "#0d273d",
+  itvx: "#111a05",
 };
 
 /**
