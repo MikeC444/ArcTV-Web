@@ -776,6 +776,10 @@
 .admin__area { fill: var(--cyan); fill-opacity: 0.1; stroke: none; }
 .admin__crosshair { stroke: var(--text-3); stroke-width: 1; }
 .admin__dot { fill: var(--cyan); stroke: var(--surface); stroke-width: 2; }
+.admin__bar { fill: var(--cyan); fill-opacity: 0.8; }
+.admin__bar--on { fill-opacity: 1; }
+.dd-growth__switch { margin-bottom: 8px; align-self: flex-start; }
+.admin__growth--hourly { display: flex; flex-direction: column; }
 .admin__endlabel { fill: var(--text); font-size: 13px; font-weight: 700; }
 .admin__tip { position: absolute; transform: translateX(-50%); display: grid; gap: 1px; padding: 8px 12px; background: var(--surface-high); border: 1px solid var(--divider); border-radius: 10px; pointer-events: none; font-size: 12px; color: var(--text-2); white-space: nowrap; }
 .admin__tip b { font-size: 18px; color: var(--text); }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addedIn, compactNumber, formatDay, labelIndices, niceTicks, rangePoints, trimLeadingEmpty, type GrowthPoint } from "./growth";
+import { addedIn, busiestHour, compactNumber, formatDay, formatHour, formatHourOfDay, hourlyRangePoints, type HourlyPoint, labelIndices, niceTicks, rangePoints, trimLeadingEmpty, type GrowthPoint } from "./growth";
 
 const pt = (date: string, newUsers: number, total: number): GrowthPoint => ({ date, newUsers, total });
 const series = [pt("2026-10-04", 0, 0), pt("2026-10-05", 0, 0), pt("2026-10-06", 3, 3), pt("2026-10-07", 0, 3), pt("2026-10-08", 5, 8)];
@@ -47,5 +47,25 @@ describe("user growth helpers", () => {
     expect(labelIndices(3)).toEqual([0, 1, 2]);
     expect(labelIndices(30)).toEqual([0, 7, 15, 22, 29]);
     expect(labelIndices(0)).toEqual([]);
+  });
+});
+
+describe("hourly growth helpers", () => {
+  const h = (hour: string, newUsers: number, total: number): HourlyPoint => ({ hour, newUsers, total });
+  const hours = [h("2026-10-17T10:00Z", 0, 5), h("2026-10-17T11:00Z", 4, 9), h("2026-10-17T12:00Z", 4, 13), h("2026-10-17T13:00Z", 1, 14)];
+
+  it("keeps the last N hours", () => {
+    expect(hourlyRangePoints(hours, 24)).toEqual(hours);
+    expect(hourlyRangePoints(Array.from({ length: 72 }, (_, i) => h(`2026-10-1${i < 24 ? 5 : 6}T00:00Z`, 0, i)), 24)).toHaveLength(24);
+  });
+
+  it("writes the hour as UTC text", () => {
+    expect(formatHourOfDay("2026-10-17T14:00Z")).toBe("14:00");
+    expect(formatHour("2026-10-17T14:00Z")).toBe("Oct 17, 14:00");
+  });
+
+  it("finds the busiest hour (the first of equals), or none when nobody signed up", () => {
+    expect(busiestHour(hours)?.hour).toBe("2026-10-17T11:00Z");
+    expect(busiestHour([h("2026-10-17T10:00Z", 0, 5)])).toBeUndefined();
   });
 });
