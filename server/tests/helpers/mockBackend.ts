@@ -160,6 +160,7 @@ export function createMockBackend(options: { accessTtlMs?: number } = {}) {
     if (request.path === "/admin/users" && request.method === "GET") return json(200, { total: 1, users: [{ id: "u1", email: "sam@example.com", query: request.query ?? "" }] });
     if (/^\/admin\/users\/[0-9a-f-]{36}$/.test(request.path) && request.method === "GET") return json(200, { user: { id: request.path.split("/").pop(), email: "sam@example.com" } });
     if (request.path === "/user/player-events/download" && request.method === "POST") return json(204);
+    if (request.path === "/user/player-events/app-promo" && request.method === "POST") return json(204);
     if (request.path === "/user/trailer") return json(200, { youtubeVideoId: "abc123" });
     return json(404, { error: "Not found" });
   };
