@@ -511,13 +511,15 @@
 .svc__name { font-weight: 800; font-size: clamp(16px, 11cqw, calc(30 * var(--dp))); color: var(--text); text-align: center; }
 /* Five tiles across at every width from a tablet up, whatever the screen size (a phone keeps Continue Watching's size, where five would be too small to read). */
 @media (min-width: 721px) { .row--streaming .card[data-cw="true"] { width: calc((100% - 4 * var(--poster-gap)) / 5); } }
-/* Streaming-service tiles, in 3D: a glossy sheen across the top, a darker lower edge, a bright top rim and a soft shadow underneath, so each tile
-   reads as a slab standing off the page. Hovering or focusing lifts it and tips it slightly toward you. */
-.row--streaming .row__scroller { padding-top: calc(10 * var(--dp)); padding-bottom: calc(18 * var(--dp)); perspective: 1100px; }
+/* Streaming-service tiles, in 3D: smooth, rounded glass slabs. A soft light from the top left, a faint diagonal glass streak, a bright top rim and a coloured
+   glow beneath (each service's own colour). A hovered tile lifts and tips toward the pointer, with a spot of light following it; a focused one lifts and tips
+   a little (nothing tilts for people who ask for reduced motion). */
+.row--streaming .row__scroller { padding-top: calc(12 * var(--dp)); padding-bottom: calc(22 * var(--dp)); perspective: 1000px; }
 .row--streaming .card__surface {
-  border-radius: calc(16 * var(--dp));
+  --svc-glow: rgba(255, 255, 255, 0.25);
+  border-radius: calc(20 * var(--dp));
   transform-style: preserve-3d;
-  transition: transform 220ms var(--ease), box-shadow 220ms var(--ease);
+  transition: transform 260ms var(--ease), box-shadow 260ms var(--ease);
 }
 .row--streaming .card__surface::before {
   content: "";
@@ -527,26 +529,33 @@
   border-radius: inherit;
   pointer-events: none;
   background:
-    radial-gradient(120% 90% at 12% -10%, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0) 55%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 38%, rgba(0, 0, 0, 0.2) 100%);
+    radial-gradient(circle at var(--glare-x, 18%) var(--glare-y, 0%), rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0) 55%),
+    linear-gradient(115deg, rgba(255, 255, 255, 0) 32%, rgba(255, 255, 255, 0.1) 44%, rgba(255, 255, 255, 0) 56%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.14));
+  transition: background-position 260ms var(--ease);
 }
 .row--streaming .card__surface:not(:hover):not(:focus-visible) {
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.4),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.07),
-    inset 0 -10px 18px -10px rgba(0, 0, 0, 0.5),
-    0 14px 22px -12px rgba(0, 0, 0, 0.85),
-    0 4px 8px -2px rgba(0, 0, 0, 0.5);
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 16px 26px -16px var(--svc-glow),
+    0 6px 12px -6px rgba(0, 0, 0, 0.7);
 }
-@media (hover: hover) {
-  .row--streaming .card__surface:not(:disabled):hover { transform: translateY(-6px) rotateX(4deg) scale(1.05); box-shadow: 0 26px 32px -14px rgba(0, 0, 0, 0.9), 0 8px 14px -4px rgba(0, 0, 0, 0.55); }
+.row--streaming .card__surface:focus-visible {
+  transform: perspective(900px) translateY(-6px) rotateX(4deg) scale(1.05);
+  box-shadow: 0 28px 38px -16px var(--svc-glow), 0 10px 16px -6px rgba(0, 0, 0, 0.6);
 }
-.row--streaming .card__surface:focus-visible { transform: translateY(-6px) rotateX(4deg) scale(1.05); box-shadow: 0 26px 32px -14px rgba(0, 0, 0, 0.9), 0 8px 14px -4px rgba(0, 0, 0, 0.55); }
-.row--streaming .svc__logo { z-index: 1; }
-.row--streaming .svc__logo img { filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.35)); }
-.row--streaming .svc__logo img[data-logo="white"] { filter: brightness(0) invert(1) drop-shadow(0 3px 6px rgba(0, 0, 0, 0.35)); }
-.row--streaming .svc__logo img[data-logo="black"] { filter: brightness(0) drop-shadow(0 3px 6px rgba(0, 0, 0, 0.25)); }
-.row--streaming .svc__name { text-shadow: 0 2px 6px rgba(0, 0, 0, 0.45); }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .row--streaming .card__surface:not(:disabled):hover {
+    transform: perspective(900px) translateY(-6px) rotateX(var(--tilt-x, 4deg)) rotateY(var(--tilt-y, 0deg)) scale(1.05);
+    box-shadow: 0 28px 38px -16px var(--svc-glow), 0 10px 16px -6px rgba(0, 0, 0, 0.6);
+  }
+}
+.row--streaming .svc__logo { z-index: 1; transform: translateZ(30px); }
+.row--streaming .svc__logo img { filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35)); }
+.row--streaming .svc__logo img[data-logo="white"] { filter: brightness(0) invert(1) drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35)); }
+.row--streaming .svc__logo img[data-logo="black"] { filter: brightness(0) drop-shadow(0 4px 8px rgba(0, 0, 0, 0.25)); }
+.row--streaming .svc__name { text-shadow: 0 2px 8px rgba(0, 0, 0, 0.45); }
 /* A logo drawn in one colour on its service's own tile colour (Paramount+, Hulu and Crunchyroll in white, ITVX in black). */
 .svc__logo img[data-logo="white"] { filter: brightness(0) invert(1); }
 .svc__logo img[data-logo="black"] { filter: brightness(0); }

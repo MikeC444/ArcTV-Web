@@ -1,3 +1,4 @@
+import type { CSSProperties, PointerEvent } from "react";
 import { streamingServiceById } from "../../domain/streamingServices";
 import { routes } from "../../lib/routes";
 import { useVisibleStreamingServices } from "../../state/hooks";
@@ -26,23 +27,41 @@ const LOGOS: Record<string, string> = { netflix: netflixLogo, disney: disneyLogo
  * Each service's own tile colour (what its app icon sits on), and whether its logo is drawn all white or all black on that colour. A logo with no
  * entry shows as it is. A service with no entry here at all (no logo file) is a black tile with its name in white.
  */
-const BRAND: Record<string, { bg: string; image?: string; logo?: "white" | "black" }> = {
-  netflix: { bg: "#000" },
-  disney: { bg: "#003f4f", image: "linear-gradient(175deg, #011828 0%, #002f3d 35%, #015e70 70%, #0098a5 88%, #2bbcc1 100%)" },
-  prime: { bg: "#1d2547", image: "linear-gradient(80deg, #141721 0%, #1d2547 30%, #294071 52%, #346b9f 80%, #4089c0 100%)", logo: "white" },
-  max: { bg: "#fff" },
-  apple: { bg: "#000" },
-  paramount: { bg: "#0064ff", logo: "white" },
-  hulu: { bg: "#1ce783", logo: "white" },
-  peacock: { bg: "#000" },
-  crunchyroll: { bg: "#f47521", logo: "white" },
-  skyshowtime: { bg: "#4a38e6", image: "linear-gradient(135deg, #6a3df0, #2b2fe0)" },
-  britbox: { bg: "#0d273d" },
-  itvx: { bg: "#dfeb55", logo: "black" },
-  iplayer: { bg: "#000" },
-  sky: { bg: "#fff" },
-  channel4: { bg: "#000" },
+const BRAND: Record<string, { bg: string; image?: string; logo?: "white" | "black"; glow?: string }> = {
+  netflix: { bg: "#000", glow: "rgba(229, 9, 20, 0.55)" },
+  disney: { bg: "#003f4f", image: "linear-gradient(175deg, #011828 0%, #002f3d 35%, #015e70 70%, #0098a5 88%, #2bbcc1 100%)", glow: "rgba(30, 190, 200, 0.55)" },
+  prime: { bg: "#1d2547", image: "linear-gradient(80deg, #141721 0%, #1d2547 30%, #294071 52%, #346b9f 80%, #4089c0 100%)", logo: "white", glow: "rgba(64, 137, 192, 0.6)" },
+  max: { bg: "#fff", glow: "rgba(140, 90, 255, 0.5)" },
+  apple: { bg: "#000", glow: "rgba(190, 190, 205, 0.4)" },
+  paramount: { bg: "#0064ff", logo: "white", glow: "rgba(0, 100, 255, 0.6)" },
+  hulu: { bg: "#1ce783", logo: "white", glow: "rgba(28, 231, 131, 0.5)" },
+  peacock: { bg: "#000", glow: "rgba(255, 190, 40, 0.4)" },
+  crunchyroll: { bg: "#f47521", logo: "white", glow: "rgba(244, 117, 33, 0.6)" },
+  skyshowtime: { bg: "#4a38e6", image: "linear-gradient(135deg, #6a3df0, #2b2fe0)", glow: "rgba(106, 61, 240, 0.6)" },
+  britbox: { bg: "#0d273d", glow: "rgba(120, 190, 235, 0.5)" },
+  itvx: { bg: "#dfeb55", logo: "black", glow: "rgba(223, 235, 85, 0.5)" },
+  iplayer: { bg: "#000", glow: "rgba(255, 70, 150, 0.5)" },
+  sky: { bg: "#fff", glow: "rgba(160, 90, 255, 0.5)" },
+  channel4: { bg: "#000", glow: "rgba(170, 255, 140, 0.45)" },
 };
+
+/** Tips a hovered tile toward the pointer, and moves the spot of light with it (the CSS reads these; nothing tilts with reduced motion or on touch). */
+function tiltToward(event: PointerEvent<HTMLDivElement>) {
+  if (event.pointerType !== "mouse") return;
+  const surface = event.currentTarget.querySelector<HTMLElement>(".card__surface");
+  if (!surface) return;
+  const box = surface.getBoundingClientRect();
+  const x = Math.min(1, Math.max(0, (event.clientX - box.left) / box.width));
+  const y = Math.min(1, Math.max(0, (event.clientY - box.top) / box.height));
+  surface.style.setProperty("--tilt-x", `${((0.5 - y) * 12).toFixed(1)}deg`);
+  surface.style.setProperty("--tilt-y", `${((x - 0.5) * 14).toFixed(1)}deg`);
+  surface.style.setProperty("--glare-x", `${(x * 100).toFixed(0)}%`);
+  surface.style.setProperty("--glare-y", `${(y * 100).toFixed(0)}%`);
+}
+function resetTilt(event: PointerEvent<HTMLDivElement>) {
+  const surface = event.currentTarget.querySelector<HTMLElement>(".card__surface");
+  for (const name of ["--tilt-x", "--tilt-y", "--glare-x", "--glare-y"]) surface?.style.removeProperty(name);
+}
 
 /**
  * Home's "Streaming services" row, shown only while an installed addon has a catalogue for at least one service the person has not turned off
@@ -63,8 +82,8 @@ export function StreamingTiles() {
           const logo = LOGOS[id];
           return (
             <div role="listitem" key={id} style={{ display: "contents" }}>
-              <div className="card" data-cw="true">
-                <Surface to={routes.streaming(id)} className="card__surface" ariaLabel={`${service.name} titles`} background={BRAND[id]?.bg ?? "#000"} backgroundImage={BRAND[id]?.image}>
+              <div className="card" data-cw="true" onPointerMove={tiltToward} onPointerLeave={resetTilt}>
+                <Surface to={routes.streaming(id)} className="card__surface" ariaLabel={`${service.name} titles`} background={BRAND[id]?.bg ?? "#000"} backgroundImage={BRAND[id]?.image} style={BRAND[id]?.glow ? ({ "--svc-glow": BRAND[id]?.glow } as CSSProperties) : undefined}>
                   <span className="svc__logo">{logo ? <img src={logo} alt="" data-logo={BRAND[id]?.logo} loading="lazy" decoding="async" draggable={false} /> : <span className="svc__name">{service.name}</span>}</span>
                 </Surface>
                 <div className="card__title">{service.name}</div>
