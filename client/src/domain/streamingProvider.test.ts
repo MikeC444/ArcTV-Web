@@ -29,7 +29,7 @@ describe("streaming service catalogues", () => {
   });
 
   it("reads one service's movies and series together, and the following pages", async () => {
-    const provider = new StremioAddonProvider("https://a/manifest.json", manifest({ catalogs: [catalog("nfx", "movie", "Netflix"), catalog("nfx", "series", "Netflix"), catalog("dnp", "movie", "Disney+")] }));
+    const provider = new StremioAddonProvider("https://a/manifest.json", manifest({ catalogs: [catalog("nfx", "movie", "Netflix", [{ name: "skip", isRequired: false, options: null, optionsLimit: null }]), catalog("nfx", "series", "Netflix", [{ name: "skip", isRequired: false, options: null, optionsLimit: null }]), catalog("dnp", "movie", "Disney+")] }));
     client.fetchCatalog.mockImplementation(async (_url: string, type: string) => [preview(`${type}-1`, type)]);
     const items = await provider.getServiceItems("netflix");
     expect(items.map((c) => c.id).sort()).toEqual(["movie-1", "series-1"]);
@@ -38,6 +38,12 @@ describe("streaming service catalogues", () => {
     client.fetchCatalog.mockClear();
     await provider.getMoreServiceItems(2, "netflix");
     expect(client.fetchCatalog).toHaveBeenCalledWith("https://a/manifest.json", "movie", "nfx", { skip: "200" });
+  });
+
+  it("asks for no further pages from a catalogue that does not declare skip", async () => {
+    const provider = new StremioAddonProvider("https://a/manifest.json", manifest({ catalogs: [catalog("nfx", "movie", "Netflix")] }));
+    expect(await provider.getMoreServiceItems(2, "netflix")).toEqual([]);
+    expect(client.fetchCatalog).not.toHaveBeenCalled();
   });
 
   it("returns nothing for a service the addon does not have", async () => {
