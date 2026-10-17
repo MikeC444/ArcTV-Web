@@ -16,7 +16,7 @@
 /* ── Home / Hero ─────────────────────────────────────────────────────────── */
 .home { position: relative; }
 /* The soft light behind the hero: the colour of the title on show (set from its artwork), spilling from the hero's lower edge onto the rows, like the glow under the streaming tiles. */
-.home__wash { position: absolute; left: 0; right: 0; top: calc(max(74vh, 620px) - 34vh); height: 78vh; pointer-events: none; z-index: 0; background-color: var(--wash, transparent); opacity: 0; transition: opacity 900ms var(--ease), background-color 900ms var(--ease); -webkit-mask-image: radial-gradient(ellipse 75% 70% at 50% 28%, #000 0%, rgba(0,0,0,0.55) 45%, transparent 100%); mask-image: radial-gradient(ellipse 75% 70% at 50% 28%, #000 0%, rgba(0,0,0,0.55) 45%, transparent 100%); }
+.home__wash { position: absolute; left: 0; right: 0; top: calc(max(74vh, 620px) - 34vh); height: 78vh; pointer-events: none; z-index: 0; background-color: var(--wash, transparent); opacity: 0; transition: opacity 900ms var(--ease), background-color 900ms var(--ease); --wash-radial: radial-gradient(ellipse 75% 70% at 50% 28%, #000 0%, rgba(0,0,0,0.55) 45%, transparent 100%); --wash-top: linear-gradient(to bottom, transparent 0%, #000 38%); -webkit-mask-image: var(--wash-radial), var(--wash-top); -webkit-mask-composite: source-in; mask-image: var(--wash-radial), var(--wash-top); mask-composite: intersect; }
 .home__wash[data-on="true"] { opacity: 0.3; }
 .home__rows { position: relative; z-index: 1; }
 @media (prefers-reduced-motion: reduce) { .home__wash { transition: none; } }
