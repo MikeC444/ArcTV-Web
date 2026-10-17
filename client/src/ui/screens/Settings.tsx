@@ -11,7 +11,7 @@ import { routes } from "../../lib/routes";
 import { useAddons, CINEMETA_MANIFEST_URL } from "../../state/addons";
 import { useAuth } from "../../state/auth";
 import { useAddonsReady, useStreamingServices } from "../../state/hooks";
-import { moveService, serviceRowId, streamingServiceById } from "../../domain/streamingServices";
+import { isServiceVisible, moveService, streamingServiceById } from "../../domain/streamingServices";
 import { buildGenreList } from "../../domain/genreList";
 import { ApiClientError } from "../../lib/api";
 import { usePlus, watchForPurchase, type PlusPlanId } from "../../state/plus";
@@ -667,6 +667,7 @@ function HomeRowsPane() {
   const setRowOrder = useSettings((s) => s.setRowOrder);
   const services = useStreamingServices();
   const setServiceOrder = useSettings((s) => s.setServiceOrder);
+  const setServiceVisible = useSettings((s) => s.setServiceVisible);
   const [rows, setRows] = useState<HomeSection[] | null>(null);
   useEffect(() => {
     if (!ready || providers.length === 0) return setRows(null);
@@ -703,14 +704,14 @@ function HomeRowsPane() {
           <ul className="homerows" style={{ marginBottom: 18 }}>
             {services.map((id, position) => {
               const name = streamingServiceById(id)?.name ?? id;
-              const visible = !prefs.hiddenRowIds.includes(serviceRowId(id));
+              const visible = isServiceVisible(id, prefs.hiddenRowIds);
               const move = (delta: number) => {
                 const next = moveService(services, id, delta);
                 if (next) setServiceOrder(next);
               };
               return (
                 <li key={id} className="homerow">
-                  <Surface className="homerow__toggle" scale={1.02} borderColor="var(--text)" onClick={() => setRowHidden(serviceRowId(id), visible)} role="switch" ariaLabel={`${name} tile`} ariaChecked={visible}>
+                  <Surface className="homerow__toggle" scale={1.02} borderColor="var(--text)" onClick={() => setServiceVisible(id, !visible)} role="switch" ariaLabel={`${name} tile`} ariaChecked={visible}>
                     <span className="t-body-md" style={{ flex: 1, color: visible ? "var(--text)" : "var(--text-3)" }}>{name}</span>
                     <Switch checked={visible} white />
                   </Surface>

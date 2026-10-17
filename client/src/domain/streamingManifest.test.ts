@@ -24,7 +24,7 @@ describe("the real Streaming Catalogs manifest", () => {
 
   it("gives a tile for every service it lists, in tile order", () => {
     expect(orderServices(provider.streamingServices())).toEqual([
-      "netflix", "disney", "prime", "max", "apple", "paramount", "hulu", "peacock", "crunchyroll", "skyshowtime", "britbox", "itvx", "iplayer", "channel4", "discovery", "shudder", "sky",
+      "netflix", "prime", "apple", "max", "disney", "paramount", "hulu", "peacock", "iplayer", "shudder", "crunchyroll", "skyshowtime", "britbox", "itvx", "channel4", "discovery", "sky",
     ]);
     expect(provider.streamingServices()).toHaveLength(17);
   });
