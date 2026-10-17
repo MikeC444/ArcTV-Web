@@ -27,7 +27,7 @@ const LOGOS: Record<string, string> = { netflix: netflixLogo, disney: disneyLogo
  */
 const BRAND: Record<string, { bg: string; image?: string; logo?: "white" | "black" }> = {
   netflix: { bg: "#000" },
-  disney: { bg: "#0e2d78", image: "linear-gradient(145deg, #1c47a8, #081a4d)" },
+  disney: { bg: "#003f4f", image: "linear-gradient(175deg, #011828 0%, #002f3d 35%, #015e70 70%, #0098a5 88%, #2bbcc1 100%)" },
   prime: { bg: "#fff" },
   max: { bg: "#000" },
   apple: { bg: "#000" },
