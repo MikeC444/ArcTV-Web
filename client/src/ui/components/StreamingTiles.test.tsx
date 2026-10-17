@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { CatalogProvider } from "../../domain/provider";
@@ -21,8 +21,19 @@ const show = () =>
     </MemoryRouter>,
   );
 
+/** jsdom has no PointerEvent: a minimal one that carries the pointer's position and kind. */
+class FakePointerEvent extends MouseEvent {
+  readonly pointerType: string;
+  constructor(type: string, init: MouseEventInit & { pointerType?: string } = {}) {
+    super(type, init);
+    this.pointerType = init.pointerType ?? "";
+  }
+}
+
 beforeEach(() => {
   (globalThis as unknown as { ResizeObserver: typeof FakeObserver }).ResizeObserver = FakeObserver;
+  (globalThis as unknown as { PointerEvent: typeof FakePointerEvent }).PointerEvent = FakePointerEvent;
+  (window as unknown as { PointerEvent: typeof FakePointerEvent }).PointerEvent = FakePointerEvent;
   useProviders.setState({ providers: [] });
   useSettings.setState({ homeRows: { order: [], hiddenRowIds: [] } });
 });
@@ -67,5 +78,18 @@ describe("StreamingTiles", () => {
     expect(useSettings.getState().homeRows.order).toEqual(["row_b", "row_a", "streaming:hulu"]);
     useSettings.getState().setServiceOrder(["netflix", "hulu"]);
     expect(useSettings.getState().homeRows.order).toEqual(["row_b", "row_a", "streaming:netflix", "streaming:hulu"]);
+  });
+
+  it("tips a tile toward the pointer the moment it enters, before any movement", () => {
+    useProviders.setState({ providers: [provider(["netflix"])] });
+    show();
+    const card = screen.getByLabelText("Netflix titles").parentElement as HTMLElement;
+    const surface = screen.getByLabelText("Netflix titles");
+    surface.getBoundingClientRect = () => ({ left: 0, top: 0, width: 400, height: 200, right: 400, bottom: 200, x: 0, y: 0, toJSON: () => ({}) });
+    fireEvent.pointerEnter(card, { clientX: 40, clientY: 20, pointerType: "mouse" });
+    expect(surface.style.getPropertyValue("--tilt-x")).toBe("4.8deg");
+    expect(surface.style.getPropertyValue("--tilt-y")).toBe("-5.6deg");
+    fireEvent.pointerLeave(card);
+    expect(surface.style.getPropertyValue("--tilt-x")).toBe("");
   });
 });
