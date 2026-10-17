@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { MdAdd, MdCheck, MdInfo, MdPause, MdPlayArrow, MdTheaters } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import type { Content, HomeSection } from "../../domain/types";
@@ -15,6 +15,7 @@ import { useMyList } from "../../state/myList";
 import { stashDetailPreview } from "../../state/pendingDetail";
 import { ArcButton, IconButton } from "../components/Buttons";
 import { LazyRow } from "../components/LazyRow";
+import { StreamingTiles } from "../components/StreamingTiles";
 import { HomeSkeleton } from "../components/Skeletons";
 import { FullScreenError, HomeEmptyState } from "../components/States";
 
@@ -186,6 +187,8 @@ export function Home() {
     document.title = "Arc TV";
   }, []);
 
+  const rows = state.kind === "success" ? withPicked(state.sections, picked.section) : [];
+  const tilesAt = rows[0]?.style === "CONTINUE_WATCHING" ? 1 : 0;
   if (state.kind === "loading") return <HomeSkeleton />;
   if (state.kind === "error") return <FullScreenError message={state.message} onRetry={reload} />;
   if (state.kind === "empty") return <div style={{ paddingTop: "var(--nav-h)" }}><HomeEmptyState /></div>;
@@ -193,8 +196,12 @@ export function Home() {
     <div className="home">
       <Hero items={state.hero} />
       <div className="home__rows">
-        {withPicked(state.sections, picked.section).map((section, index) => (
-          <LazyRow key={section.id} section={section} eager={index < 3} />
+        {rows.map((section, index) => (
+          <Fragment key={section.id}>
+            {/* the streaming-service tiles sit above "Picked for you" (after Continue Watching when there is one) */}
+            {index === tilesAt ? <StreamingTiles /> : null}
+            <LazyRow section={section} eager={index < 3} />
+          </Fragment>
         ))}
       </div>
     </div>

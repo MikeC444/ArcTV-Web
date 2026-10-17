@@ -10,7 +10,7 @@ import { AppShell } from "./ui/layout/AppShell";
 import { Spinner } from "./ui/components/States";
 import { AddAddonScreen, SettingsScreen } from "./ui/screens/Settings";
 import { AllowGuests, AuthLayout, AuthMethodScreen, AuthStartScreen, PasswordSignInScreen, QrSignInScreen, RequireAuth } from "./ui/screens/Auth";
-import { AnimeScreen, MoviesScreen, MyListScreen, TvShowsScreen } from "./ui/screens/Browse";
+import { AnimeScreen, MoviesScreen, StreamingServiceScreen, MyListScreen, TvShowsScreen } from "./ui/screens/Browse";
 import { FEATURES } from "./lib/features";
 import { LiveTvScreen } from "./ui/screens/LiveTv";
 import { DebridGuideScreen } from "./ui/screens/DebridGuide";
@@ -106,6 +106,7 @@ export function App() {
           <Route path="movies" element={<MoviesScreen />} />
           <Route path="tv" element={<TvShowsScreen />} />
           <Route path="anime" element={<AnimeScreen />} />
+          <Route path="streaming/:service" element={<StreamingServiceScreen />} />
           {FEATURES.liveTv ? <Route path="live" element={<RequireAdult><LiveTvScreen /></RequireAdult>} /> : null}
           <Route path="genres/*" element={<Navigate to="/movies" replace />} />
           <Route path="search" element={<SearchScreen />} />

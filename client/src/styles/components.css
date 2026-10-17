@@ -504,3 +504,8 @@
 .dlpanel__foot { margin: 16px 0 0; text-align: center; color: var(--text-3); font-size: 13px; }
 @media (max-height: 720px) { .dlpanel__banner { height: 170px; } .dlpanel__banner[data-plain="true"] { height: 120px; } .dlpanel__logo { max-height: 64px; } .dlpanel__name { font-size: 26px; } }
 @media (max-width: 560px) { .dlpanel__banner { height: 190px; padding: 12px 12px 14px; } .dlpanel__body { padding: 4px 14px 18px; } .dlpanel__name { font-size: 26px; } .dlrow__badge { width: 68px; font-size: 17px; } }
+
+/* Home's "Streaming services" tiles: Continue Watching's size and shape, with the service's logo where the picture would be. */
+.svc__logo { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 14% 18%; }
+.svc__logo img { max-width: 100%; max-height: 100%; object-fit: contain; user-select: none; -webkit-user-drag: none; }
+.svc__name { font-weight: 800; font-size: clamp(16px, 11cqw, calc(30 * var(--dp))); color: var(--text); text-align: center; }
