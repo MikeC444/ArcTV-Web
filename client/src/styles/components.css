@@ -564,3 +564,23 @@
 /* A logo drawn in one colour on its service's own tile colour (Paramount+, Hulu and Crunchyroll in white, ITVX in black). */
 .svc__logo img[data-logo="white"] { filter: brightness(0) invert(1); }
 .svc__logo img[data-logo="black"] { filter: brightness(0); }
+
+/* Home and grid posters: a faint rim at rest so a light poster sits on the dark page instead of glaring, and a small lift (with the usual scale and ring) on
+   hover and keyboard focus, in the spirit of the streaming tiles. Continue Watching and the streaming tiles carry data-cw and keep their own rules. */
+.card:not([data-cw="true"]) .card__surface:not(:hover):not(:focus-visible) {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+.card:not([data-cw="true"]) .card__surface:focus-visible {
+  transform: translateZ(0) translateY(calc(-4 * var(--dp))) scale(var(--tvs-scale));
+  box-shadow: 0 calc(16 * var(--dp)) calc(34 * var(--dp)) rgba(0, 0, 0, 0.75);
+}
+@media (hover: hover) {
+  .card:not([data-cw="true"]) .card__surface:not(:disabled):not([aria-disabled="true"]):hover {
+    transform: translateZ(0) translateY(calc(-4 * var(--dp))) scale(var(--tvs-scale));
+    box-shadow: 0 calc(16 * var(--dp)) calc(34 * var(--dp)) rgba(0, 0, 0, 0.75);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card:not([data-cw="true"]) .card__surface:focus-visible,
+  .card:not([data-cw="true"]) .card__surface:not(:disabled):not([aria-disabled="true"]):hover { transform: translateZ(0) scale(var(--tvs-scale)); }
+}
