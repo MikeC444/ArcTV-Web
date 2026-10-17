@@ -30,6 +30,7 @@ const ALLOWED: ReadonlyArray<readonly [method: string, path: RegExp]> = [
   ["DELETE", /^\/addons$/],
   ["GET", /^\/trailer$/],
   ["GET", /^\/release-date$/],
+  ["GET", /^\/streaming-titles$/], // more of a streaming service's titles than its addon lists, from TMDB (pages of about 20)
   // ArcTV Plus: whether this account has it, starting a Stripe checkout for a plan, and cancelling a subscription at the end of its period.
   ["GET", /^\/plus$/],
   ["POST", /^\/plus\/checkout$/],

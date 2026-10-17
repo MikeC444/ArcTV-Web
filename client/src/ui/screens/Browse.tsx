@@ -11,6 +11,7 @@ import { useAddonsReady, useHasAnime, useStreamingServices, useWatchedIds, withW
 import { withoutBlocked } from "../../domain/blockedGenres";
 import { useBlockedSet } from "../../state/blockedGenres";
 import { useMyList, type SavedListItem } from "../../state/myList";
+import { fetchServiceTitles } from "../../state/streamingTitles";
 import { BackButton } from "../components/BackButton";
 import { Pill } from "../components/Buttons";
 import { ContentCard } from "../components/ContentCard";
@@ -44,6 +45,8 @@ interface PagerSnapshot {
   items: Content[];
   page: number;
   hasMore: boolean;
+  /** A service page: the next page of TMDB titles to read once its addons have no more (see loadMore). */
+  tmdbPage?: number;
 }
 const pagerCache = new Map<string, PagerSnapshot>();
 
@@ -58,18 +61,20 @@ function usePager(kind: { type: "type"; value: ContentType; genre?: string | nul
   const [items, setItems] = useState<Content[]>(() => cachedAtStart?.items ?? []);
   const [status, setStatus] = useState<Pager["status"]>(cachedAtStart ? "loaded" : "loading");
   const [tick, setTick] = useState(0);
-  const state = useRef({ page: 1, hasMore: true, loading: false, seen: new Set<string>(), gen: 0, items: [] as Content[] });
+  const state = useRef({ page: 1, hasMore: true, loading: false, seen: new Set<string>(), gen: 0, items: [] as Content[], tmdbPage: 1 });
 
   useEffect(() => {
     const s = state.current;
     const gen = ++s.gen;
     s.page = 1;
+    s.tmdbPage = 1;
     s.hasMore = true;
     s.loading = false;
     s.seen = new Set();
     const hit = pagerCache.get(cacheKey);
     if (hit) {
       s.page = hit.page;
+      s.tmdbPage = hit.tmdbPage ?? 1;
       s.hasMore = hit.hasMore;
       s.items = hit.items;
       s.seen = new Set(hit.items.map((c) => c.id));
@@ -104,7 +109,7 @@ function usePager(kind: { type: "type"; value: ContentType; genre?: string | nul
       const merged = distinctBy(kind.type === "type" ? shuffled(results.flatMap((r) => r.items)) : interleave(results.map((r) => r.items)), (c) => c.id);
       merged.forEach((c) => s.seen.add(c.id));
       s.items = merged;
-      if (merged.length > 0) pagerCache.set(cacheKey, { items: merged, page: s.page, hasMore: s.hasMore });
+      if (merged.length > 0) pagerCache.set(cacheKey, { items: merged, page: s.page, hasMore: s.hasMore, tmdbPage: s.tmdbPage });
       setItems(merged);
       setStatus(merged.length > 0 ? "loaded" : anyFailed ? "error" : "loaded");
     })();
@@ -124,15 +129,34 @@ function usePager(kind: { type: "type"; value: ContentType; genre?: string | nul
         ),
       );
       if (gen !== s.gen) return;
-      const fresh = distinctBy(kind.type === "type" ? shuffled(results.flat()) : interleave(results), (c) => c.id).filter((c) => !s.seen.has(c.id));
+      let fresh = distinctBy(kind.type === "type" ? shuffled(results.flat()) : interleave(results), (c) => c.id).filter((c) => !s.seen.has(c.id));
+      let exhausted = false;
+      if (fresh.length === 0 && kind.type === "service") {
+        // The addons have no more (Streaming Catalogs lists about 100 a catalogue), so carry on with TMDB's list for the service, a page of movies and of series at a time.
+        const service = kind.value;
+        const providerId = providers.find((p) => p.streamingServices?.().includes(service))?.id ?? null;
+        for (let tries = 0; tries < 4 && fresh.length === 0 && providerId; tries++) {
+          const at = s.tmdbPage;
+          const [movies, shows] = await Promise.all([fetchServiceTitles(service, "MOVIE", at, providerId), fetchServiceTitles(service, "TV_SHOW", at, providerId)]);
+          if (gen !== s.gen) return;
+          if (!movies.available && !shows.available) break;
+          s.tmdbPage++;
+          fresh = distinctBy(interleave([movies.items, shows.items]), (c) => c.id).filter((c) => !s.seen.has(c.id));
+          if (at >= Math.max(movies.totalPages, shows.totalPages)) {
+            exhausted = true;
+            break;
+          }
+        }
+      }
       if (fresh.length === 0) s.hasMore = false;
       else {
         s.page++;
         fresh.forEach((c) => s.seen.add(c.id));
         s.items = [...s.items, ...fresh];
         setItems(s.items);
+        if (exhausted) s.hasMore = false;
       }
-      pagerCache.set(cacheKey, { items: s.items, page: s.page, hasMore: s.hasMore });
+      pagerCache.set(cacheKey, { items: s.items, page: s.page, hasMore: s.hasMore, tmdbPage: s.tmdbPage });
       s.loading = false;
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
