@@ -201,9 +201,8 @@ export function ContentGrid({ items, onLoadMore, placeholders = false }: { items
             <ContentCard content={content} />
           </div>
         ))}
-        {/* with placeholders the trigger sits in front of them, so the next page starts loading as the first grey shape comes near */}
-        {placeholders ? <div ref={sentinel} style={{ gridColumn: "1 / -1", height: 1 }} aria-hidden="true" /> : null}
-        {placeholders ? Array.from({ length: PLACEHOLDERS }, (_, i) => <PosterPlaceholder key={`ph${i}`} />) : null}
+        {/* the grey shapes carry on in the cells after the last title; the first one is the trigger, so the next page starts loading as it comes near */}
+        {placeholders ? Array.from({ length: PLACEHOLDERS }, (_, i) => <PosterPlaceholder key={`ph${i}`} innerRef={i === 0 ? sentinel : undefined} />) : null}
       </div>
       {placeholders ? null : <div ref={sentinel} style={{ height: 1 }} aria-hidden="true" />}
       <div style={{ height: "calc(48 * var(--dp))" }} />
