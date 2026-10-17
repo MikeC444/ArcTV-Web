@@ -46,8 +46,14 @@ export function RowsSkeleton({ rows = 4 }: { rows?: number }) {
   );
 }
 
-/** One grey poster shape inside a poster grid (it takes a grid cell, like a card). */
-export const PosterPlaceholder = () => <Shimmer style={{ aspectRatio: "2 / 3", width: "100%" }} />;
+/** One grey poster with two grey caption lines under it, the size of a card, taking a grid cell like a card does. `innerRef` lets the grid watch it. */
+export const PosterPlaceholder = ({ innerRef }: { innerRef?: React.Ref<HTMLDivElement> }) => (
+  <div ref={innerRef} aria-hidden="true">
+    <Shimmer style={{ aspectRatio: "2 / 3", width: "100%" }} />
+    <Shimmer width="70%" height={dp(14)} style={{ marginTop: dp(12) }} />
+    <Shimmer width="32%" height={dp(11)} style={{ marginTop: dp(8) }} />
+  </div>
+);
 
 export function GridSkeleton({ title, back, headExtra }: { title: string; back?: string; headExtra?: React.ReactNode }) {
   return (
