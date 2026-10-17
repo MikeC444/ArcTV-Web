@@ -74,6 +74,13 @@ describe("/api/user allow-list proxy", () => {
     expect((await client.get("/api/user/player-events/download")).status).toBe(404);
   });
 
+  it("forwards the app-popup reports the web app sends (which app, what the person did)", async () => {
+    const { backend, client } = await signedIn();
+    const res = await client.post("/api/user/player-events/app-promo").send({ app: "mac", action: "shown" });
+    expect(res.status).toBe(204);
+    expect(backend.calls.some((c) => c.method === "POST" && c.path === "/user/player-events/app-promo")).toBe(true);
+  });
+
   it("forwards removed picks, and each account only sees its own", async () => {
     const backend = createMockBackend();
     backend.addUser("alice@example.com", "password-1234");

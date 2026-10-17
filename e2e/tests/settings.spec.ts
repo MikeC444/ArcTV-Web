@@ -61,7 +61,8 @@ test.describe("settings", () => {
   test("Home Rows: hide and reorder rows; the layout is saved to the account (and the TV reads the same order)", async ({ page }) => {
     const account = await newAccount("rows");
     await openSignedIn(page, account, "/settings/home-rows");
-    await expect(page.getByText("Toggle categories on or off")).toBeVisible();
+    await page.locator(".homerow__card", { hasText: "Fixture Catalog" }).click();
+    await expect(page.getByText(/\d+ of \d+ on Home/)).toBeVisible();
     const action = page.getByRole("switch", { name: "Action", exact: true });
     await expect(action).toBeVisible();
     await action.click();

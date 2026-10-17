@@ -38,6 +38,7 @@ const ALLOWED: ReadonlyArray<readonly [method: string, path: RegExp]> = [
   ["PUT", /^\/plus\/supporter$/], // a Lifetime member chooses to be on the supporters board (or not)
   // The developer panel's Downloads card: the Plus popup shown, the Downloads panel opened, a file pressed (no titles or addresses are sent).
   ["POST", /^\/player-events\/download$/],
+  ["POST", /^\/player-events\/app-promo$/], // which app popup was shown / pressed / closed, for the developer panel (the web app has sent this all along, to a route that was not here)
 ];
 
 /** Lookups against TMDB are not user-specific, so one answer can serve everyone and spare the shared rate limit. */
