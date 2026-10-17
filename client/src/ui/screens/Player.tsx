@@ -5,6 +5,7 @@ import { DEBRID_NAMES, deviceVerdict, getDeviceCaps, parseStreamFacts } from "..
 import { buildRelayUrl, needsRelay, playbackUrl, relayRefusal } from "../../domain/relay";
 import { describeContentType, engineForContentType, getContentType } from "../../domain/contentType";
 import { assessStream, engineFor } from "../../domain/playability";
+import { loadDetails } from "../../domain/detailSource";
 import { activeProviders } from "../../domain/registry";
 import { findAddonSubtitles, languageKey, parseSubtitleCues, type AddonSubtitle } from "../../domain/stremio/subtitles";
 import type { Content, ContentType, Episode, Stream } from "../../domain/types";
@@ -55,8 +56,7 @@ export function PlayerScreen() {
     if (!ready) return;
     void (async () => {
       const providers = activeProviders();
-      const owner = providers.find((x) => x.id === providerId);
-      const content = owner ? await owner.getDetails(type, id).catch(() => null) : null;
+      const content = await loadDetails(providers, providerId, type, id);
       if (cancelled) return;
       if (!content) return setScreen({ kind: "error", message: "Couldn't load details for this title." });
       // The source the person just picked comes straight from the source list: nothing to look up again, so an addon whose ids change between
