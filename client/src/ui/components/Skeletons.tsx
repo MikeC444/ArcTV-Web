@@ -46,6 +46,9 @@ export function RowsSkeleton({ rows = 4 }: { rows?: number }) {
   );
 }
 
+/** One grey poster shape inside a poster grid (it takes a grid cell, like a card). */
+export const PosterPlaceholder = () => <Shimmer style={{ aspectRatio: "2 / 3", width: "100%" }} />;
+
 export function GridSkeleton({ title, back, headExtra }: { title: string; back?: string; headExtra?: React.ReactNode }) {
   return (
     <div style={{ paddingTop: `calc(var(--nav-h) + ${dp(24)})` }} aria-busy="true" aria-label="Loading">
