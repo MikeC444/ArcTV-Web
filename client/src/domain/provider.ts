@@ -5,6 +5,7 @@ import { AddonHttpError, describeAddonError, fetchCatalog, fetchMeta, fetchStrea
 import { isLiveType, type LiveChannel, type LiveType } from "./live";
 import { metaToContent, previewToChannel, previewToContent, streamToStream } from "./stremio/mapper";
 import type { AddonCatalogDef, AddonManifest, Content, ContentType, HomeSection, Stream } from "./types";
+import { serviceOfCatalog } from "./streamingServices";
 
 /**
  * Port of data/provider/{CatalogProvider,StremioAddonProvider}.kt. The UI only ever talks to providers through
@@ -48,6 +49,11 @@ export interface CatalogProvider {
   /** The addon's anime titles, optionally one genre; `getMoreAnimeItems` reads the following pages. */
   getAnimeItems?(genre?: string): Promise<Content[]>;
   getMoreAnimeItems?(page: number, genre?: string): Promise<Content[]>;
+  /** The streaming services (Netflix, Disney+ ...) the addon has catalogues for, read from the manifest with no request. */
+  streamingServices?(): string[];
+  /** One service's titles (movies and series together); `getMoreServiceItems` reads the following pages. */
+  getServiceItems?(service: string): Promise<Content[]>;
+  getMoreServiceItems?(page: number, service: string): Promise<Content[]>;
   /** True when the addon can be searched for anime (it has anime catalogues): Search then adds an anime-only line. */
   readonly hasAnimeSearch?: boolean;
   searchAnime?(query: string, onPartial?: (items: Content[]) => void): Promise<Content[]>;
@@ -134,6 +140,8 @@ export function uniqueStreamIds(streams: Stream[]): Stream[] {
 const isYear = (value: string): boolean => /^\d+$/.test(value) && Number(value) >= 1900 && Number(value) <= 2100;
 const genreExtra = (catalog: AddonCatalogDef) => catalog.extra.find((extra) => extra.name === "genre");
 const isBaseCatalog = (catalog: AddonCatalogDef) => genreExtra(catalog)?.isRequired !== true;
+/** A catalogue a service's page can read: it asks for nothing except (at most) a genre or a page. */
+const isBrowsableCatalog = (catalog: AddonCatalogDef) => catalog.extra.every((extra) => !extra.isRequired || extra.name === "genre" || extra.name === "skip");
 const stremioTypeOf = (type: ContentType) => (type === "TV_SHOW" ? "series" : "movie");
 
 export class StremioAddonProvider implements CatalogProvider {
@@ -142,6 +150,7 @@ export class StremioAddonProvider implements CatalogProvider {
   private readonly supported: AddonCatalogDef[];
   private readonly animeCatalogs: AddonCatalogDef[];
   private readonly animeSearchCatalogs: AddonCatalogDef[];
+  private readonly serviceCatalogs: Map<string, AddonCatalogDef[]>;
   private readonly liveCatalogs: AddonCatalogDef[];
   private readonly liveSearchCatalogs: AddonCatalogDef[];
 
@@ -154,6 +163,11 @@ export class StremioAddonProvider implements CatalogProvider {
     this.supported = manifest.catalogs.filter((catalog) => SUPPORTED_CATALOG_TYPES.has(catalog.type));
     this.animeCatalogs = manifest.catalogs.filter(isUsableAnimeCatalog);
     this.animeSearchCatalogs = manifest.catalogs.filter(isSearchableAnimeCatalog);
+    this.serviceCatalogs = new Map();
+    for (const catalog of this.supported.filter((c) => isBrowsableCatalog(c) && isBaseCatalog(c))) {
+      const service = serviceOfCatalog(catalog);
+      if (service) this.serviceCatalogs.set(service, [...(this.serviceCatalogs.get(service) ?? []), catalog]);
+    }
     this.liveCatalogs = manifest.catalogs.filter(isUsableLiveCatalog);
     this.liveSearchCatalogs = manifest.catalogs.filter(isSearchableLiveCatalog);
   }
@@ -203,6 +217,21 @@ export class StremioAddonProvider implements CatalogProvider {
   async getMoreAnimeItems(page: number, genre?: string): Promise<Content[]> {
     const catalogs = this.animeCatalogsFor(genre);
     return catalogs.length === 0 ? [] : this.fetchPage(catalogs, genre ? { genre } : {}, page);
+  }
+
+  streamingServices(): string[] {
+    return [...this.serviceCatalogs.keys()];
+  }
+
+  async getServiceItems(service: string): Promise<Content[]> {
+    const catalogs = this.serviceCatalogs.get(service) ?? [];
+    const perCatalog = await Promise.all(catalogs.map((catalog) => this.safeCatalog(catalog, {})));
+    return distinctBy(interleave(perCatalog), (c) => c.id);
+  }
+
+  async getMoreServiceItems(page: number, service: string): Promise<Content[]> {
+    const catalogs = this.serviceCatalogs.get(service) ?? [];
+    return catalogs.length === 0 ? [] : this.fetchPage(catalogs, {}, page);
   }
 
   get hasLiveTv(): boolean {

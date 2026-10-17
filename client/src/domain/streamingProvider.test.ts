@@ -1,0 +1,49 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { StremioAddonProvider } from "./provider";
+import type { AddonManifest } from "./types";
+
+const client = vi.hoisted(() => ({ fetchCatalog: vi.fn(), fetchMeta: vi.fn(), fetchStreams: vi.fn() }));
+vi.mock("./stremio/client", async (importOriginal) => ({ ...(await importOriginal<typeof import("./stremio/client")>()), ...client }));
+
+const manifest = (over: Partial<AddonManifest>): AddonManifest => ({ id: "a", name: "Addon", version: "1", description: null, logo: null, background: null, types: [], resources: [], idPrefixes: [], catalogs: [], ...over });
+const catalog = (id: string, type: string, name = id, extra: AddonManifest["catalogs"][number]["extra"] = []) => ({ type, id, name, extra });
+const preview = (id: string, type = "movie") => ({ id, type, name: id });
+
+beforeEach(() => {
+  client.fetchCatalog.mockReset();
+});
+
+describe("streaming service catalogues", () => {
+  it("finds the services an addon has catalogues for, from its manifest", () => {
+    const provider = new StremioAddonProvider(
+      "https://a/manifest.json",
+      manifest({ catalogs: [catalog("nfx", "movie", "Netflix"), catalog("nfx", "series", "Netflix"), catalog("dnp", "movie", "Disney+"), catalog("top", "movie", "Popular")] }),
+    );
+    expect(provider.streamingServices()).toEqual(["netflix", "disney"]);
+  });
+
+  it("has none when no catalogue is a service, and ignores one that needs a search or other input", () => {
+    expect(new StremioAddonProvider("https://a/manifest.json", manifest({ catalogs: [catalog("top", "movie", "Popular")] })).streamingServices()).toEqual([]);
+    const needsSearch = catalog("nfx", "movie", "Netflix", [{ name: "search", isRequired: true, options: null, optionsLimit: null }]);
+    expect(new StremioAddonProvider("https://a/manifest.json", manifest({ catalogs: [needsSearch] })).streamingServices()).toEqual([]);
+  });
+
+  it("reads one service's movies and series together, and the following pages", async () => {
+    const provider = new StremioAddonProvider("https://a/manifest.json", manifest({ catalogs: [catalog("nfx", "movie", "Netflix"), catalog("nfx", "series", "Netflix"), catalog("dnp", "movie", "Disney+")] }));
+    client.fetchCatalog.mockImplementation(async (_url: string, type: string) => [preview(`${type}-1`, type)]);
+    const items = await provider.getServiceItems("netflix");
+    expect(items.map((c) => c.id).sort()).toEqual(["movie-1", "series-1"]);
+    expect(client.fetchCatalog).toHaveBeenCalledTimes(2);
+    expect(client.fetchCatalog).not.toHaveBeenCalledWith("https://a/manifest.json", "movie", "dnp", {});
+    client.fetchCatalog.mockClear();
+    await provider.getMoreServiceItems(2, "netflix");
+    expect(client.fetchCatalog).toHaveBeenCalledWith("https://a/manifest.json", "movie", "nfx", { skip: "200" });
+  });
+
+  it("returns nothing for a service the addon does not have", async () => {
+    const provider = new StremioAddonProvider("https://a/manifest.json", manifest({ catalogs: [catalog("nfx", "movie", "Netflix")] }));
+    expect(await provider.getServiceItems("hulu")).toEqual([]);
+    expect(await provider.getMoreServiceItems(2, "hulu")).toEqual([]);
+    expect(client.fetchCatalog).not.toHaveBeenCalled();
+  });
+});

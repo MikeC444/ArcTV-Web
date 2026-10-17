@@ -10,7 +10,8 @@ import { playPreview } from "../../lib/sounds";
 import { routes } from "../../lib/routes";
 import { useAddons, CINEMETA_MANIFEST_URL } from "../../state/addons";
 import { useAuth } from "../../state/auth";
-import { useAddonsReady } from "../../state/hooks";
+import { useAddonsReady, useStreamingServices } from "../../state/hooks";
+import { serviceRowId, streamingServiceById } from "../../domain/streamingServices";
 import { buildGenreList } from "../../domain/genreList";
 import { ApiClientError } from "../../lib/api";
 import { usePlus, watchForPurchase, type PlusPlanId } from "../../state/plus";
@@ -664,6 +665,7 @@ function HomeRowsPane() {
   const prefs = useSettings((s) => s.homeRows);
   const setRowHidden = useSettings((s) => s.setRowHidden);
   const setRowOrder = useSettings((s) => s.setRowOrder);
+  const services = useStreamingServices();
   const [rows, setRows] = useState<HomeSection[] | null>(null);
   useEffect(() => {
     if (!ready || providers.length === 0) return setRows(null);
@@ -693,6 +695,26 @@ function HomeRowsPane() {
   if (rows.length === 0) return <p className="c-text-2 t-body-md">Your installed addons aren't reporting any rows right now.</p>;
   return (
     <div>
+      {services.length > 0 ? (
+        <>
+          <h3 className="t-label-lg" style={{ margin: "0 0 4px" }}>Streaming services</h3>
+          <p className="t-body-sm c-text-2" style={{ margin: "0 0 8px" }}>Your addons offer these. Turn off the ones you don't want as tiles on Home.</p>
+          <ul className="homerows" style={{ marginBottom: 18 }}>
+            {services.map((id) => {
+              const name = streamingServiceById(id)?.name ?? id;
+              const visible = !prefs.hiddenRowIds.includes(serviceRowId(id));
+              return (
+                <li key={id} className="homerow">
+                  <Surface className="homerow__toggle" scale={1.02} borderColor="var(--text)" onClick={() => setRowHidden(serviceRowId(id), visible)} role="switch" ariaLabel={`${name} tile`} ariaChecked={visible}>
+                    <span className="t-body-md" style={{ flex: 1, color: visible ? "var(--text)" : "var(--text-3)" }}>{name}</span>
+                    <Switch checked={visible} white />
+                  </Surface>
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      ) : null}
       <p className="t-body-sm c-text-2" style={{ margin: "0 0 8px" }}>Toggle categories on or off, and use the arrows to reorder them.</p>
       <ul className="homerows">
         {ordered.map((row, index) => {

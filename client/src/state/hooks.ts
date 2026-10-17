@@ -6,6 +6,8 @@ import type { Content, HomeSection } from "../domain/types";
 import { useAddons } from "./addons";
 import { FEATURES } from "../lib/features";
 import { useAuth } from "./auth";
+import { useSettings } from "./settings";
+import { orderServices, visibleServices } from "../domain/streamingServices";
 import { useMyList } from "./myList";
 
 /** Ids of titles that are My-List entries with watched = true — every screen stamps this onto the cards it shows. */
@@ -45,6 +47,19 @@ export function useAccountAction<A extends unknown[]>(action: (...args: A) => vo
 
 /** True while an installed addon has anime catalogues: the Anime tab shows only then. */
 export const useHasAnime = (): boolean => useProviders((s) => s.providers.some((p) => p.hasAnime === true));
+
+/** The streaming services (Netflix, Disney+ ...) that at least one installed addon has a catalogue for, in tile order. */
+export function useStreamingServices(): string[] {
+  const providers = useProviders((s) => s.providers);
+  return useMemo(() => orderServices(providers.flatMap((p) => p.streamingServices?.() ?? [])), [providers]);
+}
+
+/** The same, without the ones the person turned off in Settings → Home Rows: these are the tiles Home shows. */
+export function useVisibleStreamingServices(): string[] {
+  const services = useStreamingServices();
+  const hidden = useSettings((s) => s.homeRows.hiddenRowIds);
+  return useMemo(() => visibleServices(services, hidden), [services, hidden]);
+}
 
 /** True while an installed addon has channel or event catalogues: the Live TV tab shows only then, and never while the feature is switched off (lib/features.ts). */
 export function useHasLiveTv(): boolean {

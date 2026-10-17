@@ -53,6 +53,8 @@ export const routes = {
   movies: "/movies",
   tv: "/tv",
   anime: "/anime",
+  /** One streaming service's titles (Netflix, Disney+ ...), from an installed addon that has a catalogue for it. */
+  streaming: (service: string) => `/streaming/${enc(service)}`,
   live: "/live",
   /** Watching one channel (or event). Full screen, like the player. The addon's own type ("tv" / "events") says what to ask it for. */
   liveChannel: (providerId: string, type: string, id: string) => `/live/watch/${enc(providerId)}/${enc(type)}/${enc(id)}`,
