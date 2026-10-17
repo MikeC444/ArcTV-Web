@@ -82,6 +82,8 @@ export const setHomeVarietySeed = (seed: string): void => {
 const PAGE_WEIGHTS = [5, 3, 2];
 const NEW_PAGE_WEIGHTS = [6, 4];
 
+/** An addon with catalogues for at least this many streaming services is a streaming-catalogue addon (one service is just a catalogue called "Netflix Originals"). */
+const MIN_SERVICES_FOR_SERVICE_ADDON = 3;
 const SUPPORTED_CATALOG_TYPES = new Set(["movie", "series"]);
 /** The catalogue type anime addons use. Its titles are shown on the Anime tab, which only exists while an installed addon has such a catalogue. */
 const ANIME_TYPE = "anime";
@@ -160,14 +162,19 @@ export class StremioAddonProvider implements CatalogProvider {
   ) {
     this.id = manifest.id;
     this.name = manifest.name;
-    this.supported = manifest.catalogs.filter((catalog) => SUPPORTED_CATALOG_TYPES.has(catalog.type));
+    const usable = manifest.catalogs.filter((catalog) => SUPPORTED_CATALOG_TYPES.has(catalog.type));
     this.animeCatalogs = manifest.catalogs.filter(isUsableAnimeCatalog);
     this.animeSearchCatalogs = manifest.catalogs.filter(isSearchableAnimeCatalog);
     this.serviceCatalogs = new Map();
-    for (const catalog of this.supported.filter((c) => isBrowsableCatalog(c) && isBaseCatalog(c))) {
+    for (const catalog of usable.filter((c) => isBrowsableCatalog(c) && isBaseCatalog(c))) {
       const service = serviceOfCatalog(catalog);
       if (service) this.serviceCatalogs.set(service, [...(this.serviceCatalogs.get(service) ?? []), catalog]);
     }
+    // An addon made of streaming-service catalogues (Streaming Catalogs: dozens of them) is shown through the service tiles and pages. Left in the
+    // ordinary rows, all of its catalogues would be merged into one huge row named after the first one ("Netflix, 2431 titles") that is not Netflix at all.
+    const serviceOnly = this.serviceCatalogs.size >= MIN_SERVICES_FOR_SERVICE_ADDON;
+    const inService = new Set([...this.serviceCatalogs.values()].flat());
+    this.supported = serviceOnly ? usable.filter((catalog) => !inService.has(catalog)) : usable;
     this.liveCatalogs = manifest.catalogs.filter(isUsableLiveCatalog);
     this.liveSearchCatalogs = manifest.catalogs.filter(isSearchableLiveCatalog);
   }

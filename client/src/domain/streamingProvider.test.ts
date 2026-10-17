@@ -52,4 +52,25 @@ describe("streaming service catalogues", () => {
     expect(await provider.getMoreServiceItems(2, "hulu")).toEqual([]);
     expect(client.fetchCatalog).not.toHaveBeenCalled();
   });
+
+  it("keeps a streaming-catalogue addon's service catalogues out of the ordinary rows (they would merge into one row named after the first)", async () => {
+    const provider = new StremioAddonProvider(
+      "https://a/manifest.json",
+      manifest({ catalogs: [catalog("nfx", "movie", "Netflix"), catalog("dnp", "movie", "Disney+"), catalog("hlu", "movie", "Hulu")] }),
+    );
+    const rows: unknown[] = [];
+    for await (const batch of provider.getHomeSections()) rows.push(...batch);
+    expect(rows).toEqual([]);
+    expect(client.fetchCatalog).not.toHaveBeenCalled();
+    expect(provider.streamingServices()).toEqual(["netflix", "disney", "hulu"]);
+  });
+
+  it("keeps an ordinary addon's one catalogue that merely mentions a service as a row", async () => {
+    client.fetchCatalog.mockResolvedValue([preview("tt1")]);
+    const provider = new StremioAddonProvider("https://a/manifest.json", manifest({ catalogs: [catalog("top", "movie", "Popular"), catalog("nfx", "movie", "Netflix Originals")] }));
+    const rows: Array<{ items: unknown[] }> = [];
+    for await (const batch of provider.getHomeSections()) rows.push(...batch);
+    expect(rows).toHaveLength(1);
+    expect(client.fetchCatalog).toHaveBeenCalledTimes(2);
+  });
 });

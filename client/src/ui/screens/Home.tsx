@@ -1,10 +1,11 @@
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState, type CSSProperties } from "react";
 import { MdAdd, MdCheck, MdInfo, MdPause, MdPlayArrow, MdTheaters } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import type { Content, HomeSection } from "../../domain/types";
 import { formatRuntime } from "../../lib/format";
 import { sharpBackdrop } from "../../lib/imageSize";
 import { preloadHero } from "../../lib/preload";
+import { backdropColor, toCss } from "../../lib/washColor";
 import { routes } from "../../lib/routes";
 import { useHome } from "../../state/homeData";
 import { usePickedForYou } from "../../state/recommendations";
@@ -26,7 +27,7 @@ const HERO_SLIDE_MS = 650;
 type Leaving = { index: number; dir: "next" | "prev" };
 
 /** ui/home/HeroSection.kt — rotating full-bleed featured title with Ken-Burns backdrop and Play / + / Info. The dots at the bottom jump to a title. */
-function Hero({ items }: { items: Content[] }) {
+function Hero({ items, onColor }: { items: Content[]; onColor: (css: string | null) => void }) {
   const navigate = useNavigate();
   const saved = useSavedIds();
   const toggle = useAccountAction(useMyList((s) => s.toggle));
@@ -68,6 +69,17 @@ function Hero({ items }: { items: Content[] }) {
   }, [leaving]);
 
   const current = items[index % items.length];
+  // the soft light behind the hero follows the title on show; a picture without a readable colour leaves the page neutral
+  const currentBackdrop = current?.backdropUrl ?? null;
+  useEffect(() => {
+    let live = true;
+    if (!currentBackdrop) onColor(null);
+    else void backdropColor(currentBackdrop).then((c) => live && onColor(c ? toCss(c) : null));
+    return () => {
+      live = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentBackdrop]);
   // one trailer lookup per slide, made when it comes into view (visitors without an account are asked to sign in when they press the button)
   const trailer = useTrailer(current, signedIn);
   if (!current) return null;
@@ -187,14 +199,16 @@ export function Home() {
     document.title = "Arc TV";
   }, []);
 
+  const [wash, setWash] = useState<string | null>(null);
   const rows = state.kind === "success" ? withPicked(state.sections, picked.section) : [];
   const tilesAt = rows[0]?.style === "CONTINUE_WATCHING" ? 1 : 0;
   if (state.kind === "loading") return <HomeSkeleton />;
   if (state.kind === "error") return <FullScreenError message={state.message} onRetry={reload} />;
   if (state.kind === "empty") return <div style={{ paddingTop: "var(--nav-h)" }}><HomeEmptyState /></div>;
   return (
-    <div className="home">
-      <Hero items={state.hero} />
+    <div className="home" style={wash ? ({ "--wash": wash } as CSSProperties) : undefined}>
+      <Hero items={state.hero} onColor={setWash} />
+      <div className="home__wash" aria-hidden="true" data-on={wash ? "true" : "false"} />
       <div className="home__rows">
         {rows.map((section, index) => (
           <Fragment key={section.id}>
