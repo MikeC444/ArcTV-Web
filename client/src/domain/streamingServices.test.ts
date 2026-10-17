@@ -16,6 +16,15 @@ describe("serviceOfCatalog", () => {
     expect(serviceOfCatalog({ id: "streaming.dnp", name: "" })).toBe("disney");
     expect(serviceOfCatalog({ id: "amp" })).toBe("prime");
   });
+  it("knows the other services, and picks the most specific one", () => {
+    expect(serviceOfCatalog({ id: "x", name: "Peacock" })).toBe("peacock");
+    expect(serviceOfCatalog({ id: "x", name: "Sky Showtime" })).toBe("skyshowtime");
+    expect(serviceOfCatalog({ id: "x", name: "Sky Cinema" })).toBe("sky");
+    expect(serviceOfCatalog({ id: "x", name: "Netflix Kids" })).toBe("netflixkids");
+    expect(serviceOfCatalog({ id: "x", name: "Netflix" })).toBe("netflix");
+    expect(serviceOfCatalog({ id: "x", name: "BBC iPlayer" })).toBe("iplayer");
+    expect(serviceOfCatalog({ id: "x", name: "Crunchyroll" })).toBe("crunchyroll");
+  });
   it("leaves other catalogues alone", () => {
     expect(serviceOfCatalog({ id: "top", name: "Popular" })).toBeNull();
     expect(serviceOfCatalog({ id: "year", name: "New" })).toBeNull();

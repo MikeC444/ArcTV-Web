@@ -12,7 +12,7 @@ export interface StreamingService {
   words: string[];
 }
 
-/** In the order the tiles appear. */
+/** In the order the tiles appear: the best known first, then the rest A to Z. */
 export const STREAMING_SERVICES: readonly StreamingService[] = [
   { id: "netflix", name: "Netflix", words: ["netflix", "nfx"] },
   { id: "disney", name: "Disney+", words: ["disney", "disneyplus", "dnp"] },
@@ -21,6 +21,29 @@ export const STREAMING_SERVICES: readonly StreamingService[] = [
   { id: "apple", name: "Apple TV+", words: ["apple", "appletv", "atp"] },
   { id: "paramount", name: "Paramount+", words: ["paramount", "paramountplus", "pmp"] },
   { id: "hulu", name: "Hulu", words: ["hulu", "hlu"] },
+  { id: "peacock", name: "Peacock", words: ["peacock"] },
+  { id: "crunchyroll", name: "Crunchyroll", words: ["crunchyroll"] },
+  { id: "skyshowtime", name: "SkyShowtime", words: ["skyshowtime"] },
+  { id: "britbox", name: "BritBox", words: ["britbox"] },
+  { id: "itvx", name: "ITVX", words: ["itvx"] },
+  { id: "acorn", name: "Acorn TV", words: ["acorn", "acorntv"] },
+  { id: "iplayer", name: "BBC iPlayer", words: ["iplayer", "bbciplayer"] },
+  { id: "canal", name: "Canal+", words: ["canal", "canalplus"] },
+  { id: "channel4", name: "Channel 4", words: ["channel4", "all4"] },
+  { id: "claro", name: "Claro video", words: ["claro", "clarovideo"] },
+  { id: "criterion", name: "Criterion Channel", words: ["criterion"] },
+  { id: "globoplay", name: "Globoplay", words: ["globoplay"] },
+  { id: "hayu", name: "Hayu", words: ["hayu"] },
+  { id: "iqiyi", name: "iQIYI", words: ["iqiyi"] },
+  { id: "movistar", name: "Movistar+", words: ["movistar"] },
+  { id: "mubi", name: "MUBI", words: ["mubi"] },
+  { id: "netflixkids", name: "Netflix Kids", words: ["netflixkids"] },
+  { id: "sky", name: "Sky", words: ["sky"] },
+  { id: "sonyliv", name: "Sony LIV", words: ["sonyliv"] },
+  { id: "starz", name: "Starz", words: ["starz"] },
+  { id: "videoland", name: "Videoland", words: ["videoland"] },
+  { id: "viki", name: "Viki", words: ["viki"] },
+  { id: "zee5", name: "ZEE5", words: ["zee5", "z5"] },
 ];
 
 const BY_ID = new Map(STREAMING_SERVICES.map((s) => [s.id, s]));
@@ -28,13 +51,26 @@ export const streamingServiceById = (id: string): StreamingService | undefined =
 
 const tokens = (text: string | null | undefined): string[] => (text ?? "").toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
 
-/** Which service a catalogue is for (by its name first, then its id), or null when it is not one of them. */
+/** Words of eight letters or more also count when they sit inside the whole name run together ("Netflix Kids" is "netflixkids", "Sky Showtime" is "skyshowtime"). */
+const LONG_WORD = 8;
+
+/**
+ * Which service a catalogue is for (by its name first, then its id), or null when it is not one of them. When more than one service fits ("Netflix Kids"
+ * is both Netflix Kids and Netflix, "Sky Showtime" both SkyShowtime and Sky) the longest matching word wins.
+ */
 export function serviceOfCatalog(catalog: Pick<AddonCatalogDef, "id" | "name">): string | null {
   for (const source of [catalog.name, catalog.id]) {
     const found = tokens(source);
     if (found.length === 0) continue;
-    const hit = STREAMING_SERVICES.find((s) => s.words.some((w) => found.includes(w)));
-    if (hit) return hit.id;
+    const compact = found.join("");
+    let best: { id: string; length: number } | null = null;
+    for (const service of STREAMING_SERVICES) {
+      for (const word of service.words) {
+        const hit = found.includes(word) || (word.length >= LONG_WORD && compact.includes(word));
+        if (hit && (!best || word.length > best.length)) best = { id: service.id, length: word.length };
+      }
+    }
+    if (best) return best.id;
   }
   return null;
 }
