@@ -513,3 +513,6 @@
 @media (min-width: 721px) { .row--streaming .card[data-cw="true"] { width: calc((100% - 4 * var(--poster-gap)) / 5); } }
 /* Every streaming-service tile is black; a faint edge keeps it visible against the dark page. */
 .row--streaming .card__surface:not(:hover):not(:focus-visible) { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1); }
+/* A logo drawn in one colour on its service's own tile colour (Paramount+, Hulu and Crunchyroll in white, ITVX in black). */
+.svc__logo img[data-logo="white"] { filter: brightness(0) invert(1); }
+.svc__logo img[data-logo="black"] { filter: brightness(0); }
