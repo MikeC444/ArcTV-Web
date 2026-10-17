@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { inUserOrder, isServiceRowId, moveService, orderServices, serviceOfCatalog, serviceRowId, visibleServices, withServiceOrder } from "./streamingServices";
+import { inUserOrder, isServiceRowId, isServiceVisible, moveService, orderServices, serviceOfCatalog, serviceRowId, STREAMING_SERVICES, visibleServices, withServiceOrder, withServiceVisible } from "./streamingServices";
 
 describe("serviceOfCatalog", () => {
   it("finds a service from the catalogue's name", () => {
@@ -61,5 +61,34 @@ describe("the person's own order of services", () => {
     expect(withServiceOrder(["row1", "streaming:a", "row2"], ["b", "a"])).toEqual(["row1", "row2", "streaming:b", "streaming:a"]);
     expect(isServiceRowId("streaming:a")).toBe(true);
     expect(isServiceRowId("row1")).toBe(false);
+  });
+});
+
+describe("services that are off until the person turns them on", () => {
+  it("shows the default ones, and hides the others, until the person decides", () => {
+    expect(isServiceVisible("netflix", [])).toBe(true);
+    expect(isServiceVisible("shudder", [])).toBe(true);
+    expect(isServiceVisible("crunchyroll", [])).toBe(false);
+    expect(isServiceVisible("starz", [])).toBe(false);
+  });
+  it("turning one on or off is remembered, and turning a default one off wins", () => {
+    const on = withServiceVisible([], "crunchyroll", true);
+    expect(isServiceVisible("crunchyroll", on)).toBe(true);
+    expect(isServiceVisible("crunchyroll", withServiceVisible(on, "crunchyroll", false))).toBe(false);
+    expect(withServiceVisible(withServiceVisible(on, "crunchyroll", false), "crunchyroll", true)).toEqual(on);
+    const off = withServiceVisible(["row_x"], "netflix", false);
+    expect(off).toEqual(["row_x", "streaming:netflix"]);
+    expect(isServiceVisible("netflix", off)).toBe(false);
+    expect(withServiceVisible(off, "netflix", true)).toEqual(["row_x"]);
+  });
+  it("keeps the default order with Shudder well back, and every service listed once", () => {
+    const ids = STREAMING_SERVICES.map((s) => s.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(ids.slice(0, 10)).toEqual(["netflix", "prime", "apple", "max", "disney", "paramount", "hulu", "peacock", "iplayer", "shudder"]);
+    expect(STREAMING_SERVICES.filter((s) => !s.off).map((s) => s.id)).toEqual(ids.slice(0, 10));
+  });
+  it("knows the services in the real addon's full platform list", () => {
+    const names = ["Netflix", "Disney+", "Prime Video", "Apple TV+", "HBO Max", "Paramount+", "Hulu", "Peacock", "Crunchyroll", "MagellanTV", "Curiosity Stream", "Netflix Kids", "Hayu", "Clarovideo", "Globoplay", "JioHotstar", "SkyShowtime", "Videoland", "NLZIET", "Zee5", "Starz", "Discovery+", "Mubi", "Sky Go", "Sony Liv", "Movistar+", "Rakuten Viki", "Canal+", "BritBox", "Shudder", "BBC iPlayer", "Channel 4", "Criterion Channel", "iQIYI", "ITVX", "Acorn TV"];
+    for (const name of names) expect(serviceOfCatalog({ id: "x", name }), name).not.toBeNull();
   });
 });
