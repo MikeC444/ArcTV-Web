@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { orderServices, serviceOfCatalog, serviceRowId, visibleServices } from "./streamingServices";
+import { orderServices, serviceOfCatalog, serviceRowId, visibleServices, withMetaOwner } from "./streamingServices";
+import type { Content } from "./types";
 
 describe("serviceOfCatalog", () => {
   it("finds a service from the catalogue's name", () => {
@@ -40,5 +41,17 @@ describe("orderServices / visibleServices", () => {
   it("hides the ones the person turned off in Home Rows", () => {
     expect(visibleServices(["netflix", "disney"], [serviceRowId("disney")])).toEqual(["netflix"]);
     expect(visibleServices(["netflix"], ["something-else"])).toEqual(["netflix"]);
+  });
+});
+
+describe("withMetaOwner", () => {
+  const title = (id: string, providerId: string): Content => ({ id, type: "MOVIE", title: id, description: "", posterUrl: null, backdropUrl: null, genres: [], cast: [], seasons: [], watched: false, providerId });
+  it("opens an IMDb title from the metadata addon while that addon is installed", () => {
+    const out = withMetaOwner([title("tt1", "stream"), title("kitsu:2", "stream"), title("tt3", "meta")], ["stream", "meta"], "meta");
+    expect(out.map((c) => c.providerId)).toEqual(["meta", "stream", "meta"]);
+  });
+  it("leaves everything alone when the metadata addon is not installed", () => {
+    const items = [title("tt1", "stream")];
+    expect(withMetaOwner(items, ["stream"], "meta")).toBe(items);
   });
 });
