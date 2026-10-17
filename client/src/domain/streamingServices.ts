@@ -88,3 +88,30 @@ export const serviceRowId = (service: string): string => `streaming:${service}`;
 
 /** Which of these services the person has not hidden. */
 export const visibleServices = (services: string[], hiddenRowIds: readonly string[]): string[] => services.filter((s) => !hiddenRowIds.includes(serviceRowId(s)));
+
+/** Is this entry in the Home Rows order a streaming service's (rather than an ordinary row's)? */
+export const isServiceRowId = (id: string): boolean => id.startsWith("streaming:");
+
+/**
+ * Services in the person's own order: the ones they have placed (in the Home Rows order list, as `streaming:<id>`) in that order, then any not placed yet in
+ * the default tile order. So a service an addon brings later joins at the end instead of jumping to the front.
+ */
+export function inUserOrder(services: readonly string[], order: readonly string[]): string[] {
+  const placed = order.filter(isServiceRowId).map((entry) => entry.slice("streaming:".length)).filter((id) => services.includes(id));
+  const placedSet = new Set(placed);
+  return [...new Set(placed), ...services.filter((id) => !placedSet.has(id))];
+}
+
+/** One service moved up or down among `current`; null when it cannot move that way. */
+export function moveService(current: readonly string[], service: string, delta: number): string[] | null {
+  const ids = current.slice();
+  const at = ids.indexOf(service);
+  const to = at + delta;
+  if (at < 0 || to < 0 || to >= ids.length) return null;
+  ids.splice(at, 1);
+  ids.splice(to, 0, service);
+  return ids;
+}
+
+/** The Home Rows order list with the services' part replaced by `services` (in that order); ordinary rows' entries are kept as they were. */
+export const withServiceOrder = (order: readonly string[], services: readonly string[]): string[] => [...order.filter((id) => !isServiceRowId(id)), ...services.map(serviceRowId)];

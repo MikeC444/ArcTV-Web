@@ -11,7 +11,7 @@ import { routes } from "../../lib/routes";
 import { useAddons, CINEMETA_MANIFEST_URL } from "../../state/addons";
 import { useAuth } from "../../state/auth";
 import { useAddonsReady, useStreamingServices } from "../../state/hooks";
-import { serviceRowId, streamingServiceById } from "../../domain/streamingServices";
+import { moveService, serviceRowId, streamingServiceById } from "../../domain/streamingServices";
 import { buildGenreList } from "../../domain/genreList";
 import { ApiClientError } from "../../lib/api";
 import { usePlus, watchForPurchase, type PlusPlanId } from "../../state/plus";
@@ -666,6 +666,7 @@ function HomeRowsPane() {
   const setRowHidden = useSettings((s) => s.setRowHidden);
   const setRowOrder = useSettings((s) => s.setRowOrder);
   const services = useStreamingServices();
+  const setServiceOrder = useSettings((s) => s.setServiceOrder);
   const [rows, setRows] = useState<HomeSection[] | null>(null);
   useEffect(() => {
     if (!ready || providers.length === 0) return setRows(null);
@@ -698,17 +699,23 @@ function HomeRowsPane() {
       {services.length > 0 ? (
         <>
           <h3 className="t-label-lg" style={{ margin: "0 0 4px" }}>Streaming services</h3>
-          <p className="t-body-sm c-text-2" style={{ margin: "0 0 8px" }}>Your addons offer these. Turn off the ones you don't want as tiles on Home.</p>
+          <p className="t-body-sm c-text-2" style={{ margin: "0 0 8px" }}>Your addons offer these. Turn off the ones you don't want as tiles on Home, and use the arrows to put them in your order.</p>
           <ul className="homerows" style={{ marginBottom: 18 }}>
-            {services.map((id) => {
+            {services.map((id, position) => {
               const name = streamingServiceById(id)?.name ?? id;
               const visible = !prefs.hiddenRowIds.includes(serviceRowId(id));
+              const move = (delta: number) => {
+                const next = moveService(services, id, delta);
+                if (next) setServiceOrder(next);
+              };
               return (
                 <li key={id} className="homerow">
                   <Surface className="homerow__toggle" scale={1.02} borderColor="var(--text)" onClick={() => setRowHidden(serviceRowId(id), visible)} role="switch" ariaLabel={`${name} tile`} ariaChecked={visible}>
                     <span className="t-body-md" style={{ flex: 1, color: visible ? "var(--text)" : "var(--text-3)" }}>{name}</span>
                     <Switch checked={visible} white />
                   </Surface>
+                  <Surface className="homerow__move" radius="8px" background="var(--surface)" borderColor="var(--text)" onClick={() => move(-1)} disabled={position === 0} ariaLabel={`Move ${name} up`}><MdArrowUpward /></Surface>
+                  <Surface className="homerow__move" radius="8px" background="var(--surface)" borderColor="var(--text)" onClick={() => move(1)} disabled={position === services.length - 1} ariaLabel={`Move ${name} down`}><MdArrowDownward /></Surface>
                 </li>
               );
             })}

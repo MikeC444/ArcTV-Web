@@ -53,4 +53,19 @@ describe("StreamingTiles", () => {
     show();
     expect(screen.queryByText("Streaming services")).toBeNull();
   });
+
+  it("shows the tiles in the person's own order", () => {
+    useProviders.setState({ providers: [provider(["netflix", "disney", "hulu"])] });
+    useSettings.setState({ homeRows: { order: ["streaming:hulu", "streaming:netflix"], hiddenRowIds: [] } });
+    show();
+    expect(screen.getAllByRole("link").map((a) => a.getAttribute("href"))).toEqual(["/streaming/hulu", "/streaming/netflix", "/streaming/disney"]);
+  });
+
+  it("keeps the services' place when the ordinary rows are reordered, and the rows' place when the services are", () => {
+    useSettings.setState({ homeRows: { order: ["row_a", "streaming:hulu", "row_b"], hiddenRowIds: [] } });
+    useSettings.getState().setRowOrder(["row_b", "row_a"]);
+    expect(useSettings.getState().homeRows.order).toEqual(["row_b", "row_a", "streaming:hulu"]);
+    useSettings.getState().setServiceOrder(["netflix", "hulu"]);
+    expect(useSettings.getState().homeRows.order).toEqual(["row_b", "row_a", "streaming:netflix", "streaming:hulu"]);
+  });
 });

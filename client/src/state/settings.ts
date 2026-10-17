@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { DEFAULT_HOME_ROW_PREFERENCES, DEFAULT_PLAYER_PREFERENCES, type HomeRowPreferences, type PlayerPreferences } from "../domain/types";
+import { isServiceRowId, withServiceOrder } from "../domain/streamingServices";
 import { api, ApiClientError } from "../lib/api";
 import { isoMs, monotonicIso } from "../lib/iso";
 import { globalKey, Outbox, readJson, writeJson } from "./persist";
@@ -38,6 +39,8 @@ interface SettingsState {
   reset(): void;
   setRowHidden(rowId: string, hidden: boolean): void;
   setRowOrder(order: string[]): void;
+  /** The order of the streaming-service tiles (kept in the same list as the rows' order, as `streaming:<id>`). */
+  setServiceOrder(services: string[]): void;
   setPlayer(patch: Partial<PlayerPreferences>): void;
   setBlockedGenres(genres: string[]): void;
   /** Starts Your stats again from this time (now, for the Reset stats button). There is no way back: it only ever moves forward. */
@@ -145,7 +148,13 @@ export const useSettings = create<SettingsState>((set, get) => {
       changed();
     },
     setRowOrder(order) {
-      set({ homeRows: { ...get().homeRows, order } });
+      // the rows' order never drops the streaming tiles' place in the same list
+      const services = get().homeRows.order.filter(isServiceRowId);
+      set({ homeRows: { ...get().homeRows, order: [...order.filter((id) => !isServiceRowId(id)), ...services] } });
+      changed();
+    },
+    setServiceOrder(services) {
+      set({ homeRows: { ...get().homeRows, order: withServiceOrder(get().homeRows.order, services) } });
       changed();
     },
     setPlayer(patch) {
