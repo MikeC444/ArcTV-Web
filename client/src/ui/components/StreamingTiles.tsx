@@ -29,25 +29,33 @@ const LOGOS: Record<string, string> = { netflix: netflixLogo, disney: disneyLogo
  * Each service's own tile colour (what its app icon sits on), and whether its logo is drawn all white or all black on that colour. A logo with no
  * entry shows as it is. A service with no entry here at all (no logo file) is a black tile with its name in white.
  */
-const BRAND: Record<string, { bg: string; image?: string; logo?: "white" | "black"; glow?: string }> = {
-  netflix: { bg: "#000", glow: "rgba(229, 9, 20, 0.55)" },
-  disney: { bg: "#003f4f", image: "linear-gradient(175deg, #011828 0%, #002f3d 35%, #015e70 70%, #0098a5 88%, #2bbcc1 100%)", glow: "rgba(30, 190, 200, 0.55)" },
-  prime: { bg: "#1d2547", image: "linear-gradient(80deg, #141721 0%, #1d2547 30%, #294071 52%, #346b9f 80%, #4089c0 100%)", logo: "white", glow: "rgba(64, 137, 192, 0.6)" },
-  max: { bg: "#fff", glow: "rgba(140, 90, 255, 0.5)" },
-  apple: { bg: "#000", glow: "rgba(190, 190, 205, 0.4)" },
-  paramount: { bg: "#0064ff", logo: "white", glow: "rgba(0, 100, 255, 0.6)" },
-  hulu: { bg: "#1ce783", logo: "white", glow: "rgba(28, 231, 131, 0.5)" },
-  peacock: { bg: "#000", glow: "rgba(255, 190, 40, 0.4)" },
-  crunchyroll: { bg: "#f47521", logo: "white", glow: "rgba(244, 117, 33, 0.6)" },
-  skyshowtime: { bg: "#4a38e6", image: "linear-gradient(135deg, #6a3df0, #2b2fe0)", glow: "rgba(106, 61, 240, 0.6)" },
-  britbox: { bg: "#0d273d", glow: "rgba(120, 190, 235, 0.5)" },
-  itvx: { bg: "#dfeb55", logo: "black", glow: "rgba(223, 235, 85, 0.5)" },
-  iplayer: { bg: "#000", glow: "rgba(255, 70, 150, 0.5)" },
-  sky: { bg: "#fff", glow: "rgba(160, 90, 255, 0.5)" },
-  discovery: { bg: "#000", glow: "rgba(255, 150, 60, 0.5)" },
-  shudder: { bg: "#000", glow: "rgba(220, 20, 30, 0.55)" },
-  channel4: { bg: "#000", glow: "rgba(170, 255, 140, 0.45)" },
+const BRAND: Record<string, { bg: string; image?: string; logo?: "white" | "black"; glow?: [number, number, number]; hover?: number; rest?: number }> = {
+  netflix: { bg: "#000", glow: [229, 9, 20], hover: 0.55, rest: 0.12 },
+  disney: { bg: "#003f4f", image: "linear-gradient(175deg, #011828 0%, #002f3d 35%, #015e70 70%, #0098a5 88%, #2bbcc1 100%)", glow: [30, 190, 200], hover: 0.55, rest: 0.14 },
+  prime: { bg: "#1d2547", image: "linear-gradient(80deg, #141721 0%, #1d2547 30%, #294071 52%, #346b9f 80%, #4089c0 100%)", logo: "white", glow: [64, 137, 192], hover: 0.6, rest: 0.24 },
+  max: { bg: "#fff", glow: [140, 90, 255], hover: 0.5, rest: 0.26 },
+  apple: { bg: "#000", glow: [190, 190, 205], hover: 0.4, rest: 0.16 },
+  paramount: { bg: "#0064ff", logo: "white", glow: [0, 100, 255], hover: 0.6, rest: 0.28 },
+  hulu: { bg: "#1ce783", logo: "white", glow: [28, 231, 131], hover: 0.5, rest: 0.12 },
+  peacock: { bg: "#000", glow: [255, 190, 40], hover: 0.4, rest: 0.12 },
+  crunchyroll: { bg: "#f47521", logo: "white", glow: [244, 117, 33], hover: 0.6, rest: 0.16 },
+  skyshowtime: { bg: "#4a38e6", image: "linear-gradient(135deg, #6a3df0, #2b2fe0)", glow: [106, 61, 240], hover: 0.6, rest: 0.3 },
+  britbox: { bg: "#0d273d", glow: [120, 190, 235], hover: 0.5, rest: 0.16 },
+  itvx: { bg: "#dfeb55", logo: "black", glow: [223, 235, 85], hover: 0.5, rest: 0.12 },
+  iplayer: { bg: "#000", glow: [255, 70, 150], hover: 0.5, rest: 0.16 },
+  sky: { bg: "#fff", glow: [160, 90, 255], hover: 0.5, rest: 0.24 },
+  discovery: { bg: "#000", glow: [255, 150, 60], hover: 0.5, rest: 0.14 },
+  shudder: { bg: "#000", glow: [220, 20, 30], hover: 0.55, rest: 0.12 },
+  channel4: { bg: "#000", glow: [170, 255, 140], hover: 0.45, rest: 0.1 },
 };
+
+/** The light beneath a tile, as the two colours the CSS reads: the full one (hover and focus) and the quiet one (at rest). */
+function glowStyle(id: string): CSSProperties | undefined {
+  const brand = BRAND[id];
+  if (!brand?.glow) return undefined;
+  const rgb = brand.glow.join(", ");
+  return { "--svc-glow": `rgba(${rgb}, ${brand.hover ?? 0.5})`, "--svc-glow-rest": `rgba(${rgb}, ${brand.rest ?? 0.15})` } as CSSProperties;
+}
 
 /**
  * How the tiles look: "glass" (rounded 3D glass slabs with a coloured glow and a pointer tilt) or "flat" (the earlier look: a flat panel in the service's
@@ -93,7 +101,7 @@ export function StreamingTiles() {
           return (
             <div role="listitem" key={id} style={{ display: "contents" }}>
               <div className="card" data-cw="true" onPointerEnter={TILE_STYLE === "glass" ? tiltToward : undefined} onPointerMove={TILE_STYLE === "glass" ? tiltToward : undefined} onPointerLeave={TILE_STYLE === "glass" ? resetTilt : undefined}>
-                <Surface to={routes.streaming(id)} className="card__surface" ariaLabel={`${service.name} titles`} background={BRAND[id]?.bg ?? "#000"} backgroundImage={BRAND[id]?.image} style={BRAND[id]?.glow ? ({ "--svc-glow": BRAND[id]?.glow } as CSSProperties) : undefined}>
+                <Surface to={routes.streaming(id)} className="card__surface" ariaLabel={`${service.name} titles`} background={BRAND[id]?.bg ?? "#000"} backgroundImage={BRAND[id]?.image} style={glowStyle(id)}>
                   <span className="svc__logo">{logo ? <img src={logo} alt="" data-logo={BRAND[id]?.logo} loading="lazy" decoding="async" draggable={false} /> : <span className="svc__name">{service.name}</span>}</span>
                 </Surface>
                 <div className="card__title">{service.name}</div>

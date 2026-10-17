@@ -539,16 +539,11 @@
   transition: background-position 260ms var(--ease);
 }
 .row--streaming[data-tiles="glass"] .card__surface:not(:hover):not(:focus-visible) {
+  /* at rest only a quiet light of the service's own colour (--svc-glow-rest, set per service so that each one looks about as strong); the full glow is for hover and focus */
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.45),
     inset 0 0 0 1px rgba(255, 255, 255, 0.08),
-    0 16px 26px -16px rgba(0, 0, 0, 0.85),
-    0 6px 12px -6px rgba(0, 0, 0, 0.7);
-  /* at rest only a faint hint of the service's colour under the tile (a browser without color-mix keeps the plain shadow above); the full glow is for hover and focus */
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.45),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
-    0 16px 26px -16px color-mix(in srgb, var(--svc-glow) 22%, transparent),
+    0 16px 26px -16px var(--svc-glow-rest, rgba(0, 0, 0, 0.85)),
     0 6px 12px -6px rgba(0, 0, 0, 0.7);
 }
 .row--streaming[data-tiles="glass"] .card__surface:focus-visible {
