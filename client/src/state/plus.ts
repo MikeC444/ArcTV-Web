@@ -16,7 +16,6 @@ export interface PlusStatus {
   /** True once Plus is paid; false while it is free for everyone (early access). */
   paywall: boolean;
   /** Free days a first monthly or yearly subscription starts with, when this account is offered them; 0 otherwise. */
-  trialDays: number;
   /** The list price of each plan, for the plan cards; null when the backend didn't send them. Promo codes can lower what checkout charges. */
   prices: PlanPrices | null;
   /** For a Lifetime member: whether they have chosen to have their display name on the supporters board (off until they say so). null for everyone else. */
@@ -25,7 +24,7 @@ export interface PlusStatus {
   supporterAnonymous: boolean | null;
 }
 
-const NONE: PlusStatus = { active: false, plan: null, validUntil: null, cancelAtPeriodEnd: false, paywall: false, trialDays: 0, prices: null, supporterBoard: null, supporterAnonymous: null };
+const NONE: PlusStatus = { active: false, plan: null, validUntil: null, cancelAtPeriodEnd: false, paywall: false, prices: null, supporterBoard: null, supporterAnonymous: null };
 
 /** The backend's answer as a PlusStatus, with anything missing or malformed read as "none". */
 function parseStatus(status: Partial<Record<keyof PlusStatus, unknown>>): PlusStatus {
@@ -35,7 +34,6 @@ function parseStatus(status: Partial<Record<keyof PlusStatus, unknown>>): PlusSt
     validUntil: (status.validUntil as string | null) ?? null,
     cancelAtPeriodEnd: status.cancelAtPeriodEnd === true,
     paywall: status.paywall === true,
-    trialDays: typeof status.trialDays === "number" && status.trialDays > 0 ? Math.floor(status.trialDays) : 0,
     prices: parsePrices(status.prices),
     supporterBoard: typeof status.supporterBoard === "boolean" ? status.supporterBoard : null,
     supporterAnonymous: typeof status.supporterAnonymous === "boolean" ? status.supporterAnonymous : null,
@@ -99,8 +97,8 @@ export const usePlus = create<PlusState>((set, get) => ({
       supporterBoard: typeof status.supporterBoard === "boolean" ? status.supporterBoard : show,
       supporterAnonymous: typeof status.supporterAnonymous === "boolean" ? status.supporterAnonymous : show ? anonymous : null,
     });
-    const { active, plan, validUntil, cancelAtPeriodEnd, paywall, trialDays, prices, supporterBoard, supporterAnonymous } = get();
-    writeJson(userKey(userId, "plus"), { active, plan, validUntil, cancelAtPeriodEnd, paywall, trialDays, prices, supporterBoard, supporterAnonymous } satisfies PlusStatus);
+    const { active, plan, validUntil, cancelAtPeriodEnd, paywall, prices, supporterBoard, supporterAnonymous } = get();
+    writeJson(userKey(userId, "plus"), { active, plan, validUntil, cancelAtPeriodEnd, paywall, prices, supporterBoard, supporterAnonymous } satisfies PlusStatus);
   },
 
   async cancelSubscription() {

@@ -135,7 +135,7 @@ test.describe("ArcTV Plus extras", () => {
     // the same account when the paywall is on and it has no Plus
     await page.route("**/user/plus", (route) =>
       route.request().method() === "GET"
-        ? route.fulfill({ json: { active: false, plan: null, validUntil: null, cancelAtPeriodEnd: false, paywall: true, trialDays: 5 } })
+        ? route.fulfill({ json: { active: false, plan: null, validUntil: null, cancelAtPeriodEnd: false, paywall: true } })
         : route.continue(),
     );
     await page.goto("/settings/account");

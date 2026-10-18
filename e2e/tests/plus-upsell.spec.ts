@@ -12,7 +12,6 @@ async function freeWithPaywall(page: Page) {
             validUntil: null,
             cancelAtPeriodEnd: false,
             paywall: true,
-            trialDays: 5,
             prices: { monthly: { amount: 499, currency: "gbp" }, yearly: { amount: 3999, currency: "gbp" }, lifetime: { amount: 9999, currency: "gbp" } },
           },
         })
@@ -43,7 +42,7 @@ test.describe("ArcTV Plus: prices and nudges for someone without Plus", () => {
   test("without prices from the backend the cards still say 'Price at checkout' and claim no saving", async ({ page }) => {
     const account = await newAccount("noprices");
     await page.route("**/user/plus", (route) =>
-      route.request().method() === "GET" ? route.fulfill({ json: { active: false, plan: null, validUntil: null, cancelAtPeriodEnd: false, paywall: true, trialDays: 0, prices: null } }) : route.continue(),
+      route.request().method() === "GET" ? route.fulfill({ json: { active: false, plan: null, validUntil: null, cancelAtPeriodEnd: false, paywall: true, prices: null } }) : route.continue(),
     );
     await openSignedIn(page, account, "/settings/plus");
     await expect(page.getByText("Price at checkout")).toHaveCount(3);
@@ -147,7 +146,7 @@ test.describe("ArcTV Plus: prices and nudges for someone without Plus", () => {
     let anon = false;
     const lifetime = () => ({ active: true, plan: "lifetime", validUntil: null, cancelAtPeriodEnd: false, paywall: true, supporterBoard: board, supporterAnonymous: board ? anon : null });
     const puts: unknown[] = [];
-    await page.route("**/user/plus", (route) => (route.request().method() === "GET" ? route.fulfill({ json: { ...lifetime(), trialDays: 0, prices: null } }) : route.continue()));
+    await page.route("**/user/plus", (route) => (route.request().method() === "GET" ? route.fulfill({ json: { ...lifetime(), prices: null } }) : route.continue()));
     await page.route("**/user/plus/supporter", (route) => {
       puts.push(route.request().postDataJSON());
       const sent = route.request().postDataJSON() as { show: boolean; anonymous?: boolean };
