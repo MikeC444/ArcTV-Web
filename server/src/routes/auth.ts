@@ -2,7 +2,7 @@ import { Router, type Request } from "express";
 import rateLimit from "express-rate-limit";
 import { z } from "zod";
 import { backendMessage } from "../backend.js";
-import { authedBackendRequest, type AppContext } from "../context.js";
+import { authedBackendRequest, sessionKey, type AppContext } from "../context.js";
 import { ApiError, fromBackendStatus, sendError } from "../errors.js";
 import { sessionFromTokenResponse } from "../session.js";
 
@@ -125,6 +125,7 @@ export function createAuthRouter(ctx: AppContext): Router {
     const session = ctx.sessions.read(req);
     // Revoke server-side best-effort, but ALWAYS clear the cookie — a backend outage must not trap someone in a session.
     if (session) {
+      ctx.confirmed.delete(sessionKey(session)); // a copy of this cookie stops working on the relay and proxy at once
       try {
         await ctx.backend({ method: "POST", path: "/auth/logout", bearer: session.at, clientIp: req.ip, timeoutMs: 5_000 });
       } catch {

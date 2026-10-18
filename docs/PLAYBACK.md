@@ -76,7 +76,11 @@ Read from the source of `@stremio/stremio-video` (MIT) and Stremio Web (GPL-2.0,
 `/api/relay/d=<origin>&h=<Header:Value>&r=<Header:Value>/<path>?<query>` (`server/src/streamRelay.ts`) fetches a stream from
 the web server, like a native player, and passes the bytes through with `Range` support. It is **not** an open proxy:
 
-* signed-in sessions only, same-origin only (`Sec-Fetch-Site`), `GET`/`HEAD` only, http(s) only, no credentials in URLs;
+* signed-in sessions only, and still signed in at the backend: the account is asked at most once a minute per session
+  (`requireLiveSession` in `server/src/context.ts`, shared with the addon proxy, the TV guide and the cached TMDB lookups), so a
+  session signed out elsewhere stops within a minute, and at once for a cookie copied from a browser that signed out; a backend
+  that can't be reached doesn't stop playback;
+* same-origin only (`Sec-Fetch-Site`), `GET`/`HEAD` only, http(s) only, no credentials in URLs;
 * private, loopback, link-local and metadata addresses refused at the address **and at connect time**; every redirect hop is
   re-validated (≤ 6); the addon's `h` headers go to the first origin only;
 * only media types are relayed (video, audio, octet-stream, HLS, DASH, WebVTT); responses are `nosniff`, sandboxed, `inline`;

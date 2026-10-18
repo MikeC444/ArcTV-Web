@@ -1,13 +1,53 @@
+import { createHash } from "node:crypto";
 import type { Request, Response } from "express";
 import type { AppConfig } from "./config.js";
 import type { BackendFetch, BackendRequest, BackendResponse } from "./backend.js";
 import { ApiError } from "./errors.js";
-import type { SessionManager } from "./session.js";
+import type { SessionData, SessionManager } from "./session.js";
 
 export interface AppContext {
   config: AppConfig;
   backend: BackendFetch;
   sessions: SessionManager;
+  /** Sessions the backend confirmed are still signed in: refresh-token hash → until when (ms epoch). See [requireLiveSession]. */
+  confirmed: Map<string, number>;
+}
+
+/** How long a confirmed session is trusted before the backend is asked again: a session signed out elsewhere stops working within this long. */
+export const LIVE_CHECK_MS = 60_000;
+const LIVE_CHECK_MAX = 10_000;
+
+export const sessionKey = (session: Pick<SessionData, "rt">): string => createHash("sha256").update(session.rt).digest("hex");
+
+/**
+ * For the routes this server answers itself (stream relay, addon proxy, TV guide, cached TMDB lookups): a cookie that opens is not
+ * enough, because a signed-out or remotely revoked session's cookie still opens for up to 30 days. The backend is asked at most once a
+ * minute per session whether it is still signed in. A confirmed sign-out ends it (401, cookie cleared); a backend that can't be
+ * reached does not, so an outage never stops someone mid-film.
+ */
+export async function requireLiveSession(ctx: AppContext, req: Request, res: Response): Promise<SessionData> {
+  const session = ctx.sessions.read(req);
+  if (!session) throw new ApiError(401, "unauthorized", "Sign in to continue.");
+  const key = sessionKey(session);
+  const now = Date.now();
+  if ((ctx.confirmed.get(key) ?? 0) > now) return session;
+
+  let response: BackendResponse;
+  try {
+    response = await authedBackendRequest(ctx, req, res, { method: "GET", path: "/user/me" });
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) throw error;
+    return session; // backend unavailable: carry on, and ask again next time
+  }
+  if (response.status !== 200) return session;
+
+  if (ctx.confirmed.size >= LIVE_CHECK_MAX) {
+    for (const [k, until] of ctx.confirmed) if (until <= now) ctx.confirmed.delete(k);
+    if (ctx.confirmed.size >= LIVE_CHECK_MAX) ctx.confirmed.delete(ctx.confirmed.keys().next().value as string);
+  }
+  // If the check rotated the tokens, the browser's next request carries the new refresh token and is checked once more.
+  ctx.confirmed.set(key, now + LIVE_CHECK_MS);
+  return session;
 }
 
 /**
