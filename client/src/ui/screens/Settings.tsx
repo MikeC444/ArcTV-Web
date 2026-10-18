@@ -301,7 +301,7 @@ function PlusPane() {
               const shown = planPriceText(plan.id, plus.prices);
               return (
               <div key={plan.id} className="plus__plan" data-featured={plan.note ? "true" : undefined}>
-                {plan.id === "yearly" && plus.trialDays > 0 ? <span className="plus__note">{plus.trialDays} days free</span> : plan.note ? <span className="plus__note">{plan.note}</span> : null}
+                {plan.note ? <span className="plus__note">{plan.note}</span> : null}
                 <div className="t-title-md">{plan.label}</div>
                 <div className="plus__price">{shown?.price ?? plan.price ?? "Price at checkout"}</div>
                 <div className="t-label-sm c-text-3">{plan.per}</div>
@@ -315,7 +315,7 @@ function PlusPane() {
                 {shown?.versus ? <div className="t-body-sm c-text-2 plus__math">{shown.versus}</div> : null}
                 {plan.id === "lifetime" ? <span className="plus__boardtag"><MdFavorite aria-hidden="true" /> {LIFETIME_BOARD_TAG}</span> : null}
                 <p className="t-body-sm c-text-2" style={{ margin: "8px 0 14px", flex: 1 }}>{plan.blurb}</p>
-                <ArcButton text={busy === plan.id ? "Opening…" : plan.id === "lifetime" ? "Get Lifetime" : plan.id === "yearly" && plus.trialDays > 0 ? `Start ${plus.trialDays}-day free trial` : `Choose ${plan.label}`} icon={<MdWorkspacePremium />} variant="filled" compact disabled={busy !== null} onClick={() => void choose(plan.id)} />
+                <ArcButton text={busy === plan.id ? "Opening…" : plan.id === "lifetime" ? "Get Lifetime" : `Choose ${plan.label}`} icon={<MdWorkspacePremium />} variant="filled" compact disabled={busy !== null} onClick={() => void choose(plan.id)} />
               </div>
               );
             })}
@@ -329,7 +329,6 @@ function PlusPane() {
           {plus.prices ? <p className="t-body-sm c-text-3" style={{ margin: "12px 0 0" }}>List prices. Promo codes can be applied at checkout.</p> : null}
           {waiting ? <p className="t-body-sm c-text-2" style={{ margin: "12px 0 0" }}>Waiting for your payment… this switches on by itself when it goes through.</p> : null}
           {error ? <p className="t-body-sm" role="alert" style={{ margin: "12px 0 0", color: "var(--error)" }}>{error}</p> : null}
-          {plus.trialDays > 0 ? <p className="t-body-sm c-text-3" style={{ margin: "12px 0 0" }}>Your card is taken at checkout, but nothing is charged for the first {plus.trialDays} days. Cancel before then and you pay nothing. The free trial is for the yearly plan, once per account.</p> : null}
           <p className="t-body-sm c-text-3" style={{ margin: "12px 0 0" }}>Payments are handled by Stripe's secure checkout page; we never see your card.</p>
         </>
       ) : null}
