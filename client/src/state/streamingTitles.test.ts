@@ -9,11 +9,11 @@ beforeEach(() => {
 });
 
 describe("viewerRegion", () => {
-  it("is the region of the browser's language, upper-cased, else the UK", () => {
+  it("is the region of the browser's language, upper-cased, else the US", () => {
     expect(viewerRegion("en-us")).toBe("US");
     expect(viewerRegion("pt_BR")).toBe("BR");
-    expect(viewerRegion("en", "UTC")).toBe("GB");
-    expect(viewerRegion("", "UTC")).toBe("GB");
+    expect(viewerRegion("en", "UTC")).toBe("US");
+    expect(viewerRegion("", "UTC")).toBe("US");
   });
   it("falls back to the country of the time zone when the language has no region", () => {
     expect(viewerRegion("en", "Australia/Sydney")).toBe("AU");

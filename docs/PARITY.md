@@ -11,6 +11,7 @@ Status: ⬜ not done · ✅ done (released or merged) · ➖ not needed there (s
 
 | Date | Change | Firestick | Phone | Mac | Windows |
 |---|---|---|---|---|---|
+| 2026-10-19 | Netflix's Top 10 and the country behind it: when neither the device language nor its time zone gives a country, the US is used (it was the UK) (`streamingTitles.ts`) | ⬜ | ⬜ | ⬜ | ⬜ |
 | 2026-10-19 | Netflix's Top 10 numbers are back to the thin light outline on the dark page, with no colour fill (the blue-to-violet and the faded versions were tried and taken out) (`TopTenRow.tsx`, `components.css`) | ➖ never needed there | ➖ never needed there | ➖ never needed there | ➖ never needed there |
 | 2026-10-19 | Netflix's Top 10 numbers: an extremely subtle colour instead of the strong gradient, the brand blue (`#2f80ff`, about 16% strength) at the top fading through violet (`#9b5cff`, about 12%) to nothing at the bottom, so each number fades to the page's black (no outline) (`TopTenRow.tsx`, `components.css`) | ➖ taken out again | ➖ taken out again | ➖ taken out again | ➖ taken out again |
 | 2026-10-19 | Netflix's Top 10 numbers: more purple in the gradient. It now goes from blue (`#2f80ff`) at the top-left corner to full violet (`#9b5cff`) by 45% of the way across, and stays violet to the bottom-right (`TopTenRow.tsx`) | ➖ taken out again | ➖ taken out again | ➖ taken out again | ➖ taken out again |

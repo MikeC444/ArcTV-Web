@@ -37,7 +37,7 @@ const ZONE_REGION: Record<string, string> = {
 
 /**
  * The viewer's country as TMDB wants it (what a service carries differs by country), from the browser alone with no permission prompt: the region of its
- * language ("en-AU" is AU), else the country of its time zone (Australia/Sydney is AU), else the UK.
+ * language ("en-AU" is AU), else the country of its time zone (Australia/Sydney is AU), else the US.
  */
 export function viewerRegion(
   language: string | undefined = typeof navigator === "undefined" ? undefined : navigator.language,
@@ -46,7 +46,7 @@ export function viewerRegion(
   const region = language?.match(/[-_]([A-Za-z]{2})$/)?.[1];
   if (region) return region.toUpperCase();
   const zone = timeZone ? ZONE_REGION[timeZone] ?? ZONE_REGION[`${timeZone.split("/")[0]}/`] : undefined;
-  return zone ?? "GB";
+  return zone ?? "US";
 }
 
 /**
