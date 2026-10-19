@@ -27,6 +27,21 @@ export function topTen(movies: Content[], shows: Content[]): Content[] {
 /** The row's heading. */
 const TOP_TEN_TITLE = "Top 10 Today";
 
+/**
+ * The big outlined rank behind a poster. Drawn as SVG text (not CSS text-stroke, which some browsers drop) and stretched to a set width, so the number
+ * is there at any font and size; its colours come from `.top10__num` in `components.css`.
+ */
+function RankNumber({ rank }: { rank: number }) {
+  const width = String(rank).length * 56 + 6;
+  return (
+    <svg className="top10__num" viewBox={`0 0 ${width} 80`} aria-hidden="true" focusable="false">
+      <text x="3" y="76" fontSize="100" textLength={width - 6} lengthAdjust="spacingAndGlyphs">
+        {rank}
+      </text>
+    </svg>
+  );
+}
+
 /** The service's red N, drawn as three bars, on the corner of each poster. */
 export function NetflixN() {
   return (
@@ -82,9 +97,7 @@ export function TopTenRow({ service, onTitles }: { service: string; onTitles?: (
       <ScrollRow label={title} className="row__scroller hide-scroll top10__scroller" contentKey={items.map((c) => c.id).join(",")} centerOn=".card__surface" role="list">
         {items.map((content, i) => (
           <div role="listitem" key={content.id} className="top10__item" aria-label={`Number ${i + 1}`}>
-            <span className="top10__num" aria-hidden="true">
-              {i + 1}
-            </span>
+            <RankNumber rank={i + 1} />
             <div className="top10__poster">
               <ContentCard content={content} badge={<NetflixN />} />
             </div>

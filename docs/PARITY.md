@@ -11,6 +11,7 @@ Status: ⬜ not done · ✅ done (released or merged) · ➖ not needed there (s
 
 | Date | Change | Firestick | Phone | Mac | Windows |
 |---|---|---|---|---|---|
+| 2026-10-19 | Netflix's Top 10: the big outlined numbers behind the posters were going missing in some browsers; they are now drawn as SVG text so they always show (`TopTenRow.tsx`, `components.css`) | ⬜ | ⬜ | ⬜ | ⬜ |
 | 2026-10-19 | Netflix's page: a title in the Top 10 row is left out of the poster block below it, so nothing shows twice (`Browse.tsx`, `TopTenRow.tsx`) | ⬜ | ⬜ | ⬜ | ⬜ |
 | 2026-10-19 | Netflix's Top 10 row is headed just "Top 10 Today" again (the "in <country>" wording is gone; the country, from the device language or time zone, still picks which titles are ranked) (`TopTenRow.tsx`) | ⬜ | ⬜ | ⬜ | ⬜ |
 | 2026-10-19 | Netflix's page (the Top 10 and the poster rows): the green watched tick sits at the poster's top-right corner (it had moved to the bottom-right); on touch screens it steps left of the poster's menu button (`components.css`) | ⬜ | ⬜ | ⬜ | ⬜ |
