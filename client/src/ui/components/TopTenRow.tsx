@@ -1,25 +1,49 @@
 import { useEffect, useRef, useState } from "react";
-import { useProviders } from "../../domain/registry";
+import { isBlocked } from "../../domain/blockedGenres";
+import { loadDetails } from "../../domain/detailSource";
+import { activeProviders, useProviders } from "../../domain/registry";
 import type { Content } from "../../domain/types";
+import { useBlockedSet } from "../../state/blockedGenres";
 import { fetchServiceTitles, viewerRegion } from "../../state/streamingTitles";
 import { ContentCard } from "./ContentCard";
 import { ScrollRow } from "./ScrollRow";
 
 const COUNT = 10;
-/** One answer per service and country for the session, so coming back to the page does not ask again. */
+/** One answer per service, country and set of blocked genres for the session, so coming back to the page does not ask again. */
 const cache = new Map<string, Content[]>();
+/** How many candidates are looked at when some are blocked (the ten shown come from the first few that are left). */
+const POOL = 30;
+const NONE: Content[] = [];
 
-/** Movies and series taken in turn (each list is most popular first), so the ten mix both the way a streaming service's own chart does. */
-export function topTen(movies: Content[], shows: Content[]): Content[] {
+/** Movies and series taken in turn (each list is most popular first), so the ranking mixes both the way a streaming service's own chart does. */
+function rankedPool(movies: Content[], shows: Content[], limit: number): Content[] {
   const out: Content[] = [];
   const seen = new Set<string>();
-  for (let i = 0; out.length < COUNT && (i < movies.length || i < shows.length); i++) {
+  for (let i = 0; out.length < limit && (i < movies.length || i < shows.length); i++) {
     for (const c of [shows[i], movies[i]]) {
-      if (c && !seen.has(c.id) && out.length < COUNT) {
+      if (c && !seen.has(c.id) && out.length < limit) {
         seen.add(c.id);
         out.push(c);
       }
     }
+  }
+  return out;
+}
+
+export const topTen = (movies: Content[], shows: Content[]): Content[] => rankedPool(movies, shows, COUNT);
+
+/**
+ * The first `count` of `pool` (in order) that carry none of the blocked genres. TMDB's list has no genres, so each candidate's are looked up (a chunk
+ * at a time, `count` at once); a title whose genres can't be found is kept, as everywhere else a title with no genres is.
+ */
+export async function pickUnblocked(pool: Content[], blocked: ReadonlySet<string>, genresOf: (c: Content) => Promise<Content["genres"] | null>, count: number): Promise<Content[]> {
+  const out: Content[] = [];
+  for (let at = 0; at < pool.length && out.length < count; at += count) {
+    const chunk = pool.slice(at, at + count);
+    const genres = await Promise.all(chunk.map((c) => genresOf(c).catch(() => null)));
+    chunk.forEach((c, i) => {
+      if (out.length < count && !isBlocked({ genres: genres[i] ?? c.genres }, blocked)) out.push(c);
+    });
   }
   return out;
 }
@@ -56,30 +80,37 @@ export function NetflixN() {
 /**
  * Netflix's page opens with its ten most popular titles in the viewer's country: a big outlined number tucked behind each poster. The order is TMDB's
  * popularity for the service (the same list the page carries on with), not Netflix's own chart. Nothing is shown until the list arrives, or when it
- * can't be had (no TMDB key on the server). `onTitles` is told which titles it shows.
+ * can't be had (no TMDB key on the server). `onTitles` is told which titles it shows. Titles with a genre the person has blocked are left out (their genres are looked up, as TMDB sends none).
  */
 export function TopTenRow({ service, onTitles }: { service: string; onTitles?: (ids: Set<string>) => void }) {
   const region = viewerRegion();
-  const key = `${service}:${region}`;
+  const blocked = useBlockedSet();
+  const key = `${service}:${region}:${[...blocked].sort().join(",")}`;
   const providerId = useProviders((s) => s.providers.find((p) => p.streamingServices?.().includes(service))?.id ?? null);
-  const [items, setItems] = useState<Content[]>(() => cache.get(key) ?? []);
+  const [shown, setShown] = useState<{ key: string; items: Content[] }>(() => ({ key, items: cache.get(key) ?? [] }));
+  // never show what was fetched for other blocked genres
+  const items = shown.key === key ? shown.items : (cache.get(key) ?? NONE);
 
   useEffect(() => {
     const hit = cache.get(key);
     if (hit) {
-      setItems(hit);
+      setShown({ key, items: hit });
       return undefined;
     }
     let cancelled = false;
-    void Promise.all([fetchServiceTitles(service, "MOVIE", 1, providerId), fetchServiceTitles(service, "TV_SHOW", 1, providerId)]).then(([movies, shows]) => {
-      const ten = topTen(movies.items, shows.items);
+    void Promise.all([fetchServiceTitles(service, "MOVIE", 1, providerId), fetchServiceTitles(service, "TV_SHOW", 1, providerId)]).then(async ([movies, shows]) => {
+      const ten =
+        blocked.size === 0 || !providerId
+          ? topTen(movies.items, shows.items)
+          : await pickUnblocked(rankedPool(movies.items, shows.items, POOL), blocked, (c) => loadDetails(activeProviders(), providerId, c.type, c.id).then((d) => d?.genres ?? null), COUNT);
       if (ten.length === 0) return;
       cache.set(key, ten);
-      if (!cancelled) setItems(ten);
+      if (!cancelled) setShown({ key, items: ten });
     });
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, service, providerId]);
 
   const onTitlesRef = useRef(onTitles);
