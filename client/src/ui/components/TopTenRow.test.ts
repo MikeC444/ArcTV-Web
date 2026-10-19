@@ -10,7 +10,7 @@ describe("topTen", () => {
     expect(topTen(list("m", 20), list("s", 20)).map((x) => x.id)).toEqual(["s0", "m0", "s1", "m1", "s2", "m2", "s3", "m3", "s4", "m4"]);
   });
   it("fills from the longer list and skips a title both lists hold", () => {
-    expect(topTen([c("a"), c("b")], [c("a"), c("x"), c("y")]).map((x) => x.id)).toEqual(["a", "b", "x", "y"]);
+    expect(topTen([c("a"), c("b")], [c("a"), c("x"), c("y")]).map((x) => x.id)).toEqual(["a", "x", "b", "y"]);
   });
   it("is empty with nothing to show", () => expect(topTen([], [])).toEqual([]));
 });
