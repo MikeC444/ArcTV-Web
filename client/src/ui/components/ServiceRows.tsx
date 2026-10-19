@@ -3,7 +3,7 @@ import type { Content } from "../../domain/types";
 import { ContentCard } from "./ContentCard";
 import { NetflixN } from "./TopTenRow";
 
-/** The titles under a streaming service's Top 10: rows of posters close together (small gaps and corners, no captions, the service's N on each), with no headings. More titles load as the page is scrolled to its end. */
+/** The titles under a streaming service's Top 10: rows of wide (16:9) pictures close together (small gaps and corners, no captions, the service's N on each), with no headings. More titles load as the page is scrolled to its end. */
 export function ServiceRows({ items, onLoadMore }: { items: Content[]; onLoadMore?: () => void }) {
   const sentinel = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -18,7 +18,7 @@ export function ServiceRows({ items, onLoadMore }: { items: Content[]; onLoadMor
       <div className="grid" role="list">
         {items.map((content) => (
           <div role="listitem" key={content.id} style={{ display: "contents" }}>
-            <ContentCard content={content} badge={<NetflixN />} />
+            <ContentCard content={content} badge={<NetflixN />} wide />
           </div>
         ))}
       </div>

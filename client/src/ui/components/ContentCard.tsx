@@ -17,6 +17,8 @@ interface ContentCardProps {
   to?: string;
   /** Drawn inside the poster's frame, so it scales and tilts with the poster (the Top 10 row's service logo). */
   badge?: ReactNode;
+  /** A 16:9 card with the title's backdrop (its poster if it has none) instead of the tall poster, without Continue Watching's progress, logo or resume link. */
+  wide?: boolean;
 }
 
 /** Tips a hovered poster toward the mouse and moves a soft glare with it (the CSS reads these on the poster's frame, never on the picture; nothing tilts with reduced motion or on touch). */
@@ -38,13 +40,13 @@ function resetTilt(event: PointerEvent<HTMLDivElement>) {
 }
 
 /** ui/components/ContentCard.kt — poster (or 16:9 backdrop for Continue Watching), watched tick, rating on focus, progress bar. Its size comes from the row / grid it sits in (--poster-cols). */
-export function ContentCard({ content, style = "STANDARD", autoFocus, to, badge }: ContentCardProps) {
+export function ContentCard({ content, style = "STANDARD", autoFocus, to, badge, wide }: ContentCardProps) {
   const openMenu = useCardMenu((s) => s.open);
   // a Continue Watching poster carries the title's logo in its top left corner (looked up, as the saved entry has none)
   const logo = useTitleLogo(content, style === "CONTINUE_WATCHING");
   const [logoFailed, setLogoFailed] = useState(false);
   const isCw = style === "CONTINUE_WATCHING";
-  const image = isCw ? content.backdropUrl : content.posterUrl;
+  const image = isCw ? content.backdropUrl : wide ? content.backdropUrl ?? content.posterUrl : content.posterUrl;
   const progress = content.watchProgress;
   const fraction = progress && progress.durationMs > 0 ? Math.min(1, Math.max(0, progress.positionMs / progress.durationMs)) : 0;
   const providerId = content.providerId ?? "";
@@ -59,7 +61,7 @@ export function ContentCard({ content, style = "STANDARD", autoFocus, to, badge 
   const target = to ?? resumeTarget ?? (providerId ? routes.detail(providerId, content.type, content.id, content.title) : undefined);
 
   return (
-    <div className="card" data-cw={isCw || undefined} onPointerEnter={isCw ? undefined : tiltToward} onPointerMove={isCw ? undefined : tiltToward} onPointerLeave={isCw ? undefined : resetTilt}>
+    <div className="card" data-cw={isCw || undefined} data-wide={wide || undefined} onPointerEnter={isCw ? undefined : tiltToward} onPointerMove={isCw ? undefined : tiltToward} onPointerLeave={isCw ? undefined : resetTilt}>
       <Surface
         to={target}
         className="card__surface"
