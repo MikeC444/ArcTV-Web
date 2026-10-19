@@ -29,13 +29,19 @@ const TOP_TEN_TITLE = "Top 10 Today";
 
 /**
  * The big outlined rank behind a poster. Drawn as SVG text (not CSS text-stroke, which some browsers drop) and stretched to a set width, so the number
- * is there at any font and size; its colours come from `.top10__num` in `components.css`.
+ * is there at any font and size; filled blue to violet (the brand colours, from `.top10__num` in `components.css`).
  */
 function RankNumber({ rank }: { rank: number }) {
   const width = String(rank).length * 56 + 6;
   return (
     <svg className="top10__num" viewBox={`0 0 ${width} 80`} aria-hidden="true" focusable="false">
-      <text x="3" y="76" fontSize="100" textLength={width - 6} lengthAdjust="spacingAndGlyphs">
+      <defs>
+        <linearGradient id={`top10-fill-${rank}`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" className="top10__stop-from" />
+          <stop offset="1" className="top10__stop-to" />
+        </linearGradient>
+      </defs>
+      <text x="3" y="76" fontSize="100" textLength={width - 6} lengthAdjust="spacingAndGlyphs" fill={`url(#top10-fill-${rank})`}>
         {rank}
       </text>
     </svg>
