@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import type { HomeSection } from "../../domain/types";
 import { ContentCard } from "./ContentCard";
 import { ScrollRow } from "./ScrollRow";
@@ -10,12 +10,10 @@ interface ContentRowProps {
   section: HomeSection;
   compact?: boolean;
   headingLevel?: 2 | 3;
-  /** Drawn on every poster's frame (a streaming service's logo). */
-  badge?: ReactNode;
 }
 
 /** ui/components/ContentRow.kt — titled horizontal row (poster size comes from --poster-cols); on desktop, hover arrows page it for mouse users. */
-export function ContentRow({ section, compact, headingLevel = 2, badge }: ContentRowProps) {
+export function ContentRow({ section, compact, headingLevel = 2 }: ContentRowProps) {
   const [visible, setVisible] = useState(ROW_PAGE);
   const total = section.items.length;
 
@@ -35,7 +33,7 @@ export function ContentRow({ section, compact, headingLevel = 2, badge }: Conten
       <ScrollRow label={section.title} className="row__scroller row__scroller--posters hide-scroll" contentKey={`${section.id}:${total}:${visible}`} centerOn=".card__surface" onMeasure={nearEnd} role="list">
         {section.items.slice(0, visible).map((content) => (
           <div role="listitem" key={content.id} style={{ display: "contents" }}>
-            <ContentCard content={content} style={section.style} badge={badge} />
+            <ContentCard content={content} style={section.style} />
           </div>
         ))}
       </ScrollRow>
