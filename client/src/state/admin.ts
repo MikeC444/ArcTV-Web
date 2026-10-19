@@ -1,5 +1,4 @@
 import type { AddonCapabilities } from "../lib/addonCapabilities";
-import type { AppPromoDetail, AppPromoTotals } from "../lib/appPromoStats";
 import type { DownloadDetail, DownloadSummary } from "../lib/downloadStats";
 import type { PlaybackSummary } from "../lib/playbackHealth";
 import type { WebSystem } from "../lib/webSystems";
@@ -55,7 +54,6 @@ export interface AdminSummary {
   /** Web Download use in the last 7 days. Absent from a backend that predates it, and then the card is left out. */
   downloads?: DownloadSummary;
   /** How the web app's Mac and Windows app popups did in the last 7 days. Absent from a backend that predates it, and then the view says so. */
-  appPromos?: AppPromoTotals[];
   /** Accounts that used ArcTV in the last day / 30 days (the 7-day count is `activeLast7Days`). Absent from a backend that predates it. */
   activity?: { active1d: number; active30d: number };
   /** What people have installed, across every account. Absent from a backend that predates it, and then the Addons view says so. */
@@ -146,10 +144,42 @@ export interface WatchingList {
   watching: WatchingNow[];
 }
 
+/** Crashes reported by the apps (the TV app sends them on its next start), grouped by where they happened, plus the latest reports. */
+export interface CrashGroup {
+  signature: string;
+  kind: string;
+  exception: string | null;
+  count: number;
+  people: number;
+  firstAt: string;
+  lastAt: string;
+  versions: string[];
+  devices: string[];
+}
+export interface CrashReport {
+  id: string;
+  signature: string;
+  kind: string;
+  exception: string | null;
+  stackTrace: string;
+  platform: string;
+  appVersion: string;
+  deviceModel: string | null;
+  osVersion: string | null;
+  happenedAt: string;
+  createdAt: string;
+  userId: string | null;
+  email: string | null;
+}
+export interface CrashDetail {
+  groups: CrashGroup[];
+  recent: CrashReport[];
+}
+
 export const fetchAdminSummary = () => api<AdminSummary>("/admin/summary");
 export const fetchWatching = () => api<WatchingList>("/admin/watching");
 export const fetchDownloadDetail = () => api<DownloadDetail>("/admin/downloads");
-export const fetchAppPromoDetail = () => api<AppPromoDetail>("/admin/app-promos");
+export const fetchCrashes = () => api<CrashDetail>("/admin/crashes?limit=100");
 /** The user list filters; an empty value means "no filter". `device` is "<platform>|<app version>". */
 export interface AdminFilters {
   q: string;

@@ -1,15 +1,14 @@
-import { MdAutoAwesome, MdDashboard, MdDownload, MdExtension, MdInstallDesktop, MdGroups, MdPlayCircle, MdSpeed, MdSystemUpdateAlt } from "react-icons/md";
+import { MdAutoAwesome, MdBugReport, MdDashboard, MdDownload, MdExtension, MdGroups, MdPlayCircle, MdSystemUpdateAlt } from "react-icons/md";
 import { VIEWS, type ViewId } from "./views";
 
 const ICONS: Record<ViewId, JSX.Element> = {
   overview: <MdDashboard />,
   watching: <MdPlayCircle />,
   users: <MdGroups />,
-  playback: <MdSpeed />,
   downloads: <MdDownload />,
-  popups: <MdInstallDesktop />,
   addons: <MdExtension />,
   versions: <MdSystemUpdateAlt />,
+  crashes: <MdBugReport />,
 };
 
 /** The slim left rail of views (a bottom bar on a phone). */
