@@ -20,7 +20,8 @@ describe("dashboard addresses", () => {
   it("reads the view and the user from the address, and falls back to the overview", () => {
     expect(parseAdminPath("")).toEqual({ view: "overview", userId: null });
     expect(parseAdminPath(undefined)).toEqual({ view: "overview", userId: null });
-    expect(parseAdminPath("playback")).toEqual({ view: "playback", userId: null });
+    expect(parseAdminPath("crashes")).toEqual({ view: "crashes", userId: null });
+    expect(parseAdminPath("playback")).toEqual({ view: "overview", userId: null }); // a removed view
     expect(parseAdminPath("users/abc")).toEqual({ view: "users", userId: "abc" });
     expect(parseAdminPath("nonsense")).toEqual({ view: "overview", userId: null });
   });
@@ -45,6 +46,13 @@ describe("OverviewView", () => {
     const alert = screen.getByRole("button", { name: /device is on an old version|devices are on an old version/ });
     fireEvent.click(alert);
     expect(go).toHaveBeenCalledWith("versions");
+  });
+  it("shows the viewings of the last 7 days", () => {
+    render(<OverviewView summary={{ ...summary, playback: { plays7d: 1234, users7d: 56, short7d: 0, errors7d: 0, neverStarted7d: 0, medianStartMs: null, multiSource7d: 0, byDevice: [], byEngine: [], byResolution: [] } }} onGo={() => undefined} />);
+    expect(screen.getByText("Viewings · 7 days")).toBeInTheDocument();
+    expect(screen.getByText("1,234")).toBeInTheDocument();
+    expect(screen.getByText(/^by 56 people/)).toBeInTheDocument();
+    expect(screen.queryByText(/app popups/i)).not.toBeInTheDocument();
   });
 });
 
@@ -82,10 +90,10 @@ describe("CommandPalette", () => {
     const go = vi.fn();
     const close = vi.fn();
     render(<MemoryRouter><CommandPalette onClose={close} onGo={go} /></MemoryRouter>);
-    fireEvent.change(screen.getByLabelText("Search"), { target: { value: "play" } });
+    fireEvent.change(screen.getByLabelText("Search"), { target: { value: "crash" } });
     await act(async () => void vi.advanceTimersByTime(300));
     fireEvent.keyDown(screen.getByRole("dialog"), { key: "Enter" });
-    expect(go).toHaveBeenCalledWith("playback");
+    expect(go).toHaveBeenCalledWith("crashes");
     expect(close).toHaveBeenCalled();
   });
   it("closes on Escape", () => {

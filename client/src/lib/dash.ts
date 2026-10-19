@@ -1,6 +1,6 @@
 import type { AdminSummary } from "../state/admin";
 import { newestVersion } from "../state/admin";
-import { leftEarly, percent, standsOut, type PlaybackGroup } from "./playbackHealth";
+import { percent } from "./downloadStats";
 
 /** The pure logic behind the developer dashboard: names, version adoption, the "Needs attention" rules and the little chart shapes. */
 
@@ -57,28 +57,10 @@ export interface DashAlert {
   title: string;
   detail: string;
   /** The dashboard view that has the full picture. */
-  view: "overview" | "users" | "playback" | "downloads" | "addons" | "versions";
+  view: "overview" | "users" | "downloads" | "addons" | "versions";
 }
 
 const RANK: Record<AlertLevel, number> = { bad: 0, warn: 1, ok: 2 };
-
-/** A viewing group that people leave early more than others, worded for a person. */
-function groupAlerts(kind: string, groups: PlaybackGroup[], summary: NonNullable<AdminSummary["playback"]>): DashAlert[] {
-  return groups
-    .filter((g) => standsOut(g, summary))
-    .map((g) => ({
-      id: `playback-${kind}-${g.label}`,
-      level: "warn" as const,
-      title: `${kind} ${g.label}: people leave early`,
-      detail: `${percent(leftEarly(g), g.plays)}% of its ${g.plays} viewings ended early, against ${percent(leftEarlyTotal(summary), summary.plays7d)}% overall.`,
-      view: "playback" as const,
-    }));
-}
-
-/** Playback "left early" total for a summary. */
-function leftEarlyTotal(p: NonNullable<AdminSummary["playback"]>): number {
-  return p.short7d + p.errors7d + p.neverStarted7d;
-}
 
 /**
  * The "Needs attention" list: every rule looks at numbers the panel already has, and an alert exists only while its rule holds, so it
@@ -86,15 +68,6 @@ function leftEarlyTotal(p: NonNullable<AdminSummary["playback"]>): number {
  */
 export function attentionAlerts(summary: AdminSummary): DashAlert[] {
   const alerts: DashAlert[] = [];
-  const playback = summary.playback;
-  if (playback && playback.plays7d >= 10) {
-    const rate = percent(leftEarlyTotal(playback), playback.plays7d);
-    if (rate >= 40) {
-      alerts.push({ id: "playback-early", level: "bad", title: `${rate}% of viewings end early`, detail: `${playback.short7d} short, ${playback.errors7d} player errors and ${playback.neverStarted7d} that never started, in the last 7 days.`, view: "playback" });
-    }
-    alerts.push(...groupAlerts("Device", playback.byDevice, playback).slice(0, 2), ...groupAlerts("Player", playback.byEngine, playback).slice(0, 1), ...groupAlerts("Quality", playback.byResolution, playback).slice(0, 1));
-  }
-
   const platforms = versionsByPlatform(summary.versions);
   const behind = platforms.reduce((n, p) => n + p.behind, 0);
   const numbered = platforms.reduce((n, p) => n + p.versions.filter((v) => /^\d/.test(v.version)).reduce((m, v) => m + v.devices, 0), 0);
@@ -129,7 +102,7 @@ export function attentionAlerts(summary: AdminSummary): DashAlert[] {
       id: "all-good",
       level: "ok",
       title: "Nothing needs attention",
-      detail: playback && playback.plays7d > 0 ? `Playback is healthy: ${percent(leftEarlyTotal(playback), playback.plays7d)}% of viewings end early.` : "No problems found in the numbers the panel can see.",
+      detail: "No problems found in the numbers the panel can see.",
       view: "overview",
     });
   }

@@ -3,7 +3,6 @@ import type { AdminSummary } from "../state/admin";
 import { attentionAlerts, donutSlices, isOldVersion, platformName, sparkPath, versionsByPlatform, weekOverWeek } from "./dash";
 
 const base = (over: Partial<AdminSummary> = {}): AdminSummary => ({ users: 100, newLast7Days: 5, activeLast7Days: 40, plus: { monthly: 0, yearly: 0, lifetime: 0 }, versions: [], ...over });
-const group = (label: string, plays: number, early: number) => ({ label, plays, short: early, errors: 0, neverStarted: 0 });
 const playback = (over: Partial<NonNullable<AdminSummary["playback"]>> = {}): NonNullable<AdminSummary["playback"]> => ({ plays7d: 100, users7d: 20, short7d: 5, errors7d: 0, neverStarted7d: 0, medianStartMs: 2000, multiSource7d: 5, byDevice: [], byEngine: [], byResolution: [], ...over });
 
 describe("versionsByPlatform", () => {
@@ -39,21 +38,9 @@ describe("versionsByPlatform", () => {
 
 describe("attentionAlerts", () => {
   it("says nothing needs attention when nothing is wrong", () => {
-    const a = attentionAlerts(base({ playback: playback() }));
+    const a = attentionAlerts(base({ playback: playback({ short7d: 60 }) }));
     expect(a).toHaveLength(1);
     expect(a[0]!.level).toBe("ok");
-    expect(a[0]!.detail).toContain("5%");
-  });
-  it("raises a red alert when many viewings end early, and it is gone when they do not", () => {
-    const bad = attentionAlerts(base({ playback: playback({ short7d: 30, errors7d: 15 }) }));
-    expect(bad[0]!.level).toBe("bad");
-    expect(bad[0]!.title).toContain("45%");
-    expect(attentionAlerts(base({ playback: playback({ short7d: 10 }) })).every((x) => x.level === "ok")).toBe(true);
-  });
-  it("flags a device that people leave more than the rest", () => {
-    const a = attentionAlerts(base({ playback: playback({ byDevice: [group("Mi Box", 20, 12), group("Pixel", 50, 2)] }) }));
-    expect(a.map((x) => x.title)).toContain("Device Mi Box: people leave early");
-    expect(a.map((x) => x.title)).not.toContain("Device Pixel: people leave early");
   });
   it("flags old versions only when a fifth of devices are behind", () => {
     const some = attentionAlerts(base({ versions: [{ version: "0.5.1", platform: "fire_tv", devices: 90 }, { version: "0.5.0", platform: "fire_tv", devices: 5 }] }));
@@ -67,10 +54,6 @@ describe("attentionAlerts", () => {
     const spike = [...quiet, { date: "2026-09-21", newUsers: 9, total: 30 }];
     expect(attentionAlerts(base({ userGrowth: spike })).some((x) => x.id === "signup-spike")).toBe(true);
     expect(attentionAlerts(base({ userGrowth: quiet })).some((x) => x.id === "signup-spike")).toBe(false);
-  });
-  it("lists the worst first", () => {
-    const a = attentionAlerts(base({ playback: playback({ short7d: 60 }), versions: [{ version: "0.5.1", platform: "fire_tv", devices: 1 }, { version: "0.1.8", platform: "fire_tv", devices: 9 }] }));
-    expect(a.map((x) => x.level)).toEqual(["bad", "warn"]);
   });
   it("counts people with an addon that returns nothing", () => {
     const addons = { usersWithAddons: 10, usersWithDebrid: 2, flaggedUsers: 3, hosts: [], debrid: [] };

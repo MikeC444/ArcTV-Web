@@ -5,11 +5,9 @@ import { routes } from "../../lib/routes";
 import { Spinner } from "../components/States";
 import { AddonsView } from "./AddonsView";
 import { CommandPalette } from "./CommandPalette";
-import { AppPromosView } from "./AppPromosView";
 import { CrashesView } from "./CrashesView";
 import { DownloadsView } from "./DownloadsView";
 import { OverviewView } from "./OverviewView";
-import { PlaybackView } from "./PlaybackView";
 import { Rail } from "./Rail";
 import { UsersView } from "./UsersView";
 import { VersionsView } from "./VersionsView";
@@ -79,7 +77,7 @@ export function Dashboard() {
           <h1 className="dash__title">{title}</h1>
           {live ? (
             <div className="dash__live" title={liveTip}>
-              <span className="dd-pill"><span className="dd-dot" /><b>{live.online.users}</b> online</span>
+              <button type="button" className="dd-pill dd-pill--btn" onClick={() => go("users")} title="See every account"><span className="dd-dot" /><b>{live.online.users}</b> online</button>
               <button type="button" className="dd-pill dd-pill--btn" onClick={() => go("watching")} title="See who is watching"><span className="dd-dot dd-dot--v" /><b>{live.watching.users}</b> watching</button>
             </div>
           ) : null}
@@ -97,9 +95,7 @@ export function Dashboard() {
           {summary && view === "overview" ? <OverviewView summary={summary} onGo={go} /> : null}
           {view === "watching" ? <WatchingView onOpenUser={(id) => go("users", id)} /> : null}
           {view === "users" ? <UsersView summary={summary} userId={userId} onOpen={(id) => go("users", id)} onClose={() => go("users")} /> : null}
-          {summary && view === "playback" ? <PlaybackView summary={summary} /> : null}
           {summary && view === "downloads" ? <DownloadsView summary={summary} onOpenUser={(id) => go("users", id)} /> : null}
-          {summary && view === "popups" ? <AppPromosView summary={summary} onOpenUser={(id) => go("users", id)} /> : null}
           {summary && view === "addons" ? <AddonsView summary={summary} /> : null}
           {summary && view === "versions" ? <VersionsView summary={summary} onFilterUsers={(f) => navigate(`${routes.admin}/users?${f.startsWith("webSystem:") ? `webSystem=${encodeURIComponent(f.slice(10))}` : `device=${encodeURIComponent(f)}`}`)} /> : null}
           {view === "crashes" ? <CrashesView onOpenUser={(id) => go("users", id)} /> : null}
