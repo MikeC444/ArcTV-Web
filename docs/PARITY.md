@@ -11,6 +11,7 @@ Status: ⬜ not done · ✅ done (released or merged) · ➖ not needed there (s
 
 | Date | Change | Firestick | Phone | Mac | Windows |
 |---|---|---|---|---|---|
+| 2026-10-19 | Netflix's page loads faster: the wide pictures ask for a smaller size of the backdrop (TMDB w780 instead of original/w1280, Metahub medium instead of large), falling back to the original address if it isn't there (`imageSize.ts` `cardBackdrop`, `ContentCard.tsx`). Any app that shows many backdrops on a page can do the same | ⬜ | ⬜ | ⬜ | ⬜ |
 | 2026-10-19 | Netflix's page: the wide pictures are 5 across on a laptop and bigger screens (it was 6 on a big screen); 4 on a small window and 2 on a small phone, as before (`components.css`) | ⬜ | ⬜ | ⬜ | ⬜ |
 | 2026-10-19 | Netflix's page: each wide picture in the catalogue shows the title's logo at its bottom left, on a soft shade (looked up once per title, only once the card is near the screen) (`ContentCard.tsx`, `components.css`) | ⬜ | ⬜ | ⬜ | ⬜ |
 | 2026-10-19 | Netflix's page: the catalogue under the Top 10 shows wide 16:9 pictures (each title's backdrop, its poster if it has none) instead of tall posters, 4 across (5 on a laptop, 6 on a big screen, 2 on a small phone); the Top 10 stays tall posters (`ContentCard.tsx` `wide`, `ServiceRows.tsx`, `components.css`) | ⬜ | ⬜ | ⬜ | ⬜ |

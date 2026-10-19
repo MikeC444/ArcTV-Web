@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { sharpBackdrop } from "./imageSize";
+import { cardBackdrop, sharpBackdrop } from "./imageSize";
 
 describe("sharpBackdrop", () => {
   it("asks Metahub and TMDB for their biggest size", () => {
@@ -14,5 +14,19 @@ describe("sharpBackdrop", () => {
     expect(sharpBackdrop("https://example.com/poster/medium/x.jpg")).toBe("https://example.com/poster/medium/x.jpg");
     expect(sharpBackdrop(null)).toBeNull();
     expect(sharpBackdrop("")).toBeNull();
+  });
+});
+
+describe("cardBackdrop", () => {
+  it("asks for the smaller Metahub and TMDB sizes", () => {
+    expect(cardBackdrop("https://images.metahub.space/background/large/tt0111161/img")).toBe("https://images.metahub.space/background/medium/tt0111161/img");
+    expect(cardBackdrop("https://image.tmdb.org/t/p/original/abc.jpg")).toBe("https://image.tmdb.org/t/p/w780/abc.jpg");
+    expect(cardBackdrop("https://image.tmdb.org/t/p/w1280/abc.jpg")).toBe("https://image.tmdb.org/t/p/w780/abc.jpg");
+  });
+  it("leaves everything else alone", () => {
+    expect(cardBackdrop("https://image.tmdb.org/t/p/w500/abc.jpg")).toBe("https://image.tmdb.org/t/p/w500/abc.jpg");
+    expect(cardBackdrop("https://images.metahub.space/background/small/tt1/img")).toBe("https://images.metahub.space/background/small/tt1/img");
+    expect(cardBackdrop("https://example.com/x.jpg")).toBe("https://example.com/x.jpg");
+    expect(cardBackdrop(null)).toBeNull();
   });
 });

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
 import { MdCheck, MdMoreVert } from "react-icons/md";
+import { cardBackdrop } from "../../lib/imageSize";
 import { routes } from "../../lib/routes";
 import { useAuth } from "../../state/auth";
 import { findLastStreamId } from "../../state/lastSource";
@@ -59,6 +60,7 @@ export function ContentCard({ content, style = "STANDARD", autoFocus, to, badge,
   }, [wide, nearScreen]);
   const logo = useTitleLogo(content, style === "CONTINUE_WATCHING" || (!!wide && nearScreen));
   const [logoFailed, setLogoFailed] = useState(false);
+  const [smallFailed, setSmallFailed] = useState(false);
   const isCw = style === "CONTINUE_WATCHING";
   const image = isCw ? content.backdropUrl : wide ? content.backdropUrl ?? content.posterUrl : content.posterUrl;
   const progress = content.watchProgress;
@@ -85,7 +87,21 @@ export function ContentCard({ content, style = "STANDARD", autoFocus, to, badge,
         autoFocus={autoFocus}
         dataAttrs={{ contentId: content.id }}
       >
-        {image ? <img className="card__img" src={image} alt="" loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={(e) => (e.currentTarget.style.display = "none")} /> : <div className="card__placeholder">{content.title}</div>}
+        {image ? (
+          <img
+            className="card__img"
+            src={wide && !smallFailed ? cardBackdrop(image) ?? image : image}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            referrerPolicy="no-referrer"
+            onError={(e) => {
+              // the smaller size is not there: try the address as it came, then give up
+              if (wide && !smallFailed && cardBackdrop(image) !== image) setSmallFailed(true);
+              else e.currentTarget.style.display = "none";
+            }}
+          />
+        ) : <div className="card__placeholder">{content.title}</div>}
         {badge}
         {content.watched ? (
           <span className="card__watched" aria-hidden="true">
