@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { pickHeroPool, pickHeroTitles } from "./heroPool";
+import { growHeroTitles, HERO_READY_WIDE, pickHeroPool, pickHeroTitles } from "./heroPool";
 
 const item = (id: string, backdropUrl: string | null, posterUrl: string | null) => ({ id, backdropUrl, posterUrl });
 const wide = (id: string) => item(id, `https://img/${id}/bg`, `https://img/${id}/poster`);
@@ -51,5 +51,47 @@ describe("hero titles from the enabled rows", () => {
     expect(pickHeroTitles([], many("off", 12), 10)).toHaveLength(10);
     expect(pickHeroTitles(many("on", 2), many("off", 3), 10)).toHaveLength(5);
     expect(pickHeroTitles([], [], 10)).toEqual([]);
+  });
+});
+
+describe("hero titles as Home's rows arrive", () => {
+  const ids = (list: ReadonlyArray<{ id: string }>) => list.map((c) => c.id);
+  const wides = (n: number, prefix = "w") => Array.from({ length: n }, (_, i) => wide(`${prefix}${i}`));
+  const posters = (n: number) => Array.from({ length: n }, (_, i) => posterOnly(`p${i}`));
+
+  it("waits while fewer than a few titles with a background have arrived", () => {
+    expect(growHeroTitles([], [...wides(HERO_READY_WIDE - 1), ...posters(5)], [], 10, false)).toEqual([]);
+  });
+
+  it("starts as soon as a few titles with a background are in, without waiting for 10 or for every addon", () => {
+    const shown = growHeroTitles([], [...wides(HERO_READY_WIDE), ...posters(5)], [], 10, false);
+    expect(ids(shown).sort()).toEqual(ids(wides(HERO_READY_WIDE)).sort());
+  });
+
+  it("adds titles with a background as more rows arrive, keeping the ones already shown first and in order", () => {
+    const first = growHeroTitles([], wides(3), [], 10, false);
+    const later = growHeroTitles(first, [...wides(3), ...wides(4, "x"), ...posters(5)], [], 10, false);
+    expect(ids(later.slice(0, 3))).toEqual(ids(first));
+    expect(ids(later.slice(3)).sort()).toEqual(ids(wides(4, "x")).sort());
+  });
+
+  it("never goes past the size, and returns the same list when nothing is added", () => {
+    const full = growHeroTitles([], wides(15), [], 10, false);
+    expect(full).toHaveLength(10);
+    expect(growHeroTitles(full, wides(20), [], 10, true)).toBe(full);
+    const some = growHeroTitles([], wides(3), [], 10, false);
+    expect(growHeroTitles(some, [...wides(3), ...posters(4)], [], 10, false)).toBe(some);
+  });
+
+  it("still starts once 10 titles are in when the addons have no backgrounds at all", () => {
+    expect(growHeroTitles([], posters(9), [], 10, false)).toEqual([]);
+    expect(growHeroTitles([], posters(10), [], 10, false)).toHaveLength(10);
+  });
+
+  it("fills up from poster-only titles and other rows once every addon has answered", () => {
+    const shown = growHeroTitles([], wides(3), [], 10, false);
+    const done = growHeroTitles(shown, [...wides(3), ...posters(2)], [blank("other1"), blank("other2")], 10, true);
+    expect(ids(done.slice(0, 3))).toEqual(ids(shown));
+    expect(ids(done.slice(3)).sort()).toEqual(["other1", "other2", "p0", "p1"]);
   });
 });
