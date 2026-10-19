@@ -81,8 +81,7 @@ export function TopTenRow({ service }: { service: string }) {
               {i + 1}
             </span>
             <div className="top10__poster">
-              <ContentCard content={content} />
-              <NetflixN />
+              <ContentCard content={content} badge={<NetflixN />} />
             </div>
           </div>
         ))}
