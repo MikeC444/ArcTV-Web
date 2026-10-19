@@ -79,6 +79,8 @@ export const routes = {
   authMethod: (intent: "login" | "register") => `/auth/method/${intent}`,
   authPassword: (intent: "login" | "register") => `/auth/password/${intent}`,
   authQr: (intent: "login" | "register") => `/auth/qr/${intent}`,
+  /** Change the signed-in account's password (Settings → Account opens it in a new tab). */
+  changePassword: "/change-password",
   /** Ask for a password-reset email. */
   forgotPassword: "/forgot-password",
   /** Where the emailed link lands (the token is in the #fragment). */
