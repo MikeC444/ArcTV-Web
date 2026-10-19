@@ -1,4 +1,4 @@
-import { useState, type PointerEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
 import { MdCheck, MdMoreVert } from "react-icons/md";
 import { routes } from "../../lib/routes";
 import { useAuth } from "../../state/auth";
@@ -43,7 +43,21 @@ function resetTilt(event: PointerEvent<HTMLDivElement>) {
 export function ContentCard({ content, style = "STANDARD", autoFocus, to, badge, wide }: ContentCardProps) {
   const openMenu = useCardMenu((s) => s.open);
   // a Continue Watching poster carries the title's logo in its top left corner (looked up, as the saved entry has none)
-  const logo = useTitleLogo(content, style === "CONTINUE_WATCHING");
+  // a wide card shows it too, at its bottom left, but only looks it up once the card is near the screen (a catalogue page holds hundreds of them)
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [nearScreen, setNearScreen] = useState(false);
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!wide || !el || nearScreen) return undefined;
+    if (typeof IntersectionObserver === "undefined") {
+      setNearScreen(true);
+      return undefined;
+    }
+    const observer = new IntersectionObserver((entries) => entries.some((e) => e.isIntersecting) && setNearScreen(true), { rootMargin: "300px" });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [wide, nearScreen]);
+  const logo = useTitleLogo(content, style === "CONTINUE_WATCHING" || (!!wide && nearScreen));
   const [logoFailed, setLogoFailed] = useState(false);
   const isCw = style === "CONTINUE_WATCHING";
   const image = isCw ? content.backdropUrl : wide ? content.backdropUrl ?? content.posterUrl : content.posterUrl;
@@ -61,7 +75,7 @@ export function ContentCard({ content, style = "STANDARD", autoFocus, to, badge,
   const target = to ?? resumeTarget ?? (providerId ? routes.detail(providerId, content.type, content.id, content.title) : undefined);
 
   return (
-    <div className="card" data-cw={isCw || undefined} data-wide={wide || undefined} onPointerEnter={isCw ? undefined : tiltToward} onPointerMove={isCw ? undefined : tiltToward} onPointerLeave={isCw ? undefined : resetTilt}>
+    <div ref={rootRef} className="card" data-cw={isCw || undefined} data-wide={wide || undefined} onPointerEnter={isCw ? undefined : tiltToward} onPointerMove={isCw ? undefined : tiltToward} onPointerLeave={isCw ? undefined : resetTilt}>
       <Surface
         to={target}
         className="card__surface"
@@ -79,6 +93,12 @@ export function ContentCard({ content, style = "STANDARD", autoFocus, to, badge,
           </span>
         ) : null}
         {!isCw ? <div className="card__rating">{content.rating != null ? `★ ${content.rating.toFixed(1)}` : null}</div> : null}
+        {wide && logo && !logoFailed ? (
+          <>
+            <div className="card__cw-scrim" />
+            <img className="card__logo card__logo--wide" src={logo} alt="" loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={() => setLogoFailed(true)} />
+          </>
+        ) : null}
         {isCw ? (
           <>
             <div className="card__cw-scrim" />

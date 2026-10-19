@@ -634,6 +634,9 @@
 .nfrows { --poster-gap: calc(9 * var(--dp)); --card-radius: calc(4 * var(--dp)); }
 .nfrows .grid { row-gap: calc(9 * var(--dp)); padding-top: calc(10 * var(--dp)); }
 .nfrows .card__title, .nfrows .card__sub { display: none; }
+/* the title's logo sits at the bottom left of a wide picture (its top left holds the N), on the bottom shade */
+.card__logo--wide { top: auto; bottom: clamp(6px, 4cqw, calc(14 * var(--dp))); left: clamp(8px, 5cqw, calc(16 * var(--dp))); max-width: 52%; max-height: 34%; object-position: left bottom; }
+.card[data-wide="true"] .card__rating { display: none; }
 .nfrows .card__surface { --tvs-radius: var(--card-radius); }
 .nfrows .top10__badge { top: calc(5 * var(--dp)); left: calc(6 * var(--dp)); width: calc(11 * var(--dp)); }
 /* wide pictures, so fewer across than tall posters */
