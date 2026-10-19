@@ -19,7 +19,7 @@ import { GenrePicker } from "../components/GenrePicker";
 import { SortPicker } from "../components/SortPicker";
 import { ServiceRows } from "../components/ServiceRows";
 import { TopTenRow } from "../components/TopTenRow";
-import { GridSkeleton, PosterPlaceholder } from "../components/Skeletons";
+import { GridSkeleton, PosterPlaceholder, WideGridSkeleton } from "../components/Skeletons";
 import { EmptyState, FullScreenError } from "../components/States";
 
 type SortMode = "FEATURED" | "HIGHEST_RATED" | "NEWEST";
@@ -230,13 +230,21 @@ function Page({ title, children, filters, back, headExtra, intro }: { title: str
   );
 }
 
-function CatalogPage({ title, pager, emptyMessage, back, headExtra, intro, rows = false, exclude, placeholders = false }: { title: string; pager: Pager; emptyMessage: string; back?: string; headExtra?: ReactNode; intro?: ReactNode; rows?: boolean; exclude?: ReadonlySet<string>; placeholders?: boolean }) {
+function CatalogPage({ title, pager, emptyMessage, back, headExtra, intro, rows = false, exclude, placeholders = false }: { title: string; pager: Pager; emptyMessage: string; back?: string; headExtra?: ReactNode; intro?: ReactNode; rows?: boolean; exclude?: ReadonlySet<string> | null; placeholders?: boolean }) {
   const watched = useWatchedIds();
   const [sort, setSort] = useState<SortMode>("FEATURED");
   const navigate = useNavigate();
   const blocked = useBlockedSet();
   const items = useMemo(() => sortContent(withoutBlocked(pager.items, blocked), sort).filter((c) => !exclude?.has(c.id)).map((c) => withWatched(c, watched)), [pager.items, sort, watched, blocked, exclude]);
 
+  // the Netflix page keeps its own page (and so its Top 10, which starts loading at once) while the titles load, with grey wide cells in place of them; they also
+  // wait for the Top 10 (`exclude` is null until it has answered), so it does not pull ten titles out of the list once it is on screen
+  if (rows && (pager.status === "loading" || (pager.status === "loaded" && exclude === null)))
+    return (
+      <Page title={title} back={back} headExtra={headExtra} intro={intro}>
+        <WideGridSkeleton />
+      </Page>
+    );
   if (pager.status === "loading") return <GridSkeleton title={title} back={back} headExtra={headExtra} />;
   if (pager.status === "error") return <div className="page"><FullScreenError message="Couldn't reach your installed addons. Check your connection and try again." onRetry={pager.retry} /></div>;
   if (activeProviders().length === 0)
@@ -253,7 +261,7 @@ function CatalogPage({ title, pager, emptyMessage, back, headExtra, intro, rows 
       intro={intro}
       filters={items.length > 0 && !rows ? SORTS.map((s) => <Pill key={s.id} label={s.label} selected={sort === s.id} large onClick={() => setSort(s.id)} dataAttrs={{ autofocus: s.id === "FEATURED" }} />) : undefined}
     >
-      {items.length === 0 ? <p className="page__empty">{emptyMessage}</p> : rows ? <ServiceRows items={items} onLoadMore={pager.hasMore ? pager.loadMore : undefined} /> : <ContentGrid items={items} onLoadMore={pager.loadMore} placeholders={placeholders && pager.hasMore} />}
+      {items.length === 0 ? <p className="page__empty">{emptyMessage}</p> : rows ? <ServiceRows items={items} onLoadMore={pager.hasMore ? pager.loadMore : undefined} more={pager.hasMore} /> : <ContentGrid items={items} onLoadMore={pager.loadMore} placeholders={placeholders && pager.hasMore} />}
     </Page>
   );
 }
@@ -300,7 +308,12 @@ export function StreamingServiceScreen() {
   const available = useStreamingServices();
   const known = streamingServiceById(service);
   const pager = usePager({ type: "service", value: service });
-  const [topTen, setTopTen] = useState<ReadonlySet<string>>(new Set());
+  const [topTen, setTopTen] = useState<ReadonlySet<string> | null>(null);
+  // a Top 10 that is slow must not hold the page up
+  useEffect(() => {
+    const timer = window.setTimeout(() => setTopTen((t) => t ?? new Set()), 6000);
+    return () => window.clearTimeout(timer);
+  }, []);
   if (!known || (ready && !available.includes(service))) return <Navigate to={routes.home} replace />;
   return <CatalogPage title={known.name} pager={pager} back={routes.home} emptyMessage={`Your addons didn't return any ${known.name} titles right now.`} placeholders intro={known.id === "netflix" ? <TopTenRow service={known.id} onTitles={setTopTen} /> : undefined} rows={known.id === "netflix"} exclude={known.id === "netflix" ? topTen : undefined} />;
 }

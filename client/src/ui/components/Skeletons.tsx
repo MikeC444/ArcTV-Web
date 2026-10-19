@@ -78,3 +78,18 @@ export function GridSkeleton({ title, back, headExtra }: { title: string; back?:
     </div>
   );
 }
+
+/** Grey wide (16:9) cells in the Netflix page's grid, for while its titles load or more are on the way. `innerRef` goes on the first, so a page can watch it. */
+export function WideGridSkeleton({ count = 20, innerRef }: { count?: number; innerRef?: React.Ref<HTMLDivElement> }) {
+  return (
+    <div className="nfrows" aria-busy="true" aria-label="Loading">
+      <div className="grid">
+        {Array.from({ length: count }, (_, i) => (
+          <div key={i} ref={i === 0 ? innerRef : undefined} aria-hidden="true">
+            <Shimmer style={{ aspectRatio: "16 / 9", width: "100%" }} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}

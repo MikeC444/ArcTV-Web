@@ -7,6 +7,7 @@ import { useBlockedSet } from "../../state/blockedGenres";
 import { fetchServiceTitles, viewerRegion } from "../../state/streamingTitles";
 import { ContentCard } from "./ContentCard";
 import { ScrollRow } from "./ScrollRow";
+import { Shimmer } from "./Skeletons";
 
 const COUNT = 10;
 /** One answer per service, country and set of blocked genres for the session, so coming back to the page does not ask again. */
@@ -82,19 +83,20 @@ export function NetflixN() {
  * popularity for the service (the same list the page carries on with), not Netflix's own chart. Nothing is shown until the list arrives, or when it
  * can't be had (no TMDB key on the server). `onTitles` is told which titles it shows. Titles with a genre the person has blocked are left out (their genres are looked up, as TMDB sends none).
  */
-export function TopTenRow({ service, onTitles }: { service: string; onTitles?: (ids: Set<string>) => void }) {
+export function TopTenRow({ service, onTitles }: { service: string; onTitles?: (ids: Set<string> | null) => void }) {
   const region = viewerRegion();
   const blocked = useBlockedSet();
   const key = `${service}:${region}:${[...blocked].sort().join(",")}`;
   const providerId = useProviders((s) => s.providers.find((p) => p.streamingServices?.().includes(service))?.id ?? null);
-  const [shown, setShown] = useState<{ key: string; items: Content[] }>(() => ({ key, items: cache.get(key) ?? [] }));
+  const [shown, setShown] = useState<{ key: string; items: Content[]; done: boolean }>(() => ({ key, items: cache.get(key) ?? [], done: cache.has(key) }));
   // never show what was fetched for other blocked genres
   const items = shown.key === key ? shown.items : (cache.get(key) ?? NONE);
+  const done = shown.key === key ? shown.done : cache.has(key);
 
   useEffect(() => {
     const hit = cache.get(key);
     if (hit) {
-      setShown({ key, items: hit });
+      setShown({ key, items: hit, done: true });
       return undefined;
     }
     let cancelled = false;
@@ -103,9 +105,8 @@ export function TopTenRow({ service, onTitles }: { service: string; onTitles?: (
         blocked.size === 0 || !providerId
           ? topTen(movies.items, shows.items)
           : await pickUnblocked(rankedPool(movies.items, shows.items, POOL), blocked, (c) => loadDetails(activeProviders(), providerId, c.type, c.id).then((d) => d?.genres ?? null), COUNT);
-      if (ten.length === 0) return;
-      cache.set(key, ten);
-      if (!cancelled) setShown({ key, items: ten });
+      if (ten.length > 0) cache.set(key, ten);
+      if (!cancelled) setShown({ key, items: ten, done: true }); // nothing to show (no list for this service) leaves the row out
     });
     return () => {
       cancelled = true;
@@ -116,10 +117,30 @@ export function TopTenRow({ service, onTitles }: { service: string; onTitles?: (
   const onTitlesRef = useRef(onTitles);
   onTitlesRef.current = onTitles;
   // tell the page which titles the row shows, so it can leave them out of what is listed below
-  useEffect(() => onTitlesRef.current?.(new Set(items.map((c) => c.id))), [items]);
+  // (null while the list is still on its way)
+  useEffect(() => onTitlesRef.current?.(done ? new Set(items.map((c) => c.id)) : null), [items, done]);
 
-  if (items.length === 0) return null;
   const title = TOP_TEN_TITLE;
+  // while the list is on its way: the heading, and grey posters with their numbers
+  if (items.length === 0 && !done)
+    return (
+      <section className="row top10" aria-busy="true" aria-label={title}>
+        <h2 className="row__title" style={{ margin: 0 }}>
+          {title}
+        </h2>
+        <div className="row__scroller hide-scroll top10__scroller" aria-hidden="true" style={{ overflow: "hidden" }}>
+          {Array.from({ length: COUNT }, (_, i) => (
+            <div key={i} className="top10__item">
+              <RankNumber rank={i + 1} />
+              <div className="top10__poster">
+                <Shimmer style={{ aspectRatio: "2 / 3", width: "100%" }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  if (items.length === 0) return null;
   return (
     <section className="row top10" aria-label={title}>
       <h2 className="row__title" style={{ margin: 0 }}>
