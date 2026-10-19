@@ -11,6 +11,7 @@ Status: ⬜ not done · ✅ done (released or merged) · ➖ not needed there (s
 
 | Date | Change | Firestick | Phone | Mac | Windows |
 |---|---|---|---|---|---|
+| 2026-10-19 | Netflix's page: the title logos on the wide pictures appear much sooner. A card goes straight to the logo picture on Metahub (`images.metahub.space/logo/medium/<IMDb id>/img`) instead of waiting for a details lookup through the addons, and only looks the logo up the old way when Metahub has none (`ContentCard.tsx`). Any app that waits for a details call to get a logo can use that address | ⬜ | ⬜ | ⬜ | ⬜ |
 | 2026-10-19 | Netflix's page: wide pictures that stayed blank until the pointer crossed them now load reliably: each card loads its picture itself once it is within about 600px of the screen, instead of leaving it to the browser's lazy loading (`ContentCard.tsx`) | ⬜ | ⬜ | ⬜ | ⬜ |
 | 2026-10-19 | Netflix's page: wide pictures asking for a smaller backdrop size (TMDB w780, Metahub medium) was tried and taken out again, as the slow pictures were not about file size | ➖ reverted on web | ➖ reverted on web | ➖ reverted on web | ➖ reverted on web |
 | 2026-10-19 | Netflix's page: the wide pictures are 5 across on a laptop and bigger screens (it was 6 on a big screen); 4 on a small window and 2 on a small phone, as before (`components.css`) | ⬜ | ⬜ | ⬜ | ⬜ |

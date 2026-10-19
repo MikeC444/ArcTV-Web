@@ -57,7 +57,11 @@ export function ContentCard({ content, style = "STANDARD", autoFocus, to, badge,
     observer.observe(el);
     return () => observer.disconnect();
   }, [wide, nearScreen]);
-  const logo = useTitleLogo(content, style === "CONTINUE_WATCHING" || (!!wide && nearScreen));
+  // a wide card goes straight to the logo's picture on Metahub (Cinemeta's own logos live there, by IMDb id) instead of waiting for a details lookup; the lookup is the fallback when that has none
+  const [directFailed, setDirectFailed] = useState(false);
+  const directLogo = wide && nearScreen && !content.logoUrl && !directFailed && /^tt\d+$/.test(content.id) ? `https://images.metahub.space/logo/medium/${content.id}/img` : null;
+  const looked = useTitleLogo(content, style === "CONTINUE_WATCHING" || (!!wide && nearScreen && directLogo === null));
+  const logo = directLogo ?? looked;
   const [logoFailed, setLogoFailed] = useState(false);
   const isCw = style === "CONTINUE_WATCHING";
   const image = isCw ? content.backdropUrl : wide ? content.backdropUrl ?? content.posterUrl : content.posterUrl;
@@ -103,7 +107,7 @@ export function ContentCard({ content, style = "STANDARD", autoFocus, to, badge,
         {wide && logo && !logoFailed ? (
           <>
             <div className="card__cw-scrim" />
-            <img className="card__logo card__logo--wide" src={logo} alt="" loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={() => setLogoFailed(true)} />
+            <img className="card__logo card__logo--wide" src={logo} alt="" loading="eager" referrerPolicy="no-referrer" onError={() => (directLogo ? setDirectFailed(true) : setLogoFailed(true))} />
           </>
         ) : null}
         {isCw ? (
