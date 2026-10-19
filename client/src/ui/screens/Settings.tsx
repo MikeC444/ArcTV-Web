@@ -386,10 +386,7 @@ function AccountPane() {
           }}
         />
       </div>
-      <p className="t-label-sm c-text-3" style={{ marginTop: 18, maxWidth: 520 }}>
-        Signing out flushes any unsynced changes, then removes this account's data from this browser. Your library stays safe in your ArcTV account.
-      </p>
-      <p className="t-label-sm c-text-3" style={{ marginTop: 8 }}>
+      <p className="t-label-sm c-text-3" style={{ marginTop: 18 }}>
         {user ? (
           <>
             <a href={routes.changePassword} target="_blank" rel="noopener">Change password</a>
