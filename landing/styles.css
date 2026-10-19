@@ -347,6 +347,7 @@ p { text-wrap: pretty; }
 .guide__need { margin-top: 14px; display: grid; gap: 8px; }
 .guide__need li { position: relative; padding-left: 28px; }
 .guide__need li::before { content: ""; position: absolute; left: 0; top: .5em; width: 14px; height: 8px; border-left: 2.5px solid #0a9db0; border-bottom: 2.5px solid #0a9db0; transform: rotate(-45deg); }
+.guide__list { margin-top: 12px; padding-left: 22px; list-style: disc; display: grid; gap: 10px; color: var(--ink-2); font-size: 17px; }
 .guide__steps { margin-top: 18px; display: grid; gap: 14px; counter-reset: s; }
 .guide__steps li { counter-increment: s; position: relative; padding: 22px 22px 22px 70px; background: #fff; border-radius: 18px; box-shadow: 0 6px 20px rgba(15, 21, 25, .06); }
 .guide__steps li::before { content: counter(s); position: absolute; left: 20px; top: 20px; width: 34px; height: 34px; border-radius: 50%; background: var(--ink); color: #fff; font-weight: 700; display: grid; place-items: center; }

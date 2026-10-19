@@ -29,6 +29,7 @@ import { signOutAndWipe } from "../../state/sync";
 import { ArcButton, Pill, Switch } from "../components/Buttons";
 import { Spinner } from "../components/States";
 import { Surface } from "../components/Surface";
+import { PRIVACY_URL } from "../../domain/links";
 
 type Tab = "account" | "addons" | "home-rows" | "blocked-genres" | "plus" | "plus-settings" | "recommendations" | "stats" | "sounds" | "subtitles" | "audio";
 type Category = { id: Tab; icon: ReactNode; title: string; subtitle: string; /** Greyed out and not clickable without ArcTV Plus. */ plusOnly?: boolean; /** Still openable without Plus: the page shows a taste of it and what Plus adds. */ preview?: boolean };
@@ -387,6 +388,9 @@ function AccountPane() {
       </div>
       <p className="t-label-sm c-text-3" style={{ marginTop: 18, maxWidth: 520 }}>
         Signing out flushes any unsynced changes, then removes this account's data from this browser. Your library stays safe in your ArcTV account.
+      </p>
+      <p className="t-label-sm c-text-3" style={{ marginTop: 8 }}>
+        <a href={PRIVACY_URL} target="_blank" rel="noopener noreferrer">Privacy Policy</a>
       </p>
     </div>
   );

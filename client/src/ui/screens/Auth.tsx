@@ -9,6 +9,7 @@ import { DISPLAY_NAME_MAX, useAuth, validateCredentials, validateDisplayName, ty
 import { ArcButton } from "../components/Buttons";
 import { ArcLogo } from "../components/Logo";
 import { FullScreenError, Spinner } from "../components/States";
+import { PRIVACY_URL } from "../../domain/links";
 
 /** Where to go once signed in: the deep link the person was heading to, else Home. */
 function useAfterAuth(): () => void {
@@ -181,6 +182,11 @@ export function PasswordSignInScreen() {
         ) : null}
         <ArcButton text={waitLeft > 0 ? `Try again in ${waitLeft} s` : isRegister ? "Create Account" : "Log In"} icon={isRegister ? <MdAdd /> : <MdPerson />} variant="filled" fullWidth type="submit" disabled={busy || waitLeft > 0} />
         {busy ? <div style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "center" }}><Spinner small /><span className="c-text-2 t-body-md">{isRegister ? "Creating account…" : "Signing in…"}</span></div> : null}
+        {isRegister ? (
+          <p className="t-body-sm c-text-3" style={{ margin: 0, textAlign: "center" }}>
+            How we handle your data: <a href={PRIVACY_URL} target="_blank" rel="noopener noreferrer">Privacy Policy</a>
+          </p>
+        ) : null}
         <ArcButton text={isRegister ? "Already have an account? Log in" : "New here? Create an account"} icon={<MdChevronRight />} compact onClick={() => { setMode(isRegister ? "login" : "register"); setError(null); }} />
         <div><BackButton /></div>
       </form>
