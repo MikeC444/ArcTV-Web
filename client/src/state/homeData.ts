@@ -3,7 +3,7 @@ import { applyRowOrder, dedupeRows } from "../domain/homeRows";
 import { dayStamp } from "../domain/homeVariety";
 import { useProviders } from "../domain/registry";
 import { setHomeVarietySeed, type CatalogProvider } from "../domain/provider";
-import { pickHeroTitles } from "../domain/heroPool";
+import { growHeroTitles } from "../domain/heroPool";
 import type { Content, HomeSection } from "../domain/types";
 import { distinctBy } from "../lib/format";
 import { withoutBlocked } from "../domain/blockedGenres";
@@ -167,15 +167,14 @@ export function useHome(): { state: HomeState; reload(): void; ready: boolean } 
     const sections = [...(cwSection ? [cwSection] : []), ...visible];
 
     const pool = distinctBy(visible.flatMap((s) => s.items), (c) => c.id);
-    // The hero: 10 random titles from the rows the person has enabled. Wait until those rows hold at least 10 (or everything has
-    // loaded); if they never do, the rest is made up at random from the other rows.
+    // The hero: up to 10 random titles from the rows the person has enabled. It is shown as soon as a few titles with a real background
+    // have arrived, and the rest join the rotation as the other addons answer (see growHeroTitles); once everything has loaded, any
+    // shortfall is made up at random from the other rows.
     const lockKey = `${prefs.hiddenRowIds.join("|")}#${cacheOnly}#${[...blocked].join("|")}`;
     if (heroLock && heroLock.key !== lockKey) heroLock = null;
-    if (!heroLock && (pool.length >= HERO_POOL_SIZE || complete || cacheOnly)) {
-      const backup = distinctBy(rawSections.flatMap((s) => s.items), (c) => c.id);
-      const titles = pickHeroTitles(pool, backup, HERO_POOL_SIZE);
-      if (titles.length > 0) heroLock = { key: lockKey, titles };
-    }
+    const held = heroLock?.titles ?? [];
+    const grown = growHeroTitles(held, pool, distinctBy(rawSections.flatMap((s) => s.items), (c) => c.id), HERO_POOL_SIZE, complete || cacheOnly);
+    if (grown !== held) heroLock = { key: lockKey, titles: [...grown] };
     const hero = (heroLock?.titles ?? []).map((c) => (watchedIds.has(c.id) ? { ...c, watched: true } : c));
     // every movie and TV show the addons listed on Home (hidden rows included) is a candidate for "Picked for you"
     const recommendationPool = distinctBy(rawSections.flatMap((s) => s.items), (c) => c.id);

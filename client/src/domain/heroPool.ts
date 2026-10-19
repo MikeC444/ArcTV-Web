@@ -29,3 +29,38 @@ export function pickHeroTitles<T extends Pick<Content, "id" | "backdropUrl" | "p
   const extra = pickHeroPool(backup.filter((c) => !taken.has(c.id)), size - own.length, random);
   return shuffled([...own, ...extra], random);
 }
+
+/** How many titles with a real landscape background the hero needs before it is shown: it doesn't wait for the slowest addon. */
+export const HERO_READY_WIDE = 3;
+
+/**
+ * The hero's titles as Home's rows arrive. `current` is what the hero already shows (kept, in order, so the slide on screen never
+ * changes under the viewer); new titles are added at the end, up to `size`.
+ *  - Nothing shown yet: as soon as the enabled rows hold HERO_READY_WIDE titles with a real background, start with those; failing that,
+ *    once they hold `size` titles of any kind (addons with posters only), pick as `pickHeroTitles` always has.
+ *  - Shown, while addons are still answering (`final` false): add titles with a real background as they arrive.
+ *  - Every addon has answered (`final` true): fill up the way `pickHeroTitles` does, poster-only titles and other rows (`backup`) included.
+ * Returns `current` itself when nothing is added.
+ */
+export function growHeroTitles<T extends Pick<Content, "id" | "backdropUrl" | "posterUrl">>(
+  current: readonly T[],
+  enabled: readonly T[],
+  backup: readonly T[],
+  size: number,
+  final: boolean,
+  random: () => number = Math.random,
+): readonly T[] {
+  if (current.length >= size) return current;
+  const taken = new Set(current.map((c) => c.id));
+  const fresh = enabled.filter((c) => !taken.has(c.id));
+  if (final) {
+    const more = pickHeroTitles(fresh, backup.filter((c) => !taken.has(c.id)), size - current.length, random);
+    return more.length > 0 ? [...current, ...more] : current;
+  }
+  const wide = shuffled(fresh.filter(hasWideBackdrop), random);
+  if (current.length === 0) {
+    if (wide.length >= HERO_READY_WIDE) return wide.slice(0, size);
+    return enabled.length >= size ? pickHeroTitles(enabled, [], size, random) : current;
+  }
+  return wide.length > 0 ? [...current, ...wide.slice(0, size - current.length)] : current;
+}
