@@ -624,8 +624,9 @@
   user-select: none; pointer-events: none;
 }
 .top10__num text { font-family: var(--font); font-weight: 900; stroke: none; }
-.top10__stop-from { stop-color: var(--blue); stop-opacity: 0.2; }
-.top10__stop-to { stop-color: var(--violet); stop-opacity: 0.3; }
+.top10__stop-from { stop-color: var(--blue); stop-opacity: 0.16; }
+.top10__stop-to { stop-color: var(--violet); stop-opacity: 0.12; }
+.top10__stop-end { stop-color: var(--violet); stop-opacity: 0; } /* fades away to the page's black at the bottom */
 .top10__poster { position: relative; z-index: 1; flex: none; width: var(--t10-w); }
 .top10__poster .card { width: 100%; }
 .top10__poster .card__title, .top10__poster .card__sub { display: none; }

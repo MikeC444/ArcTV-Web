@@ -36,10 +36,10 @@ function RankNumber({ rank }: { rank: number }) {
   return (
     <svg className="top10__num" viewBox={`0 0 ${width} 80`} aria-hidden="true" focusable="false">
       <defs>
-        <linearGradient id={`top10-fill-${rank}`} x1="0" y1="0" x2="1" y2="1">
+        <linearGradient id={`top10-fill-${rank}`} x1="0" y1="0" x2="0.35" y2="1">
           <stop offset="0" className="top10__stop-from" />
-          <stop offset="0.45" className="top10__stop-to" />
-          <stop offset="1" className="top10__stop-to" />
+          <stop offset="0.4" className="top10__stop-to" />
+          <stop offset="1" className="top10__stop-end" />
         </linearGradient>
       </defs>
       <text x="3" y="76" fontSize="100" textLength={width - 6} lengthAdjust="spacingAndGlyphs" fill={`url(#top10-fill-${rank})`}>
