@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Content } from "../../domain/types";
-import { topTen, topTenTitle } from "./TopTenRow";
+import { topTen } from "./TopTenRow";
 
 const c = (id: string) => ({ id }) as Content;
 const list = (prefix: string, n: number) => Array.from({ length: n }, (_, i) => c(`${prefix}${i}`));
@@ -13,9 +13,4 @@ describe("topTen", () => {
     expect(topTen([c("a"), c("b")], [c("a"), c("x"), c("y")]).map((x) => x.id)).toEqual(["a", "x", "b", "y"]);
   });
   it("is empty with nothing to show", () => expect(topTen([], [])).toEqual([]));
-});
-
-describe("topTenTitle", () => {
-  it("names the country", () => expect(topTenTitle("AU")).toBe("Top 10 in Australia Today"));
-  it("falls back without one", () => expect(topTenTitle("??")).toBe("Top 10 Today"));
 });
