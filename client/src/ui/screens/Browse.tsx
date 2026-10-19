@@ -17,6 +17,7 @@ import { Pill } from "../components/Buttons";
 import { ContentCard } from "../components/ContentCard";
 import { GenrePicker } from "../components/GenrePicker";
 import { SortPicker } from "../components/SortPicker";
+import { ServiceRows } from "../components/ServiceRows";
 import { TopTenRow } from "../components/TopTenRow";
 import { GridSkeleton, PosterPlaceholder } from "../components/Skeletons";
 import { EmptyState, FullScreenError } from "../components/States";
@@ -229,7 +230,7 @@ function Page({ title, children, filters, back, headExtra, intro }: { title: str
   );
 }
 
-function CatalogPage({ title, pager, emptyMessage, back, headExtra, intro, placeholders = false }: { title: string; pager: Pager; emptyMessage: string; back?: string; headExtra?: ReactNode; intro?: ReactNode; placeholders?: boolean }) {
+function CatalogPage({ title, pager, emptyMessage, back, headExtra, intro, rows = false, placeholders = false }: { title: string; pager: Pager; emptyMessage: string; back?: string; headExtra?: ReactNode; intro?: ReactNode; rows?: boolean; placeholders?: boolean }) {
   const watched = useWatchedIds();
   const [sort, setSort] = useState<SortMode>("FEATURED");
   const navigate = useNavigate();
@@ -250,9 +251,9 @@ function CatalogPage({ title, pager, emptyMessage, back, headExtra, intro, place
       back={back}
       headExtra={headExtra}
       intro={intro}
-      filters={items.length > 0 ? SORTS.map((s) => <Pill key={s.id} label={s.label} selected={sort === s.id} large onClick={() => setSort(s.id)} dataAttrs={{ autofocus: s.id === "FEATURED" }} />) : undefined}
+      filters={items.length > 0 && !rows ? SORTS.map((s) => <Pill key={s.id} label={s.label} selected={sort === s.id} large onClick={() => setSort(s.id)} dataAttrs={{ autofocus: s.id === "FEATURED" }} />) : undefined}
     >
-      {items.length === 0 ? <p className="page__empty">{emptyMessage}</p> : <ContentGrid items={items} onLoadMore={pager.loadMore} placeholders={placeholders && pager.hasMore} />}
+      {items.length === 0 ? <p className="page__empty">{emptyMessage}</p> : rows ? <ServiceRows items={items} onLoadMore={pager.hasMore ? pager.loadMore : undefined} /> : <ContentGrid items={items} onLoadMore={pager.loadMore} placeholders={placeholders && pager.hasMore} />}
     </Page>
   );
 }
@@ -300,7 +301,7 @@ export function StreamingServiceScreen() {
   const known = streamingServiceById(service);
   const pager = usePager({ type: "service", value: service });
   if (!known || (ready && !available.includes(service))) return <Navigate to={routes.home} replace />;
-  return <CatalogPage title={known.name} pager={pager} back={routes.home} emptyMessage={`Your addons didn't return any ${known.name} titles right now.`} placeholders intro={known.id === "netflix" ? <TopTenRow service={known.id} /> : undefined} />;
+  return <CatalogPage title={known.name} pager={pager} back={routes.home} emptyMessage={`Your addons didn't return any ${known.name} titles right now.`} placeholders intro={known.id === "netflix" ? <TopTenRow service={known.id} /> : undefined} rows={known.id === "netflix"} />;
 }
 export const MoviesScreen = () => <TypeScreen title="Movies" type="MOVIE" />;
 export const TvShowsScreen = () => <TypeScreen title="TV Shows" type="TV_SHOW" />;
