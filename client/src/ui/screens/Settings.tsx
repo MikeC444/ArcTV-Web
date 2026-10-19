@@ -337,15 +337,13 @@ function PlusPane() {
   );
 }
 
-/** Settings → Account → Change password: the current password and the new one twice. Every other device is signed out; this one stays in. */
-function ChangePassword() {
-  const [open, setOpen] = useState(false);
+/** Settings → Account → Change password (opened from the small link under Sign Out): the current password and the new one twice. Every other device is signed out; this one stays in. */
+function ChangePassword({ onClose }: { onClose: (changed: boolean) => void }) {
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [again, setAgain] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState(false);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -356,11 +354,7 @@ function ChangePassword() {
     setError(null);
     try {
       await api("/auth/password/change", { method: "POST", body: { currentPassword: current, newPassword: next } });
-      setDone(true);
-      setOpen(false);
-      setCurrent("");
-      setNext("");
-      setAgain("");
+      onClose(true);
     } catch (e) {
       const err = e as ApiClientError;
       setError(err.status === 429 ? "Too many attempts right now. Please wait a minute and try again." : err.message || "Something went wrong. Please try again.");
@@ -369,14 +363,6 @@ function ChangePassword() {
     }
   };
 
-  if (!open) {
-    return (
-      <div style={{ marginTop: 16 }}>
-        <ArcButton text="Change password" icon={<MdLock />} compact onClick={() => { setOpen(true); setDone(false); }} />
-        {done ? <p className="t-body-sm c-text-2" role="status" style={{ margin: "8px 0 0" }}>Password changed. Your other devices have been signed out.</p> : null}
-      </div>
-    );
-  }
   return (
     <form onSubmit={submit} noValidate style={{ marginTop: 16, display: "grid", gap: 10, maxWidth: 420 }}>
       <label className="sr-only" htmlFor="pw-current">Current password</label>
@@ -388,7 +374,7 @@ function ChangePassword() {
       {error ? <p id="pw-error" className="c-coral t-body-md" role="alert" style={{ margin: 0 }}>{error}</p> : null}
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
         <ArcButton text={busy ? "Saving…" : "Save new password"} icon={<MdCheck />} variant="filled" compact type="submit" disabled={busy} />
-        <ArcButton text="Cancel" icon={<MdCancel />} compact onClick={() => { setOpen(false); setError(null); }} />
+        <ArcButton text="Cancel" icon={<MdCancel />} compact onClick={() => onClose(false)} />
       </div>
       <p className="t-label-sm c-text-3" style={{ margin: 0 }}>Your other devices will be signed out. Forgot your current password? Sign out and choose &ldquo;Forgot your password?&rdquo;.</p>
     </form>
@@ -397,6 +383,8 @@ function ChangePassword() {
 
 function AccountPane() {
   const user = useAuth((s) => s.user);
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [passwordChanged, setPasswordChanged] = useState(false);
   const profile = useProfiles((s) => (s.supported && s.plus ? activeProfileOf(s) : undefined));
   const freeWithProfiles = useProfiles((s) => s.ready && s.supported && !s.plus);
   const canAddProfile = useCanOfferPlus() && freeWithProfiles;
@@ -427,7 +415,6 @@ function AccountPane() {
           {user.displayName ? <div className="t-body-sm c-text-2">{user.email}</div> : null}
         </>
       ) : null}
-      {user ? <ChangePassword /> : null}
       {user?.isAdmin ? (
         <div style={{ marginTop: 16 }}>
           <ArcButton text="Developer panel" icon={<MdTune />} compact onClick={() => navigate(routes.admin)} />
@@ -449,8 +436,18 @@ function AccountPane() {
         Signing out flushes any unsynced changes, then removes this account's data from this browser. Your library stays safe in your ArcTV account.
       </p>
       <p className="t-label-sm c-text-3" style={{ marginTop: 8 }}>
+        {user ? (
+          <>
+            <button type="button" className="linkbtn" style={{ color: "inherit", textDecoration: "none" }} aria-expanded={changingPassword} onClick={() => { setChangingPassword((open) => !open); setPasswordChanged(false); }}>
+              Change password
+            </button>
+            {" · "}
+          </>
+        ) : null}
         <a href={PRIVACY_URL} target="_blank" rel="noopener noreferrer">Privacy Policy</a>
       </p>
+      {passwordChanged ? <p className="t-body-sm c-text-2" role="status" style={{ margin: "8px 0 0" }}>Password changed. Your other devices have been signed out.</p> : null}
+      {changingPassword ? <ChangePassword onClose={(changed) => { setChangingPassword(false); setPasswordChanged(changed); }} /> : null}
     </div>
   );
 }
