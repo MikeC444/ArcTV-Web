@@ -609,6 +609,15 @@
   .card:not([data-cw="true"]) .card__surface:focus-visible,
   .card:not([data-cw="true"]) .card__surface:not(:disabled):not([aria-disabled="true"]):hover { transform: translateZ(0) scale(var(--tvs-scale)); }
 }
+/* Pressing a poster (mouse down, touch or Enter/Space) pushes it back down: it sinks and shrinks a little, keeping any tilt, and its shadow tightens. Placed last so it wins over hover and focus. */
+.card:not([data-cw="true"]) .card__surface:not(:disabled):not([aria-disabled="true"]):active {
+  transform: perspective(900px) translateY(calc(1 * var(--dp))) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) scale(0.95);
+  box-shadow: 0 calc(3 * var(--dp)) calc(8 * var(--dp)) rgba(0, 0, 0, 0.7), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  transition-duration: 70ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  .card:not([data-cw="true"]) .card__surface:not(:disabled):not([aria-disabled="true"]):active { transform: translateZ(0) scale(0.98); }
+}
 
 /* The tiles have no heading, so keep the space it took: the hero's dots sit at the hero's lower edge and must not land on the first tiles. */
 .row--streaming { padding-top: calc(56 * var(--dp)); }
