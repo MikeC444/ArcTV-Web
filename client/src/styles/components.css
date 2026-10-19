@@ -571,7 +571,20 @@
 /* Home and grid posters: a faint rim at rest so a light poster sits on the dark page instead of glaring, and a small lift (with the usual scale and ring) on
    hover and keyboard focus, in the spirit of the streaming tiles. Continue Watching and the streaming tiles carry data-cw and keep their own rules. */
 .card:not([data-cw="true"]) .card__surface:not(:hover):not(:focus-visible) {
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  /* a bright top edge, a darker bottom edge and layered shadows give the poster some thickness (the picture itself is never touched) */
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.45),
+    0 1px 2px rgba(0, 0, 0, 0.6),
+    0 8px 14px -8px rgba(0, 0, 0, 0.7);
+}
+/* A soft glare over the frame, off at rest; it follows the mouse on hover (see tiltToward in ContentCard.tsx). */
+.card:not([data-cw="true"]) .card__surface::before {
+  content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none; border-radius: inherit; opacity: 0;
+  background: radial-gradient(circle at var(--glare-x, 50%) var(--glare-y, 30%), rgba(255, 255, 255, 0.5), transparent 60%);
+  mix-blend-mode: soft-light;
+  transition: opacity var(--t-medium) var(--ease);
 }
 .card:not([data-cw="true"]) .card__surface:focus-visible {
   transform: translateZ(0) translateY(calc(-4 * var(--dp))) scale(var(--tvs-scale));
@@ -582,6 +595,15 @@
     transform: translateZ(0) translateY(calc(-4 * var(--dp))) scale(var(--tvs-scale));
     box-shadow: 0 calc(16 * var(--dp)) calc(34 * var(--dp)) rgba(0, 0, 0, 0.75);
   }
+}
+/* Mouse only, and not with reduced motion: the poster tips toward the pointer with a moving glare, and its neighbours settle back a little. */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .card:not([data-cw="true"]) .card__surface:not(:disabled):not([aria-disabled="true"]):hover {
+    transform: perspective(900px) translateY(calc(-4 * var(--dp))) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) scale(var(--tvs-scale));
+    box-shadow: 0 calc(26 * var(--dp)) calc(36 * var(--dp)) calc(-12 * var(--dp)) rgba(0, 0, 0, 0.85), 0 calc(10 * var(--dp)) calc(14 * var(--dp)) calc(-6 * var(--dp)) rgba(0, 0, 0, 0.6), 0 2px 4px rgba(0, 0, 0, 0.5);
+  }
+  .card:not([data-cw="true"]) .card__surface:not(:disabled):not([aria-disabled="true"]):hover::before { opacity: 1; }
+  :has(> .card:not([data-cw="true"]):hover) > .card:not(:hover):not([data-cw="true"]) .card__surface { transform: translateZ(0) scale(0.97); }
 }
 @media (prefers-reduced-motion: reduce) {
   .card:not([data-cw="true"]) .card__surface:focus-visible,
