@@ -612,3 +612,20 @@
 
 /* The tiles have no heading, so keep the space it took: the hero's dots sit at the hero's lower edge and must not land on the first tiles. */
 .row--streaming { padding-top: calc(56 * var(--dp)); }
+
+/* ── Top 10 row (Netflix's page): a big outlined number tucked behind each poster ─────────────────────────────────── */
+.top10 { --t10-w: clamp(92px, 9.5vw, calc(172 * var(--dp))); }
+.top10__scroller { gap: calc(6 * var(--dp)); padding-bottom: calc(var(--edge-safe) + 4px); }
+.top10__item { flex: none; display: flex; align-items: flex-end; }
+.top10__num {
+  position: relative; z-index: 0; flex: none;
+  margin-right: calc(var(--t10-w) * -0.2); /* the poster sits over the right of the number */
+  font-weight: 900; font-size: calc(var(--t10-w) * 1.55); line-height: 0.82; letter-spacing: -0.06em;
+  color: var(--bg); -webkit-text-stroke: calc(4 * var(--dp)) #7b7b86; paint-order: stroke fill;
+  user-select: none; pointer-events: none;
+}
+.top10__poster { position: relative; z-index: 1; flex: none; width: var(--t10-w); }
+.top10__poster .card { width: 100%; }
+.top10__poster .card__title, .top10__poster .card__sub { display: none; }
+.top10__badge { position: absolute; z-index: 5; top: calc(6 * var(--dp)); left: calc(7 * var(--dp)); width: calc(13 * var(--dp)); min-width: 9px; height: auto; pointer-events: none; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6)); }
+@media (max-width: 720px) { .top10 { --t10-w: clamp(92px, 26vw, 140px); } }
