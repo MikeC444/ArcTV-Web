@@ -28,7 +28,7 @@ export function topTen(movies: Content[], shows: Content[]): Content[] {
 export const TOP_TEN_TITLE = "Top 10 Today";
 
 /** The service's red N, drawn as three bars, on the corner of each poster. */
-function NetflixN() {
+export function NetflixN() {
   return (
     <svg className="top10__badge" viewBox="0 0 24 40" aria-hidden="true" focusable="false">
       <rect x="0" y="0" width="8" height="40" fill="#e50914" />
@@ -81,8 +81,7 @@ export function TopTenRow({ service }: { service: string }) {
               {i + 1}
             </span>
             <div className="top10__poster">
-              <ContentCard content={content} />
-              <NetflixN />
+              <ContentCard content={content} badge={<NetflixN />} />
             </div>
           </div>
         ))}

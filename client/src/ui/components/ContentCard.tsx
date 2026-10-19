@@ -1,4 +1,4 @@
-import { useState, type PointerEvent } from "react";
+import { useState, type PointerEvent, type ReactNode } from "react";
 import { MdCheck, MdMoreVert } from "react-icons/md";
 import { routes } from "../../lib/routes";
 import { useAuth } from "../../state/auth";
@@ -15,6 +15,8 @@ interface ContentCardProps {
   autoFocus?: boolean;
   /** Where a click goes; defaults to the Detail page, except a Continue Watching poster, which carries straight on (the player on the source it was watched on, or the source list the first time). */
   to?: string;
+  /** Drawn inside the poster's frame, so it scales and tilts with the poster (the Top 10 row's service logo). */
+  badge?: ReactNode;
 }
 
 /** Tips a hovered poster toward the mouse and moves a soft glare with it (the CSS reads these on the poster's frame, never on the picture; nothing tilts with reduced motion or on touch). */
@@ -36,7 +38,7 @@ function resetTilt(event: PointerEvent<HTMLDivElement>) {
 }
 
 /** ui/components/ContentCard.kt — poster (or 16:9 backdrop for Continue Watching), watched tick, rating on focus, progress bar. Its size comes from the row / grid it sits in (--poster-cols). */
-export function ContentCard({ content, style = "STANDARD", autoFocus, to }: ContentCardProps) {
+export function ContentCard({ content, style = "STANDARD", autoFocus, to, badge }: ContentCardProps) {
   const openMenu = useCardMenu((s) => s.open);
   // a Continue Watching poster carries the title's logo in its top left corner (looked up, as the saved entry has none)
   const logo = useTitleLogo(content, style === "CONTINUE_WATCHING");
@@ -68,6 +70,7 @@ export function ContentCard({ content, style = "STANDARD", autoFocus, to }: Cont
         dataAttrs={{ contentId: content.id }}
       >
         {image ? <img className="card__img" src={image} alt="" loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={(e) => (e.currentTarget.style.display = "none")} /> : <div className="card__placeholder">{content.title}</div>}
+        {badge}
         {content.watched ? (
           <span className="card__watched" aria-hidden="true">
             <MdCheck />

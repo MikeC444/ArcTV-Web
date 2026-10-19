@@ -627,5 +627,15 @@
 .top10__poster { position: relative; z-index: 1; flex: none; width: var(--t10-w); }
 .top10__poster .card { width: 100%; }
 .top10__poster .card__title, .top10__poster .card__sub { display: none; }
-.top10__badge { position: absolute; z-index: 5; top: calc(6 * var(--dp)); left: calc(7 * var(--dp)); width: calc(13 * var(--dp)); min-width: 9px; height: auto; pointer-events: none; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6)); }
+.top10__badge { position: absolute; z-index: 3; top: calc(6 * var(--dp)); left: calc(7 * var(--dp)); width: calc(13 * var(--dp)); min-width: 9px; height: auto; pointer-events: none; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6)); }
 @media (max-width: 720px) { .top10 { --t10-w: clamp(92px, 26vw, 140px); } }
+
+/* ── Rows under a streaming service's Top 10: posters close together, small corners, no captions ─────────────────── */
+.nfrows { --poster-gap: calc(4 * var(--dp)); --card-radius: calc(4 * var(--dp)); }
+.nfrows .row { margin-bottom: calc(6 * var(--dp)); }
+.nfrows .row__title { padding-top: calc(8 * var(--dp)); padding-bottom: calc(6 * var(--dp)); font-size: calc(19 * var(--dp)); }
+.nfrows .card__title, .nfrows .card__sub { display: none; }
+.nfrows .card__surface { --tvs-radius: var(--card-radius); }
+.nfrows .top10__badge { top: calc(5 * var(--dp)); left: calc(6 * var(--dp)); width: calc(11 * var(--dp)); }
+@media (min-width: 1101px) { .nfrows { --poster-cols: 9; } }
+@media (min-width: 1601px) { .nfrows { --poster-cols: 10; } }
