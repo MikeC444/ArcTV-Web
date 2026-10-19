@@ -631,8 +631,8 @@
 @media (max-width: 720px) { .top10 { --t10-w: clamp(92px, 26vw, 140px); } }
 
 /* ── Rows under a streaming service's Top 10: posters close together, small corners, no captions or headings ─────── */
-.nfrows { --poster-gap: calc(4 * var(--dp)); --card-radius: calc(4 * var(--dp)); }
-.nfrows .grid { row-gap: calc(4 * var(--dp)); padding-top: calc(10 * var(--dp)); }
+.nfrows { --poster-gap: calc(9 * var(--dp)); --card-radius: calc(4 * var(--dp)); }
+.nfrows .grid { row-gap: calc(9 * var(--dp)); padding-top: calc(10 * var(--dp)); }
 .nfrows .card__title, .nfrows .card__sub { display: none; }
 .nfrows .card__surface { --tvs-radius: var(--card-radius); }
 .nfrows .top10__badge { top: calc(5 * var(--dp)); left: calc(6 * var(--dp)); width: calc(11 * var(--dp)); }
