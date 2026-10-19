@@ -17,6 +17,7 @@ import { Pill } from "../components/Buttons";
 import { ContentCard } from "../components/ContentCard";
 import { GenrePicker } from "../components/GenrePicker";
 import { SortPicker } from "../components/SortPicker";
+import { TopTenRow } from "../components/TopTenRow";
 import { GridSkeleton, PosterPlaceholder } from "../components/Skeletons";
 import { EmptyState, FullScreenError } from "../components/States";
 
@@ -210,7 +211,7 @@ export function ContentGrid({ items, onLoadMore, placeholders = false }: { items
   );
 }
 
-function Page({ title, children, filters, back, headExtra }: { title: string; children: ReactNode; filters?: ReactNode; back?: string; headExtra?: ReactNode }) {
+function Page({ title, children, filters, back, headExtra, intro }: { title: string; children: ReactNode; filters?: ReactNode; back?: string; headExtra?: ReactNode; intro?: ReactNode }) {
   useEffect(() => {
     document.title = `${title} · Arc TV`;
   }, [title]);
@@ -221,13 +222,14 @@ function Page({ title, children, filters, back, headExtra }: { title: string; ch
         <h1 className="t-display-md page__title">{title}</h1>
         {headExtra}
       </div>
+      {intro}
       {filters ? <div className="page__filters">{filters}</div> : null}
       {children}
     </div>
   );
 }
 
-function CatalogPage({ title, pager, emptyMessage, back, headExtra, placeholders = false }: { title: string; pager: Pager; emptyMessage: string; back?: string; headExtra?: ReactNode; placeholders?: boolean }) {
+function CatalogPage({ title, pager, emptyMessage, back, headExtra, intro, placeholders = false }: { title: string; pager: Pager; emptyMessage: string; back?: string; headExtra?: ReactNode; intro?: ReactNode; placeholders?: boolean }) {
   const watched = useWatchedIds();
   const [sort, setSort] = useState<SortMode>("FEATURED");
   const navigate = useNavigate();
@@ -247,6 +249,7 @@ function CatalogPage({ title, pager, emptyMessage, back, headExtra, placeholders
       title={title}
       back={back}
       headExtra={headExtra}
+      intro={intro}
       filters={items.length > 0 ? SORTS.map((s) => <Pill key={s.id} label={s.label} selected={sort === s.id} large onClick={() => setSort(s.id)} dataAttrs={{ autofocus: s.id === "FEATURED" }} />) : undefined}
     >
       {items.length === 0 ? <p className="page__empty">{emptyMessage}</p> : <ContentGrid items={items} onLoadMore={pager.loadMore} placeholders={placeholders && pager.hasMore} />}
@@ -297,7 +300,7 @@ export function StreamingServiceScreen() {
   const known = streamingServiceById(service);
   const pager = usePager({ type: "service", value: service });
   if (!known || (ready && !available.includes(service))) return <Navigate to={routes.home} replace />;
-  return <CatalogPage title={known.name} pager={pager} back={routes.home} emptyMessage={`Your addons didn't return any ${known.name} titles right now.`} placeholders />;
+  return <CatalogPage title={known.name} pager={pager} back={routes.home} emptyMessage={`Your addons didn't return any ${known.name} titles right now.`} placeholders intro={known.id === "netflix" ? <TopTenRow service={known.id} /> : undefined} />;
 }
 export const MoviesScreen = () => <TypeScreen title="Movies" type="MOVIE" />;
 export const TvShowsScreen = () => <TypeScreen title="TV Shows" type="TV_SHOW" />;
