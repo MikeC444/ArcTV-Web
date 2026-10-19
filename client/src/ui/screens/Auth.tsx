@@ -442,3 +442,68 @@ export function ResetPasswordScreen() {
     </div>
   );
 }
+
+/** Change the signed-in account's password, on its own page (Settings → Account opens it in a new tab). Every other device is signed out; this one stays in. */
+export function ChangePasswordScreen() {
+  const navigate = useNavigate();
+  const [current, setCurrent] = useState("");
+  const [next, setNext] = useState("");
+  const [again, setAgain] = useState("");
+  const [visible, setVisible] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    document.title = "Change password · Arc TV";
+  }, []);
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (current === "") return setError("Enter your current password.");
+    const problem = validateNewPassword(next, again);
+    if (problem) return setError(problem);
+    setBusy(true);
+    setError(null);
+    try {
+      await api("/auth/password/change", { method: "POST", body: { currentPassword: current, newPassword: next } });
+      setDone(true);
+    } catch (e) {
+      const err = e as ApiClientError;
+      setError(err.status === 429 ? "Too many attempts right now. Please wait a minute and try again." : err.message || "Something went wrong. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (done) {
+    return (
+      <div className="authpane">
+        <div className="authcenter__col authform">
+          <h1 className="t-headline-sm" style={{ margin: 0 }}>Password changed</h1>
+          <p className="t-body-md c-text-2" role="status" style={{ margin: 0 }}>Your other devices have been signed out. You&rsquo;re still signed in here, and you can close this tab.</p>
+          <ArcButton text="Go to Arc TV" icon={<MdChevronRight />} variant="filled" fullWidth onClick={() => navigate("/")} />
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="authpane">
+      <form className="authcenter__col authform" onSubmit={submit} noValidate>
+        <h1 className="t-headline-sm" style={{ margin: 0 }}>Change your password</h1>
+        <label className="sr-only" htmlFor="pw-current">Current password</label>
+        <input id="pw-current" className="mfield" type={visible ? "text" : "password"} autoComplete="current-password" placeholder="Current password" value={current} onChange={(e) => setCurrent(e.target.value)} aria-invalid={error ? true : undefined} aria-describedby={error ? "pw-error" : undefined} data-autofocus="true" />
+        <label className="sr-only" htmlFor="pw-new">New password</label>
+        <input id="pw-new" className="mfield" type={visible ? "text" : "password"} autoComplete="new-password" placeholder="New password (at least 8 characters)" value={next} onChange={(e) => setNext(e.target.value)} aria-invalid={error ? true : undefined} aria-describedby={error ? "pw-error" : undefined} />
+        <label className="sr-only" htmlFor="pw-again">New password again</label>
+        <input id="pw-again" className="mfield" type={visible ? "text" : "password"} autoComplete="new-password" placeholder="New password again" value={again} onChange={(e) => setAgain(e.target.value)} aria-invalid={error ? true : undefined} aria-describedby={error ? "pw-error" : undefined} />
+        <div>
+          <ArcButton text={visible ? "Hide Passwords" : "Show Passwords"} icon={visible ? <MdVisibilityOff /> : <MdVisibility />} compact onClick={() => setVisible((v) => !v)} />
+        </div>
+        {error ? <p id="pw-error" className="c-coral t-body-md" role="alert" style={{ margin: 0, textAlign: "center" }}>{error}</p> : null}
+        <ArcButton text={busy ? "Saving…" : "Save new password"} icon={<MdLock />} variant="filled" fullWidth type="submit" disabled={busy} />
+        <p className="t-label-sm c-text-3" style={{ margin: 0 }}>Your other devices will be signed out. Forgot your current password? Sign out and choose &ldquo;Forgot your password?&rdquo;.</p>
+      </form>
+    </div>
+  );
+}

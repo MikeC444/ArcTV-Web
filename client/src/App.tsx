@@ -9,7 +9,7 @@ import { detachSession, startGuestSession, startSession } from "./state/sync";
 import { AppShell } from "./ui/layout/AppShell";
 import { Spinner } from "./ui/components/States";
 import { AddAddonScreen, SettingsScreen } from "./ui/screens/Settings";
-import { AllowGuests, AuthFrame, AuthLayout, AuthMethodScreen, AuthStartScreen, ForgotPasswordScreen, PasswordSignInScreen, QrSignInScreen, RequireAuth, ResetPasswordScreen } from "./ui/screens/Auth";
+import { AllowGuests, AuthFrame, AuthLayout, AuthMethodScreen, AuthStartScreen, ChangePasswordScreen, ForgotPasswordScreen, PasswordSignInScreen, QrSignInScreen, RequireAuth, ResetPasswordScreen } from "./ui/screens/Auth";
 import { AnimeScreen, MoviesScreen, StreamingServiceScreen, MyListScreen, TvShowsScreen } from "./ui/screens/Browse";
 import { FEATURES } from "./lib/features";
 import { LiveTvScreen } from "./ui/screens/LiveTv";
@@ -98,6 +98,7 @@ export function App() {
         <Route element={<AuthFrame />}>
           <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
           <Route path="/reset-password" element={<ResetPasswordScreen />} />
+          <Route path="/change-password" element={<RequireAuth><ChangePasswordScreen /></RequireAuth>} />
         </Route>
         <Route
           element={
