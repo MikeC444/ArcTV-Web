@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type PointerEvent } from "react";
 import { MdCheck, MdMoreVert } from "react-icons/md";
 import { routes } from "../../lib/routes";
 import { useAuth } from "../../state/auth";
@@ -15,6 +15,24 @@ interface ContentCardProps {
   autoFocus?: boolean;
   /** Where a click goes; defaults to the Detail page, except a Continue Watching poster, which carries straight on (the player on the source it was watched on, or the source list the first time). */
   to?: string;
+}
+
+/** Tips a hovered poster toward the mouse and moves a soft glare with it (the CSS reads these on the poster's frame, never on the picture; nothing tilts with reduced motion or on touch). */
+function tiltToward(event: PointerEvent<HTMLDivElement>) {
+  if (event.pointerType !== "mouse") return;
+  const surface = event.currentTarget.querySelector<HTMLElement>(".card__surface");
+  if (!surface) return;
+  const box = surface.getBoundingClientRect();
+  const x = Math.min(1, Math.max(0, (event.clientX - box.left) / box.width));
+  const y = Math.min(1, Math.max(0, (event.clientY - box.top) / box.height));
+  surface.style.setProperty("--tilt-x", `${((0.5 - y) * 12).toFixed(1)}deg`);
+  surface.style.setProperty("--tilt-y", `${((x - 0.5) * 12).toFixed(1)}deg`);
+  surface.style.setProperty("--glare-x", `${(x * 100).toFixed(0)}%`);
+  surface.style.setProperty("--glare-y", `${(y * 100).toFixed(0)}%`);
+}
+function resetTilt(event: PointerEvent<HTMLDivElement>) {
+  const surface = event.currentTarget.querySelector<HTMLElement>(".card__surface");
+  for (const name of ["--tilt-x", "--tilt-y", "--glare-x", "--glare-y"]) surface?.style.removeProperty(name);
 }
 
 /** ui/components/ContentCard.kt — poster (or 16:9 backdrop for Continue Watching), watched tick, rating on focus, progress bar. Its size comes from the row / grid it sits in (--poster-cols). */
@@ -39,7 +57,7 @@ export function ContentCard({ content, style = "STANDARD", autoFocus, to }: Cont
   const target = to ?? resumeTarget ?? (providerId ? routes.detail(providerId, content.type, content.id, content.title) : undefined);
 
   return (
-    <div className="card" data-cw={isCw || undefined}>
+    <div className="card" data-cw={isCw || undefined} onPointerEnter={isCw ? undefined : tiltToward} onPointerMove={isCw ? undefined : tiltToward} onPointerLeave={isCw ? undefined : resetTilt}>
       <Surface
         to={target}
         className="card__surface"
