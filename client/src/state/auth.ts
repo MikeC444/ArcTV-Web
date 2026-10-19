@@ -47,9 +47,22 @@ export function validateDisplayName(displayName: string): string | null {
   return null;
 }
 
-export function validateCredentials(email: string, password: string): string | null {
+export function validateEmail(email: string): string | null {
   if (email.trim() === "") return "Enter your email address.";
   if (!EMAIL_PATTERN.test(email.trim())) return "Enter a valid email address.";
+  return null;
+}
+
+/** A new password (changing it, or from a reset link): long enough, and typed the same twice. */
+export function validateNewPassword(password: string, again: string): string | null {
+  if (password.length < MIN_PASSWORD_LENGTH) return `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`;
+  if (password !== again) return "The two passwords don't match.";
+  return null;
+}
+
+export function validateCredentials(email: string, password: string): string | null {
+  const emailProblem = validateEmail(email);
+  if (emailProblem) return emailProblem;
   if (password.length < MIN_PASSWORD_LENGTH) return `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`;
   return null;
 }

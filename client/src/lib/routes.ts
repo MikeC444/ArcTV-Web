@@ -79,6 +79,10 @@ export const routes = {
   authMethod: (intent: "login" | "register") => `/auth/method/${intent}`,
   authPassword: (intent: "login" | "register") => `/auth/password/${intent}`,
   authQr: (intent: "login" | "register") => `/auth/qr/${intent}`,
+  /** Ask for a password-reset email. */
+  forgotPassword: "/forgot-password",
+  /** Where the emailed link lands (the token is in the #fragment). */
+  resetPassword: "/reset-password",
 };
 
 export const parseOptionalInt = (value: string | undefined): number | null => {

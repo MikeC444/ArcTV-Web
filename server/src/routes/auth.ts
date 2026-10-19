@@ -18,6 +18,10 @@ const registerBody = z
   })
   .strict();
 const qrStatusQuery = z.object({ token: z.string().min(16).max(256) });
+const newPassword = z.string().min(8, "Password must be at least 8 characters.").max(256);
+const changePasswordBody = z.object({ currentPassword: z.string().min(1, "Enter your current password.").max(256), newPassword }).strict();
+const forgotPasswordBody = z.object({ email }).strict();
+const resetPasswordBody = z.object({ token: z.string().min(20).max(200), newPassword }).strict();
 
 function parse<T>(schema: z.ZodType<T>, value: unknown): T {
   const result = schema.safeParse(value);
@@ -132,6 +136,34 @@ export function createAuthRouter(ctx: AppContext): Router {
         /* cookie cleared below regardless */
       }
     }
+    ctx.sessions.clear(res);
+    res.status(204).end();
+  });
+
+  // Change the password of the signed-in account (the current one is checked; every other device is signed out, this one stays in).
+  router.post("/password/change", credentialLimiter, async (req, res) => {
+    const body = parse(changePasswordBody, req.body);
+    const response = await authedBackendRequest(ctx, req, res, { method: "POST", path: "/auth/password/change", body });
+    if (response.status !== 204) throw fromBackendStatus(response.status, backendMessage(response.json), response.retryAfter);
+    res.status(204).end();
+  });
+
+  // "Forgot password": the account emails a one-time link (the same answer whether or not the address has an account).
+  router.post("/password/forgot", credentialLimiter, async (req, res) => {
+    const body = parse(forgotPasswordBody, req.body);
+    const response = await ctx.backend({ method: "POST", path: "/auth/password/forgot", body, clientIp: req.ip });
+    if (response.status === 503) throw new ApiError(503, "upstream_error", "Password reset isn't available yet. Please try again later.");
+    if (response.status !== 204) throw fromBackendStatus(response.status, backendMessage(response.json), response.retryAfter);
+    res.status(204).end();
+  });
+
+  // A new password from the emailed link. The account signs every session out, so this browser's is cleared too.
+  router.post("/password/reset", credentialLimiter, async (req, res) => {
+    const body = parse(resetPasswordBody, req.body);
+    const response = await ctx.backend({ method: "POST", path: "/auth/password/reset", body, clientIp: req.ip });
+    if (response.status !== 204) throw fromBackendStatus(response.status, backendMessage(response.json), response.retryAfter);
+    const session = ctx.sessions.read(req);
+    if (session) ctx.confirmed.delete(sessionKey(session));
     ctx.sessions.clear(res);
     res.status(204).end();
   });
