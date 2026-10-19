@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { MdAdd, MdArrowBack, MdChevronRight, MdEdit, MdPerson, MdQrCode2, MdVisibility, MdVisibilityOff, MdWifiOff } from "react-icons/md";
+import { MdAdd, MdArrowBack, MdChevronRight, MdEdit, MdLock, MdMail, MdPerson, MdQrCode2, MdVisibility, MdVisibilityOff, MdWifiOff } from "react-icons/md";
 import QRCode from "qrcode";
 import { Navigate, Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
 import heroImage from "../../assets/img/auth_hero_living_room.webp";
 import { api, ApiClientError } from "../../lib/api";
 import { routes } from "../../lib/routes";
-import { DISPLAY_NAME_MAX, useAuth, validateCredentials, validateDisplayName, type SessionUser } from "../../state/auth";
+import { DISPLAY_NAME_MAX, useAuth, validateCredentials, validateDisplayName, validateEmail, validateNewPassword, type SessionUser } from "../../state/auth";
 import { ArcButton } from "../components/Buttons";
 import { ArcLogo } from "../components/Logo";
 import { FullScreenError, Spinner } from "../components/States";
@@ -28,15 +28,22 @@ const intentOf = (value: string | undefined): "login" | "register" => (value ===
 export function AuthLayout() {
   return (
     <RedirectIfAuthed>
-      <main className="authstart" id="main">
-        <img className="authstart__hero" src={heroImage} alt="" />
-        <div className="authstart__scrim" />
-        <div className="authstart__col">
-          <ArcLogo size={32} />
-          <Outlet />
-        </div>
-      </main>
+      <AuthFrame />
     </RedirectIfAuthed>
+  );
+}
+
+/** The same page without sending a signed-in visitor away: the password-reset pages work whether or not this browser is signed in. */
+export function AuthFrame() {
+  return (
+    <main className="authstart" id="main">
+      <img className="authstart__hero" src={heroImage} alt="" />
+      <div className="authstart__scrim" />
+      <div className="authstart__col">
+        <ArcLogo size={32} />
+        <Outlet />
+      </div>
+    </main>
   );
 }
 
@@ -119,6 +126,7 @@ export function PasswordSignInScreen() {
   const login = useAuth((s) => s.loginWithPassword);
   const register = useAuth((s) => s.registerWithPassword);
   const afterAuth = useAfterAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -187,6 +195,7 @@ export function PasswordSignInScreen() {
             How we handle your data: <a href={PRIVACY_URL} target="_blank" rel="noopener noreferrer">Privacy Policy</a>
           </p>
         ) : null}
+        {!isRegister ? <ArcButton text="Forgot your password?" icon={<MdLock />} compact onClick={() => navigate(routes.forgotPassword)} /> : null}
         <ArcButton text={isRegister ? "Already have an account? Log in" : "New here? Create an account"} icon={<MdChevronRight />} compact onClick={() => { setMode(isRegister ? "login" : "register"); setError(null); }} />
         <div><BackButton /></div>
       </form>
@@ -298,4 +307,138 @@ export function RedirectIfAuthed({ children }: { children: React.ReactNode }) {
   if (status === "signedIn") return <Navigate to="/" replace />;
   if (status === "unknown") return <div className="gate" aria-busy="true"><ArcLogo size={32} /></div>;
   return <>{children}</>;
+}
+
+/** "Forgot your password?": asks the account to email a one-time link. Says the same whether or not the address has an account. */
+export function ForgotPasswordScreen() {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    const problem = validateEmail(email);
+    if (problem) return setError(problem);
+    setBusy(true);
+    setError(null);
+    try {
+      await api("/auth/password/forgot", { method: "POST", body: { email: email.trim() }, authFlow: true });
+      setSent(true);
+    } catch (e) {
+      const err = e as ApiClientError;
+      setError(err.status === 429 ? "Too many requests right now. Please wait a minute and try again." : err.message || "Something went wrong. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const toLogIn = <ArcButton text="Back to log in" icon={<MdArrowBack />} compact onClick={() => navigate(routes.authPassword("login"))} />;
+  if (sent) {
+    return (
+      <div className="authpane">
+        <div className="authcenter__col authform">
+          <h1 className="t-headline-sm" style={{ margin: 0 }}>Check your email</h1>
+          <p className="t-body-md c-text-2" role="status" style={{ margin: 0 }}>
+            If {email.trim()} has an Arc TV account, we&rsquo;ve sent it a link to choose a new password. The link works once, for 1 hour. If you don&rsquo;t see it, check your spam folder.
+          </p>
+          <div>{toLogIn}</div>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="authpane">
+      <form className="authcenter__col authform" onSubmit={submit} noValidate>
+        <h1 className="t-headline-sm" style={{ margin: 0 }}>Reset your password</h1>
+        <p className="t-body-md c-text-2" style={{ margin: 0 }}>Enter your account&rsquo;s email and we&rsquo;ll send you a link to choose a new password.</p>
+        <label className="sr-only" htmlFor="forgot-email">Email</label>
+        <input id="forgot-email" className="mfield" type="email" inputMode="email" autoComplete="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} aria-invalid={error ? true : undefined} aria-describedby={error ? "forgot-error" : undefined} data-autofocus="true" autoCapitalize="none" spellCheck={false} />
+        {error ? <p id="forgot-error" className="c-coral t-body-md" role="alert" style={{ margin: 0, textAlign: "center" }}>{error}</p> : null}
+        <ArcButton text={busy ? "Sending…" : "Send reset link"} icon={<MdMail />} variant="filled" fullWidth type="submit" disabled={busy} />
+        <div>{toLogIn}</div>
+      </form>
+    </div>
+  );
+}
+
+/** The page the emailed link opens: choose a new password. The token comes from the address's #fragment and is taken out of it at once. */
+export function ResetPasswordScreen() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const signedIn = useAuth((s) => s.status === "signedIn");
+  const markSignedOut = useAuth((s) => s.markSignedOut);
+  const [token] = useState(() => new URLSearchParams(location.hash.slice(1)).get("token") ?? "");
+  const [password, setPassword] = useState("");
+  const [again, setAgain] = useState("");
+  const [visible, setVisible] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+
+  // keep the one-time token out of the browser's history
+  useEffect(() => {
+    if (location.hash) navigate(location.pathname, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    const problem = validateNewPassword(password, again);
+    if (problem) return setError(problem);
+    setBusy(true);
+    setError(null);
+    try {
+      await api("/auth/password/reset", { method: "POST", body: { token, newPassword: password }, authFlow: true });
+      setDone(true);
+      if (signedIn) markSignedOut(); // every session was signed out, this browser's too
+    } catch (e) {
+      const err = e as ApiClientError;
+      setError(err.status === 429 ? "Too many requests right now. Please wait a minute and try again." : err.message || "Something went wrong. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const toLogIn = <ArcButton text="Log in" icon={<MdPerson />} variant="filled" fullWidth onClick={() => navigate(routes.authPassword("login"))} />;
+  if (done) {
+    return (
+      <div className="authpane">
+        <div className="authcenter__col authform">
+          <h1 className="t-headline-sm" style={{ margin: 0 }}>Password changed</h1>
+          <p className="t-body-md c-text-2" role="status" style={{ margin: 0 }}>For your security, every device has been signed out. Log in with your new password.</p>
+          {toLogIn}
+        </div>
+      </div>
+    );
+  }
+  if (!token) {
+    return (
+      <div className="authpane">
+        <div className="authcenter__col authform">
+          <h1 className="t-headline-sm" style={{ margin: 0 }}>This link isn&rsquo;t complete</h1>
+          <p className="t-body-md c-text-2" style={{ margin: 0 }}>Open the link from the email again, or ask for a new one.</p>
+          <ArcButton text="Ask for a new link" icon={<MdMail />} variant="filled" fullWidth onClick={() => navigate(routes.forgotPassword)} />
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="authpane">
+      <form className="authcenter__col authform" onSubmit={submit} noValidate>
+        <h1 className="t-headline-sm" style={{ margin: 0 }}>Choose a new password</h1>
+        <label className="sr-only" htmlFor="reset-password">New password</label>
+        <input id="reset-password" className="mfield" type={visible ? "text" : "password"} autoComplete="new-password" placeholder="New password" value={password} onChange={(e) => setPassword(e.target.value)} aria-invalid={error ? true : undefined} aria-describedby={error ? "reset-error" : undefined} data-autofocus="true" />
+        <label className="sr-only" htmlFor="reset-again">New password again</label>
+        <input id="reset-again" className="mfield" type={visible ? "text" : "password"} autoComplete="new-password" placeholder="New password again" value={again} onChange={(e) => setAgain(e.target.value)} aria-invalid={error ? true : undefined} aria-describedby={error ? "reset-error" : undefined} />
+        <div>
+          <ArcButton text={visible ? "Hide Password" : "Show Password"} icon={visible ? <MdVisibilityOff /> : <MdVisibility />} compact onClick={() => setVisible((v) => !v)} />
+        </div>
+        {error ? <p id="reset-error" className="c-coral t-body-md" role="alert" style={{ margin: 0, textAlign: "center" }}>{error}</p> : null}
+        {error && /expired|invalid/i.test(error) ? <ArcButton text="Ask for a new link" icon={<MdMail />} compact onClick={() => navigate(routes.forgotPassword)} /> : null}
+        <ArcButton text={busy ? "Saving…" : "Save new password"} icon={<MdLock />} variant="filled" fullWidth type="submit" disabled={busy} />
+      </form>
+    </div>
+  );
 }

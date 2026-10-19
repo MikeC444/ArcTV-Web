@@ -23,7 +23,7 @@ export function createMockBackend(options: { accessTtlMs?: number } = {}) {
   const data = new Map<string, Map<string, unknown>>(); // userId → key → value
   const calls: BackendRequest[] = [];
   /** `refreshRateLimit`: answer /auth/refresh with 429 and this Retry-After (seconds), like the backend's per-IP limiter. */
-  const state = { down: false, refreshCalls: 0, refreshRateLimit: null as number | null, rejectAllTokens: false, tokenSeq: 0, plus: true, profilesSupported: true };
+  const state = { emailOff: false, resetToken: "reset-token-0123456789abcdef", down: false, refreshCalls: 0, refreshRateLimit: null as number | null, rejectAllTokens: false, tokenSeq: 0, plus: true, profilesSupported: true };
   /** userId → profiles (the account's own "main" profile is created on first use) and their PINs. */
   const profiles = new Map<string, Array<{ id: string; name: string; avatar: string; kind: "adult" | "kids"; isDefault: boolean; pin: string | null }>>();
   const profilesOf = (user: MockUser) => {
@@ -79,6 +79,16 @@ export function createMockBackend(options: { accessTtlMs?: number } = {}) {
       return json(200, tokens);
     }
 
+    if (request.path === "/auth/password/forgot" && request.method === "POST") return state.emailOff ? json(503, { error: "Password reset isn't available yet" }) : json(204);
+    if (request.path === "/auth/password/reset" && request.method === "POST") {
+      const user = [...users.values()][0];
+      if (body.token !== state.resetToken || !user) return json(400, { error: "This reset link is invalid or has expired. Ask for a new one" });
+      user.password = body.newPassword!;
+      access.clear();
+      refresh.clear();
+      return json(204);
+    }
+
     // everything below needs a bearer
     const token = request.bearer ? access.get(request.bearer) : undefined;
     if (state.rejectAllTokens || !token || token.expires <= Date.now()) return json(401, { error: "Unauthorized" });
@@ -86,6 +96,11 @@ export function createMockBackend(options: { accessTtlMs?: number } = {}) {
 
     if (request.path === "/auth/logout") {
       access.delete(request.bearer!);
+      return json(204);
+    }
+    if (request.path === "/auth/password/change" && request.method === "POST") {
+      if (body.currentPassword !== user.password) return json(403, { error: "Your current password isn't right" });
+      user.password = body.newPassword!;
       return json(204);
     }
     if (request.path === "/user/me") return json(200, { id: user.id, email: user.email, displayName: user.displayName, isAdmin: user.email.startsWith("admin") });

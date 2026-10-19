@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { MdBarChart, MdBolt, MdDownload, MdGroups, MdLanguage, MdLock, MdAccountCircle, MdAdd, MdBlock, MdCancel, MdFavorite, MdWorkspacePremium, MdArrowBack, MdArrowDownward, MdArrowUpward, MdCheck, MdCloudUpload, MdDelete, MdExtension, MdGridView, MdInfo, MdLogout, MdMusicNote, MdSubtitles, MdSwitchAccount, MdTune, MdVolumeUp, MdSpatialAudio, MdStars } from "react-icons/md";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { formatMoney, LIFETIME_BOARD_NOTE, LIFETIME_BOARD_TAG, PLUS_FREE_NOTE, PLUS_PERKS, PLUS_PLANS, PLUS_PROCEEDS_NOTE, savingPercent, SUPPORTERS_URL, yearlyPerDay, yearlyPerMonth, type PlanPrices, type PlusPlan } from "../../domain/plus";
@@ -9,11 +9,11 @@ import { pluralize } from "../../lib/format";
 import { playPreview } from "../../lib/sounds";
 import { routes } from "../../lib/routes";
 import { useAddons, CINEMETA_MANIFEST_URL } from "../../state/addons";
-import { useAuth } from "../../state/auth";
+import { useAuth, validateNewPassword } from "../../state/auth";
 import { useAddonsReady, useStreamingServices } from "../../state/hooks";
 import { isServiceVisible, moveService, streamingServiceById } from "../../domain/streamingServices";
 import { buildGenreList } from "../../domain/genreList";
-import { ApiClientError } from "../../lib/api";
+import { api, ApiClientError } from "../../lib/api";
 import { usePlus, watchForPurchase, type PlusPlanId } from "../../state/plus";
 import { activeProfileOf, useProfiles } from "../../state/profiles";
 import { ProfileAvatar } from "../components/ProfileAvatar";
@@ -337,6 +337,64 @@ function PlusPane() {
   );
 }
 
+/** Settings → Account → Change password: the current password and the new one twice. Every other device is signed out; this one stays in. */
+function ChangePassword() {
+  const [open, setOpen] = useState(false);
+  const [current, setCurrent] = useState("");
+  const [next, setNext] = useState("");
+  const [again, setAgain] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (current === "") return setError("Enter your current password.");
+    const problem = validateNewPassword(next, again);
+    if (problem) return setError(problem);
+    setBusy(true);
+    setError(null);
+    try {
+      await api("/auth/password/change", { method: "POST", body: { currentPassword: current, newPassword: next } });
+      setDone(true);
+      setOpen(false);
+      setCurrent("");
+      setNext("");
+      setAgain("");
+    } catch (e) {
+      const err = e as ApiClientError;
+      setError(err.status === 429 ? "Too many attempts right now. Please wait a minute and try again." : err.message || "Something went wrong. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (!open) {
+    return (
+      <div style={{ marginTop: 16 }}>
+        <ArcButton text="Change password" icon={<MdLock />} compact onClick={() => { setOpen(true); setDone(false); }} />
+        {done ? <p className="t-body-sm c-text-2" role="status" style={{ margin: "8px 0 0" }}>Password changed. Your other devices have been signed out.</p> : null}
+      </div>
+    );
+  }
+  return (
+    <form onSubmit={submit} noValidate style={{ marginTop: 16, display: "grid", gap: 10, maxWidth: 420 }}>
+      <label className="sr-only" htmlFor="pw-current">Current password</label>
+      <input id="pw-current" className="mfield" type="password" autoComplete="current-password" placeholder="Current password" value={current} onChange={(e) => setCurrent(e.target.value)} data-autofocus="true" aria-invalid={error ? true : undefined} aria-describedby={error ? "pw-error" : undefined} />
+      <label className="sr-only" htmlFor="pw-new">New password</label>
+      <input id="pw-new" className="mfield" type="password" autoComplete="new-password" placeholder="New password (at least 8 characters)" value={next} onChange={(e) => setNext(e.target.value)} aria-invalid={error ? true : undefined} aria-describedby={error ? "pw-error" : undefined} />
+      <label className="sr-only" htmlFor="pw-again">New password again</label>
+      <input id="pw-again" className="mfield" type="password" autoComplete="new-password" placeholder="New password again" value={again} onChange={(e) => setAgain(e.target.value)} aria-invalid={error ? true : undefined} aria-describedby={error ? "pw-error" : undefined} />
+      {error ? <p id="pw-error" className="c-coral t-body-md" role="alert" style={{ margin: 0 }}>{error}</p> : null}
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <ArcButton text={busy ? "Saving…" : "Save new password"} icon={<MdCheck />} variant="filled" compact type="submit" disabled={busy} />
+        <ArcButton text="Cancel" icon={<MdCancel />} compact onClick={() => { setOpen(false); setError(null); }} />
+      </div>
+      <p className="t-label-sm c-text-3" style={{ margin: 0 }}>Your other devices will be signed out. Forgot your current password? Sign out and choose &ldquo;Forgot your password?&rdquo;.</p>
+    </form>
+  );
+}
+
 function AccountPane() {
   const user = useAuth((s) => s.user);
   const profile = useProfiles((s) => (s.supported && s.plus ? activeProfileOf(s) : undefined));
@@ -369,6 +427,7 @@ function AccountPane() {
           {user.displayName ? <div className="t-body-sm c-text-2">{user.email}</div> : null}
         </>
       ) : null}
+      {user ? <ChangePassword /> : null}
       {user?.isAdmin ? (
         <div style={{ marginTop: 16 }}>
           <ArcButton text="Developer panel" icon={<MdTune />} compact onClick={() => navigate(routes.admin)} />
