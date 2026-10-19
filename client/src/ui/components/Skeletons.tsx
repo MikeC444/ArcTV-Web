@@ -36,6 +36,13 @@ export function HomeSkeleton() {
   );
 }
 
+/** The hero's place on Home while it has no title yet (the addons are still answering): a grey block the hero's height, so the rows below do not jump down when it arrives. */
+export const HeroSkeleton = () => (
+  <div className="hero" aria-busy="true" aria-label="Loading">
+    <Shimmer height="100%" radius="0" style={{ position: "absolute", inset: 0 }} />
+  </div>
+);
+
 export function RowsSkeleton({ rows = 4 }: { rows?: number }) {
   return (
     <div style={{ paddingTop: `calc(var(--nav-h) + ${dp(24)})` }} aria-busy="true" aria-label="Loading">

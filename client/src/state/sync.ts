@@ -95,10 +95,16 @@ export function stopBackgroundSync(): void {
 
 /** Called once a session exists (login, QR, or a still-valid cookie at launch). */
 export async function startSession(userId: string): Promise<void> {
-  // Which profile this browser is on comes first: every library below is loaded (and cached) under it.
-  await useProfiles.getState().load(userId);
+  // Which profile this browser is on comes first: every library below is loaded (and cached) under it. When this account's last answer is saved the
+  // libraries load from it at once (Home paints from its saved rows), and the server's answer is checked behind that; only a first visit waits for it.
+  const profiles = useProfiles.getState();
+  const savedActive = profiles.loadCached(userId) ? useProfiles.getState().activeId : null;
+  const answer = profiles.load(userId);
+  if (savedActive === null) await answer;
   hydrateAll(userId);
   startBackgroundSync();
+  // the account is on another profile now than when this browser last looked (changed on another device): the library just loaded is the wrong one
+  if (savedActive !== null) void answer.then(() => useProfiles.getState().activeId !== savedActive && window.location.reload());
   await syncAll();
 }
 

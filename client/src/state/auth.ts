@@ -73,6 +73,10 @@ export const useAuth = create<AuthState>((set) => ({
   notice: null,
 
   async init() {
+    // A user remembered on this browser is signed in at once (the saved library paints straight away); the check below confirms the session behind it,
+    // and a confirmed 401 still signs them out.
+    const remembered = readJson<SessionUser | null>(LAST_USER_KEY, null);
+    if (remembered && useAuth.getState().status === "unknown") set({ status: "signedIn", user: remembered });
     try {
       const { user } = await api<{ user: SessionUser }>("/auth/session", { authFlow: true });
       writeJson(LAST_USER_KEY, user);
@@ -81,7 +85,6 @@ export const useAuth = create<AuthState>((set) => ({
       if (error instanceof ApiClientError && error.isNetwork) {
         // Offline (or the server is restarting). A remembered user lets the cached library keep working; the next
         // successful request re-validates the session. A confirmed 401 — never a network error — is what signs people out.
-        const remembered = readJson<SessionUser | null>(LAST_USER_KEY, null);
         set(remembered ? { status: "signedIn", user: remembered } : { status: "offline", user: null });
         return;
       }

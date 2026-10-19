@@ -34,6 +34,8 @@ interface ProfilesState {
   chosen: boolean;
   /** Reads the account's profiles and tells the rest of the app which one this browser is on. Called once, before any library is loaded. */
   load(userId: string): Promise<void>;
+  /** Applies this account's last saved answer straight away, with no request, so the library can load at once. False when there is none yet. */
+  loadCached(userId: string): boolean;
   /** Reads the list again after a change. */
   refresh(): Promise<void>;
   reset(): void;
@@ -83,6 +85,14 @@ export const useProfiles = create<ProfilesState>((set, get) => {
     ready: false,
     ...NONE,
     chosen: false,
+
+    loadCached(userId) {
+      const saved = readJson<ProfilesResponse | null>(cacheKey(userId), null);
+      if (!saved) return false;
+      set({ userId, chosen: readChosen(userId) });
+      apply(userId, saved);
+      return true;
+    },
 
     async load(userId) {
       set({ userId, chosen: readChosen(userId) });

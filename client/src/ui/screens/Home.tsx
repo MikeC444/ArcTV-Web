@@ -17,7 +17,7 @@ import { stashDetailPreview } from "../../state/pendingDetail";
 import { ArcButton, IconButton } from "../components/Buttons";
 import { LazyRow } from "../components/LazyRow";
 import { StreamingTiles } from "../components/StreamingTiles";
-import { HomeSkeleton } from "../components/Skeletons";
+import { HeroSkeleton, HomeSkeleton } from "../components/Skeletons";
 import { FullScreenError, HomeEmptyState } from "../components/States";
 
 const HERO_ROTATE_MS = 5000;
@@ -207,7 +207,7 @@ export function Home() {
   if (state.kind === "empty") return <div style={{ paddingTop: "var(--nav-h)" }}><HomeEmptyState /></div>;
   return (
     <div className="home" style={wash ? ({ "--wash": wash } as CSSProperties) : undefined}>
-      <Hero items={state.hero} onColor={setWash} />
+      {state.heroPending ? <HeroSkeleton /> : <Hero items={state.hero} onColor={setWash} />}
       <div className="home__wash" aria-hidden="true" data-on={wash ? "true" : "false"} />
       <div className="home__rows">
         {rows.map((section, index) => (

@@ -64,3 +64,34 @@ export function growHeroTitles<T extends Pick<Content, "id" | "backdropUrl" | "p
   }
   return wide.length > 0 ? [...current, ...wide.slice(0, size - current.length)] : current;
 }
+
+/** The hero's titles, remembered for the launch, with what they were chosen from. */
+export interface HeroLock<T> {
+  /** Everything the choice depended on: the rows enabled, the blocked genres, and whether the rows were the saved copy. */
+  key: string;
+  /** The same without "was the saved copy": the saved hero may stand in for a live one only while this is unchanged. */
+  base: string;
+  titles: T[];
+}
+
+/**
+ * The hero for this moment. A lock from a different key is dropped (rows were switched, or the saved copy gave way to live rows), and the hero is chosen
+ * again from the rows now in hand. But when the saved copy gives way to live rows (same `base`) and those can't make a hero yet (the first answer has few
+ * titles with a real background), the saved hero stays, so the page never shows its rows with the hero gone and back. Returns `prior` itself when nothing changed.
+ */
+export function resolveHeroLock<T extends Pick<Content, "id" | "backdropUrl" | "posterUrl">>(
+  prior: HeroLock<T> | null,
+  next: { key: string; base: string },
+  pool: readonly T[],
+  backup: readonly T[],
+  size: number,
+  final: boolean,
+  random: () => number = Math.random,
+): HeroLock<T> | null {
+  const sameKey = prior !== null && prior.key === next.key;
+  const held = sameKey ? prior.titles : [];
+  const grown = growHeroTitles(held, pool, backup, size, final, random);
+  if (!sameKey && grown.length === 0 && prior !== null && prior.base === next.base) return { ...next, titles: prior.titles };
+  if (grown === held) return sameKey ? prior : null;
+  return { ...next, titles: [...grown] };
+}

@@ -3,7 +3,7 @@ import { applyRowOrder, dedupeRows } from "../domain/homeRows";
 import { dayStamp } from "../domain/homeVariety";
 import { useProviders } from "../domain/registry";
 import { setHomeVarietySeed, type CatalogProvider } from "../domain/provider";
-import { growHeroTitles } from "../domain/heroPool";
+import { resolveHeroLock, type HeroLock } from "../domain/heroPool";
 import type { Content, HomeSection } from "../domain/types";
 import { distinctBy } from "../lib/format";
 import { withoutBlocked } from "../domain/blockedGenres";
@@ -26,7 +26,7 @@ export type HomeState =
   | { kind: "loading" }
   | { kind: "empty" }
   | { kind: "error"; message: string }
-  | { kind: "success"; hero: Content[]; sections: HomeSection[]; pool: Content[] };
+  | { kind: "success"; hero: Content[]; sections: HomeSection[]; pool: Content[]; /** No hero yet, but the addons are still answering: its place shows a grey block, so the rows do not jump when it arrives. */ heroPending: boolean };
 
 interface HomeCache {
   at: number;
@@ -38,7 +38,7 @@ interface HomeCache {
  * They are picked again only if the rows the person has enabled change (Settings → Home Rows) or the rows turn out to come from
  * the offline copy, so a title from a row that has since been switched off never lingers in the hero.
  */
-let heroLock: { key: string; titles: Content[] } | null = null;
+let heroLock: HeroLock<Content> | null = null;
 export const resetHomeSession = (): void => {
   heroLock = null;
 };
@@ -170,15 +170,12 @@ export function useHome(): { state: HomeState; reload(): void; ready: boolean } 
     // The hero: up to 10 random titles from the rows the person has enabled. It is shown as soon as a few titles with a real background
     // have arrived, and the rest join the rotation as the other addons answer (see growHeroTitles); once everything has loaded, any
     // shortfall is made up at random from the other rows.
-    const lockKey = `${prefs.hiddenRowIds.join("|")}#${cacheOnly}#${[...blocked].join("|")}`;
-    if (heroLock && heroLock.key !== lockKey) heroLock = null;
-    const held = heroLock?.titles ?? [];
-    const grown = growHeroTitles(held, pool, distinctBy(rawSections.flatMap((s) => s.items), (c) => c.id), HERO_POOL_SIZE, complete || cacheOnly);
-    if (grown !== held) heroLock = { key: lockKey, titles: [...grown] };
+    const base = `${prefs.hiddenRowIds.join("|")}#${[...blocked].join("|")}`;
+    heroLock = resolveHeroLock(heroLock, { key: `${base}#${cacheOnly}`, base }, pool, distinctBy(rawSections.flatMap((s) => s.items), (c) => c.id), HERO_POOL_SIZE, complete || cacheOnly);
     const hero = (heroLock?.titles ?? []).map((c) => (watchedIds.has(c.id) ? { ...c, watched: true } : c));
     // every movie and TV show the addons listed on Home (hidden rows included) is a candidate for "Picked for you"
     const recommendationPool = distinctBy(rawSections.flatMap((s) => s.items), (c) => c.id);
-    if (hero.length > 0 || sections.length > 0) return { kind: "success", hero, sections, pool: recommendationPool };
+    if (hero.length > 0 || sections.length > 0) return { kind: "success", hero, sections, pool: recommendationPool, heroPending: hero.length === 0 && !complete && !cacheOnly };
     if (failed) return { kind: "error", message: "Couldn't reach your installed addons. Check your connection and try again." };
     return { kind: "empty" };
   }, [fetched, addonsReady, raw, prefs, blocked, cw, watchedIds, savedIds, feedbackEntries, cacheOnly, failed, complete]);

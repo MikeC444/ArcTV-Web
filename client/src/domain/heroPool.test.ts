@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { growHeroTitles, HERO_READY_WIDE, pickHeroPool, pickHeroTitles } from "./heroPool";
+import { growHeroTitles, HERO_READY_WIDE, pickHeroPool, pickHeroTitles, resolveHeroLock } from "./heroPool";
 
 const item = (id: string, backdropUrl: string | null, posterUrl: string | null) => ({ id, backdropUrl, posterUrl });
 const wide = (id: string) => item(id, `https://img/${id}/bg`, `https://img/${id}/poster`);
@@ -93,5 +93,34 @@ describe("hero titles as Home's rows arrive", () => {
     const done = growHeroTitles(shown, [...wides(3), ...posters(2)], [blank("other1"), blank("other2")], 10, true);
     expect(ids(done.slice(0, 3))).toEqual(ids(shown));
     expect(ids(done.slice(3)).sort()).toEqual(["other1", "other2", "p0", "p1"]);
+  });
+});
+
+describe("resolveHeroLock", () => {
+  const t = (id: string, wide = true) => ({ id, backdropUrl: wide ? `b-${id}` : null, posterUrl: `p-${id}` });
+  const noRandom = () => 0.5;
+  const saved = { key: "rows#true", base: "rows", titles: [t("a"), t("b"), t("c")] };
+
+  it("keeps the saved hero while the first live rows can't make one yet", () => {
+    const out = resolveHeroLock(saved, { key: "rows#false", base: "rows" }, [t("x"), t("y", false)], [], 10, false, noRandom);
+    expect(out?.titles.map((x) => x.id)).toEqual(["a", "b", "c"]);
+    expect(out?.key).toBe("rows#false");
+  });
+
+  it("chooses again from the live rows once they can make a hero", () => {
+    const live = [t("x"), t("y"), t("z")];
+    const out = resolveHeroLock(saved, { key: "rows#false", base: "rows" }, live, [], 10, false, noRandom);
+    expect(out?.titles.map((x) => x.id).sort()).toEqual(["x", "y", "z"]);
+  });
+
+  it("drops the saved hero when the rows themselves changed", () => {
+    const out = resolveHeroLock(saved, { key: "other#false", base: "other" }, [t("x")], [], 10, false, noRandom);
+    expect(out).toBeNull();
+  });
+
+  it("leaves a lock alone while nothing is added, and starts empty with no prior", () => {
+    const same = { key: "rows#false", base: "rows", titles: Array.from({ length: 10 }, (_, i) => t(`t${i}`)) };
+    expect(resolveHeroLock(same, { key: "rows#false", base: "rows" }, [t("x")], [], 10, false, noRandom)).toBe(same);
+    expect(resolveHeroLock(null, { key: "rows#false", base: "rows" }, [], [], 10, false, noRandom)).toBeNull();
   });
 });

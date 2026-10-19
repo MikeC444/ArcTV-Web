@@ -88,6 +88,20 @@ describe("loading profiles", () => {
     expect(activeProfileId()).toBe("main");
   });
 
+  it("applies the last saved answer at once, with no request, so the library can load without waiting", async () => {
+    expect(useProfiles.getState().loadCached("u1")).toBe(false); // a first visit has nothing saved
+    expect(useProfiles.getState().ready).toBe(false);
+    respond = () => answer({ active: "p_kid" });
+    await useProfiles.getState().load("u1");
+    resetAllStores();
+    calls.length = 0;
+    expect(useProfiles.getState().loadCached("u1")).toBe(true);
+    expect(calls).toHaveLength(0);
+    expect(useProfiles.getState().ready).toBe(true);
+    expect(activeProfileId()).toBe("p_kid");
+    expect(useProfiles.getState().profiles).toHaveLength(3);
+  });
+
   it("remembers the last answer per account for when the service can't be reached", async () => {
     respond = () => answer({ active: "p_kid" });
     await useProfiles.getState().load("u1");
