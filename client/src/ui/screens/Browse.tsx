@@ -230,12 +230,12 @@ function Page({ title, children, filters, back, headExtra, intro }: { title: str
   );
 }
 
-function CatalogPage({ title, pager, emptyMessage, back, headExtra, intro, rows = false, placeholders = false }: { title: string; pager: Pager; emptyMessage: string; back?: string; headExtra?: ReactNode; intro?: ReactNode; rows?: boolean; placeholders?: boolean }) {
+function CatalogPage({ title, pager, emptyMessage, back, headExtra, intro, rows = false, exclude, placeholders = false }: { title: string; pager: Pager; emptyMessage: string; back?: string; headExtra?: ReactNode; intro?: ReactNode; rows?: boolean; exclude?: ReadonlySet<string>; placeholders?: boolean }) {
   const watched = useWatchedIds();
   const [sort, setSort] = useState<SortMode>("FEATURED");
   const navigate = useNavigate();
   const blocked = useBlockedSet();
-  const items = useMemo(() => sortContent(withoutBlocked(pager.items, blocked), sort).map((c) => withWatched(c, watched)), [pager.items, sort, watched, blocked]);
+  const items = useMemo(() => sortContent(withoutBlocked(pager.items, blocked), sort).filter((c) => !exclude?.has(c.id)).map((c) => withWatched(c, watched)), [pager.items, sort, watched, blocked, exclude]);
 
   if (pager.status === "loading") return <GridSkeleton title={title} back={back} headExtra={headExtra} />;
   if (pager.status === "error") return <div className="page"><FullScreenError message="Couldn't reach your installed addons. Check your connection and try again." onRetry={pager.retry} /></div>;
@@ -300,8 +300,9 @@ export function StreamingServiceScreen() {
   const available = useStreamingServices();
   const known = streamingServiceById(service);
   const pager = usePager({ type: "service", value: service });
+  const [topTen, setTopTen] = useState<ReadonlySet<string>>(new Set());
   if (!known || (ready && !available.includes(service))) return <Navigate to={routes.home} replace />;
-  return <CatalogPage title={known.name} pager={pager} back={routes.home} emptyMessage={`Your addons didn't return any ${known.name} titles right now.`} placeholders intro={known.id === "netflix" ? <TopTenRow service={known.id} /> : undefined} rows={known.id === "netflix"} />;
+  return <CatalogPage title={known.name} pager={pager} back={routes.home} emptyMessage={`Your addons didn't return any ${known.name} titles right now.`} placeholders intro={known.id === "netflix" ? <TopTenRow service={known.id} onTitles={setTopTen} /> : undefined} rows={known.id === "netflix"} exclude={known.id === "netflix" ? topTen : undefined} />;
 }
 export const MoviesScreen = () => <TypeScreen title="Movies" type="MOVIE" />;
 export const TvShowsScreen = () => <TypeScreen title="TV Shows" type="TV_SHOW" />;

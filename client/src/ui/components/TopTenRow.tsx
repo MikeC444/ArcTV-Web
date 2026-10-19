@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useProviders } from "../../domain/registry";
 import type { Content } from "../../domain/types";
 import { fetchServiceTitles, viewerRegion } from "../../state/streamingTitles";
@@ -41,9 +41,9 @@ export function NetflixN() {
 /**
  * Netflix's page opens with its ten most popular titles in the viewer's country: a big outlined number tucked behind each poster. The order is TMDB's
  * popularity for the service (the same list the page carries on with), not Netflix's own chart. Nothing is shown until the list arrives, or when it
- * can't be had (no TMDB key on the server).
+ * can't be had (no TMDB key on the server). `onTitles` is told which titles it shows.
  */
-export function TopTenRow({ service }: { service: string }) {
+export function TopTenRow({ service, onTitles }: { service: string; onTitles?: (ids: Set<string>) => void }) {
   const region = viewerRegion();
   const key = `${service}:${region}`;
   const providerId = useProviders((s) => s.providers.find((p) => p.streamingServices?.().includes(service))?.id ?? null);
@@ -66,6 +66,11 @@ export function TopTenRow({ service }: { service: string }) {
       cancelled = true;
     };
   }, [key, service, providerId]);
+
+  const onTitlesRef = useRef(onTitles);
+  onTitlesRef.current = onTitles;
+  // tell the page which titles the row shows, so it can leave them out of what is listed below
+  useEffect(() => onTitlesRef.current?.(new Set(items.map((c) => c.id))), [items]);
 
   if (items.length === 0) return null;
   const title = TOP_TEN_TITLE;
