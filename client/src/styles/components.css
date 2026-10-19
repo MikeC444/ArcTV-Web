@@ -638,5 +638,6 @@
 .nfrows .top10__badge { top: calc(5 * var(--dp)); left: calc(6 * var(--dp)); width: calc(11 * var(--dp)); }
 @media (min-width: 1101px) { .nfrows { --poster-cols: 9; } }
 @media (min-width: 1601px) { .nfrows { --poster-cols: 10; } }
-/* On Netflix's page the red N holds the top-left corner, so the watched tick moves to the bottom-right (the top-right has the touch menu button). */
-.nfrows .card__watched, .top10 .card__watched { top: auto; left: auto; right: 5px; bottom: 5px; z-index: 3; }
+/* On Netflix's page the red N holds the top-left corner, so the watched tick sits top-right; where touch screens show the poster's menu button there, it steps left of that button. */
+.nfrows .card__watched, .top10 .card__watched { top: 5px; left: auto; right: 5px; bottom: auto; z-index: 3; }
+@media (hover: none), (max-width: 720px) { .nfrows .card__watched, .top10 .card__watched { right: 40px; } }
