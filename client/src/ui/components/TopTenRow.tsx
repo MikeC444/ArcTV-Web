@@ -38,6 +38,7 @@ function RankNumber({ rank }: { rank: number }) {
       <defs>
         <linearGradient id={`top10-fill-${rank}`} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" className="top10__stop-from" />
+          <stop offset="0.45" className="top10__stop-to" />
           <stop offset="1" className="top10__stop-to" />
         </linearGradient>
       </defs>
