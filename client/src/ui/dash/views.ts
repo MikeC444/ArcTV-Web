@@ -1,4 +1,4 @@
-export type ViewId = "overview" | "watching" | "users" | "playback" | "downloads" | "popups" | "addons" | "versions";
+export type ViewId = "overview" | "watching" | "users" | "playback" | "downloads" | "popups" | "addons" | "versions" | "crashes";
 
 export const VIEWS: Array<{ id: ViewId; label: string; hint: string }> = [
   { id: "overview", label: "Overview", hint: "The numbers that matter, on one screen" },
@@ -9,4 +9,5 @@ export const VIEWS: Array<{ id: ViewId; label: string; hint: string }> = [
   { id: "popups", label: "App popups", hint: "Who the Mac and Windows app popups reach, and what they do" },
   { id: "addons", label: "Addons", hint: "What people have installed" },
   { id: "versions", label: "Versions", hint: "App versions and websites in use" },
+  { id: "crashes", label: "Crashes", hint: "Crash reports the apps send on their next start" },
 ];

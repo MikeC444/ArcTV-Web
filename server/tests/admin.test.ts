@@ -24,6 +24,9 @@ describe("/api/admin (developer panel proxy)", () => {
     expect((await client.get("/api/admin/summary")).body).toMatchObject({ users: 3, versions: [{ version: "0.1.7" }], live: { online: { users: 3 }, watching: { users: 1 } } });
     expect((await client.get("/api/admin/watching")).body).toMatchObject({ windowSeconds: 45, watching: [{ title: "The Film", platform: "fire_tv" }] });
     expect((await client.get("/api/admin/downloads")).body).toMatchObject({ people: [{ email: "sam@example.com", lastKind: "popup" }] });
+    expect((await client.get("/api/admin/app-promos")).body).toMatchObject({ people: [] });
+    const crashes = await client.get("/api/admin/crashes?limit=100");
+    expect(crashes.body).toMatchObject({ groups: [{ kind: "crash", count: 2 }], query: "limit=100" });
     const list = await client.get("/api/admin/users?q=sam&limit=20&offset=40");
     expect(list.body.total).toBe(1);
     const call = backend.calls.find((c) => c.path === "/admin/users")!;
@@ -36,7 +39,7 @@ describe("/api/admin (developer panel proxy)", () => {
 
   it("exposes nothing else, and nothing that changes data", async () => {
     const { client } = await signedIn();
-    for (const path of ["/api/admin", "/api/admin/other", "/api/admin/feature-intros/torrent_intro", "/api/admin/users/not-an-id", "/api/admin/users/../summary"]) {
+    for (const path of ["/api/admin", "/api/admin/other", "/api/admin/feature-intros/torrent_intro", "/api/admin/users/not-an-id", "/api/admin/users/../summary", "/api/admin/crashes/abc"]) {
       expect([404, 400]).toContain((await client.get(path)).status);
     }
     expect((await client.post("/api/admin/users").send({})).status).toBe(404);

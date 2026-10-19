@@ -6,6 +6,7 @@ import { Spinner } from "../components/States";
 import { AddonsView } from "./AddonsView";
 import { CommandPalette } from "./CommandPalette";
 import { AppPromosView } from "./AppPromosView";
+import { CrashesView } from "./CrashesView";
 import { DownloadsView } from "./DownloadsView";
 import { OverviewView } from "./OverviewView";
 import { PlaybackView } from "./PlaybackView";
@@ -42,7 +43,7 @@ export function Dashboard() {
 
   const go = useCallback((next: ViewId, id?: string | null) => navigate(adminPath(next, id)), [navigate]);
 
-  // Ctrl/Cmd+K or "/" opens the palette; 1–7 jump between views (not while typing).
+  // Ctrl/Cmd+K or "/" opens the palette; 1–9 jump between views (not while typing).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const typing = e.target instanceof HTMLElement && (e.target.tagName === "INPUT" || e.target.tagName === "SELECT" || e.target.tagName === "TEXTAREA" || e.target.isContentEditable);
@@ -101,6 +102,7 @@ export function Dashboard() {
           {summary && view === "popups" ? <AppPromosView summary={summary} onOpenUser={(id) => go("users", id)} /> : null}
           {summary && view === "addons" ? <AddonsView summary={summary} /> : null}
           {summary && view === "versions" ? <VersionsView summary={summary} onFilterUsers={(f) => navigate(`${routes.admin}/users?${f.startsWith("webSystem:") ? `webSystem=${encodeURIComponent(f.slice(10))}` : `device=${encodeURIComponent(f)}`}`)} /> : null}
+          {view === "crashes" ? <CrashesView onOpenUser={(id) => go("users", id)} /> : null}
         </main>
       </div>
       {palette ? <CommandPalette onClose={() => setPalette(false)} onGo={go} /> : null}

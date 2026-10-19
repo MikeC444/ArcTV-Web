@@ -146,10 +146,43 @@ export interface WatchingList {
   watching: WatchingNow[];
 }
 
+/** Crashes reported by the apps (the TV app sends them on its next start), grouped by where they happened, plus the latest reports. */
+export interface CrashGroup {
+  signature: string;
+  kind: string;
+  exception: string | null;
+  count: number;
+  people: number;
+  firstAt: string;
+  lastAt: string;
+  versions: string[];
+  devices: string[];
+}
+export interface CrashReport {
+  id: string;
+  signature: string;
+  kind: string;
+  exception: string | null;
+  stackTrace: string;
+  platform: string;
+  appVersion: string;
+  deviceModel: string | null;
+  osVersion: string | null;
+  happenedAt: string;
+  createdAt: string;
+  userId: string | null;
+  email: string | null;
+}
+export interface CrashDetail {
+  groups: CrashGroup[];
+  recent: CrashReport[];
+}
+
 export const fetchAdminSummary = () => api<AdminSummary>("/admin/summary");
 export const fetchWatching = () => api<WatchingList>("/admin/watching");
 export const fetchDownloadDetail = () => api<DownloadDetail>("/admin/downloads");
 export const fetchAppPromoDetail = () => api<AppPromoDetail>("/admin/app-promos");
+export const fetchCrashes = () => api<CrashDetail>("/admin/crashes?limit=100");
 /** The user list filters; an empty value means "no filter". `device` is "<platform>|<app version>". */
 export interface AdminFilters {
   q: string;

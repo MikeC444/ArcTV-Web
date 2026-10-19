@@ -305,3 +305,24 @@
 @media (max-width: 1180px) { .dd-dlrow { grid-template-columns: 40px minmax(0, 1fr) 80px; } .dd-dlstatus, .dd-dlcounts { grid-column: 2 / -1; } .dd-dlrow .dd-urow__seen { display: none; } }
 @media (max-width: 720px) { .dd-feed li { grid-template-columns: 10px minmax(0, 1fr); } .dd-feed__what, .dd-feed__when { grid-column: 2; } }
 .dd-fun__foot { margin-top: auto; padding-top: 10px; }
+
+/* Crashes: one row per problem or report, opening to its trace. */
+.dd-crashes { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; }
+.dd-crashes > li { border-top: 1px solid var(--d-line); }
+.dd-crashes > li:first-child { border-top: 0; }
+.dd-crash summary { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 12px; padding: 10px 4px; cursor: pointer; font-size: 13.5px; list-style: none; }
+.dd-crash summary::-webkit-details-marker { display: none; }
+.dd-crash summary:focus-visible { outline: 2px solid var(--focus-border); outline-offset: 2px; border-radius: 8px; }
+.dd-crash[open] summary { color: var(--text); }
+.dd-crash > .dd-sub { margin: 0 4px 8px; }
+.dd-crash__count, .dd-crash__when { color: var(--text-2); white-space: nowrap; }
+.dd-crash .dd-tag[data-kind="native_crash"], .dd-crash .dd-tag[data-kind="crash"] { color: #ff8a8a; }
+.dd-crash .dd-tag[data-kind="anr"], .dd-crash .dd-tag[data-kind="low_memory"] { color: #ffc46b; }
+.dd-crash__body { margin: 0 4px 12px; }
+.dd-crash__body > .dd-sub { margin: 0 0 6px; }
+.dd-crash__trace { margin: 0; max-height: 360px; overflow: auto; padding: 12px; border-radius: 12px; border: 1px solid var(--d-line); background: color-mix(in srgb, var(--text) 4%, transparent); font-size: 12px; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
+.dd-linkbtn { background: none; border: 0; padding: 0; color: var(--text); font: inherit; text-decoration: underline; cursor: pointer; }
+@media (max-width: 720px) {
+  .dd-crash summary { grid-template-columns: auto minmax(0, 1fr); }
+  .dd-crash__count, .dd-crash__when { grid-column: 2; white-space: normal; }
+}
