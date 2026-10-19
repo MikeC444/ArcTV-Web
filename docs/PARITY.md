@@ -11,6 +11,7 @@ Status: ⬜ not done · ✅ done (released or merged) · ➖ not needed there (s
 
 | Date | Change | Firestick | Phone | Mac | Windows |
 |---|---|---|---|---|---|
+| 2026-10-19 | Netflix's Top 10 row is headed "Top 10 in <country> Today" ("Top 10 Today" if the country can't be named), using the viewer's country: the region of the device language, else the country of its time zone, else the UK. No location permission is asked. The same country picks which titles are ranked (`TopTenRow.tsx`, `streamingTitles.ts`) | ⬜ | ⬜ | ⬜ | ⬜ |
 | 2026-10-19 | Netflix's page: the poster rows get slightly bigger gaps between posters (9dp across and down, was 4dp) (`components.css`) | ⬜ | ⬜ | ⬜ | ⬜ |
 | 2026-10-19 | On Netflix's page (the Top 10 and the poster rows) the green watched tick moves to the poster's bottom-right corner, so it no longer sits under the red N (`components.css`) | ⬜ | ⬜ | ⬜ | ⬜ |
 | 2026-10-19 | **Netflix's page shows poster rows instead of one grid**, under the Top 10, with no row headings or categories (just the posters, close together (4dp gaps), small corners, no captions under them and the red N on each poster). More titles load as the page is scrolled; the Featured / Highest Rated / Newest pills are gone there. The N now sits inside the poster so it grows and tilts with it. Only Netflix's page (`ServiceRows.tsx`, `ContentRow.tsx`, `Browse.tsx`, `components.css`) | ⬜ | ⬜ | ⬜ | ⬜ |

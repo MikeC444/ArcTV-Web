@@ -12,8 +12,14 @@ describe("viewerRegion", () => {
   it("is the region of the browser's language, upper-cased, else the UK", () => {
     expect(viewerRegion("en-us")).toBe("US");
     expect(viewerRegion("pt_BR")).toBe("BR");
-    expect(viewerRegion("en")).toBe("GB");
-    expect(viewerRegion("")).toBe("GB");
+    expect(viewerRegion("en", "UTC")).toBe("GB");
+    expect(viewerRegion("", "UTC")).toBe("GB");
+  });
+  it("falls back to the country of the time zone when the language has no region", () => {
+    expect(viewerRegion("en", "Australia/Sydney")).toBe("AU");
+    expect(viewerRegion("en", "America/Los_Angeles")).toBe("US");
+    expect(viewerRegion("en", "Pacific/Auckland")).toBe("NZ");
+    expect(viewerRegion("en-GB", "Australia/Perth")).toBe("GB");
   });
 });
 

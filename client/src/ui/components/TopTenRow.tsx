@@ -24,8 +24,16 @@ export function topTen(movies: Content[], shows: Content[]): Content[] {
   return out;
 }
 
-/** The row's heading. */
-export const TOP_TEN_TITLE = "Top 10 Today";
+/** "Top 10 in Australia Today", naming the viewer's country; "Top 10 Today" when the browser can't name it. */
+export function topTenTitle(region: string): string {
+  try {
+    const country = new Intl.DisplayNames(["en"], { type: "region" }).of(region);
+    if (country && country !== region) return `Top 10 in ${country} Today`;
+  } catch {
+    /* an unknown region code: fall through */
+  }
+  return "Top 10 Today";
+}
 
 /** The service's red N, drawn as three bars, on the corner of each poster. */
 export function NetflixN() {
@@ -68,7 +76,7 @@ export function TopTenRow({ service }: { service: string }) {
   }, [key, service, providerId]);
 
   if (items.length === 0) return null;
-  const title = TOP_TEN_TITLE;
+  const title = topTenTitle(region);
   return (
     <section className="row top10" aria-label={title}>
       <h2 className="row__title" style={{ margin: 0 }}>
