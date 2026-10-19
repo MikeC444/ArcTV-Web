@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { Content } from "../../domain/types";
 import { ContentCard } from "./ContentCard";
-import { WideGridSkeleton } from "./Skeletons";
+import { WideCells } from "./Skeletons";
 import { NetflixN } from "./TopTenRow";
 
 /** The titles under a streaming service's Top 10: rows of wide (16:9) pictures close together (small gaps and corners, no captions, the service's N on each), with no headings. More titles load as the page is scrolled to its end. */
@@ -22,8 +22,9 @@ export function ServiceRows({ items, onLoadMore, more = false }: { items: Conten
             <ContentCard content={content} badge={<NetflixN />} wide />
           </div>
         ))}
+        {/* the grey cells carry on in the same grid, so they start right after the last title */}
+        {more ? <WideCells /> : null}
       </div>
-      {more ? <WideGridSkeleton /> : null}
       <div ref={sentinel} style={{ height: 1 }} aria-hidden="true" />
       <div style={{ height: "calc(48 * var(--dp))" }} />
     </div>
