@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authedBackendRequest, type AppContext } from "../context.js";
+import { authedBackendRequest, requireLiveSession, type AppContext } from "../context.js";
 import { ApiError, fromBackendStatus } from "../errors.js";
 import { backendMessage } from "../backend.js";
 
@@ -64,7 +64,7 @@ export function createUserRouter(ctx: AppContext): Router {
     const cacheKey = CACHEABLE.test(req.path) ? `${req.path}?${query}` : null;
     if (cacheKey) {
       // Still requires a valid session — the cache only skips the *upstream* call.
-      if (!ctx.sessions.read(req)) throw new ApiError(401, "unauthorized", "Sign in to continue.");
+      await requireLiveSession(ctx, req, res);
       const hit = cache.get(cacheKey);
       if (hit && hit.until > Date.now()) {
         res.json(hit.json);

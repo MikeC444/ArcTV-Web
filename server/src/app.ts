@@ -9,7 +9,7 @@ import { addonProxyHandler, createAddonFetcher } from "./addonProxy.js";
 import { createBackendClient, type BackendFetch } from "./backend.js";
 import { createEpgService, EPG_SOURCES, type EpgService } from "./epg/epgService.js";
 import type { AppConfig } from "./config.js";
-import type { AppContext } from "./context.js";
+import { requireLiveSession, type AppContext } from "./context.js";
 import { ApiError, sendError } from "./errors.js";
 import { createAuthRouter } from "./routes/auth.js";
 import { createAdminRouter } from "./routes/admin.js";
@@ -94,7 +94,7 @@ export interface CreateAppOptions {
 
 export function createApp(config: AppConfig, options: CreateAppOptions = {}): Express {
   const backend = options.backend ?? createBackendClient(config.apiUrl);
-  const ctx: AppContext = { config, backend, sessions: new SessionManager(config, backend) };
+  const ctx: AppContext = { config, backend, sessions: new SessionManager(config, backend), confirmed: new Map() };
 
   const app = express();
   app.disable("x-powered-by");
@@ -243,7 +243,7 @@ export function createApp(config: AppConfig, options: CreateAppOptions = {}): Ex
   });
   api.post("/epg/guide", perClient(60), async (req, res, next) => {
     try {
-      if (!ctx.sessions.read(req)) throw new ApiError(401, "unauthorized", "Sign in to continue.");
+      await requireLiveSession(ctx, req, res);
       const parsed = guideBody.safeParse(req.body);
       if (!parsed.success || !EPG_SOURCES.some((s) => s.id === parsed.data.source)) throw new ApiError(400, "bad_request", "That guide request isn't valid.");
       res.removeHeader("Cache-Control");
@@ -260,7 +260,7 @@ export function createApp(config: AppConfig, options: CreateAppOptions = {}): Ex
   const fetchAddonJson = createAddonFetcher(config);
   api.get("/addon-proxy", perClient(120), async (req, res, next) => {
     try {
-      if (!ctx.sessions.read(req)) throw new ApiError(401, "unauthorized", "Sign in to continue.");
+      await requireLiveSession(ctx, req, res);
       res.removeHeader("Cache-Control");
       await addonProxyHandler(fetchAddonJson)(req, res);
     } catch (error) {
@@ -272,8 +272,7 @@ export function createApp(config: AppConfig, options: CreateAppOptions = {}): Ex
   const relayStream = createStreamRelay(config);
   api.get("/relay/*rest", perClient(1200), async (req, res, next) => {
     try {
-      const session = ctx.sessions.read(req);
-      if (!session) throw new ApiError(401, "unauthorized", "Sign in to continue.");
+      const session = await requireLiveSession(ctx, req, res);
       await relayStream(req, res, session.user.id);
     } catch (error) {
       next(error);
