@@ -642,7 +642,6 @@
 /* wide pictures, so fewer across than tall posters */
 .nfrows { --poster-cols: 4; }
 @media (min-width: 1101px) { .nfrows { --poster-cols: 5; } }
-@media (min-width: 1601px) { .nfrows { --poster-cols: 6; } }
 @media (max-width: 540px) { .nfrows { --poster-cols: 2; } }
 /* On Netflix's page the red N holds the top-left corner, so the watched tick sits top-right; where touch screens show the poster's menu button there, it steps left of that button. */
 .nfrows .card__watched, .top10 .card__watched { top: 5px; left: auto; right: 5px; bottom: auto; z-index: 3; }
